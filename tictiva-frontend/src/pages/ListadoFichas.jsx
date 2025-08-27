@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HRSubnav from "../components/HRSubnav";
 import "./ListadoFichas.css";
-import CrearEmpleadoModal from "../components/CrearEmpleadoModal";
+import CrearEmpleadoModal from "../components/CrearEmpleadoModal"; // (no se usa, se deja para no tocar importaciones)
 
 const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
 
@@ -33,11 +33,7 @@ const pathDetalleEmpleado = (emp) => {
   return "/rrhh/fichas"; // fallback seguro
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   NORMALIZACIÓN DE GÉNERO (ROBUSTA + FALLBACK POR NOMBRE)
-   Esto permite que las cards Hombres/Mujeres funcionen aunque el backend
-   no entregue “genero/sexo”.
-────────────────────────────────────────────────────────────────────────── */
+/* ───────────── Normalización de género (robusta + fallback por nombre) ───────────── */
 const _rmAccents = (s = "") => s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
 const _getByKeysCI = (obj = {}, keys = []) => {
   const map = Object.fromEntries(
@@ -51,11 +47,8 @@ const _getByKeysCI = (obj = {}, keys = []) => {
 };
 const getGeneroRaw = (e) => {
   if (!e) return "";
-  let v = _getByKeysCI(e, [
-    "genero", "género", "sexo", "gender",
-    "genero_text", "sexo_text", "generodescripcion", "genderlabel"
-  ]);
-  const code = _getByKeysCI(e, ["genero_id", "sexo_id", "gender_id", "gendercode"]);
+  let v = _getByKeysCI(e, ["genero","género","sexo","gender","genero_text","sexo_text","generodescripcion","genderlabel"]);
+  const code = _getByKeysCI(e, ["genero_id","sexo_id","gender_id","gendercode"]);
   if ((v == null || String(v).trim() === "") && code != null) v = String(code);
   if (v == null || String(v).trim() === "") return "";
   return _rmAccents(String(v).trim().toLowerCase());
@@ -63,13 +56,11 @@ const getGeneroRaw = (e) => {
 const FEMALE_NAMES = new Set([
   "maria","maria jose","maría","ana","nicole","victoria","camila","valentina",
   "constanza","paula","sofia","sofía","fernanda","carolina","daniela","isabella",
-  "martina","josefina","romina","catalina","pamela","veronica","verónica","antonia",
-  "francisca"
+  "martina","josefina","romina","catalina","pamela","veronica","verónica","antonia","francisca"
 ]);
 const MALE_NAMES = new Set([
   "juan","carlos","luis","raul","raúl","gabriel","francisco","jose","josé","pedro",
-  "diego","felipe","rodrigo","nicolas","nicólas","nicolás","cristian","cristían",
-  "andres","andrés","pablo","matias","matías","raul","raúl"
+  "diego","felipe","rodrigo","nicolas","nicolás","cristian","andres","andrés","pablo","matias","matías","raul","raúl"
 ]);
 const firstName = (s="") => _rmAccents(s).trim().split(/\s+/)[0]?.toLowerCase() || "";
 const guessGeneroPorNombre = (nombre="") => {
@@ -98,7 +89,6 @@ const esMujer = (e) => {
   }
   return guessGeneroPorNombre(e?.nombre || "") === "femenino";
 };
-/* Discapacidad: aceptamos distintas claves y truthy */
 const tieneDiscapacidad = (e) => {
   const v = _getByKeysCI(e, ["discapacidad", "es_discapacitado", "disability", "hasdisability"]);
   return !!v;
@@ -110,6 +100,9 @@ export default function ListadoFichas() {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+
+  // Filtro por KPI activo: 'todos' | 'activos' | 'inactivos' | 'hombres' | 'mujeres' | 'discapacidad'
+  const [kpiFilter, setKpiFilter] = useState("todos");
 
   useEffect(() => {
     let cancel = false;
@@ -127,13 +120,30 @@ export default function ListadoFichas() {
     return () => { cancel = true; };
   }, []);
 
-  const filtered = useMemo(() => {
+  const listBySearch = useMemo(() => {
     const t = q.trim().toLowerCase();
     if (!t) return empleados;
     return empleados.filter((e) =>
       `${e?.nombre || ""} ${e?.rut || ""}`.toLowerCase().includes(t)
     );
   }, [empleados, q]);
+
+  const listFiltered = useMemo(() => {
+    switch (kpiFilter) {
+      case "activos":
+        return listBySearch.filter((e) => (e?.estado || "").toLowerCase() === "activo");
+      case "inactivos":
+        return listBySearch.filter((e) => (e?.estado || "").toLowerCase() !== "activo");
+      case "hombres":
+        return listBySearch.filter((e) => esHombre(e));
+      case "mujeres":
+        return listBySearch.filter((e) => esMujer(e));
+      case "discapacidad":
+        return listBySearch.filter((e) => tieneDiscapacidad(e));
+      default:
+        return listBySearch;
+    }
+  }, [listBySearch, kpiFilter]);
 
   // KPIs (con inferencia de género)
   const total = empleados.length;
@@ -273,13 +283,17 @@ export default function ListadoFichas() {
 
       try { await navigator.clipboard?.writeText(String(nuevo.credencialesApp.pin || "")); } catch {}
 
-      // ✅ ir a la ficha usando ID si existe, si no por RUT
       navigate(pathDetalleEmpleado(nuevo));
     } catch (e) {
       alert("No se pudo crear el empleado. Revisa json-server.");
     } finally {
       setSaving(false);
     }
+  };
+
+  // Toggle filtro KPI
+  const toggleKpi = (key) => {
+    setKpiFilter(prev => (prev === key ? "todos" : key));
   };
 
   return (
@@ -351,23 +365,35 @@ export default function ListadoFichas() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs (clicables) */}
       <div className="lf-kpis">
         {[
-          { key: "Total", value: total, icon: "👥", color: "indigo" },
-          { key: "Activos", value: activos, icon: "✅", color: "green" },
-          { key: "Inactivos", value: inactivos, icon: "⛔️", color: "amber" },
-          { key: "Hombres", value: hombres, icon: "👨", color: "blue" },
-          { key: "Mujeres", value: mujeres, icon: "👩", color: "pink" },
-          { key: "Discapacitados", value: conDiscapacidad, icon: "♿️", color: "violet" },
+          { id: "todos",          key: "Total",           value: total,             icon: "👥", color: "indigo" },
+          { id: "activos",        key: "Activos",         value: activos,           icon: "✅", color: "green"  },
+          { id: "inactivos",      key: "Inactivos",       value: inactivos,         icon: "⛔️", color: "amber"  },
+          { id: "hombres",        key: "Hombres",         value: hombres,           icon: "👨", color: "blue"   },
+          { id: "mujeres",        key: "Mujeres",         value: mujeres,           icon: "👩", color: "pink"   },
+          { id: "discapacidad",   key: "Discapacitados",  value: conDiscapacidad,   icon: "♿️", color: "violet" },
         ].map((k) => (
-          <div key={k.key} className="lf-kpi-card">
+          <button
+            key={k.id}
+            onClick={() => toggleKpi(k.id)}
+            className="lf-kpi-card"
+            style={{
+              cursor: "pointer",
+              outline: kpiFilter === k.id ? "2px solid #1A56DB" : "none",
+              outlineOffset: "2px",
+              background: "#fff",
+              textAlign: "left"
+            }}
+            type="button"
+          >
             <div className={`lf-kpi-ico lf-${k.color}`}>{k.icon}</div>
             <div className="lf-kpi-meta">
               <div className="lf-kpi-label">{k.key}</div>
               <div className="lf-kpi-val">{k.value}</div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -404,10 +430,10 @@ export default function ListadoFichas() {
         {/* Filas */}
         {loading ? (
           <div style={{ padding: 16, color: "#6B7280" }}>Cargando…</div>
-        ) : filtered.length === 0 ? (
+        ) : listFiltered.length === 0 ? (
           <div style={{ padding: 16, color: "#6B7280" }}>Sin resultados</div>
         ) : (
-          filtered.map((e) => {
+          listFiltered.map((e) => {
             const key = e?.id ?? e?.rut;
             const activo = (e?.estado || "").toLowerCase() === "activo";
             const hrefDetalle = pathDetalleEmpleado(e);
@@ -481,7 +507,7 @@ export default function ListadoFichas() {
         )}
       </div>
 
-      {/* ===== Modal Crear Empleado ===== */}
+      {/* ===== Modal Crear Empleado (push-pop) ===== */}
       {open && (
         <>
           <div
@@ -496,6 +522,8 @@ export default function ListadoFichas() {
               transform: "translate(-50%, -50%)",
               width: 760,
               maxWidth: "92vw",
+              maxHeight: "86vh",            // ← scroll interno si crece
+              overflow: "auto",              // ← scroll
               background: "#fff",
               border: "1px solid #E5E7EB",
               borderRadius: 12,
@@ -506,11 +534,15 @@ export default function ListadoFichas() {
             {/* Header modal */}
             <div
               style={{
+                position: "sticky",
+                top: 0,
+                background: "#fff",
                 padding: 12,
                 borderBottom: "1px solid #E5E7EB",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                zIndex: 1,
               }}
             >
               <h3 style={{ margin: 0 }}>Crear Empleado</h3>
@@ -526,7 +558,7 @@ export default function ListadoFichas() {
 
             {/* Body modal */}
             <div style={{ padding: 12, display: "grid", gap: 12 }}>
-              {/* === Datos Personales (título arriba de nombre) === */}
+              {/* Título Datos Personales (arriba de nombre) */}
               <h4 style={{ margin: "0 0 4px" }}>Datos Personales</h4>
 
               {/* Identificación */}
@@ -607,7 +639,7 @@ export default function ListadoFichas() {
                 onChange={(e) => setForm({ ...form, fechaIngreso: e.target.value })}
               />
 
-              {/* Datos personales (contacto) */}
+              {/* Contacto */}
               <div className="vdt-grid-2">
                 <div>
                   <label className="vdt-label">Correo</label>
@@ -718,6 +750,9 @@ export default function ListadoFichas() {
             {/* Footer modal */}
             <div
               style={{
+                position: "sticky",
+                bottom: 0,
+                background: "#fff",
                 padding: 12,
                 borderTop: "1px solid #E5E7EB",
                 display: "flex",
