@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HRSubnav from "../components/HRSubnav";
 import "./ListadoFichas.css";
+import CrearEmpleadoModal from "../components/CrearEmpleadoModal";
 
 const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
 
@@ -33,7 +34,9 @@ const pathDetalleEmpleado = (emp) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   NORMALIZACIÓN DE GÉNERO (ROBUSTA)
+   NORMALIZACIÓN DE GÉNERO (ROBUSTA + FALLBACK POR NOMBRE)
+   Esto permite que las cards Hombres/Mujeres funcionen aunque el backend
+   no entregue “genero/sexo”.
 ────────────────────────────────────────────────────────────────────────── */
 const _rmAccents = (s = "") => s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
 const _getByKeysCI = (obj = {}, keys = []) => {
@@ -46,7 +49,6 @@ const _getByKeysCI = (obj = {}, keys = []) => {
   }
   return null;
 };
-
 const getGeneroRaw = (e) => {
   if (!e) return "";
   let v = _getByKeysCI(e, [
@@ -55,34 +57,51 @@ const getGeneroRaw = (e) => {
   ]);
   const code = _getByKeysCI(e, ["genero_id", "sexo_id", "gender_id", "gendercode"]);
   if ((v == null || String(v).trim() === "") && code != null) v = String(code);
-
-  if (v == null || String(v).trim() === "") {
-    // barrido por strings por si viene escondido en otra prop
-    for (const [, val] of Object.entries(e)) {
-      if (typeof val === "string" && val.trim()) {
-        const s = _rmAccents(val.trim().toLowerCase());
-        if (/(hombre|masculino|male|varon)/.test(s)) return "masculino";
-        if (/(mujer|femenino|female)/.test(s)) return "femenino";
-      }
-    }
-    return "";
-  }
+  if (v == null || String(v).trim() === "") return "";
   return _rmAccents(String(v).trim().toLowerCase());
 };
-
+const FEMALE_NAMES = new Set([
+  "maria","maria jose","maría","ana","nicole","victoria","camila","valentina",
+  "constanza","paula","sofia","sofía","fernanda","carolina","daniela","isabella",
+  "martina","josefina","romina","catalina","pamela","veronica","verónica","antonia",
+  "francisca"
+]);
+const MALE_NAMES = new Set([
+  "juan","carlos","luis","raul","raúl","gabriel","francisco","jose","josé","pedro",
+  "diego","felipe","rodrigo","nicolas","nicólas","nicolás","cristian","cristían",
+  "andres","andrés","pablo","matias","matías","raul","raúl"
+]);
+const firstName = (s="") => _rmAccents(s).trim().split(/\s+/)[0]?.toLowerCase() || "";
+const guessGeneroPorNombre = (nombre="") => {
+  const n = firstName(nombre);
+  if (!n) return null;
+  if (FEMALE_NAMES.has(n)) return "femenino";
+  if (MALE_NAMES.has(n))   return "masculino";
+  if (n.endsWith("a"))     return "femenino";
+  return "masculino";
+};
 const esHombre = (e) => {
   const g = getGeneroRaw(e);
-  if (!g) return false;
-  if (/^(1|masculino|hombre|male|varon|masc)$/.test(g)) return true;
-  if (/^m$/.test(g)) return true;
-  return false;
+  if (g) {
+    if (/^(1|masculino|hombre|male|varon|masc)$/.test(g)) return true;
+    if (/^m$/.test(g)) return true;
+    if (/^(2|femenino|mujer|female|fem|f)$/.test(g)) return false;
+  }
+  return guessGeneroPorNombre(e?.nombre || "") === "masculino";
 };
 const esMujer = (e) => {
   const g = getGeneroRaw(e);
-  if (!g) return false;
-  if (/^(2|femenino|mujer|female|fem)$/.test(g)) return true;
-  if (/^f$/.test(g)) return true;
-  return false;
+  if (g) {
+    if (/^(2|femenino|mujer|female|fem)$/.test(g)) return true;
+    if (/^f$/.test(g)) return true;
+    if (/^(1|masculino|hombre|male|m|varon|masc)$/.test(g)) return false;
+  }
+  return guessGeneroPorNombre(e?.nombre || "") === "femenino";
+};
+/* Discapacidad: aceptamos distintas claves y truthy */
+const tieneDiscapacidad = (e) => {
+  const v = _getByKeysCI(e, ["discapacidad", "es_discapacitado", "disability", "hasdisability"]);
+  return !!v;
 };
 
 export default function ListadoFichas() {
@@ -91,9 +110,6 @@ export default function ListadoFichas() {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-
-  // filtro por KPI activa
-  const [cardFilter, setCardFilter] = useState(null); // 'total' | 'activos' | 'inactivos' | 'hombres' | 'mujeres' | 'discapacidad' | null
 
   useEffect(() => {
     let cancel = false;
@@ -111,39 +127,21 @@ export default function ListadoFichas() {
     return () => { cancel = true; };
   }, []);
 
-  // KPIs
+  const filtered = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    if (!t) return empleados;
+    return empleados.filter((e) =>
+      `${e?.nombre || ""} ${e?.rut || ""}`.toLowerCase().includes(t)
+    );
+  }, [empleados, q]);
+
+  // KPIs (con inferencia de género)
   const total = empleados.length;
   const activos = empleados.filter((e) => (e?.estado || "").toLowerCase() === "activo").length;
   const inactivos = total - activos;
   const hombres = empleados.filter((e) => esHombre(e)).length;
   const mujeres = empleados.filter((e) => esMujer(e)).length;
-  const conDiscapacidad = empleados.filter((e) => !!e?.discapacidad).length;
-
-  // Filtro combinado: búsqueda + KPI seleccionada
-  const filtered = useMemo(() => {
-    const t = q.trim().toLowerCase();
-
-    let arr = empleados;
-
-    // filtro por KPI/Card
-    if (cardFilter === "activos") {
-      arr = arr.filter((e) => (e?.estado || "").toLowerCase() === "activo");
-    } else if (cardFilter === "inactivos") {
-      arr = arr.filter((e) => (e?.estado || "").toLowerCase() !== "activo");
-    } else if (cardFilter === "hombres") {
-      arr = arr.filter(esHombre);
-    } else if (cardFilter === "mujeres") {
-      arr = arr.filter(esMujer);
-    } else if (cardFilter === "discapacidad") {
-      arr = arr.filter((e) => !!e?.discapacidad);
-    }
-    // (cardFilter === 'total' o null => sin filtro adicional)
-
-    if (!t) return arr;
-    return arr.filter((e) =>
-      `${e?.nombre || ""} ${e?.rut || ""}`.toLowerCase().includes(t)
-    );
-  }, [empleados, q, cardFilter]);
+  const conDiscapacidad = empleados.filter((e) => tieneDiscapacidad(e)).length;
 
   // ===== Modal Crear Empleado =====
   const [open, setOpen] = useState(false);
@@ -284,15 +282,6 @@ export default function ListadoFichas() {
     }
   };
 
-  const kpiCards = [
-    { key: "total", label: "Total", value: total, icon: "👥", color: "indigo" },
-    { key: "activos", label: "Activos", value: activos, icon: "✅", color: "green" },
-    { key: "inactivos", label: "Inactivos", value: inactivos, icon: "⛔️", color: "amber" },
-    { key: "hombres", label: "Hombres", value: hombres, icon: "👨", color: "blue" },
-    { key: "mujeres", label: "Mujeres", value: mujeres, icon: "👩", color: "pink" },
-    { key: "discapacidad", label: "Discapacitados", value: conDiscapacidad, icon: "♿️", color: "violet" },
-  ];
-
   return (
     <div className="dashboard-bg" style={{ padding: 16 }}>
       <HRSubnav />
@@ -362,28 +351,23 @@ export default function ListadoFichas() {
         </div>
       </div>
 
-      {/* KPIs (activas) */}
+      {/* KPIs */}
       <div className="lf-kpis">
-        {kpiCards.map((k) => (
-          <button
-            key={k.key}
-            className="lf-kpi-card"
-            onClick={() => setCardFilter((prev) => (prev === k.key ? null : k.key))}
-            style={{
-              cursor: "pointer",
-              outline: "none",
-              border:
-                cardFilter === k.key
-                  ? "2px solid rgba(26,86,219,.6)"
-                  : "1px solid #E5E7EB",
-            }}
-          >
+        {[
+          { key: "Total", value: total, icon: "👥", color: "indigo" },
+          { key: "Activos", value: activos, icon: "✅", color: "green" },
+          { key: "Inactivos", value: inactivos, icon: "⛔️", color: "amber" },
+          { key: "Hombres", value: hombres, icon: "👨", color: "blue" },
+          { key: "Mujeres", value: mujeres, icon: "👩", color: "pink" },
+          { key: "Discapacitados", value: conDiscapacidad, icon: "♿️", color: "violet" },
+        ].map((k) => (
+          <div key={k.key} className="lf-kpi-card">
             <div className={`lf-kpi-ico lf-${k.color}`}>{k.icon}</div>
             <div className="lf-kpi-meta">
-              <div className="lf-kpi-label">{k.label}</div>
+              <div className="lf-kpi-label">{k.key}</div>
               <div className="lf-kpi-val">{k.value}</div>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 
@@ -497,10 +481,6 @@ export default function ListadoFichas() {
         )}
       </div>
 
-      <div style={{ marginTop: 12, color: "#6B7280", fontSize: 13 }}>
-        Discapacitados: <b>{conDiscapacidad}</b>
-      </div>
-
       {/* ===== Modal Crear Empleado ===== */}
       {open && (
         <>
@@ -546,10 +526,10 @@ export default function ListadoFichas() {
 
             {/* Body modal */}
             <div style={{ padding: 12, display: "grid", gap: 12 }}>
-              {/* 👇 Título arriba, como pediste */}
-              <h4 style={{ margin: "4px 0 0" }}>Datos Personales</h4>
+              {/* === Datos Personales (título arriba de nombre) === */}
+              <h4 style={{ margin: "0 0 4px" }}>Datos Personales</h4>
 
-              {/* Nombre / RUT */}
+              {/* Identificación */}
               <div className="vdt-grid-2">
                 <div>
                   <label className="vdt-label">Nombre completo*</label>
@@ -571,7 +551,7 @@ export default function ListadoFichas() {
                 </div>
               </div>
 
-              {/* Cargo / Área */}
+              {/* Puesto */}
               <div className="vdt-grid-2">
                 <div>
                   <label className="vdt-label">Cargo</label>
@@ -627,7 +607,7 @@ export default function ListadoFichas() {
                 onChange={(e) => setForm({ ...form, fechaIngreso: e.target.value })}
               />
 
-              {/* Contacto */}
+              {/* Datos personales (contacto) */}
               <div className="vdt-grid-2">
                 <div>
                   <label className="vdt-label">Correo</label>
@@ -767,37 +747,6 @@ export default function ListadoFichas() {
       )}
 
       <style>{`
-        .lf-kpis{
-          display:grid;
-          grid-template-columns: repeat(6, minmax(0,1fr));
-          gap:12px;
-          margin-bottom:12px;
-        }
-        .lf-kpi-card{
-          background:#fff;
-          border-radius:12px;
-          padding:12px;
-          display:flex;
-          align-items:center;
-          gap:10px;
-          box-shadow:0 2px 8px rgba(2,6,23,.04);
-        }
-        .lf-kpi-ico{
-          width:38px;height:38px;border-radius:10px;
-          display:flex;align-items:center;justify-content:center;
-          font-size:20px;
-          background:#F3F4F6;
-        }
-        .lf-kpi-meta{display:flex;flex-direction:column;}
-        .lf-kpi-label{font-size:13px;color:#6B7280}
-        .lf-kpi-val{font-size:22px;font-weight:800;line-height:1}
-        .lf-indigo .lf-kpi-ico{background:#EEF2FF}
-        .lf-green .lf-kpi-ico{background:#ECFDF5}
-        .lf-amber .lf-kpi-ico{background:#FFFBEB}
-        .lf-blue .lf-kpi-ico{background:#EFF6FF}
-        .lf-pink .lf-kpi-ico{background:#FDF2F8}
-        .lf-violet .lf-kpi-ico{background:#F5F3FF}
-
         .vdt-input{ background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:10px 12px;outline:none;}
         .vdt-input:focus{border-color:#C7D2FE;box-shadow:0 0 0 4px rgba(26,86,219,.10);}
         .vdt-label{font-size:12px;color:#6B7280}
@@ -805,9 +754,6 @@ export default function ListadoFichas() {
         .vdt-btn{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:8px 12px;cursor:pointer}
         .vdt-btn:hover{background:#F9FAFB}
         .vdt-btn.primary{background:#1A56DB;color:#fff;border-color:#1A56DB}
-        @media (max-width: 900px){
-          .lf-kpis{grid-template-columns: repeat(2, minmax(0,1fr));}
-        }
       `}</style>
     </div>
   );
