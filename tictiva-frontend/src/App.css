@@ -1,0 +1,339 @@
+/* =========================
+   Variables (tema global)
+   ========================= */
+:root {
+  --font-family: 'Montserrat', Arial, sans-serif;
+  --color-bg: #f4f6fa;
+  --color-primary: #2563eb;
+  --shadow-sm: 0 2px 16px 0 rgba(52, 128, 202, 0.09);
+  --shadow-md: 0 4px 24px 0 rgba(52, 128, 202, 0.15);
+  --shadow-card: 0 2px 18px 0 rgba(52, 128, 202, 0.13);
+  --shadow-card-hover: 0 8px 28px 0 rgba(52, 128, 202, 0.18);
+  --gradient-brand: linear-gradient(120deg, #1bb4e8 0%, #16c7b0 100%);
+}
+
+/* =========================
+   Reset/Global
+   ========================= */
+* { box-sizing: border-box; }
+
+html, body, #root {
+  min-height: 100vh;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  overflow-x: hidden !important;
+}
+
+#root {
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+/* =========================
+   LOGIN
+   ========================= */
+.login-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--gradient-brand);
+  position: relative;
+  padding-top: 0;
+  z-index: 2;
+  overflow-x: hidden;
+}
+
+.login-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  width: 100%;
+  max-width: 100vw;
+  margin: 0 auto;
+  background: transparent;
+  position: relative;
+  z-index: 10;
+  padding: 0 10px 40px 10px;
+}
+
+.login-form-outer { display: flex; flex-direction: column; align-items: center; margin-top: 32px; }
+
+.tictiva-logo-bar {
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  padding: 32px 0 18px 0; width: 100%;
+}
+.tictiva-logo-bar img { height: 150px; margin-right: 16px; }
+.tictiva-logo-bar-title { color: #fff; font-size: 2.7rem; font-weight: 900; line-height: 1.1; letter-spacing: -1px; }
+.tictiva-logo-bar-slogan { color: #fff; font-size: 1.13rem; font-weight: 400; margin-top: 0; margin-left: 2px; }
+
+.login-form-card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: var(--shadow-md);
+  padding: 38px 34px 30px 34px;
+  width: 420px; max-width: 98vw;
+  display: flex; flex-direction: column; align-items: stretch;
+  margin-bottom: 26px;
+}
+.login-form-title { font-size: 2.1rem; font-weight: 900; margin: 0 0 6px; color: #21293c; text-align: left; }
+.login-form-subtitle { color: #404b5c; font-size: 1.16rem; margin-bottom: 19px; font-weight: 400; text-align: left; line-height: 1.28; }
+.login-form-label { font-size: 1.04rem; font-weight: 700; margin: 18px 0 5px; color: #232323; display: block; }
+.login-form-input {
+  width: 100%; font-size: 1.11rem; padding: 11px 16px; border-radius: 13px;
+  border: 2px solid #e0e8f6; background: #f8fafb; color: #232323; outline: none; transition: border .2s;
+}
+.login-form-input:focus { border-color: #1bb4e8; }
+.login-form-input-password { position: relative; display: flex; align-items: center; }
+.login-form-eye { position: absolute; right: 14px; top: 54%; transform: translateY(-50%); color: #9eb2c0; cursor: pointer; font-size: 1.2rem; }
+.login-form-row { display: flex; align-items: center; justify-content: space-between; margin: 19px 0 8px; }
+.login-checkbox-label { display: flex; align-items: center; font-size: 1rem; color: #2c2c2c; font-weight: 500; gap: 7px; cursor: pointer; }
+.login-checkbox { width: 17px; height: 17px; accent-color: #16c7b0; border-radius: 4px; background: #fff; outline: none; }
+.login-form-link { font-size: 1.03rem; color: var(--color-primary); font-weight: 700; text-decoration: none; transition: color .2s; margin-left: 10px; }
+.login-form-link:hover { color: #16c7b0; text-decoration: underline; }
+.login-form-button {
+  margin-top: 25px; padding: 14px 0;
+  background: linear-gradient(90deg, #2196f3 0%, #16c7b0 100%);
+  border: none; border-radius: 13px; font-size: 1.22rem; font-weight: 800; color: #fff;
+  cursor: pointer; transition: box-shadow .18s; box-shadow: var(--shadow-sm);
+}
+.login-form-button:hover { filter: brightness(1.04); box-shadow: 0 8px 30px 0 rgba(52,128,202,.16); }
+.login-form-footer { text-align: center; color: #757575; font-size: 1.05rem; margin-top: 21px; font-weight: 400; }
+.login-form-footer a { color: var(--color-primary); font-weight: 700; text-decoration: none; margin-left: 5px; }
+.login-form-footer a:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .login-form-card { padding: 18px 7vw 15px 7vw; width: 99vw; }
+  .tictiva-logo-bar img { height: 42px; }
+}
+
+/* Tarjeta DT bajo login */
+.dt-card {
+  background: #fff; border-radius: 20px; box-shadow: var(--shadow-card);
+  padding: 22px 30px 17px 20px; margin: 0 auto; max-width: 510px; min-width: 230px;
+  display: flex; align-items: center; gap: 18px; z-index: 10; transition: box-shadow .18s;
+}
+.dt-card:hover { box-shadow: var(--shadow-card-hover); }
+.dt-card-content { display: flex; align-items: flex-start; gap: 13px; flex: 1; }
+.dt-card-title { font-weight: 700; font-size: 1.10rem; color: #232323; margin-bottom: 3px; }
+.dt-card-desc { color: #757575; font-size: 0.98rem; font-weight: 400; line-height: 1.22; margin-top: 1px; }
+.dt-card-icon { font-size: 2rem; margin-top: 2px; min-width: 32px; }
+.dt-card-arrow { font-size: 1.5rem; color: #d2d2d2; margin-left: 10px; transition: color .18s; }
+.dt-card:hover .dt-card-arrow { color: #16c7b0; font-weight: bold; }
+
+/* =========================
+   Dashboard
+   ========================= */
+.dashboard-bg {
+  background: var(--color-bg) !important;
+  min-height: 100vh;
+  width: 100% !important;
+  padding: 0 0 40px 0;
+  position: relative; z-index: 1;
+}
+
+.dashboard-header-content { padding-left: 62px; padding-top: 32px; padding-bottom: 10px; max-width: 1400px; }
+@media (max-width: 800px) {
+  .dashboard-header-content { padding-left: 18px; padding-top: 18px; }
+}
+
+.dashboard-greeting { font-size: 2.15rem; font-weight: 800; color: #222; margin: 0 0 5px; }
+.dashboard-motivation { color: #555; font-size: 1.13rem; margin-bottom: 34px; font-weight: 500; }
+
+.dashboard-tip-card {
+  display: flex; align-items: center;
+  background: linear-gradient(90deg, #cfe8fd 0%, #d6edff 100%);
+  border-radius: 24px; padding: 20px 28px;
+  margin: 0 auto 36px; max-width: 1100px; min-width: 310px;
+  box-shadow: var(--shadow-sm);
+  justify-content: flex-start;
+}
+.dashboard-tip-icon { font-size: 2.1rem; margin-right: 18px; margin-top: 2px; }
+.dashboard-tip-title { font-weight: 700; font-size: 1.12rem; color: #297dc1; display: block; margin-bottom: 3px; }
+.dashboard-tip-text { color: #50597b; font-size: 1.02rem; line-height: 1.4; }
+
+.dashboard-modules-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 28px; margin: 0 auto 36px; max-width: 1100px; width: 100%;
+}
+@media (max-width: 1100px) {
+  .dashboard-modules-grid { grid-template-columns: 1fr 1fr; max-width: 700px; gap: 20px; }
+}
+@media (max-width: 700px) {
+  .dashboard-modules-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 20px; max-width: 98vw; padding: 0 4px; }
+}
+
+.dashboard-module-card {
+  background: #fff; border-radius: 20px; box-shadow: 0 2px 16px 0 rgba(52,128,202,0.10);
+  padding: 22px 16px 14px; display: flex; flex-direction: column;
+  transition: box-shadow .23s, transform .17s; cursor: pointer;
+  min-width: 170px; max-width: 320px;
+}
+.dashboard-module-card:hover { box-shadow: 0 8px 36px 0 rgba(52,128,202,0.12); transform: translateY(-3px) scale(1.02); }
+
+.dashboard-module-header {
+  display: flex; align-items: center; font-size: 1.30rem; font-weight: 700; margin-bottom: 6px; gap: 12px;
+}
+
+/* ✅ Gradiente SOLO en el emoji; el título queda negro */
+.dashboard-module-header .dashboard-module-emoji {
+  font-size: 2rem; margin-right: 5px; color: #fff; padding: 3px 9px; border-radius: 10px;
+}
+.dashboard-module-header .dashboard-module-title {
+  font-weight: 800; font-size: 1.14rem; color: #232323 !important;
+}
+
+.dashboard-module-premium {
+  background: #ffe2c6; color: #d97706; font-size: .85rem; font-weight: 700;
+  padding: 3px 13px; border-radius: 14px; margin-left: 12px; letter-spacing: .5px;
+}
+
+.dashboard-module-desc { color: #6b7280; font-size: .97rem; margin-bottom: 13px; font-weight: 500; min-height: 30px; }
+.dashboard-module-links { display: flex; flex-direction: column; gap: 8px; }
+
+/* 🔧 Enlaces de submódulos siempre en negro (también :visited) */
+.dashboard-module-links a,
+.dashboard-module-links a:visited {
+  color: #232323 !important;
+  font-size: 1.01rem;
+  text-decoration: none !important;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  transition: color .2s, background .2s;
+  padding: 7px 0;
+  border-radius: 7px;
+  gap: 8px;
+  line-height: 1.25;
+}
+.dashboard-module-links a:hover { color: #1bb4e8; background: #f4fbfd; }
+.dashboard-module-links a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* “Deshabilitados” también en negro para consistencia visual */
+.mod-link-disabled {
+  color: #232323 !important;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0;
+  cursor: default;
+}
+
+/* 🎨 Mapeo de gradientes al emoji según módulo */
+.hr-gradient { background: transparent !important; }
+.hr-gradient .dashboard-module-emoji {
+  background: linear-gradient(90deg, #1bb4e8 0%, #16c7b0 100%);
+}
+
+.asistencia-gradient { background: transparent !important; }
+.asistencia-gradient .dashboard-module-emoji {
+  background: linear-gradient(90deg, #00bfa6 0%, #4dd0e1 100%);
+}
+
+.comunicaciones-gradient { background: transparent !important; }
+.comunicaciones-gradient .dashboard-module-emoji {
+  background: linear-gradient(90deg, #b39ddb 0%, #9575cd 100%);
+}
+
+.tictiva-cuida-gradient { background: transparent !important; }
+.tictiva-cuida-gradient .dashboard-module-emoji {
+  background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+}
+
+.reportes-gradient { background: transparent !important; }
+.reportes-gradient .dashboard-module-emoji {
+  background: linear-gradient(90deg, #f06292 0%, #ec407a 100%);
+}
+
+/* =========================
+   NAVBAR
+   ========================= */
+.navbar-tictiva {
+  width: 100%; background: #fff; padding: 0 24px; min-height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 12px 0 rgba(30,40,90,0.06);
+}
+
+.navbar-left { display: flex; align-items: center; gap: 9px; }
+.tictiva-navbar-logo, .navbar-logo { height: 38px; width: auto; }
+.navbar-title { font-weight: 900; font-size: 1.23rem; color: var(--color-primary); margin-left: 4px; letter-spacing: -1px; }
+
+.navbar-right { display: flex; align-items: center; gap: 18px; }
+.navbar-bell { font-size: 1.4rem; cursor: pointer; }
+
+.navbar-user {
+  display: flex; align-items: center; background: #f1f7fe;
+  border-radius: 22px; padding: 3px 12px 3px 7px; cursor: pointer; position: relative; gap: 6px; font-size: 1.01rem;
+}
+.navbar-avatar {
+  background: var(--color-primary); color: #fff; border-radius: 50%;
+  width: 29px; height: 29px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.04rem; margin-right: 3px;
+}
+.navbar-chevron { font-size: 1.01rem; margin-left: 1px; }
+
+.navbar-menu {
+  position: absolute; top: 37px; right: 0; background: #fff;
+  border-radius: 11px; box-shadow: 0 8px 28px 0 rgba(50,80,100,0.13);
+  padding: 7px 0; min-width: 130px; z-index: 100;
+}
+.navbar-menu-item { padding: 7px 18px; cursor: pointer; color: #232323; font-size: .98rem; transition: background .13s; }
+.navbar-menu-item:hover { background: #f4f6fa; }
+
+/* Dropdown empresa */
+.navbar-empresa-dropdown { position: relative; display: inline-block; margin-right: 18px; }
+.navbar-empresa-btn {
+  background: #eef3fb; border: none; border-radius: 18px; padding: 6px 18px;
+  font-size: 1.04rem; font-weight: 700; cursor: pointer; color: #2c374b; transition: background .15s;
+}
+.navbar-empresa-btn:hover { background: #dde8f6; }
+.navbar-empresa-menu {
+  position: absolute; top: 38px; left: 0; background: #fff; border-radius: 11px;
+  box-shadow: 0 8px 28px 0 rgba(50,80,100,0.13); padding: 9px 0; min-width: 140px; z-index: 200;
+}
+.navbar-empresa-item { padding: 9px 22px; cursor: pointer; color: #2c374b; font-size: 1.04rem; transition: background .13s; }
+.navbar-empresa-item.selected { font-weight: 900; background: #eef3fb; }
+.navbar-empresa-item:hover { background: #e2eefc; }
+
+/* =========================
+   Form inputs base
+   ========================= */
+input, select, textarea { color: #232323 !important; background: #fff !important; }
+input::placeholder, textarea::placeholder { color: #8c8c8c !important; }
+
+/* =========================
+   Otras utilidades
+   ========================= */
+.titulo-datos { font-size: 18px; font-weight: 600; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; color: #111827; }
+.datos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+
+/* Documentos */
+.categoria-card { color: #1a1a1a !important; font-weight: 500; }
+.categoria-card:hover { background: #f5f5f5; }
+
+/* Navbar (otra variante sticky básica si la usas) */
+.navbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 12px;
+  height: 56px; padding: 0 20px;
+  background: #fff; border-bottom: 1px solid #e5e7eb;
+}
+.navbar-brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none !important; color: #0f172a; font-weight: 800; font-size: 19px; }
+.navbar-brand:hover { opacity: .9; }
+.navbar-logo { height: 20px; width: 20px; }
+.navbar-brand-text { letter-spacing: .2px; }
+.navbar-env { border: 1px solid #e5e7eb; background: #f3f4f6; padding: 6px 12px; border-radius: 999px; font-weight: 600; color: #374151; cursor: pointer; }
+.navbar-env:hover { background: #eef2f7; }
+.navbar-spacer { flex: 1; }
+.navbar-right { display: inline-flex; align-items: center; gap: 10px; }
+.navbar-user { color: #374151; }
+.navbar-btn-logout { border: 1px solid #e5e7eb; background: #fff; color: #111827; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.navbar-btn-logout:hover { background: #f9fafb; }

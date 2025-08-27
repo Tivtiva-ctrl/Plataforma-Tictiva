@@ -1,0 +1,195 @@
+/* ModalCrearEmpleado.css */
+.modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: rgba(30, 41, 59, 0.24);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-contenido {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 44px #2563eb28;
+  padding: 36px 36px 28px 36px;
+  max-width: 600px;
+  min-width: 350px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: modalFadeIn 0.18s;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.modal-contenido h2 {
+  margin-top: 0;
+  color: #2c3654;
+  font-size: 2rem;
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+
+.form-empleado h4 {
+  margin-top: 30px;
+  color: #7ea3f1;
+  font-size: 1.17rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.form-row input,
+.form-row select,
+.form-row button[type="button"] {
+  flex: 1;
+  padding: 10px 13px;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  background: #f8fafc;
+  font-size: 1rem;
+  outline: none;
+}
+
+.form-row input:focus,
+.form-row select:focus {
+  border: 1.5px solid #2563eb;
+  background: #f4f9ff;
+}
+
+.form-row button[type="button"] {
+  background: #e6ecff;
+  color: #2563eb;
+  font-weight: 700;
+  border: none;
+  transition: background 0.15s;
+  cursor: pointer;
+  flex-basis: 140px;
+}
+
+.form-row button[type="button"]:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+.btn-cancelar {
+  background: #f5f6fa;
+  color: #363f52;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.13s;
+}
+
+.btn-cancelar:hover {
+  background: #e3e8ef;
+}
+
+.btn-guardar {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 9px 22px;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+
+.btn-guardar:hover {
+  background: #193fad;
+}
+
+/* Inputs y texto en negro */
+.form-empleado,
+.form-empleado input,
+.form-empleado select,
+.form-empleado textarea,
+.form-empleado label,
+.form-empleado h2,
+.form-empleado h4 {
+  color: #181e23 !important;
+  background: #f8fafc;
+}
+
+/* Placeholder gris en selects */
+.form-empleado select:invalid,
+.form-empleado select option[value=""] {
+  color: #858585 !important;
+}
+
+.form-row select[name="region"],
+.form-row select[name="comuna"] {
+  min-width: 0;
+  width: 49%;
+  display: inline-block;
+}
+
+/* Estilos para el PIN */
+.pin-card {
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  padding: 8px 12px;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pin-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.pin-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #181e23;
+}
+
+/* Responsivo */
+@media (max-width: 700px) {
+  .modal-contenido {
+    min-width: unset;
+    max-width: 97vw;
+    padding: 18px 7px;
+  }
+  .form-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

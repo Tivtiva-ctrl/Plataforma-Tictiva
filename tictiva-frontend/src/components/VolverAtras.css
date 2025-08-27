@@ -1,0 +1,12 @@
+.volver-atras {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2563eb;
+  cursor: pointer;
+  margin: 12px 0;
+  width: fit-content;
+  transition: color 0.2s;
+}
+.volver-atras:hover {
+  color: #1d4ed8;
+}

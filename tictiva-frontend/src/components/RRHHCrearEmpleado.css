@@ -1,0 +1,73 @@
+/* Overlay + modal con scroll interno */
+.emp-overlay{
+  position:fixed; inset:0; background:rgba(15,23,42,.45); backdrop-filter:blur(2px);
+  display:grid; place-items:center; padding:16px; z-index:60;
+}
+.emp-modal{
+  background:#fff; border-radius:16px; box-shadow:0 24px 60px rgba(2,6,23,.25);
+  width:min(960px,96vw); max-height:88vh; display:flex; flex-direction:column; overflow:hidden;
+}
+.emp-modal--wide{ width:min(960px,96vw); }
+
+.emp-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid #eef1f6; position:sticky; top:0; background:#fff; z-index:1;
+}
+.emp-title{ font-size:18px; font-weight:800; color:#0f172a; }
+.emp-x{ border:none; background:transparent; font-size:18px; cursor:pointer; }
+
+.emp-body{
+  padding:16px; flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable;
+}
+.emp-body::-webkit-scrollbar{ width:10px; }
+.emp-body::-webkit-scrollbar-thumb{ background:#c7d2fe; border-radius:10px; }
+.emp-body::-webkit-scrollbar-track{ background:#f1f5fb; }
+
+.emp-foot{
+  padding:12px 16px; border-top:1px solid #eef1f6; display:flex; gap:10px; justify-content:flex-end;
+  position:sticky; bottom:0; background:#fff; z-index:1;
+}
+
+/* Bloques & grids */
+.emp-block{ border:1px solid #eef1f6; border-radius:14px; padding:14px; margin-bottom:14px; }
+.emp-block-title{ font-weight:800; color:#0f172a; margin-bottom:8px; }
+.emp-grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.emp-grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+.emp-field{ display:flex; flex-direction:column; gap:6px; }
+.emp-field.emp-full{ grid-column:1/-1; }
+.emp-label{ font-size:12px; color:#64748b; }
+
+/* Inputs */
+.emp-input{
+  border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px; font-size:14px; outline:none; width:100%;
+}
+.emp-input:focus{ border-color:#94b7ff; box-shadow:0 0 0 3px rgba(147,197,253,.35); }
+.emp-err{ border-color:#fca5a5 !important; box-shadow:0 0 0 3px rgba(248,113,113,.25) !important; }
+.emp-help{ color:#6b7280; font-size:12px; }
+.emp-help-err{ color:#b91c1c; font-size:12px; }
+
+/* Botones */
+.emp-btn{
+  border:1px solid #e5e7eb; background:#fff; color:#111827; border-radius:12px; padding:10px 14px;
+  font-weight:600; cursor:pointer;
+}
+.emp-btn:hover{ background:#f7f8fb; }
+.emp-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.emp-btn--primary{
+  background:linear-gradient(90deg,#2563eb,#0ea5e9); color:#fff; border:1px solid #2563eb;
+}
+.emp-btn--primary:hover{ filter:brightness(.96); }
+
+/* Pin row */
+.emp-pinrow{ display:flex; gap:8px; }
+.emp-pinrow .emp-input{ flex:1; }
+
+/* Responsive */
+@media (max-width: 900px){
+  .emp-grid3{ grid-template-columns:1fr 1fr; }
+}
+@media (max-width: 640px){
+  .emp-modal{ width:96vw; max-height:92vh; }
+  .emp-grid2, .emp-grid3{ grid-template-columns:1fr; }
+}

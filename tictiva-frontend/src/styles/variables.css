@@ -1,0 +1,34 @@
+:root {
+  /* === Colores base === */
+  --color-bg: #f4f6fa;
+  --color-text: #232323;
+  --color-muted: #555;
+  --color-border: #e5e7eb;
+
+  /* === Branding === */
+  --color-brand: #1bb4e8;
+  --color-brand-alt: #16c7b0;
+  --color-primary: #2563eb;
+  --color-secondary: #297dc1;
+
+  /* === Estados === */
+  --color-success: #00bfa6;
+  --color-warning: #ff9800;
+  --color-danger: #ec407a;
+
+  /* === Gradientes === */
+  --gradient-brand: linear-gradient(120deg, var(--color-brand) 0%, var(--color-brand-alt) 100%);
+  --gradient-hr: linear-gradient(90deg, var(--color-brand) 0%, var(--color-brand-alt) 100%);
+  --gradient-asistencia: linear-gradient(90deg, #00bfa6 0%, #4dd0e1 100%);
+  --gradient-comunicaciones: linear-gradient(90deg, #b39ddb 0%, #9575cd 100%);
+  --gradient-cuida: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+  --gradient-reportes: linear-gradient(90deg, #f06292 0%, #ec407a 100%);
+
+  /* === Tipografía === */
+  --font-family: 'Montserrat', Arial, sans-serif;
+
+  /* === Sombras === */
+  --shadow-sm: 0 2px 8px rgba(52, 128, 202, 0.1);
+  --shadow-md: 0 4px 16px rgba(52, 128, 202, 0.12);
+  --shadow-lg: 0 8px 28px rgba(52, 128, 202, 0.16);
+}

@@ -1,0 +1,104 @@
+{
+  "empleados": [
+    {
+      "id": 1,
+      "rut": "12.345.678-9",
+      "nombre": "Juan Díaz Morales",
+      "cargo": "Analista",
+      "estado": "Activo",
+      "fechaIngreso": "2022-03-01",
+      "area": "Operaciones",
+      "marcas": [
+        {
+          "fecha": "2025-08-01",
+          "hora": "08:58:00",
+          "tipo": "Entrada",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "192.168.1.10"
+        },
+        {
+          "fecha": "2025-08-01",
+          "hora": "18:02:00",
+          "tipo": "Salida",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "192.168.1.10"
+        },
+        {
+          "fecha": "2025-08-02",
+          "hora": "09:12:00",
+          "tipo": "Entrada",
+          "estado": "Atraso",
+          "metodo": "Web",
+          "ip": "192.168.1.11"
+        },
+        {
+          "fecha": "2025-08-02",
+          "hora": "18:05:00",
+          "tipo": "Salida",
+          "estado": "Válida",
+          "metodo": "Web",
+          "ip": "192.168.1.11"
+        }
+      ],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      }
+    },
+    {
+      "id": 2,
+      "rut": "14.567.890-1",
+      "nombre": "María Carmen González",
+      "cargo": "Desarrolladora Senior Frontend",
+      "estado": "Activo",
+      "fechaIngreso": "2021-01-15",
+      "area": "Tecnología",
+      "marcas": [
+        {
+          "fecha": "2025-08-01",
+          "hora": "08:50:00",
+          "tipo": "Entrada",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "10.0.0.2"
+        },
+        {
+          "fecha": "2025-08-01",
+          "hora": "18:10:00",
+          "tipo": "Salida",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "10.0.0.2"
+        }
+      ],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      }
+    }
+  ]
+}

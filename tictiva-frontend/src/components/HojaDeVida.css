@@ -1,0 +1,153 @@
+.hoja-vida-container {
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+  background-color: #f7f9fc;
+}
+
+.hoja-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.perfil {
+  display: flex;
+  gap: 16px;
+}
+
+.avatar-iniciales {
+  background: #1a56db;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.estado-activo {
+  background: #DCFCE7;
+  color: #166534;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.tarjeta-section {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.tarjeta-lista {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tarjeta-lista li {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.fecha {
+  float: right;
+  color: gray;
+  font-size: 12px;
+}
+
+.confidencial {
+  border-left: 4px solid #eab308;
+}
+
+.etiqueta {
+  font-size: 12px;
+  background: #fde68a;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  color: #92400e;
+}
+
+.resumen-boxes {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.box {
+  flex: 1;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: bold;
+  padding: 12px 8px;
+}
+
+.verde {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.rojo {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.gris {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.resumen-final {
+  display: flex;
+  gap: 10px;
+  justify-content: space-around;
+  text-align: center;
+  font-size: 14px;
+}
+
+.indicador {
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 10px;
+  width: 100px;
+}
+
+.acciones-hoja {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-descargar {
+  background-color: #1a56db;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+}
+
+.btn-ver {
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+}
+
+.btn-editar {
+  background-color: #d1fae5;
+  color: #065f46;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+}

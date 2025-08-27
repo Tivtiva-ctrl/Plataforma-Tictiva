@@ -1,0 +1,279 @@
+/* src/pages/ListadoFichas.css */
+.listadofichas-container { max-width: 1300px; margin: 40px auto; background: #f8fafc; border-radius: 18px; box-shadow: 0 6px 38px #dbeafe33; padding: 26px 34px; }
+.lf-tabs { display: flex; gap: 22px; margin-bottom: 20px; border-bottom: 2.5px solid #dbeafe; }
+.lf-tab { background: none; border: none; font-size: 1.17rem; font-weight: 600; color: #666; padding: 14px 0 10px 0; cursor: pointer; border-bottom: 3px solid transparent; }
+.lf-tab.active { color: #2563eb; border-bottom: 3px solid #2563eb; }
+.lf-header { display: flex; align-items: center; gap: 22px; margin-bottom: 22px; }
+.lf-logo { font-size: 3rem; color: #2563eb; margin-right: 13px; }
+.lf-title { font-size: 2rem; font-weight: 800; color: #24262f; }
+.lf-subtitle { color: #60748b; font-size: 1.1rem; margin-top: 5px; }
+.lf-actions { margin-left: auto; display: flex; gap: 9px; }
+.lf-buscar { padding: 9px 14px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: #f4f6fa; font-size: 1rem; }
+.lf-btn-grey { background: #e7f0fa; color: #323f52; border: none; border-radius: 9px; padding: 9px 18px; font-weight: 600; cursor: pointer; }
+.lf-btn-blue { background: #2563eb; color: #fff; border: none; border-radius: 9px; padding: 9px 18px; font-weight: 700; cursor: pointer; }
+
+.lf-cards-row { display: flex; gap: 18px; margin-bottom: 23px; }
+.lf-card { background: #fff; border-radius: 15px; padding: 19px 26px; box-shadow: 0 2px 13px #dbeafe18; display: flex; flex-direction: column; align-items: center; min-width: 120px; }
+.lf-card-title { color: #7a8595; font-weight: 600; font-size: 1rem; margin-bottom: 2px; }
+.lf-card-num { font-size: 1.6rem; font-weight: 900; color: #2563eb; }
+
+.lf-table { background: #fff; border-radius: 13px; overflow: hidden; margin-bottom: 18px; }
+.lf-table-header, .lf-table-row { display: grid; grid-template-columns: 80px 1.6fr 1.2fr 2fr 1fr 1.2fr; align-items: center; padding: 14px 18px; font-size: 1.08rem; }
+.lf-table-header { font-weight: 700; color: #2c3654; background: #f5faff; }
+.lf-table-row { border-top: 1px solid #f2f4f9; background: #fff; }
+.lf-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e7ecf6; color: #58698b; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; }
+.lf-nombre { color: #2563eb; font-weight: 700; cursor: pointer; }
+.lf-badge-active { background: #e7fbe9; color: #19b259; border-radius: 7px; padding: 3px 12px; font-weight: 700; }
+.lf-badge-inactivo { background: #fae7e7; color: #d52d3c; border-radius: 7px; padding: 3px 12px; font-weight: 700; }
+.lf-btn-detalle { background: none; border: none; color: #353e53; font-weight: 600; cursor: pointer; font-size: 1.01rem; }
+
+.lf-paginacion { display: flex; gap: 4px; align-items: center; margin-bottom: 5px; }
+.lf-paginacion button { background: #f6f8fb; border: 1.5px solid #dbeafe; color: #383b4c; border-radius: 7px; padding: 6px 13px; cursor: pointer; font-weight: 700; }
+.lf-paginacion button.active { background: #2563eb; color: #fff; border: none; }
+
+.lf-resultados { font-size: 1rem; color: #8592aa; margin-bottom: 9px; }
+
+@media (max-width: 1000px) {
+  .listadofichas-container {
+  max-width: 1300px;
+  margin: 40px auto;
+  background: #f8fafc;
+  border-radius: 18px;
+  box-shadow: 0 6px 38px #dbeafe33;
+  padding: 46px 54px; /* <-- AUMENTA el padding */
+  position: relative; /* AYUDA a aislar el contenido de overlays externos */
+  z-index: 2;         /* AYUDA si hay overlays externos */
+}
+
+} .lf-table {
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 12px #eaeaea;
+}
+
+.lf-table-header,
+.lf-table-row {
+  display: grid;
+  grid-template-columns: 80px 1.8fr 1fr 2fr 1fr 1fr;
+  align-items: center;
+}
+
+.lf-table-header {
+  background: #f5f8fa;
+  font-weight: 700;
+  color: #2c3352;
+  font-size: 1.1rem;
+  padding: 16px 0;
+}
+
+.lf-table-row {
+  border-top: 1px solid #f1f1f1;
+  padding: 12px 0;
+  color: #2c3352;
+  font-size: 1.05rem;
+  background: #fff;
+}
+
+.lf-avatar {
+  width: 42px;
+  height: 42px;
+  background: #dbeafe;
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
+.lf-nombre {
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.lf-badge-active {
+  background: #d1fae5;
+  color: #059669;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.lf-badge-inactivo {
+  background: #fef3c7;
+  color: #b45309;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.lf-btn-detalle {
+  border: none;
+  background: none;
+  color: #374151;
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.lf-btn-detalle:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}/* ListadoFichas.css */
+
+/* Ajuste del contenedor de tarjetas */
+.lf-cards-row {
+  display: flex;
+  justify-content: space-between; /* separa de forma pareja */
+  flex-wrap: wrap;
+  gap: 12px; /* espacio entre tarjetas */
+  margin: 16px 0;
+}
+
+/* Ajuste de cada tarjeta */
+.lf-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 130px; /* más angosta */
+  min-height: 60px; /* más baja */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+/* Cuando está activa */
+.lf-card.lf-card-active {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #007bff;
+}
+
+/* Texto interno */
+.lf-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.lf-card-num {
+  font-size: 20px;
+  font-weight: bold;
+  color: #007bff;
+}/* Encabezado de la tabla */
+.lf-table-header {
+  display: grid;
+  grid-template-columns: 80px 1.8fr 1fr 1fr 1fr 1fr; /* ajusta el espacio de FOTO */
+  padding: 10px 16px;
+  background: #f8f9fc;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;       /* más pequeño */
+  font-weight: 600;      /* menos grueso */
+  color: #2c2c2c;
+}
+
+/* Celdas de la tabla */
+.lf-table-row {
+  display: grid;
+  grid-template-columns: 80px 1.8fr 1fr 1fr 1fr 1fr; /* igual a header */
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+/* Avatar (columna FOTO) centrado */
+.lf-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #d6e4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #1a56db;
+  margin: 0 auto; /* centra el círculo */
+}
+
+/* Ajuste de texto general */
+.lf-table-header div {
+  display: flex;
+  align-items: center;
+}/* Botón de descarga de plantilla (modal carga masiva) */
+.btn-descargar-plantilla {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-descargar-plantilla:hover {
+  background-color: #0069d9;
+}/* KPIs */
+.lf-kpis{
+  display:grid;
+  grid-template-columns: repeat(6,minmax(0,1fr));
+  gap:12px;
+  margin:12px 0 14px;
+}
+@media (max-width: 1100px){
+  .lf-kpis{ grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 720px){
+  .lf-kpis{ grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+.lf-kpi-card{
+  display:flex; align-items:center; gap:10px;
+  background:#fff; border:1px solid #E5E7EB; border-radius:12px; padding:12px;
+}
+.lf-kpi-ico{
+  width:42px; height:42px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:700; color:#111827;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+}
+.lf-kpi-meta{ display:flex; flex-direction:column; }
+.lf-kpi-label{ color:#6B7280; font-size:12px; line-height:1; margin-bottom:4px;}
+.lf-kpi-val{ font-size:22px; font-weight:800; line-height:1; }
+
+/* Colores del cuadrito del icono */
+.lf-indigo{ background:#EEF2FF; color:#3730A3; }
+.lf-green { background:#ECFDF5; color:#065F46; }
+.lf-amber { background:#FFFBEB; color:#92400E; }
+.lf-blue  { background:#EFF6FF; color:#1E3A8A; }
+.lf-pink  { background:#FDF2F8; color:#9D174D; }
+.lf-violet{ background:#F5F3FF; color:#5B21B6; }
+
+/* Modal (aseguramos z-index por encima de todo) */
+.lf-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.35); z-index: 9998;
+}
+.lf-modal{
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:760px; max-width:92vw; background:#fff;
+  border:1px solid #E5E7EB; border-radius:12px;
+  box-shadow:0 18px 42px rgba(0,0,0,.22); z-index: 9999;
+}
+
+
+
+

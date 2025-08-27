@@ -1,0 +1,505 @@
+{
+  "empleados": [
+    {
+      "id": "1",
+      "rut": "12.345.678-9",
+      "nombre": "Juan Díaz Morales",
+      "cargo": "Gerente de Operaciones",
+      "estado": "Activo",
+      "fechaIngreso": "2021-03-01",
+      "area": "Operaciones",
+      "marcas": [
+        {
+          "fecha": "2025-08-01",
+          "hora": "08:58:00",
+          "tipo": "Entrada",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "192.168.1.10"
+        },
+        {
+          "fecha": "2025-08-01",
+          "hora": "18:02:00",
+          "tipo": "Salida",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "192.168.1.10"
+        },
+        {
+          "fecha": "2025-08-02",
+          "hora": "09:12:00",
+          "tipo": "Entrada",
+          "estado": "Atraso",
+          "metodo": "Web",
+          "ip": "192.168.1.11"
+        },
+        {
+          "fecha": "2025-08-02",
+          "hora": "18:05:00",
+          "tipo": "Salida",
+          "estado": "Válida",
+          "metodo": "Web",
+          "ip": "192.168.1.11"
+        }
+      ],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "Carla Díaz",
+        "relacion": "Esposa",
+        "telefono": "+56 9 1111 1111",
+        "direccion": "Providencia 1234, Santiago"
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      },
+      "afp": "vgg",
+      "hojaDeVida": {
+        "experiencias": [],
+        "educacion": [],
+        "certificaciones": [],
+        "habilidades": [],
+        "idiomas": [],
+        "observaciones": ""
+      }
+    },
+    {
+      "id": "2",
+      "rut": "14.567.890-1",
+      "nombre": "María Pérez Lagos",
+      "cargo": "Analista de Recursos Humanos",
+      "estado": "Activo",
+      "fechaIngreso": "2022-01-10",
+      "area": "RR.HH.",
+      "marcas": [
+        {
+          "fecha": "2025-08-01",
+          "hora": "08:50:00",
+          "tipo": "Entrada",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "10.0.0.2"
+        },
+        {
+          "fecha": "2025-08-01",
+          "hora": "18:10:00",
+          "tipo": "Salida",
+          "estado": "Válida",
+          "metodo": "App",
+          "ip": "10.0.0.2"
+        }
+      ],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "Héctor Pérez",
+        "relacion": "Padre",
+        "telefono": "+56 9 2222 2222",
+        "direccion": "Ñuñoa, Santiago"
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "3",
+      "rut": "16.789.012-3",
+      "nombre": "Carlos Rodríguez Vega",
+      "cargo": "Desarrollador Senior",
+      "estado": "Activo",
+      "fechaIngreso": "2020-08-15",
+      "area": "Tecnología",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "4",
+      "rut": "18.901.234-5",
+      "nombre": "Ana González Muñoz",
+      "cargo": "Diseñadora UX/UI",
+      "estado": "Inactivo",
+      "fechaIngreso": "2019-04-20",
+      "area": "Producto",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Plazo Fijo"
+      }
+    },
+    {
+      "id": "5",
+      "rut": "15.432.109-7",
+      "nombre": "Luis Soto Parra",
+      "cargo": "Contador",
+      "estado": "Activo",
+      "fechaIngreso": "2023-05-10",
+      "area": "Finanzas",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "6",
+      "rut": "17.555.221-1",
+      "nombre": "Raúl Aravena",
+      "cargo": "Full Stack",
+      "estado": "Activo",
+      "fechaIngreso": "2022-11-01",
+      "area": "Tecnología",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "7",
+      "rut": "18.456.789-1",
+      "nombre": "Nicole Castro",
+      "cargo": "Analista QA",
+      "estado": "Activo",
+      "fechaIngreso": "2021-07-07",
+      "area": "Calidad",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "8",
+      "rut": "16.001.234-5",
+      "nombre": "Gabriel Reyes",
+      "cargo": "Soporte",
+      "estado": "Activo",
+      "fechaIngreso": "2020-02-03",
+      "area": "TI",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "9",
+      "rut": "17.999.111-2",
+      "nombre": "Victoria Pizarro",
+      "cargo": "Gerente Legal",
+      "estado": "Inactivo",
+      "fechaIngreso": "2021-06-15",
+      "area": "Legal",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    },
+    {
+      "id": "10",
+      "rut": "13.222.333-4",
+      "nombre": "Francisco Ríos",
+      "cargo": "Ingeniero DevOps",
+      "estado": "Activo",
+      "fechaIngreso": "2020-04-20",
+      "area": "Tecnología",
+      "marcas": [],
+      "salud": {
+        "condiciones": "",
+        "accidentes": "",
+        "religion": "",
+        "indicaciones": ""
+      },
+      "contacto": {
+        "nombre": "",
+        "relacion": "",
+        "telefono": "",
+        "direccion": ""
+      },
+      "evaluacion": {
+        "comentarios": ""
+      },
+      "datosContractuales": {
+        "tipoContrato": "Indefinido"
+      }
+    }
+  ],
+  "posts": [],
+  "comments": [],
+  "profile": {
+    "name": "tictiva"
+  },
+  "permisos": [
+    {
+      "id": "sol-1",
+      "rut": "12.345.678-9",
+      "nombre": "Juan Díaz Morales",
+      "tipo": "Personal",
+      "desde": "2025-08-15",
+      "hasta": "2025-08-15",
+      "horario": "15:00 – 18:00",
+      "motivo": "Trámite personal impostergable",
+      "adjuntoNombre": null,
+      "estado": "Aprobado",
+      "fechaEnvio": "2025-08-15 09:12",
+      "slaHoras": 18
+    },
+    {
+      "id": "sol-1755904824530",
+      "rut": "16.789.012-3",
+      "nombre": "Carlos Rodríguez Vega",
+      "tipo": "Administrativo",
+      "desde": "2025-08-26",
+      "hasta": "2025-08-27",
+      "horario": "15:00 – 18:00",
+      "motivo": "",
+      "adjuntoNombre": null,
+      "estado": "Aprobado",
+      "fechaEnvio": "2025-08-22 23:20",
+      "slaHoras": 119
+    }
+  ],
+  "permisos_historial": [
+    {
+      "id": "h-1",
+      "rut": "11.222.333-4",
+      "nombre": "Ana Castro",
+      "tipo": "Médico",
+      "fechas": "2025-08-10",
+      "estado": "Aprobado",
+      "fechaEnvio": "2025-08-08 14:30",
+      "resueltoPor": "María González",
+      "fechaRevision": "2025-08-09 09:15"
+    }
+  ],
+  "documentos_pendientes": [
+    {
+      "id": "doc-1",
+      "rut": "12.345.678-9",
+      "nombre": "Juan Díaz Morales",
+      "tipo": "Contrato",
+      "estado": "Pendiente firma",
+      "vence": "2025-09-10"
+    },
+    {
+      "id": "doc-2",
+      "rut": "14.567.890-1",
+      "nombre": "María Pérez Lagos",
+      "tipo": "Cons. Biométrico",
+      "estado": "Sin consentimiento",
+      "vence": "2025-09-05"
+    },
+    {
+      "id": "doc-3",
+      "rut": "16.789.012-3",
+      "nombre": "Carlos Rodríguez Vega",
+      "tipo": "Anexo",
+      "estado": "Borrador",
+      "vence": "2025-10-01"
+    }
+  ],
+  "documentos_historial": [
+    {
+      "id": "dh-1",
+      "rut": "18.901.234-5",
+      "nombre": "Ana González Muñoz",
+      "tipo": "Contrato",
+      "estado": "Firmado",
+      "fecha": "2025-08-01"
+    }
+  ],
+  "repo_folders": [
+    {
+      "id": "f-1",
+      "nombre": "Contrato y Anexos"
+    },
+    {
+      "id": "f-2",
+      "nombre": "Documentación Personal"
+    },
+    {
+      "id": "f-3",
+      "nombre": "Ficha Previsional y Bancaria"
+    },
+    {
+      "id": "f-4",
+      "nombre": "Salud y Seguridad Laboral"
+    },
+    {
+      "id": "f-5",
+      "nombre": "Permisos y Descansos"
+    },
+    {
+      "id": "f-6",
+      "nombre": "Otros Documentos"
+    },
+    {
+      "id": "f-1756308688728",
+      "nombre": "Contratos"
+    }
+  ],
+  "repo_docs": [
+    {
+      "id": "r-1",
+      "nombre": "Reglamento Interno 2025",
+      "descripcion": "Versión vigente del Reglamento Interno.",
+      "carpeta": "Salud y Seguridad Laboral",
+      "categoria": "Legal",
+      "etiquetas": [
+        "reglamento",
+        "legal",
+        "interno"
+      ],
+      "version": "2.0",
+      "vence": "",
+      "url": "https://example.com/reglamento.pdf",
+      "actualizadoTs": "2025-08-15 10:00"
+    },
+    {
+      "id": "r-2",
+      "nombre": "Plantilla Contrato Indefinido",
+      "descripcion": "Contrato tipo para nuevas incorporaciones.",
+      "carpeta": "Contrato y Anexos",
+      "categoria": "Plantillas",
+      "etiquetas": [
+        "contrato",
+        "plantilla"
+      ],
+      "version": "1.3",
+      "vence": "",
+      "url": "https://example.com/contrato_indefinido.docx",
+      "actualizadoTs": "2025-08-12 09:40"
+    },
+    {
+      "id": "r-3",
+      "nombre": "Protocolo Uso EPP 2025",
+      "descripcion": "Procedimiento para entrega y uso de EPP.",
+      "carpeta": "Salud y Seguridad Laboral",
+      "categoria": "Seguridad",
+      "etiquetas": [
+        "epp",
+        "seguridad"
+      ],
+      "version": "1.0",
+      "vence": "2026-01-31",
+      "url": "",
+      "actualizadoTs": "2025-08-10 16:22"
+    }
+  ]
+}
