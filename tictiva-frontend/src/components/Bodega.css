@@ -41,3 +41,43 @@
 .bod-formline{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px}
 .bod-filters{display:grid;grid-template-columns:repeat(5,1fr) 220px 220px;gap:10px;margin:12px 0}
 .bod-input, .bod-select{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:10px 12px;outline:none}
+/* --- Tema sobrio para Dashboard Bodega & EPP --- */
+:root{
+  --b-bg:#F7F8FB; --b-card:#FFFFFF; --b-border:#E5E7EB;
+  --b-text-1:#0F172A; --b-text-2:#475569; --b-soft:#F3F4F6;
+  --b-primary:#1D4ED8; --b-success:#16A34A; --b-warn:#D97706;
+  --b-danger:#DC2626; --b-violet:#7C3AED; --b-ico-bg:#EEF2FF;
+}
+.b-wrap{padding:12px;}
+.b-head{margin-bottom:8px;}
+.b-title{margin:0;font-size:24px;font-weight:800;color:var(--b-text-1);}
+.b-subtitle{margin:6px 0 0;color:var(--b-text-2);}
+.b-kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:12px 0;}
+.b-kpi{display:flex;gap:12px;align-items:center;background:var(--b-card);border:1px solid var(--b-border);border-radius:12px;padding:14px;}
+.b-kpi-ico{width:40px;height:40px;border-radius:10px;background:var(--b-ico-bg);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.b-kpi-meta{display:flex;flex-direction:column;}
+.b-kpi-val{font-size:22px;font-weight:800;color:var(--b-text-1);}
+.b-kpi-label{font-size:12px;color:var(--b-text-2);}
+.b-cards-grid{display:grid;grid-template-columns:1.2fr 1.2fr 1fr;gap:12px;margin-bottom:12px;}
+.b-card{background:var(--b-card);border:1px solid var(--b-border);border-radius:12px;padding:12px;}
+.b-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.b-card-title{font-weight:700;color:var(--b-text-1);}
+.b-list{display:grid;gap:8px;}
+.b-list-item{display:flex;align-items:center;justify-content:space-between;font-weight:600;color:var(--b-text-1);}
+.b-list-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.b-list-note{color:var(--b-text-2);font-size:12px;margin-top:-4px;}
+.b-badge{border:1px solid var(--b-border);padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700;background:var(--b-soft);color:var(--b-text-1);}
+.b-badge.success{border-color:#BBF7D0;background:#ECFDF5;color:#065F46;}
+.b-badge.warn{border-color:#FDE68A;background:#FFFBEB;color:#92400E;}
+.b-badge.danger{border-color:#FCA5A5;background:#FEF2F2;color:#991B1B;}
+.b-badge.neutral{border-color:#E5E7EB;background:#F9FAFB;color:#374151;}
+.b-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.b-btn{border:1px solid var(--b-border);background:#fff;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;}
+.b-btn:hover{background:#F9FAFB;}
+.b-btn.primary{border-color:var(--b-primary);color:#fff;background:var(--b-primary);}
+.b-btn.success{border-color:var(--b-success);color:#fff;background:var(--b-success);}
+.b-btn.violet{border-color:var(--b-violet);color:#fff;background:var(--b-violet);}
+@media (max-width:1100px){
+  .b-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .b-cards-grid{grid-template-columns:1fr;}
+}
