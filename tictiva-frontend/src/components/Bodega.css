@@ -1,0 +1,43 @@
+/* src/components/Bodega.css */
+.bod-wrap{padding:16px}
+.bod-subnav{display:flex;gap:8px;margin:8px 0 16px}
+.bod-pill{background:#fff;border:1px solid #E5E7EB;border-radius:999px;padding:8px 14px;text-decoration:none;color:#111827;font-weight:600}
+.bod-pill.is-active{background:#1A56DB;color:#fff;border-color:#1A56DB}
+
+.bod-grid{display:grid;gap:12px}
+.bod-kpis{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:12px}
+.bod-kpi{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px}
+.bod-kpi .t{color:#6B7280;font-size:12px}
+.bod-kpi .v{font-weight:800;font-size:22px}
+
+.bod-columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.bod-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px}
+.bod-card h3{margin:0 0 8px;font-size:16px}
+.bod-list{display:grid;gap:8px}
+.bod-item{border:1px solid #F3F4F6;background:#F9FAFB;border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center}
+
+.bod-actions{display:flex;gap:10px}
+.bod-btn{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:600}
+.bod-btn.primary{background:#1A56DB;color:#fff;border-color:#1A56DB}
+.bod-btn.success{background:#059669;color:#fff;border-color:#059669}
+.bod-btn.warn{background:#F59E0B;color:#111}
+.bod-badge{border-radius:999px;padding:4px 8px;font-size:12px;border:1px solid transparent}
+.bod-badge.ok{background:#D1FAE5;color:#065F46;border-color:#A7F3D0}
+.bod-badge.low{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
+.bod-badge.crit{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+
+.bod-table{width:100%}
+.bod-tr{display:grid;grid-template-columns:1.6fr .8fr .8fr .7fr .9fr .8fr;gap:8px;align-items:center;padding:12px 10px;border-top:1px solid #E5E7EB}
+.bod-th{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:10px;font-weight:700;color:#374151}
+.bod-tr.head{background:#F9FAFB;border-top:none}
+.bod-row-actions{display:flex;gap:10px;justify-content:flex-end}
+
+.bod-cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.bod-assign{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px}
+.bod-assign .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.bod-assign .bar{height:8px;background:#E5E7EB;border-radius:999px;overflow:hidden}
+.bod-assign .bar > span{display:block;height:100%;background:#10B981}
+
+.bod-formline{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px}
+.bod-filters{display:grid;grid-template-columns:repeat(5,1fr) 220px 220px;gap:10px;margin:12px 0}
+.bod-input, .bod-select{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:10px 12px;outline:none}

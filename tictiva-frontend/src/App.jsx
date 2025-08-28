@@ -23,6 +23,15 @@ import EmpleadoDetalle from "./pages/EmpleadoDetalle";
 import PermisosJustificaciones from "./pages/PermisosJustificaciones";
 import ValidacionDT from "./pages/ValidacionDT";
 import RepoDocs from "./pages/RepoDocs.jsx";
+// ❌ (reemplazado por layout + páginas internas)
+// import BodegaEPP from "./pages/BodegaEPP.jsx";
+
+// ===== Bodega & EPP (nuevo submódulo con tabs) =====
+import BodegaLayout from "./bodega/BodegaLayout";
+import BodegaDashboard from "./bodega/pages/BodegaDashboard";
+import BodegaInventario from "./bodega/pages/BodegaInventario";
+import BodegaColaboradores from "./bodega/pages/BodegaColaboradores";
+import BodegaOperaciones from "./bodega/pages/BodegaOperaciones";
 
 // Asistencia
 import SupervisionIntegral from "./pages/SupervisionIntegral";
@@ -78,6 +87,19 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             <Route path={ROUTES.rrhhPermisos} element={<PermisosJustificaciones />} />
             <Route path={`${ROUTES.rrhhValidacionDT}/*`} element={<ValidacionDT />} />
             <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
+
+            {/* Bodega & EPP (submódulo con pestañas) */}
+            <Route path={ROUTES.rrhhBodega.root} element={<BodegaLayout />}>
+              {/* /rrhh/bodega → /rrhh/bodega/dashboard */}
+              <Route
+                index
+                element={<Navigate to={ROUTES.rrhhBodega.dashboard} replace />}
+              />
+              <Route path="dashboard" element={<BodegaDashboard />} />
+              <Route path="inventario" element={<BodegaInventario />} />
+              <Route path="colaboradores" element={<BodegaColaboradores />} />
+              <Route path="operaciones" element={<BodegaOperaciones />} />
+            </Route>
 
             {/* Empleado (variantes) */}
             <Route path="/rrhh/empleado/:id" element={<EmpleadoDetalle />} />

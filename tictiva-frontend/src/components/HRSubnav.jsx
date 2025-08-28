@@ -10,6 +10,7 @@ export default function HRSubnav() {
     { to: ROUTES.rrhhPermisos,     label: "Permisos y Justificaciones" },
     { to: ROUTES.rrhhValidacionDT, label: "Validación DT" },
     { to: ROUTES.rrhhDocumentos,   label: "Repositorio Documental" },
+    { to: ROUTES.rrhhBodega.dashboard, label: "Bodega & EPP" }, // 👈 nuevo
   ];
 
   return (
