@@ -1,13 +1,13 @@
-// src/bodega/pages/BodegaDashboard.jsx
+// src/bodega/BodegaDashboard.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../../routes";
+import { ROUTES } from "../routes"; // <- si tu archivo está en src/bodega
 
 export default function BodegaDashboard() {
   const navigate = useNavigate();
   const base = ROUTES?.rrhhBodega?.root || "/rrhh/bodega";
 
-  // Helper para volver cualquier tarjeta "clickeable" y accesible con teclado
+  // Hace “clickeable” una tarjeta y accesible con teclado
   const asButton = (onActivate) => ({
     role: "button",
     tabIndex: 0,
@@ -19,6 +19,7 @@ export default function BodegaDashboard() {
       }
     },
     style: { cursor: "pointer" },
+    "aria-pressed": false,
   });
 
   return (
@@ -106,7 +107,7 @@ export default function BodegaDashboard() {
         </div>
       </div>
 
-      {/* Secciones (tu contenido actual) */}
+      {/* Secciones */}
       <div
         style={{
           display: "grid",
@@ -167,16 +168,37 @@ export default function BodegaDashboard() {
         </div>
       </div>
 
+      {/* Acciones rápidas (activadas) */}
       <div className="b-card" style={{ marginTop: 12 }}>
         <div className="b-card-title">Acciones Rápidas</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="b-btn">Entregar por QR</button>
-          <button className="b-btn success">Generar OC</button>
-          <button className="b-btn info">Reconteo</button>
+          <button
+            className="b-btn primary"
+            title="Escanear QR/NFC para entregar"
+            onClick={() => navigate(`${base}/operaciones?view=qr`)}
+          >
+            Entregar por QR
+          </button>
+
+          <button
+            className="b-btn success"
+            title="Nueva orden de compra"
+            onClick={() => navigate(`${base}/operaciones?view=compras&new=1`)}
+          >
+            Generar OC
+          </button>
+
+          <button
+            className="b-btn info"
+            title="Iniciar recuento cíclico"
+            onClick={() => navigate(`${base}/operaciones?view=recuentos&start=1`)}
+          >
+            Reconteo
+          </button>
         </div>
       </div>
 
-      {/* Estilos mínimos por si no están en tu CSS */}
+      {/* Estilos mínimos */}
       <style>{`
         .b-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px}
         .b-card-title{font-weight:700;margin-bottom:8px}
@@ -190,10 +212,12 @@ export default function BodegaDashboard() {
         .b-pill-ok{background:#DCFCE7;border-color:#86EFAC}
         .b-pill-warn{background:#FEF9C3;border-color:#FDE68A}
         .b-pill-danger{background:#FEE2E2;border-color:#FCA5A5}
-        .b-btn{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:8px 12px;cursor:pointer}
+        .b-btn{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
         .b-btn:hover{background:#F9FAFB}
-        .b-btn.success{background:#16A34A;color:#fff;border-color:#16A34A}
-        .b-btn.info{background:#4F46E5;color:#fff;border-color:#4F46E5}
+        .b-btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}     /* QR en azul */
+        .b-btn.primary:hover{filter:brightness(0.95)}
+        .b-btn.success{background:#16A34A;color:#fff;border-color:#16A34A}   /* OC en verde */
+        .b-btn.info{background:#4F46E5;color:#fff;border-color:#4F46E5}      /* Reconteo en morado */
       `}</style>
     </div>
   );
