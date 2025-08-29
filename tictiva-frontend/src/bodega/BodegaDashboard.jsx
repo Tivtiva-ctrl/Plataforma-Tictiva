@@ -1,7 +1,7 @@
 // src/bodega/BodegaDashboard.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../routes"; // <- si tu archivo está en src/bodega
+import { ROUTES } from "../routes";
 
 export default function BodegaDashboard() {
   const navigate = useNavigate();
@@ -38,7 +38,12 @@ export default function BodegaDashboard() {
           marginTop: 14,
         }}
       >
-        <div className="b-card" {...asButton(() => navigate(`${base}/inventario`))} title="Ir a Inventario">
+        {/* Stock Total → Inventario por instalación */}
+        <div
+          className="b-card"
+          {...asButton(() => navigate(`${base}/inventario?modo=instalacion`))}
+          title="Ir a Inventario (por instalación)"
+        >
           <div className="b-kpi">
             <div className="b-kpi-ico">📦</div>
             <div className="b-kpi-meta">
@@ -48,6 +53,7 @@ export default function BodegaDashboard() {
           </div>
         </div>
 
+        {/* Entregas Hoy → Operaciones (entregas de hoy) */}
         <div
           className="b-card"
           {...asButton(() =>
@@ -64,9 +70,12 @@ export default function BodegaDashboard() {
           </div>
         </div>
 
+        {/* Alertas de stock → Inventario con estado=alerta (por instalación) */}
         <div
           className="b-card"
-          {...asButton(() => navigate(`${base}/inventario?estado=alerta`))}
+          {...asButton(() =>
+            navigate(`${base}/inventario?modo=instalacion&estado=alerta`)
+          )}
           title="Ver ítems con alerta de stock"
         >
           <div className="b-kpi">
@@ -78,6 +87,7 @@ export default function BodegaDashboard() {
           </div>
         </div>
 
+        {/* Costo mensual → Operaciones (compras) */}
         <div
           className="b-card"
           {...asButton(() => navigate(`${base}/operaciones?view=compras`))}
@@ -92,9 +102,10 @@ export default function BodegaDashboard() {
           </div>
         </div>
 
+        {/* % EPP al Día → Inventario por colaborador */}
         <div
           className="b-card"
-          {...asButton(() => navigate(`${base}/colaboradores`))}
+          {...asButton(() => navigate(`${base}/inventario?modo=colaborador`))}
           title="Ver EPP por colaborador"
         >
           <div className="b-kpi">
@@ -168,7 +179,7 @@ export default function BodegaDashboard() {
         </div>
       </div>
 
-      {/* Acciones rápidas (activadas) */}
+      {/* Acciones rápidas (activadas y con color) */}
       <div className="b-card" style={{ marginTop: 12 }}>
         <div className="b-card-title">Acciones Rápidas</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -214,10 +225,10 @@ export default function BodegaDashboard() {
         .b-pill-danger{background:#FEE2E2;border-color:#FCA5A5}
         .b-btn{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
         .b-btn:hover{background:#F9FAFB}
-        .b-btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}     /* QR en azul */
+        .b-btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
         .b-btn.primary:hover{filter:brightness(0.95)}
-        .b-btn.success{background:#16A34A;color:#fff;border-color:#16A34A}   /* OC en verde */
-        .b-btn.info{background:#4F46E5;color:#fff;border-color:#4F46E5}      /* Reconteo en morado */
+        .b-btn.success{background:#16A34A;color:#fff;border-color:#16A34A}
+        .b-btn.info{background:#4F46E5;color:#fff;border-color:#4F46E5}
       `}</style>
     </div>
   );
