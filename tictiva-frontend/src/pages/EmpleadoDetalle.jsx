@@ -165,9 +165,17 @@ export default function EmpleadoDetalle() {
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
-  // 3) ENV
-  const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
+  // 3) ENV: en producción NO usamos localhost
+  const isLocalHost =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const API_ENV = (import.meta.env.VITE_API_URL || "").trim();
+  const API = API_ENV || (isLocalHost ? "http://127.0.0.1:3001" : "");
   const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
+  const DEBUG = import.meta.env.DEV;
+
+  DEBUG && console.log("[ED] PARAMS", { params, rawParam, idParam, rutParam });
+  DEBUG && console.log("[ED] ENV", { API, RESOURCE });
 
   // Estados
   const [empleado, setEmpleado] = useState(null);
@@ -197,7 +205,6 @@ export default function EmpleadoDetalle() {
   // Carga del empleado por id O por rut (API → fallback /data/db.json)
   useEffect(() => {
     if (!hasParam) {
-      // No hay parámetro; evitamos llamar a la API en esta renderización
       setNotFound(true);
       return;
     }
@@ -219,7 +226,6 @@ export default function EmpleadoDetalle() {
           arr.find((e) => normalizeRut(e?.RUT || "") === nr);
         if (byRut) return byRut;
       }
-      // Último intento: param usado como id string en el array
       const raw = normId(rawParam);
       return arr.find((e) => normId(e?.id) === raw) || null;
     };
@@ -228,51 +234,58 @@ export default function EmpleadoDetalle() {
       setNotFound(false);
       let emp = null;
 
-      // -------- 1) API real
-      try {
-        // a) /empleados/:id
-        if (!emp && idParam != null) {
-          const r = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}/${encodeURIComponent(String(idParam))}`, { cache: "no-store" });
-          if (r.ok) {
-            const j = await r.json();
-            if (j && (j.id != null || j.nombre)) emp = j;
-          }
-        }
-        // b) /empleados?rut=...
-        if (!emp && rutParam != null) {
-          const nr = normalizeRut(rutParam);
-          const urls = [
-            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(String(rutParam))}`,
-            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(String(rutParam))}`,
-            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(nr)}`,
-            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(nr)}`,
-          ];
-          for (const url of urls) {
-            const r = await fetch(url, { cache: "no-store" });
-            if (!r.ok) continue;
-            const j = await r.json();
-            if (Array.isArray(j) && j.length) { emp = j[0]; break; }
-            if (!Array.isArray(j) && j && Object.keys(j).length) { emp = j; break; }
-          }
-          // c) traer todo y filtrar por RUT/ID
-          if (!emp) {
-            const rAll = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}`, { cache: "no-store" });
-            if (rAll.ok) {
-              const arr = await rAll.json();
-              emp = buscarEnArray(arr);
+      // -------- 1) API real (solo si hay API configurada o estás en local)
+      if (API) {
+        try {
+          // a) /empleados/:id
+          if (!emp && idParam != null) {
+            const r = await fetch(
+              `${String(API).replace(/\/$/, "")}/${RESOURCE}/${encodeURIComponent(String(idParam))}`,
+              { cache: "no-store" }
+            );
+            if (r.ok) {
+              const j = await r.json();
+              if (j && (j.id != null || j.nombre)) emp = j;
             }
           }
-        }
-        // d) último intento por id como query
-        if (!emp && !idParam && rawParam) {
-          const r = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}?id=${encodeURIComponent(String(rawParam))}`, { cache: "no-store" });
-          if (r.ok) {
-            const arr = await r.json();
-            if (Array.isArray(arr) && arr.length) emp = arr[0];
+          // b) /empleados?rut=...
+          if (!emp && rutParam != null) {
+            const nr = normalizeRut(rutParam);
+            const urls = [
+              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(String(rutParam))}`,
+              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(String(rutParam))}`,
+              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(nr)}`,
+              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(nr)}`,
+            ];
+            for (const url of urls) {
+              const r = await fetch(url, { cache: "no-store" });
+              if (!r.ok) continue;
+              const j = await r.json();
+              if (Array.isArray(j) && j.length) { emp = j[0]; break; }
+              if (!Array.isArray(j) && j && Object.keys(j).length) { emp = j; break; }
+            }
+            if (!emp) {
+              const rAll = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}`, { cache: "no-store" });
+              if (rAll.ok) {
+                const arr = await rAll.json();
+                emp = buscarEnArray(arr);
+              }
+            }
           }
+          // c) último intento por id como query
+          if (!emp && !idParam && rawParam) {
+            const r = await fetch(
+              `${String(API).replace(/\/$/, "")}/${RESOURCE}?id=${encodeURIComponent(String(rawParam))}`,
+              { cache: "no-store" }
+            );
+            if (r.ok) {
+              const arr = await r.json();
+              if (Array.isArray(arr) && arr.length) emp = arr[0];
+            }
+          }
+        } catch {
+          // Silenciar; probaremos fallback
         }
-      } catch {
-        // Silenciar; probaremos fallback
       }
 
       // -------- 2) Fallback estático /public/data/db.json
@@ -289,11 +302,8 @@ export default function EmpleadoDetalle() {
       }
 
       if (!cancel) {
-        if (emp) {
-          setEmpleado(emp);
-        } else {
-          setNotFound(true);
-        }
+        if (emp) setEmpleado(emp);
+        else setNotFound(true);
       }
     };
 
@@ -306,7 +316,7 @@ export default function EmpleadoDetalle() {
   };
 
   const guardarEmpleado = async () => {
-    if (!empleado) return;
+    if (!empleado || !API) return; // si no hay API (prod), omitimos guardar
     try {
       const id = empleado.id ?? encodeURIComponent(empleado.rut);
       const url = `${String(API).replace(/\/$/, "")}/${RESOURCE}/${id}`;
@@ -323,7 +333,6 @@ export default function EmpleadoDetalle() {
     }
   };
 
-  // Helper para actualizar hash al cambiar de tab (opcional)
   const selectTab = (tab) => {
     setTabActiva(tab);
     try {
@@ -332,13 +341,21 @@ export default function EmpleadoDetalle() {
     } catch {}
   };
 
-  // Renders (sin hooks condicionales)
   if (!hasParam) {
     return (
       <div className="detalle-container">
         <VolverAtras />
-        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
-          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
+        <div
+          style={{
+            padding: 16,
+            color: "#b45309",
+            background: "#fffbeb",
+            border: "1px solid #f59e0b",
+            borderRadius: 8,
+          }}
+        >
+          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o{" "}
+          <code>/rrhh/empleado/:rut</code>.
         </div>
       </div>
     );
@@ -396,7 +413,7 @@ export default function EmpleadoDetalle() {
         </div>
 
         {modoEdicion ? (
-          <button className="btn-guardar" onClick={guardarEmpleado}>
+          <button className="btn-guardar" onClick={guardarEmpleado} disabled={!API}>
             Guardar Cambios
           </button>
         ) : (
