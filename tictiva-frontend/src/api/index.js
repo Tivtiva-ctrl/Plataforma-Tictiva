@@ -1,32 +1,56 @@
 // src/api/index.js
-// Capa API centralizada con fallback a /public/data/db.json
-// En producción se IGNORA cualquier VITE_API_URL que apunte a localhost/127.0.0.1
+// API centralizada con:
+// - En dev: usa json-server o VITE_API_URL.
+// - En prod: si VITE_API_URL apunta a localhost, se ignora y usamos /public/data/db.json.
+// - Fallback con persistencia en localStorage (overlay) para que lo creado NO se pierda al refrescar.
 
-const host =
-  typeof window !== "undefined" ? window.location.hostname : "localhost";
-
+const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
 const isLocalHost = ["localhost", "127.0.0.1"].includes(host);
 
 const VITE_API = (import.meta.env.VITE_API_URL || "").trim();
-const isViteApiLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(
-  VITE_API
-);
+const isViteApiLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(VITE_API);
 
-// Si estoy en dev → uso VITE_API o json-server local.
-// Si estoy en prod → solo uso VITE_API si NO es localhost.
-const BASE = isLocalHost
-  ? (VITE_API || "http://127.0.0.1:3001")
-  : (isViteApiLocal ? "" : VITE_API);
+// En dev: usa VITE_API o json-server local.
+// En prod: solo usa VITE_API si NO es localhost.
+const BASE = isLocalHost ? (VITE_API || "http://127.0.0.1:3001") : (isViteApiLocal ? "" : VITE_API);
 
-// Debug solo en dev
-if (import.meta.env.DEV) {
-  // eslint-disable-next-line no-console
-  console.log("[API] host:", host, "VITE_API:", VITE_API, "BASE usado:", BASE || "(fallback)");
-}
+// === Overlay localStorage (persistencia en navegador) ===
+const LS_KEY = "tictiva_overlay_v1";
+// Estructura overlay:
+// { empleados: [], permisos: [], permisos_historial: [] }
 
-// ---------- helpers ----------
+const readOverlay = () => {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const obj = raw ? JSON.parse(raw) : {};
+    return {
+      empleados: Array.isArray(obj.empleados) ? obj.empleados : [],
+      permisos: Array.isArray(obj.permisos) ? obj.permisos : [],
+      permisos_historial: Array.isArray(obj.permisos_historial) ? obj.permisos_historial : [],
+    };
+  } catch {
+    return { empleados: [], permisos: [], permisos_historial: [] };
+  }
+};
+const writeOverlay = (next) => {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(next));
+  } catch {}
+};
+const pushOverlay = (col, item) => {
+  const ov = readOverlay();
+  ov[col] = [item, ...ov[col]];
+  writeOverlay(ov);
+};
+const replaceOverlayCollection = (col, arr) => {
+  const ov = readOverlay();
+  ov[col] = Array.isArray(arr) ? arr : [];
+  writeOverlay(ov);
+};
+
+// ---------- helpers fetch ----------
 const apiGet = async (path) => {
-  if (!BASE) return null; // en prod sin API válida: no llamamos a red
+  if (!BASE) return null;
   const url = `${BASE.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
   try {
     const r = await fetch(url, { cache: "no-store" });
@@ -47,6 +71,7 @@ const fetchDb = async () => {
   }
 };
 
+// ---------- normalizadores ----------
 const normalizeEstadoKey = (e = "") => {
   const s = String(e || "").trim().toLowerCase();
   if (s.startsWith("aprob")) return "aprobado";
@@ -63,9 +88,7 @@ const labelEstado = (e = "") => {
 
 const parseHorario = (hor) => {
   if (!hor) return ["", ""];
-  const parts = String(hor)
-    .split(/[-–—]| a /i)
-    .map((s) => s.trim());
+  const parts = String(hor).split(/[-–—]| a /i).map((s) => s.trim());
   return [parts[0] || "", parts[1] || ""];
 };
 
@@ -108,37 +131,77 @@ const normalizePermiso = (x = {}) => {
 
 // ---------- APIs ----------
 export const PermisosAPI = {
+  // Solo pendientes (gestionables)
   async listPendientes() {
+    // 1) API remota
     let arr = await apiGet("permisos");
+
+    // 2) Fallback seed + overlay
     if (!Array.isArray(arr)) {
-      const db = await fetchDb();
-      arr = db?.permisos || [];
+      const seed = await fetchDb();
+      const ov = readOverlay();
+      const seedPend = Array.isArray(seed?.permisos) ? seed.permisos.map(normalizePermiso) : [];
+      const ovPend = ov.permisos.map(normalizePermiso);
+      arr = [...ovPend, ...seedPend]; // overlay primero
+    } else {
+      arr = arr.map(normalizePermiso);
+      // mezclar overlay por si también hay creados localmente
+      const ov = readOverlay();
+      arr = [...ov.permisos.map(normalizePermiso), ...arr];
     }
-    arr = arr.map(normalizePermiso);
+
     return arr.filter((p) => normalizeEstadoKey(p.estado) === "pendiente");
   },
 
+  // Historial (aprobados / rechazados)
   async listHistorial() {
     let arr = await apiGet("permisos_historial");
+
     if (!Array.isArray(arr)) {
-      const db = await fetchDb();
-      arr = db?.permisos_historial || [];
+      const seed = await fetchDb();
+      const ov = readOverlay();
+      const seedHist = Array.isArray(seed?.permisos_historial) ? seed.permisos_historial.map(normalizePermiso) : [];
+      const ovHist = ov.permisos_historial.map(normalizePermiso);
+      arr = [...ovHist, ...seedHist];
+    } else {
+      arr = arr.map(normalizePermiso);
+      const ov = readOverlay();
+      arr = [...ov.permisos_historial.map(normalizePermiso), ...arr];
     }
-    return arr.map(normalizePermiso);
+
+    return arr;
   },
 
+  // Cambia estado de un permiso pendiente
   async patchEstado(id, estadoLabel /* "Aprobado" | "Rechazado" */) {
-    if (!BASE) return { ok: true, simulated: true }; // en prod sin API: simulamos OK
-    const url = `${BASE.replace(/\/$/, "")}/permisos/${encodeURIComponent(String(id))}`;
-    const r = await fetch(url, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: estadoLabel }),
-    });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    return await r.json();
+    if (BASE) {
+      const url = `${BASE.replace(/\/$/, "")}/permisos/${encodeURIComponent(String(id))}`;
+      const r = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: estadoLabel }),
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    }
+
+    // Sin API → mover en overlay de pendientes → historial
+    const ov = readOverlay();
+    const idx = ov.permisos.findIndex((p) => String(p.id) === String(id));
+    let item;
+    if (idx >= 0) {
+      item = ov.permisos.splice(idx, 1)[0];
+    } else {
+      // si no estaba en overlay (podía venir del seed), creamos uno mínimo
+      item = { id, estado: "Pendiente" };
+    }
+    const normalized = normalizePermiso({ ...item, estado: estadoLabel });
+    ov.permisos_historial = [normalized, ...ov.permisos_historial];
+    writeOverlay(ov);
+    return { ok: true, simulated: true };
   },
 
+  // Crear permiso manual
   async createManual(form) {
     const nuevo = {
       id: `sol-${Date.now()}`,
@@ -156,16 +219,20 @@ export const PermisosAPI = {
       slaHoras: computeSlaHoras(form.hasta, form.horaFin),
     };
 
-    if (!BASE) return normalizePermiso(nuevo); // en prod sin API: devolvemos normalizado
+    if (BASE) {
+      const r = await fetch(`${BASE.replace(/\/$/, "")}/permisos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevo),
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      return normalizePermiso(j);
+    }
 
-    const r = await fetch(`${BASE.replace(/\/$/, "")}/permisos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nuevo),
-    });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    return normalizePermiso(j);
+    // Sin API → guardamos en overlay local
+    pushOverlay("permisos", nuevo);
+    return normalizePermiso(nuevo);
   },
 };
 
@@ -173,10 +240,30 @@ export const EmpleadosAPI = {
   async list() {
     let arr = await apiGet("empleados");
     if (!Array.isArray(arr)) {
-      const db = await fetchDb();
-      arr = db?.empleados || [];
+      const seed = await fetchDb();
+      const ov = readOverlay();
+      const seedE = Array.isArray(seed?.empleados) ? seed.empleados : [];
+      arr = [...ov.empleados, ...seedE]; // overlay primero
+    } else {
+      const ov = readOverlay();
+      arr = [...ov.empleados, ...arr];
     }
     return arr;
+  },
+
+  async create(nuevo) {
+    if (BASE) {
+      const r = await fetch(`${BASE.replace(/\/$/, "")}/empleados`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevo),
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    }
+    // Sin API → guardamos en overlay local
+    pushOverlay("empleados", nuevo);
+    return nuevo;
   },
 };
 
