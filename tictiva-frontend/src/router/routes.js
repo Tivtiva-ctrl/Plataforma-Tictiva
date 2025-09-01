@@ -8,6 +8,8 @@ const ROUTES = {
   rrhhPermisos: "/rrhh/permisos",
   rrhhValidacionDT: "/rrhh/validacion-dt",
   rrhhDocumentos: "/rrhh/documentos",
+  rrhhBodegaInventario: "/rrhh/bodega/inventario",
+
 
   // Asistencia (submódulos vigentes)
   asistenciaSupervision: "/asistencia/supervision",
