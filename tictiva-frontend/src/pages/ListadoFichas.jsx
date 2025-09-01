@@ -4,8 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import HRSubnav from "../components/HRSubnav";
 import "./ListadoFichas.css";
 import CrearEmpleadoModal from "../components/CrearEmpleadoModal"; // (no se usa, se deja para no tocar importaciones)
-
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
+import { EmpleadosAPI } from "../api"; // ✅ usar capa API centralizada
 
 const initials = (name = "") =>
   name.toString().split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -109,33 +108,10 @@ export default function ListadoFichas() {
     (async () => {
       setLoading(true);
       try {
-        let arr = [];
-
-        // 1) API real (si está disponible)
-        try {
-          const r = await fetch(`${String(API).replace(/\/$/, "")}/empleados`, { cache: "no-store" });
-          if (r.ok) {
-            const data = await r.json();
-            if (Array.isArray(data) && data.length) {
-              arr = data;
-            }
-          }
-        } catch (_) {
-          // Silenciar: probaremos fallback
-        }
-
-        // 2) Fallback estático (/public/data/db.json)
-        if (!arr.length) {
-          const r2 = await fetch("/data/db.json", { cache: "no-store" });
-          if (r2.ok) {
-            const j2 = await r2.json();
-            arr = Array.isArray(j2?.empleados) ? j2.empleados : Array.isArray(j2) ? j2 : [];
-          }
-        }
-
-        if (!cancel) setEmpleados(Array.isArray(arr) ? arr : []);
+        const data = await EmpleadosAPI.list(); // ✅ usa capa API (API → /data/db.json)
+        if (!cancel) setEmpleados(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error("No se pudo cargar empleados:", e);
+        console.error("No se pudo cargar empleados", e);
         if (!cancel) setEmpleados([]);
       } finally {
         if (!cancel) setLoading(false);
@@ -295,18 +271,23 @@ export default function ListadoFichas() {
     };
 
     try {
-      const r = await fetch(`${API}/empleados`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevo),
-      });
-      if (!r.ok) throw new Error("HTTP " + r.status);
+      // Mantengo tu flujo original (POST a API local si estás en dev)
+      const API_ENV = (import.meta.env.VITE_API_URL || "").trim();
+      const isLocal = typeof window !== "undefined" && ["localhost","127.0.0.1"].includes(window.location.hostname);
+      const API = API_ENV || (isLocal ? "http://127.0.0.1:3001" : "");
+
+      if (API) {
+        const r = await fetch(`${API.replace(/\/$/, "")}/empleados`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(nuevo),
+        });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+      }
 
       setEmpleados((p) => [nuevo, ...p]);
       setOpen(false);
-
       try { await navigator.clipboard?.writeText(String(nuevo.credencialesApp.pin || "")); } catch {}
-
       navigate(pathDetalleEmpleado(nuevo));
     } catch (e) {
       alert("No se pudo crear el empleado. Revisa json-server.");
@@ -546,8 +527,8 @@ export default function ListadoFichas() {
               transform: "translate(-50%, -50%)",
               width: 760,
               maxWidth: "92vw",
-              maxHeight: "86vh",            // ← scroll interno si crece
-              overflow: "auto",              // ← scroll
+              maxHeight: "86vh",
+              overflow: "auto",
               background: "#fff",
               border: "1px solid #E5E7EB",
               borderRadius: 12,
