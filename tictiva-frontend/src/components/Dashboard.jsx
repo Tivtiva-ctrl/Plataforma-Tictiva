@@ -55,8 +55,13 @@ export default function Dashboard() {
             <Link to={ROUTES.rrhhPermisos} style={linkStyle}>📝 Permisos y Justificaciones</Link>
             <Link to={ROUTES.rrhhValidacionDT} style={linkStyle}>✅ Validación DT</Link>
             <Link to={ROUTES.rrhhDocumentos} style={linkStyle}>📁 Repositorio Documental</Link>
-            <Link to={ROUTES.rrhhBodegaInventario} style={linkStyle}>📦 Bodega y EPP</Link>
-            
+            {/* 📦 Bodega y EPP: robusto ante diferencias de nombres en ROUTES */}
+            <Link
+              to={ROUTES?.rrhhBodegaInventario || ROUTES?.rrhhBodega?.root || "/rrhh/bodega"}
+              style={linkStyle}
+            >
+              📦 Bodega y EPP
+            </Link>
           </div>
         </div>
 

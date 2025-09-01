@@ -54,7 +54,7 @@ function NavbarWithLogout({ userName, onLogout }) {
   const navigate = useNavigate();
   const handleLogout = () => {
     onLogout();
-    navigate(ROUTES.home);
+    navigate(ROUTES?.home || "/");
   };
   return <Navbar userName={userName} onLogout={handleLogout} />;
 }
@@ -109,7 +109,10 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             {/* Empleado (variantes) */}
             <Route path="/rrhh/empleado/:id" element={<EmpleadoDetalle />} />
             <Route path="/rrhh/empleado/rut/:rut" element={<EmpleadoDetalle />} />
-            <Route path="/rrhh/empleado" element={<Navigate to="/rrhh/fichas" replace />} />
+            <Route
+              path="/rrhh/empleado"
+              element={<Navigate to={ROUTES.listadoFichas} replace />}
+            />
 
             {/* Asistencia */}
             <Route
