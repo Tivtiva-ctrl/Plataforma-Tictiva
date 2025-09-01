@@ -73,9 +73,17 @@ export default function BodegaColaboradores() {
             </div>
 
             <div className="c-rows">
-              <Lado label="Costo:" value={formatUSD(a.costo)} />
+              {/* 🔁 Cambio a CLP para consistencia con el total */}
+              <Lado label="Costo:" value={formatCLP(a.costo)} />
               <Lado label="Entregado:" value={a.entregado} />
-              <Lado label="Vence:" value={a.vence} valueClass={norm(a.estado)==="por vencer" ? "c-warn" : norm(a.estado)==="vencido" ? "c-danger" : ""}/>
+              <Lado
+                label="Vence:"
+                value={a.vence}
+                valueClass={
+                  norm(a.estado)==="por vencer" ? "c-warn" :
+                  norm(a.estado)==="vencido" ? "c-danger" : ""
+                }
+              />
             </div>
 
             <div className="c-life">
@@ -188,7 +196,7 @@ function norm(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[
 function incluye(txt,sub){ return norm(txt).includes(norm(sub)) }
 function clamp(v){ v = Number.isFinite(v)? v : 0; return Math.max(0, Math.min(100, v)); }
 function formatUSD(n){ return `$${Number(n||0).toFixed(2)}` }
-function formatCLP(n){ return n.toLocaleString("es-CL", { style:"currency", currency:"CLP" }) }
+function formatCLP(n){ return Number(n||0).toLocaleString("es-CL", { style:"currency", currency:"CLP" }) }
 function iconoPorItem(desc=""){ const d=norm(desc); if(d.includes("casco"))return "🪖"; if(d.includes("zapato"))return "👟"; if(d.includes("guante"))return "🖐️"; return "👓"; }
 function colorPorItem(desc=""){ const d=norm(desc); if(d.includes("casco"))return "b-blue"; if(d.includes("zapato"))return "b-yellow"; if(d.includes("guante"))return "b-red"; return "b-purple"; }
 function badgeClase(e){ e=norm(e); if(e==="vencido")return "bad-danger"; if(e==="por vencer"||e==="porvencer")return "bad-warn"; return "bad-ok"; }

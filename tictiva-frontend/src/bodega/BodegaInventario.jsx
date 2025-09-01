@@ -1,6 +1,8 @@
 // src/bodega/pages/BodegaInventario.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+
+const API_BASE = "https://plataforma-tictiva-0ijm.onrender.com";
 
 export default function BodegaInventario() {
   const [sp, setSp] = useSearchParams();
@@ -8,6 +10,7 @@ export default function BodegaInventario() {
   const [modo, setModo] = useState(modoUrl === "colaborador" ? "colaborador" : "instalacion");
 
   // ---------- DATA (ahora en estado para poder editar) ----------
+  // Dejo un seed inicial por si el fetch tarda; al cargar se sobreescribe con backend
   const [items, setItems] = useState([
     { sku: "EPP-001", desc: "Casco Blanco", categoria: "EPP", instalacion: "Planta Norte", stock: 45, min: 20, max: 100, estado: "OK",    ubic: "A-01-15" },
     { sku: "EPP-015", desc: "Zapatos Seguridad T42", categoria: "EPP", instalacion: "Bodega Central", stock: 3,  min: 10, max: 50,  estado: "Crítico", ubic: "B-03-08" },
@@ -65,6 +68,29 @@ export default function BodegaInventario() {
     setSp(sp, { replace: true });
   };
 
+  // ---------- CARGA DESDE BACKEND ----------
+  // Carga inventario desde Render respetando filtros (instalación/categoría/estado/q)
+  useEffect(() => {
+    if (modo !== "instalacion") return; // Solo carga cuando se ve la tabla de instalación
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (f.instalacion) params.set("instalacion", f.instalacion);
+    if (f.categoria) params.set("categoria", f.categoria);
+    if (f.estado) params.set("estado", f.estado);
+
+    const url = `${API_BASE}/bodega/inventario?${params.toString()}`;
+    fetch(url, { credentials: "include" })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => Array.isArray(data) ? setItems(data) : setItems([]))
+      .catch(err => {
+        console.error("Error cargando inventario:", err);
+        // en caso de error dejamos los items actuales (seed) para no romper la UI
+      });
+  }, [q, f, modo]);
+
   // ---------- MODALES DE ACCIÓN ----------
   const [modal, setModal] = useState({ open: false, tipo: null, item: null });
   const openModal = (tipo, item) => setModal({ open: true, tipo, item });
@@ -74,8 +100,9 @@ export default function BodegaInventario() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const sku = form.get("sku");
-    setItems(prev => prev.map(it => it.sku === sku ? ({
-      ...it,
+
+    // Actualización local inmediata (optimista)
+    const payload = {
       desc: form.get("desc"),
       categoria: form.get("categoria"),
       instalacion: form.get("instalacion"),
@@ -84,8 +111,29 @@ export default function BodegaInventario() {
       max: Number(form.get("max") || 0),
       estado: form.get("estado"),
       ubic: form.get("ubic")
-    }) : it));
+    };
+    setItems(prev => prev.map(it => it.sku === sku ? ({ ...it, ...payload }) : it));
     closeModal();
+
+    // Persistir en backend (PUT /bodega/items/:sku)
+    fetch(`${API_BASE}/bodega/items/${encodeURIComponent(sku)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload)
+    })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(updated => {
+        // Alinear con respuesta del backend
+        setItems(prev => prev.map(it => it.sku === sku ? updated : it));
+      })
+      .catch(err => {
+        console.error("Error guardando edición:", err);
+        // si falla, no hacemos rollback visual para no complicar — puedes alertar si quieres
+      });
   };
 
   const copyQRLink = async (sku) => {
