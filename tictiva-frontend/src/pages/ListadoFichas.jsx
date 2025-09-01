@@ -107,12 +107,36 @@ export default function ListadoFichas() {
   useEffect(() => {
     let cancel = false;
     (async () => {
+      setLoading(true);
       try {
-        const r = await fetch(`${API}/empleados`);
-        const data = await r.json();
-        if (!cancel) setEmpleados(Array.isArray(data) ? data : []);
+        let arr = [];
+
+        // 1) API real (si está disponible)
+        try {
+          const r = await fetch(`${String(API).replace(/\/$/, "")}/empleados`, { cache: "no-store" });
+          if (r.ok) {
+            const data = await r.json();
+            if (Array.isArray(data) && data.length) {
+              arr = data;
+            }
+          }
+        } catch (_) {
+          // Silenciar: probaremos fallback
+        }
+
+        // 2) Fallback estático (/public/data/db.json)
+        if (!arr.length) {
+          const r2 = await fetch("/data/db.json", { cache: "no-store" });
+          if (r2.ok) {
+            const j2 = await r2.json();
+            arr = Array.isArray(j2?.empleados) ? j2.empleados : Array.isArray(j2) ? j2 : [];
+          }
+        }
+
+        if (!cancel) setEmpleados(Array.isArray(arr) ? arr : []);
       } catch (e) {
-        console.error("No se pudo cargar /empleados", e);
+        console.error("No se pudo cargar empleados:", e);
+        if (!cancel) setEmpleados([]);
       } finally {
         if (!cancel) setLoading(false);
       }
