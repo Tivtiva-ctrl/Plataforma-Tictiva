@@ -97,9 +97,9 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
 
             {/* Bodega & EPP (submódulo con pestañas) */}
-            <Route path={BODEGA.root} element={<BodegaLayout />}>
+            <Route path={`${BODEGA.root}/*`} element={<BodegaLayout />}>
               {/* /rrhh/bodega → /rrhh/bodega/dashboard */}
-              <Route index element={<Navigate to={BODEGA.dashboard} replace />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<BodegaDashboard />} />
               <Route path="inventario" element={<BodegaInventario />} />
               <Route path="colaboradores" element={<BodegaColaboradores />} />

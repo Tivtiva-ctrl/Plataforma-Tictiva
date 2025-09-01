@@ -1,13 +1,7 @@
 // src/bodega/BodegaLayout.jsx
 import React from "react";
-import { NavLink, Outlet, Routes, Route } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import HRSubnav from "../components/HRSubnav";
-
-// Vistas hijas
-import BodegaDashboard from "./BodegaDashboard";
-import BodegaInventario from "./BodegaInventario";
-import BodegaColaboradores from "./BodegaColaboradores";
-import BodegaOperaciones from "./BodegaOperaciones";
 
 // ⬅️ IMPORTA EL CSS (ajusta SOLO si tu archivo está en otra ruta)
 import "../components/Bodega.css";
@@ -26,27 +20,28 @@ export default function BodegaLayout() {
         style={{ marginTop: 8 }}
       >
         <nav className="hr-pillbar">
+          {/* ✅ Enlaces RELATIVOS al layout /rrhh/bodega/* */}
           <NavLink
-            to="/rrhh/bodega/dashboard"
+            to="dashboard"
             end
             className={({ isActive }) => `hr-pill${isActive ? " is-active" : ""}`}
           >
             Dashboard
           </NavLink>
           <NavLink
-            to="/rrhh/bodega/inventario"
+            to="inventario"
             className={({ isActive }) => `hr-pill${isActive ? " is-active" : ""}`}
           >
             Inventario
           </NavLink>
           <NavLink
-            to="/rrhh/bodega/colaboradores"
+            to="colaboradores"
             className={({ isActive }) => `hr-pill${isActive ? " is-active" : ""}`}
           >
             Colaboradores
           </NavLink>
           <NavLink
-            to="/rrhh/bodega/operaciones"
+            to="operaciones"
             className={({ isActive }) => `hr-pill${isActive ? " is-active" : ""}`}
           >
             Operaciones
@@ -54,18 +49,9 @@ export default function BodegaLayout() {
         </nav>
       </div>
 
-      {/* Contenido de cada subpágina */}
+      {/* Contenido de cada subpágina (viene del router padre) */}
       <div className="b-wrap">
         <Outlet />
-
-        {/* Alias directo: asegura que /rrhh/bodega/inventario
-            siempre muestre el componente, aunque se llame plano */}
-        <Routes>
-          <Route path="/rrhh/bodega/dashboard" element={<BodegaDashboard />} />
-          <Route path="/rrhh/bodega/inventario" element={<BodegaInventario />} />
-          <Route path="/rrhh/bodega/colaboradores" element={<BodegaColaboradores />} />
-          <Route path="/rrhh/bodega/operaciones" element={<BodegaOperaciones />} />
-        </Routes>
       </div>
     </div>
   );
