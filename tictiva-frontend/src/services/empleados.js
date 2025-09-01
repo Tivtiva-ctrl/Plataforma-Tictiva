@@ -1,60 +1,21 @@
-// src/services/empleados.js
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
-const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
+import http from "../lib/http";
 
-const normalizeRut = (r="") => r.replace(/\./g,"").replace(/-/g,"").toUpperCase();
+/** Listado de empleados */
+export const listarEmpleados = () =>
+  http.get("/empleados").then(r => r.data);
 
-async function http(url, opts) {
-  const res = await fetch(url, opts);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
-}
+/** Obtener empleado por RUT (acepta con o sin puntos/guión) */
+export const obtenerEmpleado = (rut) =>
+  http.get(`/empleados/${encodeURIComponent(rut)}`).then(r => r.data);
 
-// LISTADO (con paginación opcional)
-export async function listarEmpleados({ page=1, limit=50, sort="nombre", order="asc" } = {}) {
-  const url = `${API}/${RESOURCE}?_page=${page}&_limit=${limit}&_sort=${sort}&_order=${order}`;
-  return http(url);
-}
+/** Actualizar empleado por RUT (merge superficial) */
+export const actualizarEmpleado = (rut, payload) =>
+  http.put(`/empleados/${encodeURIComponent(rut)}`, payload).then(r => r.data);
 
-// DETALLE: acepta id o rut
-export async function obtenerEmpleado({ id, rut }) {
-  // por id directo
-  if (id) {
-    try {
-      return await http(`${API}/${RESOURCE}/${encodeURIComponent(id)}`);
-    } catch {}
-  }
-  // por rut en varias formas
-  if (rut) {
-    const raw = rut.trim();
-    const norm = normalizeRut(raw);
-    const tries = [
-      `${API}/${RESOURCE}?rut=${encodeURIComponent(raw)}`,
-      `${API}/${RESOURCE}?rut_like=${encodeURIComponent(raw)}`,
-      `${API}/${RESOURCE}?rut=${encodeURIComponent(norm)}`,
-      `${API}/${RESOURCE}?rut_like=${encodeURIComponent(norm)}`,
-    ];
-    for (const u of tries) {
-      try {
-        const data = await http(u);
-        if (Array.isArray(data) ? data[0] : data) return Array.isArray(data) ? data[0] : data;
-      } catch {}
-    }
-    // fallback traer todos
-    try {
-      const all = await http(`${API}/${RESOURCE}`);
-      return all.find(e => normalizeRut(e?.rut) === norm) || null;
-    } catch {}
-  }
-  return null;
-}
+/** Crear empleado (genera PIN único automáticamente) */
+export const crearEmpleado = (payload) =>
+  http.post("/admin/empleados", payload).then(r => r.data);
 
-// UPDATE (PUT completo)
-export async function guardarEmpleado(empleado) {
-  const id = empleado.id ?? encodeURIComponent(empleado.rut);
-  return http(`${API}/${RESOURCE}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(empleado),
-  });
-}
+/** Regenerar PIN por RUT */
+export const regenerarPin = (rut) =>
+  http.post(`/admin/empleados/${encodeURIComponent(rut)}/regenerar-pin`).then(r => r.data);

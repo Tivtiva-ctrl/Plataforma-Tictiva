@@ -242,7 +242,183 @@ app.post("/ingest/marca", (req, res) => {
     empleado: { rut: emp.rut, nombre: emp.nombre, pin: emp.codigoMarcacion },
     marca: { fecha: f, hora: h, tipo, estado, metodo, ip }
   });
+});// ========================= BODEGA & EPP (ENDPOINTS NUEVOS) =========================
+
+// Datos en memoria (puedes persistir en DB después)
+let inventario = [
+  { sku: "EPP-001", desc: "Casco Blanco", categoria: "EPP", instalacion: "Planta Norte", stock: 45, min: 20, max: 100, estado: "OK",      ubic: "A-01-15" },
+  { sku: "EPP-015", desc: "Zapatos Seguridad T42", categoria: "EPP", instalacion: "Bodega Central", stock: 3,  min: 10, max: 50,  estado: "Crítico", ubic: "B-03-08" },
+  { sku: "EPP-008", desc: "Guantes Nitrilo", categoria: "EPP", instalacion: "Planta Sur",   stock: 8,  min: 15, max: 80,  estado: "Bajo",    ubic: "A-02-12" },
+  { sku: "EPP-030", desc: "Lentes de Seguridad", categoria: "EPP", instalacion: "Planta Norte", stock: 16, min: 5, max: 60, estado: "OK",  ubic: "A-05-02" },
+];
+
+const precios = new Map([
+  ["EPP-001", 45000],
+  ["EPP-008", 12500],
+  ["EPP-015", 85000],
+  ["EPP-030", 28000],
+]);
+
+// Asignaciones por RUT (mock)
+let asignacionesPorRut = {
+  [normalizarRut("12.345.678-9")]: [
+    { sku: "EPP-001", desc: "Casco Blanco",        talla: "U",  entregado: "2025-03-15", vence: "2026-03-15", vida: 75, estado: "Activo" },
+    { sku: "EPP-008", desc: "Guantes Nitrilo",     talla: "L",  entregado: "2025-02-01", vence: "2025-08-01", vida: 20, estado: "Por vencer" },
+    { sku: "EPP-015", desc: "Zapatos Seguridad",   talla: "42", entregado: "2024-06-15", vence: "2025-02-15", vida: 0,  estado: "Vencido" },
+    { sku: "EPP-030", desc: "Lentes de Seguridad", talla: "U",  entregado: "2025-01-10", vence: "2026-01-10", vida: 90, estado: "Activo" },
+  ],
+};
+
+function normalizaEstado(s=""){
+  return s.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+
+// ---------- INVENTARIO ----------
+
+// GET /bodega/inventario?instalacion=&categoria=&estado=&q=
+app.get("/bodega/inventario", (req, res) => {
+  const { instalacion, categoria, estado, q } = req.query || {};
+  let out = inventario.slice();
+
+  if (q) {
+    const x = q.toString().toLowerCase();
+    out = out.filter(i => `${i.sku} ${i.desc} ${i.instalacion}`.toLowerCase().includes(x));
+  }
+  if (instalacion && instalacion !== "Todas las instalaciones") {
+    out = out.filter(i => i.instalacion === instalacion);
+  }
+  if (categoria && categoria !== "Todas las categorías") {
+    out = out.filter(i => i.categoria === categoria);
+  }
+  if (estado && estado !== "Todos los estados") {
+    out = out.filter(i => normalizaEstado(i.estado) === normalizaEstado(estado));
+  }
+  res.json(out);
 });
+
+// GET /bodega/items/:sku  (detalle de item)
+app.get("/bodega/items/:sku", (req, res) => {
+  const sku = req.params.sku;
+  const item = inventario.find(i => i.sku === sku);
+  if (!item) return res.status(404).json({ error: "Item no encontrado" });
+  res.json(item);
+});
+
+// PUT /bodega/items/:sku  (editar item)
+app.put("/bodega/items/:sku", (req, res) => {
+  const sku = req.params.sku;
+  const idx = inventario.findIndex(i => i.sku === sku);
+  if (idx === -1) return res.status(404).json({ error: "Item no encontrado" });
+
+  // merge superficial, validando numéricos
+  const body = req.body || {};
+  const parseNum = (v, def=0) => Number.isFinite(Number(v)) ? Number(v) : def;
+
+  inventario[idx] = {
+    ...inventario[idx],
+    ...(body.desc !== undefined ? { desc: body.desc } : {}),
+    ...(body.categoria !== undefined ? { categoria: body.categoria } : {}),
+    ...(body.instalacion !== undefined ? { instalacion: body.instalacion } : {}),
+    ...(body.ubic !== undefined ? { ubic: body.ubic } : {}),
+    ...(body.estado !== undefined ? { estado: body.estado } : {}),
+    ...(body.stock !== undefined ? { stock: parseNum(body.stock, inventario[idx].stock) } : {}),
+    ...(body.min !== undefined ? { min: parseNum(body.min, inventario[idx].min) } : {}),
+    ...(body.max !== undefined ? { max: parseNum(body.max, inventario[idx].max) } : {}),
+  };
+  res.json(inventario[idx]);
+});
+
+// GET /bodega/items/:sku/qr  (simula URL QR)
+app.get("/bodega/items/:sku/qr", (req, res) => {
+  const sku = req.params.sku;
+  const item = inventario.find(i => i.sku === sku);
+  if (!item) return res.status(404).json({ error: "Item no encontrado" });
+  res.json({ url: `https://tictiva.com/qr/${encodeURIComponent(sku)}` });
+});
+
+// ---------- COLABORADORES ----------
+
+// GET /bodega/colaboradores/:rut  → ficha + asignaciones + costo total
+app.get("/bodega/colaboradores/:rut", (req, res) => {
+  const rutN = normalizarRut(req.params.rut);
+  // Busca en tu arreglo empleados (ya existente arriba en tu server)
+  const emp = empleados.find(e => normalizarRut(e.rut) === rutN);
+  if (!emp) return res.status(404).json({ error: "Colaborador no encontrado" });
+
+  const asign = asignacionesPorRut[rutN] || [];
+  const total = asign.reduce((s,a)=> s + (precios.get(a.sku) || 0), 0);
+
+  res.json({
+    colaborador: { rut: emp.rut, nombre: emp.nombre, cargo: emp.cargo, id: emp.codigoMarcacion || "" },
+    asignaciones: asign,
+    costoTotal: total,
+  });
+});
+
+// POST /bodega/colaboradores/:rut/entregar
+// body: { sku, talla? }
+app.post("/bodega/colaboradores/:rut/entregar", (req, res) => {
+  const rutN = normalizarRut(req.params.rut);
+  const emp = empleados.find(e => normalizarRut(e.rut) === rutN);
+  if (!emp) return res.status(404).json({ error: "Colaborador no encontrado" });
+
+  const { sku, talla = "U" } = req.body || {};
+  if (!sku) return res.status(422).json({ error: "sku es obligatorio" });
+
+  const item = inventario.find(i => i.sku === sku);
+  if (!item) return res.status(404).json({ error: "SKU no existe en inventario" });
+
+  // Reglas simples de ejemplo:
+  const hoy = new Date();
+  const entregado = hoy.toISOString().slice(0,10);
+  const vence = new Date(hoy); vence.setFullYear(vence.getFullYear() + 1);
+  const vida = 100;
+
+  const nueva = {
+    sku,
+    desc: item.desc,
+    talla,
+    entregado,
+    vence: vence.toISOString().slice(0,10),
+    vida,
+    estado: "Activo",
+  };
+
+  if (!asignacionesPorRut[rutN]) asignacionesPorRut[rutN] = [];
+  asignacionesPorRut[rutN].unshift(nueva);
+
+  // (opcional) descuenta stock si quieres:
+  // item.stock = Math.max(0, item.stock - 1);
+
+  const total = asignacionesPorRut[rutN].reduce((s,a)=> s + (precios.get(a.sku) || 0), 0);
+  res.status(201).json({
+    ok: true,
+    colaborador: { rut: emp.rut, nombre: emp.nombre },
+    asignaciones: asignacionesPorRut[rutN],
+    costoTotal: total
+  });
+});
+
+// POST /bodega/colaboradores/:rut/baja
+// body: { sku, motivo? }
+app.post("/bodega/colaboradores/:rut/baja", (req, res) => {
+  const rutN = normalizarRut(req.params.rut);
+  const emp = empleados.find(e => normalizarRut(e.rut) === rutN);
+  if (!emp) return res.status(404).json({ error: "Colaborador no encontrado" });
+
+  const { sku, motivo = "Baja" } = req.body || {};
+  if (!sku) return res.status(422).json({ error: "sku es obligatorio" });
+
+  const asign = asignacionesPorRut[rutN] || [];
+  const idx = asign.findIndex(a => a.sku === sku && normalizaEstado(a.estado) !== "vencido");
+  if (idx === -1) return res.status(404).json({ error: "Asignación no encontrada o ya vencida" });
+
+  asign[idx] = { ...asign[idx], estado: "Vencido", vida: 0, motivoBaja: motivo };
+
+  const total = asign.reduce((s,a)=> s + (precios.get(a.sku) || 0), 0);
+  res.json({ ok: true, asignaciones: asign, costoTotal: total });
+});
+
 
 app.listen(3000, '0.0.0.0', () => console.log("API en http://<TU_IP>:3000"));
 
