@@ -1,18 +1,32 @@
 // src/api/index.js
-// Capa API centralizada con fallback automático a /public/data/db.json.
-// En producción (no localhost) NO llama al 127.0.0.1:3001.
+// Capa API centralizada con fallback a /public/data/db.json
+// En producción se IGNORA cualquier VITE_API_URL que apunte a localhost/127.0.0.1
 
-const isLocalHost =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const host =
+  typeof window !== "undefined" ? window.location.hostname : "localhost";
+
+const isLocalHost = ["localhost", "127.0.0.1"].includes(host);
 
 const VITE_API = (import.meta.env.VITE_API_URL || "").trim();
-// En dev usa json-server local si no hay VITE_API; en prod no usa localhost.
-const BASE = VITE_API || (isLocalHost ? "http://127.0.0.1:3001" : "");
+const isViteApiLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(
+  VITE_API
+);
+
+// Si estoy en dev → uso VITE_API o json-server local.
+// Si estoy en prod → solo uso VITE_API si NO es localhost.
+const BASE = isLocalHost
+  ? (VITE_API || "http://127.0.0.1:3001")
+  : (isViteApiLocal ? "" : VITE_API);
+
+// Debug solo en dev
+if (import.meta.env.DEV) {
+  // eslint-disable-next-line no-console
+  console.log("[API] host:", host, "VITE_API:", VITE_API, "BASE usado:", BASE || "(fallback)");
+}
 
 // ---------- helpers ----------
 const apiGet = async (path) => {
-  if (!BASE) return null; // en prod sin VITE_API: saltamos API
+  if (!BASE) return null; // en prod sin API válida: no llamamos a red
   const url = `${BASE.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
   try {
     const r = await fetch(url, { cache: "no-store" });
@@ -48,25 +62,29 @@ const labelEstado = (e = "") => {
 };
 
 const parseHorario = (hor) => {
-  if (!hor) return [ "", "" ];
-  const parts = String(hor).split(/[-–—]| a /i).map(s => s.trim());
-  return [ parts[0] || "", parts[1] || "" ];
+  if (!hor) return ["", ""];
+  const parts = String(hor)
+    .split(/[-–—]| a /i)
+    .map((s) => s.trim());
+  return [parts[0] || "", parts[1] || ""];
 };
 
 const computeSlaHoras = (fechaISO, horaHHMM) => {
   try {
     const end = new Date(`${fechaISO}T${(horaHHMM || "23:59")}:00`);
     return Math.round((end.getTime() - Date.now()) / (1000 * 60 * 60));
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 };
 
 const normalizePermiso = (x = {}) => {
   const fechaInicio = x.fechaInicio || x.desde || x.fechas || "";
-  const fechaFin    = x.fechaFin    || x.hasta || x.fechas || "";
+  const fechaFin = x.fechaFin || x.hasta || x.fechas || "";
   const [hIniFromHorario, hFinFromHorario] = parseHorario(x.horario);
   const horaInicio = x.horaInicio || x.hora_ini || x.horaDesde || hIniFromHorario || "";
-  const horaFin    = x.horaFin    || x.hora_fin || x.horaHasta || hFinFromHorario || "";
-  const slaHoras   = Number.isFinite(x.slaHoras) ? x.slaHoras : computeSlaHoras(fechaFin, horaFin);
+  const horaFin = x.horaFin || x.hora_fin || x.horaHasta || hFinFromHorario || "";
+  const slaHoras = Number.isFinite(x.slaHoras) ? x.slaHoras : computeSlaHoras(fechaFin, horaFin);
 
   return {
     id: x.id ?? `sol-${Date.now()}`,
@@ -90,7 +108,6 @@ const normalizePermiso = (x = {}) => {
 
 // ---------- APIs ----------
 export const PermisosAPI = {
-  // Lista SOLO pendientes
   async listPendientes() {
     let arr = await apiGet("permisos");
     if (!Array.isArray(arr)) {
@@ -101,7 +118,6 @@ export const PermisosAPI = {
     return arr.filter((p) => normalizeEstadoKey(p.estado) === "pendiente");
   },
 
-  // Historial (aprobados/rechazados)
   async listHistorial() {
     let arr = await apiGet("permisos_historial");
     if (!Array.isArray(arr)) {
@@ -111,7 +127,6 @@ export const PermisosAPI = {
     return arr.map(normalizePermiso);
   },
 
-  // Cambia estado de un permiso pendiente
   async patchEstado(id, estadoLabel /* "Aprobado" | "Rechazado" */) {
     if (!BASE) return { ok: true, simulated: true }; // en prod sin API: simulamos OK
     const url = `${BASE.replace(/\/$/, "")}/permisos/${encodeURIComponent(String(id))}`;
@@ -124,7 +139,6 @@ export const PermisosAPI = {
     return await r.json();
   },
 
-  // Crea un permiso manual
   async createManual(form) {
     const nuevo = {
       id: `sol-${Date.now()}`,
