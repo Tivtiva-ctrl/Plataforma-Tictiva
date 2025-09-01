@@ -4,10 +4,33 @@ import HRSubnav from "../components/HRSubnav";        // barra de submódulos RR
 import "./PermisosJustificaciones.css";
 import { PermisosAPI, EmpleadosAPI } from "../api";   // ✅ capa de API centralizada
 
+/* ───────────────── helpers visuales ──────────────── */
 const initials = (name = "") =>
   name.toString().trim().split(/\s+/).map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
-// Para el preview del SLA en el modal (la API lo calcula al crear, pero aquí lo mostramos en vivo)
+const normEstado = (e = "") => {
+  const s = String(e || "").trim().toLowerCase();
+  if (s.startsWith("aprob")) return "aprobado";
+  if (s.startsWith("rechaz")) return "rechazado";
+  if (s === "pend" || s.startsWith("pend")) return "pendiente";
+  return s || "pendiente";
+};
+const labelEstado = (e = "") => {
+  const k = normEstado(e);
+  if (k === "aprobado") return "Aprobado";
+  if (k === "rechazado") return "Rechazado";
+  return "Pendiente";
+};
+
+const getFechaInicio = (r) => r?.fechaInicio || r?.desde || "";
+const getFechaFin    = (r) => r?.fechaFin    || r?.hasta  || "";
+const getHoraIni     = (r) => r?.horaInicio  || r?.hora_ini || r?.horaDesde || "";
+const getHoraFin     = (r) => r?.horaFin     || r?.hora_fin || r?.horaHasta || "";
+const getAdjunto     = (r) => r?.adjunto || r?.adjuntoNombre || "";
+const getRut         = (r) => r?.trabajador?.rut || r?.rut || "";
+const getNombre      = (r) => r?.trabajador?.nombre || r?.nombre || "";
+
+/* Para el preview del SLA en el modal (la API lo calcula al crear, pero aquí lo mostramos en vivo) */
 function computeSlaHoras(fechaISO, horaHHMM) {
   try {
     const end = new Date(`${fechaISO}T${(horaHHMM || "23:59")}:00`);
@@ -49,20 +72,24 @@ export default function PermisosJustificaciones() {
     adjuntoNombre: ""
   });
 
-  // Cargas iniciales (desde la capa de API)
+  /* ─────────── Carga inicial (desde la capa de API) ─────────── */
   useEffect(() => {
     let cancel = false;
     (async () => {
-      const [pend, hist, emps] = await Promise.all([
-        PermisosAPI.listPendientes(),
-        PermisosAPI.listHistorial(),
-        EmpleadosAPI.list(),
-      ]);
-      if (!cancel) {
-        setPendientes(pend);
-        setHistorial(hist);
-        setEmpleados(Array.isArray(emps) ? emps : []);
-        setLoading(false);
+      setLoading(true);
+      try {
+        const [pend, hist, emps] = await Promise.all([
+          PermisosAPI.listPendientes().catch(() => []),
+          PermisosAPI.listHistorial().catch(() => []),
+          EmpleadosAPI.list().catch(() => []),
+        ]);
+        if (!cancel) {
+          setPendientes(Array.isArray(pend) ? pend : []);
+          setHistorial(Array.isArray(hist) ? hist : []);
+          setEmpleados(Array.isArray(emps) ? emps : []);
+        }
+      } finally {
+        if (!cancel) setLoading(false);
       }
     })();
     return () => { cancel = true; };
@@ -74,21 +101,20 @@ export default function PermisosJustificaciones() {
     const t = q.trim().toLowerCase();
     if (!t) return data;
     return data.filter(r =>
-      `${r?.trabajador?.nombre || ""} ${r?.trabajador?.rut || ""} ${r?.tipo || ""} ${r?.motivo || ""}`
-        .toLowerCase()
-        .includes(t)
+      `${getNombre(r)} ${getRut(r)} ${r?.tipo || ""} ${r?.motivo || ""}`.toLowerCase().includes(t)
     );
   }, [data, q]);
 
-  // KPIs sobre pendientes
+  /* ─────────── KPIs sobre pendientes ─────────── */
   const hoy = new Date().toISOString().slice(0, 10);
   const kpiPend = pendientes.length;
-  const kpiHoy = pendientes.filter(r => r.fechaFin === hoy).length;
+  const kpiHoy = pendientes.filter(r => getFechaFin(r) === hoy).length;
   const kpiAtras = pendientes.filter(r => (r.slaHoras ?? 0) < 0).length;
 
-  const slaClass = (h) => (h < 0 ? "pj-sla pj-sla--danger" : h <= 6 ? "pj-sla pj-sla--warn" : "pj-sla");
+  const slaClass = (h) =>
+    h < 0 ? "pj-sla pj-sla--danger" : h <= 6 ? "pj-sla pj-sla--warn" : "pj-sla";
 
-  // selección
+  /* ─────────── selección ─────────── */
   const toggleOne = (id) => {
     setSelected(prev => {
       const n = new Set(prev);
@@ -105,14 +131,18 @@ export default function PermisosJustificaciones() {
   };
   const clearSelection = () => setSelected(new Set());
 
-  // aprobar / rechazar (optimistic UI + API)
-  const patchEstado = async (id, estado) => {
+  /* ─────────── aprobar / rechazar (optimistic UI + API) ─────────── */
+  const patchEstado = async (id, estadoKey /* 'aprobado'|'rechazado' */) => {
     const item = pendientes.find(p => p.id === id);
     if (!item) return;
+
+    // Optimistic
     setPendientes(prev => prev.filter(p => p.id !== id));
-    setHistorial(prev => [{ ...item, estado }, ...prev]);
+    setHistorial(prev => [{ ...item, estado: labelEstado(estadoKey) }, ...prev]);
+
     try {
-      await PermisosAPI.patchEstado(id, estado === "aprobado" ? "Aprobado" : "Rechazado");
+      // La API recibe "Aprobado"/"Rechazado" (con mayúscula)
+      await PermisosAPI.patchEstado(id, labelEstado(estadoKey));
     } catch {
       // rollback
       setHistorial(prev => prev.filter(p => p.id !== id));
@@ -125,7 +155,7 @@ export default function PermisosJustificaciones() {
   const approveSelected = () => { selected.forEach(id => aprobar(id)); clearSelection(); };
   const rejectSelected = () => { selected.forEach(id => rechazar(id)); clearSelection(); };
 
-  // ===== Crear permiso manual =====
+  /* ─────────── Crear permiso manual ─────────── */
   const openCreateModal = () => {
     setForm({
       rut: "",
@@ -169,7 +199,8 @@ export default function PermisosJustificaciones() {
     }
   };
 
-  const headerChecked = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const headerChecked =
+    filtered.length > 0 && filtered.every(r => selected.has(r.id));
 
   return (
     <div className="pj-wrap">
@@ -200,7 +231,9 @@ export default function PermisosJustificaciones() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <button className="pj-btn-primary" onClick={openCreateModal}>+ Crear Permiso Manual</button>
+          <button className="pj-btn-primary" onClick={openCreateModal}>
+            + Crear Permiso Manual
+          </button>
         </div>
       </div>
 
@@ -295,10 +328,10 @@ export default function PermisosJustificaciones() {
                   {/* Trabajador */}
                   <div className="pj-td">
                     <div className="pj-worker">
-                      <div className="pj-avatar" aria-hidden>{initials(r?.trabajador?.nombre)}</div>
+                      <div className="pj-avatar" aria-hidden>{initials(getNombre(r))}</div>
                       <div>
-                        <div className="pj-worker-name">{r?.trabajador?.nombre}</div>
-                        <div className="pj-worker-rut">{r?.trabajador?.rut}</div>
+                        <div className="pj-worker-name">{getNombre(r) || "—"}</div>
+                        <div className="pj-worker-rut">{getRut(r) || "—"}</div>
                       </div>
                     </div>
                   </div>
@@ -310,9 +343,9 @@ export default function PermisosJustificaciones() {
 
                   {/* Fechas */}
                   <div className="pj-td">
-                    <div className="pj-date-main">{r.fechaInicio} — {r.fechaFin}</div>
+                    <div className="pj-date-main">{getFechaInicio(r)} — {getFechaFin(r)}</div>
                     <div className="pj-date-sub">
-                      {r.horaInicio || "—"}{(r.horaInicio || r.horaFin) ? " – " : ""}{r.horaFin || ""}
+                      {getHoraIni(r) || "—"}{(getHoraIni(r) || getHoraFin(r)) ? " – " : ""}{getHoraFin(r) || ""}
                       <span className="pj-muted"> · Jornada completa</span>
                     </div>
                   </div>
@@ -322,7 +355,9 @@ export default function PermisosJustificaciones() {
 
                   {/* Adjuntos */}
                   <div className="pj-td">
-                    {r.adjunto ? <a className="pj-link" href="#" onClick={(e)=>e.preventDefault()}>{r.adjunto}</a> : <span className="pj-muted">—</span>}
+                    {getAdjunto(r)
+                      ? <a className="pj-link" href="#" onClick={(e)=>e.preventDefault()}>{getAdjunto(r)}</a>
+                      : <span className="pj-muted">—</span>}
                   </div>
 
                   {tab === "gestionar" ? (
@@ -331,7 +366,7 @@ export default function PermisosJustificaciones() {
                       <div className="pj-td">
                         <span className={slaCls}>
                           <span className="pj-dot" />
-                          {Math.abs(r.slaHoras)}h {r.slaHoras < 0 ? "vencido" : "restantes"}
+                          {Math.abs(r.slaHoras ?? 0)}h {(r.slaHoras ?? 0) < 0 ? "vencido" : "restantes"}
                         </span>
                       </div>
 
@@ -345,7 +380,7 @@ export default function PermisosJustificaciones() {
                   ) : (
                     <>
                       <div className="pj-td">
-                        <span className={`pj-badge pj-badge--${r.estado}`}>{r.estado}</span>
+                        <span className={`pj-badge pj-badge--${normEstado(r.estado)}`}>{labelEstado(r.estado)}</span>
                       </div>
                       <div className="pj-td">{r.resueltoPor || <span className="pj-muted">—</span>}</div>
                     </>
@@ -375,19 +410,19 @@ export default function PermisosJustificaciones() {
           <div className="pj-backdrop" onClick={() => setPanelItem(null)} />
           <aside className="pj-panel" role="dialog" aria-modal="true">
             <div className="pj-panel-head">
-              <strong>Solicitud de {panelItem.trabajador?.nombre}</strong>
+              <strong>Solicitud de {getNombre(panelItem) || "—"}</strong>
               <button className="pj-x" onClick={() => setPanelItem(null)}>✕</button>
             </div>
             <div className="pj-panel-body">
               <div className="pj-block">
                 <div className="pj-block-title">Resumen</div>
-                <div className="pj-kv"><span>Tipo</span><span>{panelItem.tipo}</span></div>
-                <div className="pj-kv"><span>Fechas</span><span>{panelItem.fechaInicio} — {panelItem.fechaFin}</span></div>
-                <div className="pj-kv"><span>Horario</span><span>{panelItem.horaInicio || "—"}{(panelItem.horaInicio || panelItem.horaFin) ? " – " : ""}{panelItem.horaFin || ""}</span></div>
+                <div className="pj-kv"><span>Tipo</span><span>{panelItem.tipo || "—"}</span></div>
+                <div className="pj-kv"><span>Fechas</span><span>{getFechaInicio(panelItem)} — {getFechaFin(panelItem)}</span></div>
+                <div className="pj-kv"><span>Horario</span><span>{getHoraIni(panelItem) || "—"}{(getHoraIni(panelItem) || getHoraFin(panelItem)) ? " – " : ""}{getHoraFin(panelItem) || ""}</span></div>
                 <div className="pj-kv"><span>Motivo</span><span>{panelItem.motivo || "—"}</span></div>
-                <div className="pj-kv"><span>Adjunto</span><span>{panelItem.adjunto || "—"}</span></div>
-                <div className="pj-kv"><span>Estado</span><span className={`pj-badge pj-badge--${panelItem.estado}`}>{panelItem.estado}</span></div>
-                <div className="pj-kv"><span>SLA</span><span className={slaClass(panelItem.slaHoras)}><span className="pj-dot" />{Math.abs(panelItem.slaHoras)}h {panelItem.slaHoras < 0 ? "vencido" : "restantes"}</span></div>
+                <div className="pj-kv"><span>Adjunto</span><span>{getAdjunto(panelItem) || "—"}</span></div>
+                <div className="pj-kv"><span>Estado</span><span className={`pj-badge pj-badge--${normEstado(panelItem.estado)}`}>{labelEstado(panelItem.estado)}</span></div>
+                <div className="pj-kv"><span>SLA</span><span className={slaClass(panelItem.slaHoras ?? 0)}><span className="pj-dot" />{Math.abs(panelItem.slaHoras ?? 0)}h {(panelItem.slaHoras ?? 0) < 0 ? "vencido" : "restantes"}</span></div>
               </div>
 
               {(panelItem.resueltoPor || panelItem.fechaRevision) && (
@@ -400,7 +435,7 @@ export default function PermisosJustificaciones() {
             </div>
             <div className="pj-panel-foot">
               <button className="pj-btn-ghost" onClick={() => setPanelItem(null)}>Cerrar</button>
-              {panelItem.estado === "pendiente" && (
+              {normEstado(panelItem.estado) === "pendiente" && (
                 <>
                   <button className="pj-btn-success" onClick={() => { aprobar(panelItem.id); setPanelItem(null); }}>Aprobar</button>
                   <button className="pj-btn-danger" onClick={() => { rechazar(panelItem.id); setPanelItem(null); }}>Rechazar</button>
