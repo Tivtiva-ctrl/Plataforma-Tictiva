@@ -17,6 +17,8 @@ import HojaDeVida from "../components/HojaDeVida";
 const normalizeRut = (r) =>
   (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
 
+const normId = (v) => String(v ?? "").trim();
+
 /* ===========================
    Tab: Asistencia (resumen)
    =========================== */
@@ -167,12 +169,7 @@ export default function EmpleadoDetalle() {
   const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
   const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
 
-  // 4) DEBUG (ya con todo declarado)
-  // eslint-disable-next-line no-console
-  console.log("[ED] PARAMS", { params, rawParam, idParam, rutParam });
-  // eslint-disable-next-line no-console
-  console.log("[ED] ENV", { API, RESOURCE });
-
+  // Estados
   const [empleado, setEmpleado] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [tabActiva, setTabActiva] = useState("personales");
@@ -197,107 +194,112 @@ export default function EmpleadoDetalle() {
     if (map[wanted]) setTabActiva(map[wanted]);
   }, [location]);
 
-  // Si NO hay parámetro en la URL, no intentamos fetchear y avisamos elegante
-  if (!hasParam) {
-    return (
-      <div className="detalle-container">
-        <VolverAtras />
-        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
-          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
-        </div>
-      </div>
-    );
-  }
-
-  // Carga del empleado por id O por rut
+  // Carga del empleado por id O por rut (API → fallback /data/db.json)
   useEffect(() => {
+    if (!hasParam) {
+      // No hay parámetro; evitamos llamar a la API en esta renderización
+      setNotFound(true);
+      return;
+    }
+
     let cancel = false;
+
+    const buscarEnArray = (arr) => {
+      if (!Array.isArray(arr)) return null;
+      // Prioriza ID si viene
+      if (idParam != null) {
+        const nid = normId(idParam);
+        const byId = arr.find((e) => normId(e?.id) === nid);
+        if (byId) return byId;
+      }
+      if (rutParam != null) {
+        const nr = normalizeRut(rutParam);
+        const byRut =
+          arr.find((e) => normalizeRut(e?.rut || "") === nr) ||
+          arr.find((e) => normalizeRut(e?.RUT || "") === nr);
+        if (byRut) return byRut;
+      }
+      // Último intento: param usado como id string en el array
+      const raw = normId(rawParam);
+      return arr.find((e) => normId(e?.id) === raw) || null;
+    };
 
     const fetchEmpleado = async () => {
       setNotFound(false);
+      let emp = null;
 
-      // Intento por ID directo (/empleados/:id)
-      if (idParam) {
-        try {
-          const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
+      // -------- 1) API real
+      try {
+        // a) /empleados/:id
+        if (!emp && idParam != null) {
+          const r = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}/${encodeURIComponent(String(idParam))}`, { cache: "no-store" });
           if (r.ok) {
-            const emp = await r.json();
-            if (emp && !cancel && (emp.id != null || emp.nombre)) {
-              setEmpleado(emp);
-              return;
-            }
+            const j = await r.json();
+            if (j && (j.id != null || j.nombre)) emp = j;
           }
-        } catch {
-          /* noop */
         }
-      }
-
-      // Intentos por RUT (query)
-      if (rutParam) {
-        const normRut = normalizeRut(rutParam);
-        const urls = [
-          `${API}/${RESOURCE}?rut=${encodeURIComponent(rutParam)}`,
-          `${API}/${RESOURCE}?rut_like=${encodeURIComponent(rutParam)}`,
-          `${API}/${RESOURCE}?rut=${encodeURIComponent(normRut)}`,
-          `${API}/${RESOURCE}?rut_like=${encodeURIComponent(normRut)}`,
-        ];
-        for (const url of urls) {
-          try {
-            const r = await fetch(url);
+        // b) /empleados?rut=...
+        if (!emp && rutParam != null) {
+          const nr = normalizeRut(rutParam);
+          const urls = [
+            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(String(rutParam))}`,
+            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(String(rutParam))}`,
+            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(nr)}`,
+            `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(nr)}`,
+          ];
+          for (const url of urls) {
+            const r = await fetch(url, { cache: "no-store" });
             if (!r.ok) continue;
-            const data = await r.json();
-            const emp = Array.isArray(data) ? data[0] : data;
-            if (emp && !cancel) {
-              setEmpleado(emp);
-              return;
-            }
-          } catch {
-            /* noop */
+            const j = await r.json();
+            if (Array.isArray(j) && j.length) { emp = j[0]; break; }
+            if (!Array.isArray(j) && j && Object.keys(j).length) { emp = j; break; }
           }
-        }
-
-        // Fallback: traer todo y filtrar por RUT normalizado
-        try {
-          const rAll = await fetch(`${API}/${RESOURCE}`);
-          if (rAll.ok) {
-            const arr = await rAll.json();
-            const found = (Array.isArray(arr) ? arr : []).find(
-              (e) => normalizeRut(e?.rut) === normRut
-            );
-            if (found && !cancel) {
-              setEmpleado(found);
-              return;
+          // c) traer todo y filtrar por RUT/ID
+          if (!emp) {
+            const rAll = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}`, { cache: "no-store" });
+            if (rAll.ok) {
+              const arr = await rAll.json();
+              emp = buscarEnArray(arr);
             }
           }
-        } catch {
-          /* noop */
         }
-      }
-
-      // Último intento: query por id cuando vino como string
-      if (!idParam && rawParam) {
-        try {
-          const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
+        // d) último intento por id como query
+        if (!emp && !idParam && rawParam) {
+          const r = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}?id=${encodeURIComponent(String(rawParam))}`, { cache: "no-store" });
           if (r.ok) {
             const arr = await r.json();
-            if (Array.isArray(arr) && arr.length > 0 && !cancel) {
-              setEmpleado(arr[0]);
-              return;
-            }
+            if (Array.isArray(arr) && arr.length) emp = arr[0];
+          }
+        }
+      } catch {
+        // Silenciar; probaremos fallback
+      }
+
+      // -------- 2) Fallback estático /public/data/db.json
+      if (!emp) {
+        try {
+          const r2 = await fetch("/data/db.json", { cache: "no-store" });
+          if (r2.ok) {
+            const j2 = await r2.json();
+            emp = buscarEnArray(j2?.empleados || j2 || []);
           }
         } catch {
           /* noop */
         }
       }
 
-      if (!cancel) setNotFound(true);
+      if (!cancel) {
+        if (emp) {
+          setEmpleado(emp);
+        } else {
+          setNotFound(true);
+        }
+      }
     };
 
     fetchEmpleado();
-    return () => {
-      cancel = true;
-    };
-  }, [rutParam, idParam, rawParam, API, RESOURCE]);
+    return () => { cancel = true; };
+  }, [hasParam, rutParam, idParam, rawParam, API, RESOURCE]);
 
   const handleChange = (campo, valor) => {
     setEmpleado((prev) => ({ ...prev, [campo]: valor }));
@@ -307,7 +309,7 @@ export default function EmpleadoDetalle() {
     if (!empleado) return;
     try {
       const id = empleado.id ?? encodeURIComponent(empleado.rut);
-      const url = `${API}/${RESOURCE}/${id}`;
+      const url = `${String(API).replace(/\/$/, "")}/${RESOURCE}/${id}`;
       await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -320,6 +322,27 @@ export default function EmpleadoDetalle() {
       alert("Error al guardar cambios");
     }
   };
+
+  // Helper para actualizar hash al cambiar de tab (opcional)
+  const selectTab = (tab) => {
+    setTabActiva(tab);
+    try {
+      const newUrl = `${location.pathname}#${tab}`;
+      window.history.replaceState(null, "", newUrl);
+    } catch {}
+  };
+
+  // Renders (sin hooks condicionales)
+  if (!hasParam) {
+    return (
+      <div className="detalle-container">
+        <VolverAtras />
+        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
+          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
+        </div>
+      </div>
+    );
+  }
 
   if (notFound) {
     return (
@@ -348,15 +371,6 @@ export default function EmpleadoDetalle() {
       .join("")
       .substring(0, 2)
       .toUpperCase() || "";
-
-  // Helper para actualizar hash al cambiar de tab (opcional)
-  const selectTab = (tab) => {
-    setTabActiva(tab);
-    try {
-      const newUrl = `${location.pathname}#${tab}`;
-      window.history.replaceState(null, "", newUrl);
-    } catch {}
-  };
 
   return (
     <div className="detalle-container">
