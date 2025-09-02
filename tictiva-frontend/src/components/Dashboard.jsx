@@ -25,19 +25,18 @@ export default function Dashboard() {
           </p>
         </header>
 
-        {/* Tip con lamparita (💡 se mantiene) */}
+        {/* Tip con lamparita */}
         <section className="tip-card" aria-label="Tip de VictorIA">
           <div className="tip-ico" aria-hidden>💡</div>
           <div>
             <div className="tip-title">Tip de VictorIA</div>
             <div className="tip-text">
-              ¡Es fin de mes! Es un buen momento para revisar los permisos
-              pendientes y la Validación DT en Recursos Humanos.
+              ¡Es un buen momento para revisar <b>Permisos</b> y la <b>Validación DT</b> en RR.HH.!
             </div>
           </div>
         </section>
 
-        {/* Módulos principales */}
+        {/* Módulos principales (como la 2ª imagen) */}
         <div className="modules-grid">
           {/* Recursos Humanos */}
           <section className="module accent-blue">
@@ -51,9 +50,12 @@ export default function Dashboard() {
             <nav className="module-links">
               <Link to={ROUTES.listadoFichas} style={linkStyle}>📅 Listado y Fichas</Link>
               <Link to={ROUTES.rrhhPermisos} style={linkStyle}>📋 Permisos y Justificaciones</Link>
-              <Link to={ROUTES.rrhhValidacionDT} style={linkStyle}>✅ Validación DT</Link>
-              <Link to={ROUTES.rrhhDocumentos} style={linkStyle}>📁 Repositorio Documental</Link>
-              <Link to={ROUTES.rrhhBodegaInventario} style={linkStyle}>📦 Bodega y EPP</Link>
+              <Link
+                to={ROUTES?.rrhhBodegaInventario || "/rrhh/bodega"}
+                style={linkStyle}
+              >
+                📦 Bodega y EPP
+              </Link>
             </nav>
           </section>
 
@@ -67,63 +69,17 @@ export default function Dashboard() {
               Control de horarios, marcas y gestión de turnos.
             </p>
             <nav className="module-links">
-              <Link to={ROUTES.asistenciaSupervision} style={linkStyle}>🔎 Supervisión Integral</Link>
               <Link to={ROUTES.asistenciaMarcas} style={linkStyle}>✅ Marcas Registradas</Link>
               <Link to={ROUTES.asistenciaMapa} style={linkStyle}>📍 Mapa de Cobertura</Link>
-              <Link to={ROUTES.asistenciaDispositivos ?? ROUTES.asistenciaGestionDispositivos} style={linkStyle}>📟 Gestión de Dispositivos</Link>
-              <Link to={"/asistencia/turnos"} style={linkStyle}>📅 Gestión de Turnos y Jornadas</Link>
+              <Link to={ROUTES.asistenciaGestionTurnos} style={linkStyle}>📅 Gestión de Turnos</Link>
             </nav>
-          </section>
-
-          {/* Comunicaciones (placeholder) */}
-          <section className="module accent-purple">
-            <div className="module-head">
-              <div className="module-ico" aria-hidden>💬</div>
-              <div className="module-title">Comunicaciones</div>
-            </div>
-            <p className="module-desc">
-              Mensajería, encuestas y comunicados para tu equipo.
-            </p>
-            <div className="module-links">
-              <span className="mod-link-disabled">✉️ Enviar mensaje</span>
-              <span className="mod-link-disabled">📝 Plantillas</span>
-              <span className="mod-link-disabled">⭐ Encuestas</span>
-            </div>
-          </section>
-
-          {/* Reportes (placeholder) */}
-          <section className="module accent-pink">
-            <div className="module-head">
-              <div className="module-ico" aria-hidden>📊</div>
-              <div className="module-title">Reportes</div>
-            </div>
-            <p className="module-desc">Informes gerenciales y análisis de datos.</p>
-            <div className="module-links">
-              <span className="mod-link-disabled">📄 Informes Gerenciales</span>
-              <span className="mod-link-disabled">📈 Dashboards</span>
-              <span className="mod-link-disabled">📁 Documentos</span>
-            </div>
-          </section>
-
-          {/* Tictiva Cuida (placeholder) */}
-          <section className="module accent-yellow">
-            <div className="module-head">
-              <div className="module-ico" aria-hidden>🧠</div>
-              <div className="module-title">Tictiva Cuida</div>
-            </div>
-            <p className="module-desc">Bienestar psicoemocional y salud organizacional.</p>
-            <div className="module-links">
-              <span className="mod-link-disabled">🧑‍⚕️ Test Psicológicos</span>
-              <span className="mod-link-disabled">📊 Dashboard de Bienestar</span>
-              <span className="mod-link-disabled">🤖 VictorIA</span>
-            </div>
           </section>
         </div>
       </div>
 
-      {/* Estilos locales del dashboard */}
+      {/* Estilos locales del dashboard (look & feel 2ª imagen) */}
       <style>{`
-        .home-wrap{max-width:1150px;margin:0 auto;padding:24px}
+        .home-wrap{max-width:1100px;margin:0 auto;padding:24px}
         .home-header{margin-bottom:12px}
         .home-title{font-size:42px;line-height:1.1;margin:0 0 6px;font-weight:800;color:#0f172a}
         .home-quote{margin:0;color:#64748b;font-size:16px}
@@ -142,18 +98,13 @@ export default function Dashboard() {
         .module:before{content:"";position:absolute;left:14px;right:14px;top:-2px;height:8px;border-radius:999px}
         .accent-blue:before{background:#3b82f6}
         .accent-green:before{background:#10b981}
-        .accent-purple:before{background:#8b5cf6}
-        .accent-pink:before{background:#ec4899}
-        .accent-yellow:before{background:#f59e0b}
 
         .module-head{display:flex;align-items:center;gap:12px;margin-top:2px}
         .module-ico{font-size:22px;background:#f1f5f9;border:1px solid #e5e7eb;border-radius:14px;padding:10px 12px}
         .module-title{font-size:24px;font-weight:800;color:#0f172a}
         .module-desc{margin:8px 0 10px;color:#6b7280}
 
-        .module-links{display:grid;gap:8px}
-        .mod-link-disabled{color:#9ca3af;cursor:not-allowed;display:inline-block;padding:2px 0}
-
+        .module-links{display:grid;gap:10px}
       `}</style>
     </div>
   );
