@@ -1,10 +1,10 @@
 // src/pages/ListadoFichas.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HRSubnav from "../components/HRSubnav";
 import "./ListadoFichas.css";
 import CrearEmpleadoModal from "../components/CrearEmpleadoModal"; // (no se usa, se deja para no tocar importaciones)
-import { EmpleadosAPI } from "../api"; // ✅ usar capa API centralizada
+import { EmpleadosAPI } from "../api"; // ✅ usar capa API (persiste: API real o localStorage)
 
 const initials = (name = "") =>
   name.toString().split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -93,6 +93,62 @@ const tieneDiscapacidad = (e) => {
   return !!v;
 };
 
+/* ───────────── CSV / JSON (Carga Masiva) ───────────── */
+const lowerKeys = (obj={}) => {
+  const out = {};
+  for (const [k,v] of Object.entries(obj)) out[_rmAccents(String(k).toLowerCase())]=v;
+  return out;
+};
+
+function splitRow(row, delimiter) {
+  const out = [];
+  let cur = "";
+  let inQ = false;
+  for (let i=0;i<row.length;i++){
+    const ch = row[i];
+    if (ch === '"') {
+      if (inQ && row[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (!inQ && ch === delimiter) {
+      out.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out.map(s=>s.trim());
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim()!=="");
+  if (lines.length === 0) return [];
+  // Detecta delimitador por heurística
+  const dCandidates = [",",";","\t"];
+  let delimiter = ",";
+  let best = -1;
+  for (const d of dCandidates) {
+    const c = splitRow(lines[0], d).length;
+    if (c > best) { best = c; delimiter = d; }
+  }
+  const headers = splitRow(lines[0], delimiter).map(h => _rmAccents(h).toLowerCase());
+  const rows = [];
+  for (let i=1;i<lines.length;i++){
+    const cols = splitRow(lines[i], delimiter);
+    const obj = {};
+    headers.forEach((h,idx)=> obj[h] = cols[idx] ?? "");
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function normalizeEstadoTxt(s="") {
+  const t = _rmAccents(s).toLowerCase().trim();
+  if (t.startsWith("inac")) return "Inactivo";
+  return "Activo";
+}
+
+/* ───────────── Componente ───────────── */
 export default function ListadoFichas() {
   const navigate = useNavigate();
 
@@ -103,12 +159,15 @@ export default function ListadoFichas() {
   // Filtro por KPI activo: 'todos' | 'activos' | 'inactivos' | 'hombres' | 'mujeres' | 'discapacidad'
   const [kpiFilter, setKpiFilter] = useState("todos");
 
+  // File input (carga masiva)
+  const fileRef = useRef(null);
+
   useEffect(() => {
     let cancel = false;
     (async () => {
       setLoading(true);
       try {
-        const data = await EmpleadosAPI.list(); // ✅ usa capa API (API → /data/db.json)
+        const data = await EmpleadosAPI.list(); // ✅ usa capa API (API → /data/db.json + overlay)
         if (!cancel) setEmpleados(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error("No se pudo cargar empleados", e);
@@ -271,19 +330,8 @@ export default function ListadoFichas() {
     };
 
     try {
-      // Mantengo tu flujo original (POST a API local si estás en dev)
-      const API_ENV = (import.meta.env.VITE_API_URL || "").trim();
-      const isLocal = typeof window !== "undefined" && ["localhost","127.0.0.1"].includes(window.location.hostname);
-      const API = API_ENV || (isLocal ? "http://127.0.0.1:3001" : "");
-
-      if (API) {
-        const r = await fetch(`${API.replace(/\/$/, "")}/empleados`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(nuevo),
-        });
-        if (!r.ok) throw new Error("HTTP " + r.status);
-      }
+      // ✅ Persistente: API real o localStorage (overlay)
+      await EmpleadosAPI.create(nuevo);
 
       setEmpleados((p) => [nuevo, ...p]);
       setOpen(false);
@@ -299,6 +347,112 @@ export default function ListadoFichas() {
   // Toggle filtro KPI
   const toggleKpi = (key) => {
     setKpiFilter(prev => (prev === key ? "todos" : key));
+  };
+
+  // ===== CARGA MASIVA (CSV / JSON) =====
+  const clickCargaMasiva = () => {
+    fileRef.current?.click();
+  };
+
+  const handleBulkFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite re-seleccionar el mismo archivo luego
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      let rows = [];
+
+      if (file.name.toLowerCase().endsWith(".json")) {
+        const parsed = JSON.parse(text);
+        rows = Array.isArray(parsed) ? parsed : [];
+      } else {
+        rows = parseCSV(text);
+      }
+
+      // Mapeo flexible de columnas
+      const nuevos = rows.map((rRaw, idx) => {
+        const r = lowerKeys(rRaw);
+        const nombre = r.nombre || r["nombre completo"] || r["nombre_completo"] || "";
+        const rut = r.rut || r["rut trabajador"] || r["rut_trabajador"] || "";
+        if (!nombre || !rut) return null;
+
+        const cargo = r.cargo || "—";
+        const area = r.area || "—";
+        const estado = r.estado ? normalizeEstadoTxt(r.estado) : "Activo";
+        const genero = r.genero || "Otro";
+        const fechaIngreso = r.fechaingreso || r["fecha de ingreso"] || r["fecha_ingreso"] || new Date().toISOString().slice(0,10);
+        const correo = r.correo || "";
+        const telefono = r.telefono || "";
+        const direccion = r.direccion || "";
+        const centro = r.centro || "";
+
+        const tipoContrato = r.tipocontrato || r["tipo de contrato"] || "Indefinido";
+        const jornada = r.jornada || "Jornada Completa";
+        const sueldoBase = r.sueldobase || r["sueldo base"] || "";
+
+        const usuarioApp = r.usuarioapp || r["usuario app"] || guessUsuario(nombre, rut);
+        const pin = String(r.pin || genPin());
+
+        return {
+          id: Date.now() + idx,
+          rut: String(rut).trim(),
+          nombre: String(nombre).trim(),
+          cargo: String(cargo).trim() || "—",
+          estado,
+          fechaIngreso: String(fechaIngreso).slice(0,10),
+          area: String(area) || "—",
+          genero,
+
+          correo, telefono, direccion, centro,
+
+          marcas: [],
+          salud: { condiciones: "", accidentes: "", religion: "", indicaciones: "" },
+          contacto: { nombre: "", relacion: "", telefono: "", direccion: "" },
+          evaluacion: { comentarios: "" },
+
+          datosContractuales: {
+            tipoContrato,
+            jornada,
+            sueldoBase: sueldoBase ? Number(sueldoBase) : undefined,
+          },
+
+          credencialesApp: { usuario: usuarioApp, pin },
+
+          hojaDeVida: {
+            experiencias: [],
+            educacion: [],
+            certificaciones: [],
+            habilidades: [],
+            idiomas: [],
+            observaciones: "",
+          },
+        };
+      }).filter(Boolean);
+
+      if (!nuevos.length) {
+        alert("No se encontraron filas válidas (requiere al menos columnas: nombre, rut).");
+        return;
+      }
+
+      // Persistencia: API real o overlay
+      await Promise.all(nuevos.map(n => EmpleadosAPI.create(n)));
+
+      // Merge al estado (dedupe por RUT si corresponde)
+      setEmpleados(prev => {
+        const byKey = new Map();
+        [...nuevos, ...prev].forEach(emp => {
+          const key = String(emp.rut || emp.id);
+          if (!byKey.has(key)) byKey.set(key, emp);
+        });
+        return Array.from(byKey.values());
+      });
+
+      alert(`Carga masiva realizada: ${nuevos.length} empleados agregados.`);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo procesar el archivo. Asegúrate de subir CSV o JSON válido.");
+    }
   };
 
   return (
@@ -337,9 +491,18 @@ export default function ListadoFichas() {
               width: 260,
             }}
           />
+
+          {/* 🔥 CARGA MASIVA ACTIVADA */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,.json"
+            onChange={handleBulkFile}
+            style={{ display: "none" }}
+          />
           <button
             className="btn"
-            onClick={() => alert("Carga masiva (demo)")}
+            onClick={clickCargaMasiva}
             style={{
               border: "1px solid #E5E7EB",
               background: "#fff",
@@ -348,9 +511,11 @@ export default function ListadoFichas() {
               cursor: "pointer",
             }}
             type="button"
+            title="Sube un CSV o JSON con columnas: nombre, rut, (cargo, área, estado, etc.)"
           >
             Carga Masiva
           </button>
+
           <button
             className="btn primary"
             onClick={openModal}
@@ -527,8 +692,8 @@ export default function ListadoFichas() {
               transform: "translate(-50%, -50%)",
               width: 760,
               maxWidth: "92vw",
-              maxHeight: "86vh",
-              overflow: "auto",
+              maxHeight: "86vh",            // ← scroll interno si crece
+              overflow: "auto",              // ← scroll
               background: "#fff",
               border: "1px solid #E5E7EB",
               borderRadius: 12,
