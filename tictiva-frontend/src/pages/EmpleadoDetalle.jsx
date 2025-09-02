@@ -17,7 +17,28 @@ import HojaDeVida from "../components/HojaDeVida";
 const normalizeRut = (r) =>
   (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
 
-const normId = (v) => String(v ?? "").trim();
+const mesesEs = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+];
+const fmtFechaLarga = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d)) return "—";
+  return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
+};
+const antiguedadStr = (desdeISO) => {
+  if (!desdeISO) return "";
+  const start = new Date(desdeISO);
+  const now = new Date();
+  if (isNaN(start)) return "";
+  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  const aTxt = y === 1 ? "1 año" : `${y} años`;
+  const mTxt = m === 1 ? "1 mes" : `${m} meses`;
+  return `${aTxt} y ${mTxt}`;
+};
 
 /* ===========================
    Tab: Asistencia (resumen)
@@ -149,7 +170,7 @@ function AsistenciaTab({ empleado }) {
 }
 
 /* ===========================
-   Detalle empleado
+   Detalle empleado (UI renovada)
    =========================== */
 export default function EmpleadoDetalle() {
   // Puede venir :rut o :id en la URL
@@ -165,19 +186,10 @@ export default function EmpleadoDetalle() {
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
-  // 3) ENV: en producción NO usamos localhost
-  const isLocalHost =
-    typeof window !== "undefined" &&
-    ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  const API_ENV = (import.meta.env.VITE_API_URL || "").trim();
-  const API = API_ENV || (isLocalHost ? "http://127.0.0.1:3001" : "");
+  // 3) ENV
+  const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
   const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
-  const DEBUG = import.meta.env.DEV;
 
-  DEBUG && console.log("[ED] PARAMS", { params, rawParam, idParam, rutParam });
-  DEBUG && console.log("[ED] ENV", { API, RESOURCE });
-
-  // Estados
   const [empleado, setEmpleado] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [tabActiva, setTabActiva] = useState("personales");
@@ -202,124 +214,98 @@ export default function EmpleadoDetalle() {
     if (map[wanted]) setTabActiva(map[wanted]);
   }, [location]);
 
-  // Carga del empleado por id O por rut (API → fallback /data/db.json)
+  // Si NO hay parámetro en la URL, no intentamos fetchear y avisamos elegante
+  if (!hasParam) {
+    return (
+      <div className="detalle-container">
+        <VolverAtras />
+        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
+          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
+        </div>
+      </div>
+    );
+  }
+
+  // Carga del empleado por id O por rut
   useEffect(() => {
-    if (!hasParam) {
-      setNotFound(true);
-      return;
-    }
-
     let cancel = false;
-
-    const buscarEnArray = (arr) => {
-      if (!Array.isArray(arr)) return null;
-      // Prioriza ID si viene
-      if (idParam != null) {
-        const nid = normId(idParam);
-        const byId = arr.find((e) => normId(e?.id) === nid);
-        if (byId) return byId;
-      }
-      if (rutParam != null) {
-        const nr = normalizeRut(rutParam);
-        const byRut =
-          arr.find((e) => normalizeRut(e?.rut || "") === nr) ||
-          arr.find((e) => normalizeRut(e?.RUT || "") === nr);
-        if (byRut) return byRut;
-      }
-      const raw = normId(rawParam);
-      return arr.find((e) => normId(e?.id) === raw) || null;
-    };
 
     const fetchEmpleado = async () => {
       setNotFound(false);
-      let emp = null;
 
-      // -------- 1) API real (solo si hay API configurada o estás en local)
-      if (API) {
+      // Intento por ID directo (/empleados/:id)
+      if (idParam) {
         try {
-          // a) /empleados/:id
-          if (!emp && idParam != null) {
-            const r = await fetch(
-              `${String(API).replace(/\/$/, "")}/${RESOURCE}/${encodeURIComponent(String(idParam))}`,
-              { cache: "no-store" }
-            );
-            if (r.ok) {
-              const j = await r.json();
-              if (j && (j.id != null || j.nombre)) emp = j;
+          const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
+          if (r.ok) {
+            const emp = await r.json();
+            if (emp && !cancel && (emp.id != null || emp.nombre)) {
+              setEmpleado(emp);
+              return;
             }
           }
-          // b) /empleados?rut=...
-          if (!emp && rutParam != null) {
-            const nr = normalizeRut(rutParam);
-            const urls = [
-              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(String(rutParam))}`,
-              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(String(rutParam))}`,
-              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut=${encodeURIComponent(nr)}`,
-              `${String(API).replace(/\/$/, "")}/${RESOURCE}?rut_like=${encodeURIComponent(nr)}`,
-            ];
-            for (const url of urls) {
-              const r = await fetch(url, { cache: "no-store" });
-              if (!r.ok) continue;
-              const j = await r.json();
-              if (Array.isArray(j) && j.length) { emp = j[0]; break; }
-              if (!Array.isArray(j) && j && Object.keys(j).length) { emp = j; break; }
-            }
-            if (!emp) {
-              const rAll = await fetch(`${String(API).replace(/\/$/, "")}/${RESOURCE}`, { cache: "no-store" });
-              if (rAll.ok) {
-                const arr = await rAll.json();
-                emp = buscarEnArray(arr);
-              }
-            }
-          }
-          // c) último intento por id como query
-          if (!emp && !idParam && rawParam) {
-            const r = await fetch(
-              `${String(API).replace(/\/$/, "")}/${RESOURCE}?id=${encodeURIComponent(String(rawParam))}`,
-              { cache: "no-store" }
-            );
-            if (r.ok) {
-              const arr = await r.json();
-              if (Array.isArray(arr) && arr.length) emp = arr[0];
-            }
-          }
-        } catch {
-          // Silenciar; probaremos fallback
-        }
+        } catch {/* noop */}
       }
 
-      // -------- 2) Fallback estático /public/data/db.json
-      if (!emp) {
+      // Intentos por RUT (query)
+      if (rutParam) {
+        const normRut = normalizeRut(rutParam);
+        const urls = [
+          `${API}/${RESOURCE}?rut=${encodeURIComponent(rutParam)}`,
+          `${API}/${RESOURCE}?rut_like=${encodeURIComponent(rutParam)}`,
+          `${API}/${RESOURCE}?rut=${encodeURIComponent(normRut)}`,
+          `${API}/${RESOURCE}?rut_like=${encodeURIComponent(normRut)}`,
+        ];
+        for (const url of urls) {
+          try {
+            const r = await fetch(url);
+            if (!r.ok) continue;
+            const data = await r.json();
+            const emp = Array.isArray(data) ? data[0] : data;
+            if (emp && !cancel) { setEmpleado(emp); return; }
+          } catch { /* noop */ }
+        }
+
+        // Fallback: traer todo y filtrar por RUT normalizado
         try {
-          const r2 = await fetch("/data/db.json", { cache: "no-store" });
-          if (r2.ok) {
-            const j2 = await r2.json();
-            emp = buscarEnArray(j2?.empleados || j2 || []);
+          const rAll = await fetch(`${API}/${RESOURCE}`);
+          if (rAll.ok) {
+            const arr = await rAll.json();
+            const found = (Array.isArray(arr) ? arr : []).find(
+              (e) => normalizeRut(e?.rut) === normRut
+            );
+            if (found && !cancel) { setEmpleado(found); return; }
           }
-        } catch {
-          /* noop */
-        }
+        } catch { /* noop */ }
       }
 
-      if (!cancel) {
-        if (emp) setEmpleado(emp);
-        else setNotFound(true);
+      // Último intento: query por id cuando vino como string
+      if (!idParam && rawParam) {
+        try {
+          const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
+          if (r.ok) {
+            const arr = await r.json();
+            if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); return; }
+          }
+        } catch { /* noop */ }
       }
+
+      if (!cancel) setNotFound(true);
     };
 
     fetchEmpleado();
     return () => { cancel = true; };
-  }, [hasParam, rutParam, idParam, rawParam, API, RESOURCE]);
+  }, [rutParam, idParam, rawParam, API, RESOURCE]);
 
   const handleChange = (campo, valor) => {
     setEmpleado((prev) => ({ ...prev, [campo]: valor }));
   };
 
   const guardarEmpleado = async () => {
-    if (!empleado || !API) return; // si no hay API (prod), omitimos guardar
+    if (!empleado) return;
     try {
       const id = empleado.id ?? encodeURIComponent(empleado.rut);
-      const url = `${String(API).replace(/\/$/, "")}/${RESOURCE}/${id}`;
+      const url = `${API}/${RESOURCE}/${id}`;
       await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -332,34 +318,6 @@ export default function EmpleadoDetalle() {
       alert("Error al guardar cambios");
     }
   };
-
-  const selectTab = (tab) => {
-    setTabActiva(tab);
-    try {
-      const newUrl = `${location.pathname}#${tab}`;
-      window.history.replaceState(null, "", newUrl);
-    } catch {}
-  };
-
-  if (!hasParam) {
-    return (
-      <div className="detalle-container">
-        <VolverAtras />
-        <div
-          style={{
-            padding: 16,
-            color: "#b45309",
-            background: "#fffbeb",
-            border: "1px solid #f59e0b",
-            borderRadius: 8,
-          }}
-        >
-          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o{" "}
-          <code>/rrhh/empleado/:rut</code>.
-        </div>
-      </div>
-    );
-  }
 
   if (notFound) {
     return (
@@ -389,87 +347,267 @@ export default function EmpleadoDetalle() {
       .substring(0, 2)
       .toUpperCase() || "";
 
+  const activo = (empleado.estado || "").toLowerCase() === "activo";
+
+  // Quick info (cumpleaños con 🎈)
+  const cumpleISO = empleado.fechaNacimiento || empleado.nacimiento || empleado?.personales?.fechaNacimiento;
+  const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^(\d{2}) de /, (_, d) => `${parseInt(d,10)} `) : "—";
+  const ingresoTxt = empleado.fechaIngreso ? fmtFechaLarga(empleado.fechaIngreso) : "—";
+  const antig = antiguedadStr(empleado.fechaIngreso);
+
+  // Helper para actualizar hash al cambiar de tab (opcional)
+  const selectTab = (tab) => {
+    setTabActiva(tab);
+    try {
+      const newUrl = `${location.pathname}#${tab}`;
+      window.history.replaceState(null, "", newUrl);
+    } catch {}
+  };
+
   return (
-    <div className="detalle-container">
+    <div className="ed-wrap">
       <VolverAtras />
 
-      {/* Encabezado */}
-      <div className="detalle-card-principal">
-        <div className="avatar-iniciales">{iniciales}</div>
+      {/* Encabezado grande */}
+      <div className="ed-card ed-head">
+        <div className="ed-avatar">{iniciales}</div>
 
-        <div className="detalle-info-principal">
-          <h2 className="nombre-empleado">{empleado.nombre}</h2>
-          <p className="cargo-empleado">{empleado.cargo}</p>
-
-          <div className="badges-header">
-            <span className="badge-activo">{empleado.estado}</span>
-            {empleado.fechaIngreso && (
-              <span className="badge-ingreso">Desde {empleado.fechaIngreso}</span>
-            )}
-            <span className="badge-antiguedad">2 años y 9 meses</span>
+        <div className="ed-head-main">
+          <div className="ed-name-row">
+            <h2 className="ed-name">{empleado.nombre || "—"}</h2>
+            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>{empleado.estado || "—"}</span>
           </div>
-
-          <p className="rut-subtle">RUT: {empleado.rut || "—"}</p>
+          <div className="ed-sub">{empleado.cargo || "—"}</div>
+          {empleado.fechaIngreso && (
+            <div className="ed-sub light">
+              Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}
+            </div>
+          )}
         </div>
 
         {modoEdicion ? (
-          <button className="btn-guardar" onClick={guardarEmpleado} disabled={!API}>
-            Guardar Cambios
-          </button>
+          <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
         ) : (
-          <button className="btn-editar" onClick={() => setModoEdicion(true)}>
-            Editar Ficha
-          </button>
+          <button className="ed-btn" onClick={() => setModoEdicion(true)}>Editar Ficha</button>
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="detalle-tabs">
+      {/* Tabs tipo pill */}
+      <div className="ed-tabs">
         {[
-          "personales",
-          "contractuales",
-          "documentos",
-          "prevision",
-          "bancarios",
-          "asistencia",
-          "hojaVida",
-        ].map((tab) => (
+          { id: "personales", label: "Personales" },
+          { id: "contractuales", label: "Contractuales" },
+          { id: "documentos", label: "Documentos" },
+          { id: "asistencia", label: "Asistencia" },
+          { id: "hojaVida", label: "Hoja de Vida" },
+        ].map((t) => (
           <button
-            key={tab}
-            className={tabActiva === tab ? "tab-activa" : ""}
-            onClick={() => selectTab(tab)}
+            key={t.id}
+            className={`ed-tab ${tabActiva === t.id ? "is-active" : ""}`}
+            onClick={() => selectTab(t.id)}
+            type="button"
           >
-            {tab === "hojaVida" ? "Hoja de Vida" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {t.label}
           </button>
         ))}
       </div>
 
-      {/* Contenido por pestaña */}
-      {tabActiva === "personales" && (
-        <PersonalesTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-      )}
+      {/* Grid 2 columnas: izquierda contenido, derecha sidebar */}
+      <div className="ed-grid">
+        {/* Izquierda */}
+        <div className="ed-left">
+          {tabActiva === "personales" ? (
+            <div className="ed-card">
+              <h3 className="ed-card-title">Información Personal</h3>
+              <div className="ed-kv">
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">👤 Nombre Completo:</span>
+                  <span className="ed-kv-value">{empleado.nombre || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">🪪 Cédula:</span>
+                  <span className="ed-kv-value">{empleado.rut || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">🎂 Fecha de Nacimiento:</span>
+                  <span className="ed-kv-value">{cumpleTxt}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">✉️ Email:</span>
+                  <span className="ed-kv-value">{empleado.correo || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">📞 Teléfono:</span>
+                  <span className="ed-kv-value">{empleado.telefono || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">📍 Dirección:</span>
+                  <span className="ed-kv-value">{empleado.direccion || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">❤️‍💑 Estado Civil:</span>
+                  <span className="ed-kv-value">{empleado.estadoCivil || "—"}</span>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
-      {tabActiva === "contractuales" && (
-        <ContractualesTab
-          datos={empleado.datosContractuales || {}}
-          modoEdicion={modoEdicion}
-          onChange={handleChange}
-        />
-      )}
+          {tabActiva === "contractuales" && (
+            <ContractualesTab
+              datos={empleado.datosContractuales || {}}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+            />
+          )}
+          {tabActiva === "documentos" && <DocumentosTab rut={empleado.rut} />}
+          {tabActiva === "prevision" && (
+            <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
+          )}
+          {tabActiva === "bancarios" && (
+            <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
+          )}
+          {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
+          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
+        </div>
 
-      {tabActiva === "documentos" && <DocumentosTab rut={empleado.rut} />}
+        {/* Derecha: Sidebar */}
+        <aside className="ed-right">
+          <div className="ed-card">
+            <h4 className="ed-card-title">Información Rápida</h4>
+            <ul className="ed-quick">
+              <li>
+                <span className="ed-quick-ico">🎈</span>
+                <div>
+                  <div className="ed-quick-label">Próximo cumpleaños</div>
+                  <div className="ed-quick-val">
+                    {cumpleTxt} <span aria-hidden>🎉🎈</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <span className="ed-quick-ico">⏰</span>
+                <div>
+                  <div className="ed-quick-label">Horario</div>
+                  <div className="ed-quick-val">{empleado.horario || "08:30 - 18:00"}</div>
+                </div>
+              </li>
+              <li>
+                <span className="ed-quick-ico">📌</span>
+                <div>
+                  <div className="ed-quick-label">Oficina</div>
+                  <div className="ed-quick-val">{empleado.centro || "Santiago Centro"}</div>
+                </div>
+              </li>
+            </ul>
+          </div>
 
-      {tabActiva === "prevision" && (
-        <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-      )}
+          <div className="ed-card">
+            <h4 className="ed-card-title">Rendimiento</h4>
 
-      {tabActiva === "bancarios" && (
-        <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-      )}
+            <div className="ed-metric">
+              <div className="ed-metric-row">
+                <span>Productividad</span>
+                <span className="ed-metric-num">92%</span>
+              </div>
+              <div className="ed-bar">
+                <div className="ed-bar-fill blue" style={{ width: "92%" }} />
+              </div>
+            </div>
 
-      {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
+            <div className="ed-metric">
+              <div className="ed-metric-row">
+                <span>Puntualidad</span>
+                <span className="ed-metric-num">96%</span>
+              </div>
+              <div className="ed-bar">
+                <div className="ed-bar-fill green" style={{ width: "96%" }} />
+              </div>
+            </div>
 
-      {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
+            <div className="ed-metric">
+              <div className="ed-metric-row">
+                <span>Colaboración</span>
+                <span className="ed-metric-num">88%</span>
+              </div>
+              <div className="ed-bar">
+                <div className="ed-bar-fill purple" style={{ width: "88%" }} />
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* Estilos del rediseño (aislados con prefijo .ed-) */}
+      <style>{`
+        .ed-wrap{padding:16px 16px 32px}
+        .ed-card{
+          background:#fff;
+          border:1px solid #E5E7EB;
+          border-radius:16px;
+          padding:16px;
+          box-shadow:0 4px 10px rgba(0,0,0,.04);
+        }
+        .ed-head{
+          display:flex; gap:16px; align-items:center; margin-bottom:12px;
+        }
+        .ed-avatar{
+          width:64px;height:64px;border-radius:16px;
+          background:#E0E7FF;color:#1E3A8A;font-weight:800;
+          display:flex;align-items:center;justify-content:center;font-size:22px;
+        }
+        .ed-head-main{flex:1;min-width:0}
+        .ed-name-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .ed-name{margin:0;font-size:24px;font-weight:800;color:#111827}
+        .ed-badge{
+          font-weight:700;font-size:12px;border-radius:999px;padding:6px 10px;border:1px solid transparent;
+        }
+        .ed-badge.is-ok{background:#D1FAE5;color:#065F46;border-color:#A7F3D0}
+        .ed-badge.is-warn{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
+        .ed-sub{color:#374151;margin-top:2px}
+        .ed-sub.light{color:#6B7280}
+
+        .ed-btn{
+          background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:8px 12px;cursor:pointer
+        }
+        .ed-btn.primary{background:#1A56DB;color:#fff;border-color:#1A56DB}
+
+        .ed-tabs{display:flex;gap:8px;margin:12px 0 16px;flex-wrap:wrap}
+        .ed-tab{
+          background:#fff;border:1px solid #E5E7EB;border-radius:999px;padding:8px 14px;cursor:pointer;color:#374151
+        }
+        .ed-tab.is-active{background:#EEF2FF;border-color:#C7D2FE;color:#1E3A8A;font-weight:700}
+
+        .ed-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px}
+        @media (max-width: 980px){ .ed-grid{grid-template-columns:1fr} }
+
+        .ed-left{display:grid;gap:16px}
+        .ed-right{display:grid;gap:16px}
+
+        .ed-card-title{margin:0 0 10px;font-size:18px;color:#111827;font-weight:800}
+
+        .ed-kv{display:grid}
+        .ed-kv-row{
+          display:flex;justify-content:space-between;gap:12px;padding:14px 2px;border-top:1px solid #F3F4F6;
+        }
+        .ed-kv-row:first-child{border-top:none}
+        .ed-kv-label{color:#6B7280;min-width:220px}
+        .ed-kv-value{font-weight:700;color:#111827;text-align:right}
+
+        .ed-quick{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+        .ed-quick li{display:flex;gap:10px;align-items:flex-start}
+        .ed-quick-ico{font-size:20px;line-height:1}
+        .ed-quick-label{color:#6B7280}
+        .ed-quick-val{font-weight:700;color:#111827}
+
+        .ed-metric{margin:10px 0}
+        .ed-metric-row{display:flex;justify-content:space-between;color:#374151;margin-bottom:6px}
+        .ed-metric-num{font-weight:800}
+        .ed-bar{height:8px;background:#F3F4F6;border-radius:999px;overflow:hidden}
+        .ed-bar-fill{height:100%}
+        .ed-bar-fill.blue{background:#3B82F6}
+        .ed-bar-fill.green{background:#10B981}
+        .ed-bar-fill.purple{background:#8B5CF6}
+      `}</style>
     </div>
   );
 }
