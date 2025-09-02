@@ -1,6 +1,7 @@
 import React from "react";
-// Importo BrowserRouter para que los <Link> funcionen en la vista previa
-import { BrowserRouter, Link } from "react-router-dom";
+// Quitamos Link de react-router-dom para evitar el error de contexto.
+// Usaremos etiquetas <a> estándar en su lugar.
+// import { Link } from "react-router-dom";
 
 // Asumo que tu archivo de rutas sigue una estructura similar
 const ROUTES = {
@@ -38,68 +39,66 @@ const ITurns = () => <ICalendar />;
 
 export default function Dashboard() {
   return (
-    // Es necesario envolverlo en BrowserRouter para que los <Link> funcionen en la vista previa
-    <BrowserRouter>
-      <div className="new-dashboard-container">
-        {/* Saludo */}
-        <header className="new-header">
-          <h1 className="new-title">
-            Buenas tardes, Verónica Mateo <span>👋</span>
-          </h1>
-          <p className="new-quote">
-            "Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve."
-          </p>
-        </header>
+    <div className="new-dashboard-container">
+      {/* Saludo */}
+      <header className="new-header">
+        <h1 className="new-title">
+          Buenas tardes, Verónica Mateo <span>👋</span>
+        </h1>
+        <p className="new-quote">
+          "Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve."
+        </p>
+      </header>
 
-        {/* Tip de VictorIA */}
-        <section className="new-tip-card">
-          <div className="new-tip-bulb">💡</div>
-          <div>
-            <div className="new-tip-title">Tip de VictorIA</div>
-            <div className="new-tip-text">
-              ¡Es fin de mes! Revisa <b>Permisos</b> y <b>Validación DT</b> en RR.HH.
-            </div>
+      {/* Tip de VictorIA */}
+      <section className="new-tip-card">
+        <div className="new-tip-bulb">💡</div>
+        <div>
+          <div className="new-tip-title">Tip de VictorIA</div>
+          <div className="new-tip-text">
+            ¡Es fin de mes! Revisa <b>Permisos</b> y <b>Validación DT</b> en RR.HH.
+          </div>
+        </div>
+      </section>
+
+      {/* Grid de Módulos */}
+      <div className="new-grid">
+        {/* RRHH */}
+        <section className="new-card">
+          <div className="new-card-top new-bar-blue" />
+          <div className="new-card-head">
+            <IconWrap fg="#1e40af" bg="#e0e7ff"><IUsers /></IconWrap>
+            <h3 className="new-card-title">Recursos Humanos</h3>
+          </div>
+          <p className="new-card-desc">Gestiona fichas, contratos y documentación legal.</p>
+          <div className="new-links-grid">
+            <a href={ROUTES.listadoFichas} className="new-link-item"><ICalendar /><span>Listado y Fichas</span></a>
+            <a href={ROUTES.rrhhPermisos} className="new-link-item"><IClipboard /><span>Permisos y Justificaciones</span></a>
+            <a href={ROUTES.rrhhValidacionDT} className="new-link-item"><ICheck /><span>Validación DT</span></a>
+            <a href={ROUTES.rrhhDocumentos} className="new-link-item"><IClipboard /><span>Repositorio Documental</span></a>
+            <a href={ROUTES.rrhhBodegaInventario || "/rrhh/bodega"} className="new-link-item"><IBox /><span>Bodega y EPP</span></a>
           </div>
         </section>
 
-        {/* Grid de Módulos */}
-        <div className="new-grid">
-          {/* RRHH */}
-          <section className="new-card">
-            <div className="new-card-top new-bar-blue" />
-            <div className="new-card-head">
-              <IconWrap fg="#1e40af" bg="#e0e7ff"><IUsers /></IconWrap>
-              <h3 className="new-card-title">Recursos Humanos</h3>
-            </div>
-            <p className="new-card-desc">Gestiona fichas, contratos y documentación legal.</p>
-            <div className="new-links-grid">
-              <Link to={ROUTES.listadoFichas} className="new-link-item"><ICalendar /><span>Listado y Fichas</span></Link>
-              <Link to={ROUTES.rrhhPermisos} className="new-link-item"><IClipboard /><span>Permisos y Justificaciones</span></Link>
-              <Link to={ROUTES.rrhhValidacionDT} className="new-link-item"><ICheck /><span>Validación DT</span></Link>
-              <Link to={ROUTES.rrhhDocumentos} className="new-link-item"><IClipboard /><span>Repositorio Documental</span></Link>
-              <Link to={ROUTES.rrhhBodegaInventario || "/rrhh/bodega"} className="new-link-item"><IBox /><span>Bodega y EPP</span></Link>
-            </div>
-          </section>
+        {/* Asistencia */}
+        <section className="new-card">
+          <div className="new-card-top new-bar-green" />
+          <div className="new-card-head">
+            <IconWrap fg="#065f46" bg="#d1fae5"><IClock /></IconWrap>
+            <h3 className="new-card-title">Asistencia</h3>
+          </div>
+          <p className="new-card-desc">Control de horarios, marcas y gestión de turnos.</p>
+          <div className="new-links-grid">
+            <a href={ROUTES.asistenciaSupervision} className="new-link-item"><ISearch /><span>Supervisión Integral</span></a>
+            <a href={ROUTES.asistenciaMarcas} className="new-link-item"><ICheck /><span>Marcas Registradas</span></a>
+            <a href={ROUTES.asistenciaMapa} className="new-link-item"><IPin /><span>Mapa de Cobertura</span></a>
+            <a href={ROUTES.asistenciaGestionDispositivos} className="new-link-item"><IDevice /><span>Gestión de Dispositivos</span></a>
+            <a href={ROUTES.asistenciaGestionTurnos} className="new-link-item"><ITurns /><span>Gestión de Turnos y Jornadas</span></a>
+          </div>
+        </section>
 
-          {/* Asistencia */}
-          <section className="new-card">
-            <div className="new-card-top new-bar-green" />
-            <div className="new-card-head">
-              <IconWrap fg="#065f46" bg="#d1fae5"><IClock /></IconWrap>
-              <h3 className="new-card-title">Asistencia</h3>
-            </div>
-            <p className="new-card-desc">Control de horarios, marcas y gestión de turnos.</p>
-            <div className="new-links-grid">
-              <Link to={ROUTES.asistenciaSupervision} className="new-link-item"><ISearch /><span>Supervisión Integral</span></Link>
-              <Link to={ROUTES.asistenciaMarcas} className="new-link-item"><ICheck /><span>Marcas Registradas</span></Link>
-              <Link to={ROUTES.asistenciaMapa} className="new-link-item"><IPin /><span>Mapa de Cobertura</span></Link>
-              <Link to={ROUTES.asistenciaGestionDispositivos} className="new-link-item"><IDevice /><span>Gestión de Dispositivos</span></Link>
-              <Link to={ROUTES.asistenciaGestionTurnos} className="new-link-item"><ITurns /><span>Gestión de Turnos y Jornadas</span></Link>
-            </div>
-          </section>
-
-          {/* Comunicaciones */}
-          <section className="new-card">
+        {/* Comunicaciones */}
+        <section className="new-card">
             <div className="new-card-top new-bar-violet" />
             <div className="new-card-head">
               <IconWrap fg="#5b21b6" bg="#ede9fe"><IMessage /></IconWrap>
@@ -143,11 +142,9 @@ export default function Dashboard() {
             </div>
           </section>
 
-        </div>
       </div>
 
-      {/* Estilos locales. He usado nombres de clase nuevos (ej: "new-card")
-          para evitar conflictos con tu archivo App.css. */}
+      {/* Estilos locales. */}
       <style>{`
         .new-dashboard-container {
             max-width: 1200px;
@@ -281,7 +278,7 @@ export default function Dashboard() {
             background-color: transparent;
         }
       `}</style>
-    </BrowserRouter>
+    </div>
   );
 }
 
