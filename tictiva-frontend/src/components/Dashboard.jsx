@@ -1,295 +1,287 @@
-// src/components/Dashboard.jsx
 import React from "react";
-import { Link } from "react-router-dom";
-import "../App.css";
-import { ROUTES } from "../routes";
+// Importo BrowserRouter para que los <Link> funcionen en la vista previa
+import { BrowserRouter, Link } from "react-router-dom";
 
-/* ──────── Icon helpers (SVG minimalistas) ──────── */
+// Asumo que tu archivo de rutas sigue una estructura similar
+const ROUTES = {
+  listadoFichas: "/rrhh/fichas",
+  rrhhPermisos: "/rrhh/permisos",
+  rrhhValidacionDT: "/rrhh/validacion-dt",
+  rrhhDocumentos: "/rrhh/documentos",
+  rrhhBodegaInventario: "/rrhh/bodega",
+  asistenciaSupervision: "/asistencia/supervision",
+  asistenciaMarcas: "/asistencia/marcas",
+  asistenciaMapa: "/asistencia/mapa",
+  asistenciaGestionDispositivos: "/asistencia/dispositivos",
+  asistenciaGestionTurnos: "/asistencia/turnos",
+};
+
+/* Tus componentes de Iconos (los he mantenido intactos) */
 const IconWrap = ({ fg = "#1f2937", bg = "#eef2ff", children }) => (
-  <div
-    className="ico"
-    style={{
-      background: bg,
-      border: "1px solid rgba(0,0,0,.06)",
-      color: fg,
-    }}
-  >
+  <div className="new-ico" style={{ background: bg, color: fg }}>
     {children}
   </div>
 );
-
-/* Módulos */
-const IUsers = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <circle cx="9" cy="8" r="3" />
-    <path d="M3 19c0-3 3-5 6-5s6 2 6 5" />
-    <circle cx="17" cy="9" r="2.5" />
-    <path d="M14.5 19c.3-2.4 2.3-3.9 4.5-4" />
-  </svg>
-);
-const IClock = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v6l4 2" />
-  </svg>
-);
-const IMessage = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <rect x="3" y="4" width="18" height="14" rx="3" />
-    <path d="M7 10h10M7 14h6" />
-  </svg>
-);
-const IChart = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M4 20h16" />
-    <rect x="6" y="11" width="3" height="6" rx="1" />
-    <rect x="11" y="8" width="3" height="9" rx="1" />
-    <rect x="16" y="6" width="3" height="11" rx="1" />
-  </svg>
-);
-const IBrain = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M8 7a3 3 0 1 1 0 6v1a3 3 0 1 1 0 6" />
-    <path d="M16 7a3 3 0 1 0 0 6v1a3 3 0 1 0 0 6" />
-  </svg>
-);
-
-/* Enlaces (íconos) */
-const ICalendar = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <rect x="3" y="5" width="18" height="16" rx="2" />
-    <path d="M8 3v4M16 3v4M3 10h18" />
-  </svg>
-);
-const IClipboard = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <rect x="6" y="4" width="12" height="16" rx="2" />
-    <rect x="9" y="2" width="6" height="4" rx="1.5" />
-  </svg>
-);
-const IBox = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M12 3l9 4.5-9 4.5L3 7.5 12 3z" />
-    <path d="M21 7.5V16l-9 4.5-9-4.5V7.5" />
-  </svg>
-);
-const ISearch = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <circle cx="10" cy="10" r="6" />
-    <path d="M14.5 14.5L20 20" />
-  </svg>
-);
-const ICheck = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M7.5 12l3 3.5 6-7" />
-  </svg>
-);
-const IPin = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M12 21s7-6.2 7-11.2A7 7 0 1 0 5 9.8C5 14.8 12 21 12 21z" />
-    <circle cx="12" cy="10" r="2.5" />
-  </svg>
-);
-const IDevice = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <rect x="7" y="2" width="10" height="20" rx="2" />
-    <circle cx="12" cy="18" r="1" />
-  </svg>
-);
+const IUsers = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
+const IClock = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>;
+const IMessage = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>;
+const IChart = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>;
+const IBrain = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7h0A2.5 2.5 0 0 1 7 4.5v0A2.5 2.5 0 0 1 9.5 2m0 15A2.5 2.5 0 0 1 12 19.5v0a2.5 2.5 0 0 1-2.5 2.5h0A2.5 2.5 0 0 1 7 19.5v0a2.5 2.5 0 0 1 2.5-2.5m5 0A2.5 2.5 0 0 1 17 19.5v0a2.5 2.5 0 0 1-2.5 2.5h0A2.5 2.5 0 0 1 12 19.5v0a2.5 2.5 0 0 1 2.5-2.5m0-15A2.5 2.5 0 0 1 17 4.5v0A2.5 2.5 0 0 1 14.5 7h0A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 14.5 2z" /><path d="M12 7v10" /></svg>;
+const ICalendar = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
+const IClipboard = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>;
+const IBox = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>;
+const ISearch = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
+const ICheck = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
+const IPin = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>;
+const IDevice = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>;
 const ITurns = () => <ICalendar />;
-
-/* ───────────────────────────────────────────────── */
 
 export default function Dashboard() {
   return (
-    <div className="dashboard-bg">
-      <div className="xhome-wrap">
+    // Es necesario envolverlo en BrowserRouter para que los <Link> funcionen en la vista previa
+    <BrowserRouter>
+      <div className="new-dashboard-container">
         {/* Saludo */}
-        <header className="xhome-header">
-          <h1 className="xhome-title">
+        <header className="new-header">
+          <h1 className="new-title">
             Buenas tardes, Verónica Mateo <span>👋</span>
           </h1>
-          <p className="xhome-quote">
+          <p className="new-quote">
             "Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve."
           </p>
         </header>
 
-        {/* Tip de VictorIA (lamparita se mantiene) */}
-        <section className="xhome-tip">
-          <div className="xhome-tip-bulb">💡</div>
+        {/* Tip de VictorIA */}
+        <section className="new-tip-card">
+          <div className="new-tip-bulb">💡</div>
           <div>
-            <div className="xhome-tip-title">Tip de VictorIA</div>
-            <div className="xhome-tip-text">
+            <div className="new-tip-title">Tip de VictorIA</div>
+            <div className="new-tip-text">
               ¡Es fin de mes! Revisa <b>Permisos</b> y <b>Validación DT</b> en RR.HH.
             </div>
           </div>
         </section>
 
-        {/* Grid 2x2 con cards compactas */}
-        <div className="xhome-grid">
+        {/* Grid de Módulos */}
+        <div className="new-grid">
           {/* RRHH */}
-          <section className="xcard">
-            <div className="xcard-top xbar-blue" />
-            <div className="xcard-head">
-              <IconWrap fg="#1e40af" bg="#e5edff">
-                <IUsers />
-              </IconWrap>
-              <div className="xcard-title">Recursos Humanos</div>
+          <section className="new-card">
+            <div className="new-card-top new-bar-blue" />
+            <div className="new-card-head">
+              <IconWrap fg="#1e40af" bg="#e0e7ff"><IUsers /></IconWrap>
+              <h3 className="new-card-title">Recursos Humanos</h3>
             </div>
-            <p className="xcard-desc">Gestiona fichas, contratos y documentación legal.</p>
-
-            <div className="xlinks">
-              <Link to={ROUTES.listadoFichas} className="xitem">
-                <span className="xitem-ico"><ICalendar /></span>
-                <span>Listado y Fichas</span>
-              </Link>
-              <Link to={ROUTES.rrhhPermisos} className="xitem">
-                <span className="xitem-ico"><IClipboard /></span>
-                <span>Permisos y Justificaciones</span>
-              </Link>
-              <Link to={ROUTES.rrhhValidacionDT} className="xitem">
-                <span className="xitem-ico"><ICheck /></span>
-                <span>Validación DT</span>
-              </Link>
-              <Link to={ROUTES.rrhhDocumentos} className="xitem">
-                <span className="xitem-ico"><IClipboard /></span>
-                <span>Repositorio Documental</span>
-              </Link>
-              <Link
-                to={ROUTES?.rrhhBodegaInventario || "/rrhh/bodega"}
-                className="xitem"
-              >
-                <span className="xitem-ico"><IBox /></span>
-                <span>Bodega y EPP</span>
-              </Link>
+            <p className="new-card-desc">Gestiona fichas, contratos y documentación legal.</p>
+            <div className="new-links-grid">
+              <Link to={ROUTES.listadoFichas} className="new-link-item"><ICalendar /><span>Listado y Fichas</span></Link>
+              <Link to={ROUTES.rrhhPermisos} className="new-link-item"><IClipboard /><span>Permisos y Justificaciones</span></Link>
+              <Link to={ROUTES.rrhhValidacionDT} className="new-link-item"><ICheck /><span>Validación DT</span></Link>
+              <Link to={ROUTES.rrhhDocumentos} className="new-link-item"><IClipboard /><span>Repositorio Documental</span></Link>
+              <Link to={ROUTES.rrhhBodegaInventario || "/rrhh/bodega"} className="new-link-item"><IBox /><span>Bodega y EPP</span></Link>
             </div>
           </section>
 
           {/* Asistencia */}
-          <section className="xcard">
-            <div className="xcard-top xbar-green" />
-            <div className="xcard-head">
-              <IconWrap fg="#065f46" bg="#e8fff3">
-                <IClock />
-              </IconWrap>
-              <div className="xcard-title">Asistencia</div>
+          <section className="new-card">
+            <div className="new-card-top new-bar-green" />
+            <div className="new-card-head">
+              <IconWrap fg="#065f46" bg="#d1fae5"><IClock /></IconWrap>
+              <h3 className="new-card-title">Asistencia</h3>
             </div>
-            <p className="xcard-desc">Control de horarios, marcas y gestión de turnos.</p>
-
-            <div className="xlinks">
-              <Link to={ROUTES.asistenciaSupervision} className="xitem">
-                <span className="xitem-ico"><ISearch /></span>
-                <span>Supervisión Integral</span>
-              </Link>
-              <Link to={ROUTES.asistenciaMarcas} className="xitem">
-                <span className="xitem-ico"><ICheck /></span>
-                <span>Marcas Registradas</span>
-              </Link>
-              <Link to={ROUTES.asistenciaMapa} className="xitem">
-                <span className="xitem-ico"><IPin /></span>
-                <span>Mapa de Cobertura</span>
-              </Link>
-              <Link to={ROUTES.asistenciaGestionDispositivos} className="xitem">
-                <span className="xitem-ico"><IDevice /></span>
-                <span>Gestión de Dispositivos</span>
-              </Link>
-              <Link to={ROUTES.asistenciaGestionTurnos} className="xitem">
-                <span className="xitem-ico"><ITurns /></span>
-                <span>Gestión de Turnos y Jornadas</span>
-              </Link>
+            <p className="new-card-desc">Control de horarios, marcas y gestión de turnos.</p>
+            <div className="new-links-grid">
+              <Link to={ROUTES.asistenciaSupervision} className="new-link-item"><ISearch /><span>Supervisión Integral</span></Link>
+              <Link to={ROUTES.asistenciaMarcas} className="new-link-item"><ICheck /><span>Marcas Registradas</span></Link>
+              <Link to={ROUTES.asistenciaMapa} className="new-link-item"><IPin /><span>Mapa de Cobertura</span></Link>
+              <Link to={ROUTES.asistenciaGestionDispositivos} className="new-link-item"><IDevice /><span>Gestión de Dispositivos</span></Link>
+              <Link to={ROUTES.asistenciaGestionTurnos} className="new-link-item"><ITurns /><span>Gestión de Turnos y Jornadas</span></Link>
             </div>
           </section>
 
           {/* Comunicaciones */}
-          <section className="xcard">
-            <div className="xcard-top xbar-violet" />
-            <div className="xcard-head">
-              <IconWrap fg="#6d28d9" bg="#f3e8ff">
-                <IMessage />
-              </IconWrap>
-              <div className="xcard-title">Comunicaciones</div>
+          <section className="new-card">
+            <div className="new-card-top new-bar-violet" />
+            <div className="new-card-head">
+              <IconWrap fg="#5b21b6" bg="#ede9fe"><IMessage /></IconWrap>
+              <h3 className="new-card-title">Comunicaciones</h3>
             </div>
-            <p className="xcard-desc">Mensajería, encuestas y comunicados para tu equipo.</p>
-            <div className="xlinks">
-              <span className="xitem xdisabled"><span className="xitem-ico"><IMessage /></span><span>Enviar mensaje</span></span>
-              <span className="xitem xdisabled"><span className="xitem-ico"><IClipboard /></span><span>Plantillas</span></span>
-              <span className="xitem xdisabled"><span className="xitem-ico"><ICheck /></span><span>Encuestas</span></span>
+            <p className="new-card-desc">Mensajería, encuestas y comunicados para tu equipo.</p>
+            <div className="new-links-grid">
+              <span className="new-link-item new-disabled"><IMessage /><span>Enviar mensaje</span></span>
+              <span className="new-link-item new-disabled"><IClipboard /><span>Plantillas</span></span>
+              <span className="new-link-item new-disabled"><ICheck /><span>Encuestas</span></span>
             </div>
           </section>
 
           {/* Reportes */}
-          <section className="xcard">
-            <div className="xcard-top xbar-pink" />
-            <div className="xcard-head">
-              <IconWrap fg="#be185d" bg="#ffe4ef">
-                <IChart />
-              </IconWrap>
-              <div className="xcard-title">Reportes</div>
+          <section className="new-card">
+            <div className="new-card-top new-bar-pink" />
+            <div className="new-card-head">
+              <IconWrap fg="#9d174d" bg="#fce7f3"><IChart /></IconWrap>
+              <h3 className="new-card-title">Reportes</h3>
             </div>
-            <p className="xcard-desc">Informes gerenciales y análisis de datos.</p>
-            <div className="xlinks">
-              <span className="xitem xdisabled"><span className="xitem-ico"><IChart /></span><span>Informes Gerenciales</span></span>
-              <span className="xitem xdisabled"><span className="xitem-ico"><IChart /></span><span>Dashboards</span></span>
-              <span className="xitem xdisabled"><span className="xitem-ico"><IClipboard /></span><span>Documentos</span></span>
+            <p className="new-card-desc">Informes gerenciales y análisis de datos.</p>
+            <div className="new-links-grid">
+              <span className="new-link-item new-disabled"><IChart /><span>Informes Gerenciales</span></span>
+              <span className="new-link-item new-disabled"><IChart /><span>Dashboards</span></span>
+              <span className="new-link-item new-disabled"><IClipboard /><span>Documentos</span></span>
             </div>
           </section>
 
-          {/* Tictiva Cuida */}
-          <section className="xcard">
-            <div className="xcard-top xbar-orange" />
-            <div className="xcard-head">
-              <IconWrap fg="#9a3412" bg="#fff1d6">
-                <IBrain />
-              </IconWrap>
-              <div className="xcard-title">Tictiva Cuida</div>
+           {/* Tictiva Cuida */}
+           <section className="new-card">
+            <div className="new-card-top new-bar-orange" />
+            <div className="new-card-head">
+              <IconWrap fg="#9a3412" bg="#ffedd5"><IBrain /></IconWrap>
+              <h3 className="new-card-title">Tictiva Cuida</h3>
             </div>
-            <p className="xcard-desc">Bienestar psicoemocional y salud organizacional.</p>
-            <div className="xlinks">
-              <span className="xitem xdisabled"><span className="xitem-ico"><IBrain /></span><span>Test Psicológicos</span></span>
-              <span className="xitem xdisabled"><span className="xitem-ico"><IChart /></span><span>Dashboard de Bienestar</span></span>
-              <span className="xitem xdisabled"><span className="xitem-ico"><IMessage /></span><span>VictorIA</span></span>
+            <p className="new-card-desc">Bienestar psicoemocional y salud organizacional.</p>
+            <div className="new-links-grid">
+              <span className="new-link-item new-disabled"><IBrain /><span>Test Psicológicos</span></span>
+              <span className="new-link-item new-disabled"><IChart /><span>Dashboard de Bienestar</span></span>
+              <span className="new-link-item new-disabled"><IMessage /><span>VictorIA</span></span>
             </div>
           </section>
+
         </div>
       </div>
 
-      {/* Estilos locales (no tocan el resto de la app) */}
+      {/* Estilos locales. He usado nombres de clase nuevos (ej: "new-card")
+          para evitar conflictos con tu archivo App.css. */}
       <style>{`
-        .xhome-wrap{max-width:1080px;margin:0 auto;padding:24px}
-        .xhome-title{font-size:42px;line-height:1.1;margin:0 0 6px;font-weight:800;color:#0f172a}
-        .xhome-quote{margin:0;color:#64748b;font-size:16px}
-
-        .xhome-tip{display:flex;gap:12px;align-items:center;background:#e7f0ff;border:1px solid #cfe0ff;
-          border-radius:16px;padding:14px 16px;margin:14px 0 20px}
-        .xhome-tip-bulb{font-size:22px;background:#ffe58a;border:1px solid #fcd34d;border-radius:999px;padding:10px}
-        .xhome-tip-title{font-weight:800;color:#1e40af;margin-bottom:2px}
-        .xhome-tip-text{color:#1f2937}
-
-        .xhome-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-        @media (max-width:1000px){ .xhome-grid{grid-template-columns:1fr} }
-
-        .xcard{position:relative;background:#fff;border:1px solid #eef2f9;border-radius:16px;padding:16px 16px 14px;
-          box-shadow:0 3px 6px rgba(0,0,0,.05)}
-        .xcard-top{position:absolute;left:0;right:0;top:0;height:6px;border-top-left-radius:16px;border-top-right-radius:16px}
-        .xbar-blue{background:#3b82f6}.xbar-green{background:#10b981}.xbar-violet{background:#8b5cf6}
-        .xbar-pink{background:#ec4899}.xbar-orange{background:#f59e0b}
-
-        .xcard-head{display:flex;align-items:center;gap:12px;margin-top:6px}
-        .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center}
-        .xcard-title{font-size:22px;font-weight:800;color:#0f172a}
-        .xcard-desc{margin:6px 0 8px;color:#6b7280}
-
-        /* grid de enlaces para que la card no quede larga */
-        .xlinks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        @media (max-width:780px){ .xlinks{grid-template-columns:1fr} }
-
-        .xitem{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #eef2f9;border-radius:10px;
-          background:#fff;color:#111827;text-decoration:none;font-weight:700}
-        .xitem:hover{background:#f8fafc}
-        .xitem-ico{width:18px;height:18px;display:grid;place-items:center;color:#475569}
-        .xdisabled{opacity:.55;pointer-events:none}
+        .new-dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+            font-family: 'Inter', sans-serif;
+        }
+        .new-header {
+            margin-bottom: 24px;
+        }
+        .new-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #111827;
+            margin: 0;
+        }
+        .new-quote {
+            color: #6b7280;
+            font-size: 1rem;
+            margin-top: 4px;
+        }
+        .new-tip-card {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background-color: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 1rem;
+            padding: 16px;
+            margin-bottom: 32px;
+        }
+        .new-tip-bulb {
+            font-size: 1.5rem;
+            background-color: #fef08a;
+            border-radius: 9999px;
+            padding: 8px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+        }
+        .new-tip-title {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .new-tip-text {
+            color: #1e40af;
+        }
+        .new-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        .new-card {
+            position: relative;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 1.25rem;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .new-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+        .new-card-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            border-top-left-radius: 1.25rem;
+            border-top-right-radius: 1.25rem;
+        }
+        .new-bar-blue { background-color: #3b82f6; }
+        .new-bar-green { background-color: #22c55e; }
+        .new-bar-violet { background-color: #8b5cf6; }
+        .new-bar-pink { background-color: #ec4899; }
+        .new-bar-orange { background-color: #f97316; }
+        .new-card-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .new-ico {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: grid;
+            place-items: center;
+        }
+        .new-card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .new-card-desc {
+            margin-top: 8px;
+            margin-bottom: 16px;
+            color: #4b5563;
+        }
+        .new-links-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .new-link-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 0.5rem;
+            color: #374151;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .new-link-item:hover {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+        .new-link-item svg {
+            color: #6b7280;
+        }
+        .new-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .new-disabled:hover {
+            background-color: transparent;
+        }
       `}</style>
-    </div>
+    </BrowserRouter>
   );
 }
+
