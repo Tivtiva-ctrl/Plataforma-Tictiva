@@ -1,502 +1,514 @@
-// src/pages/RepositorioDocs.jsx
+// src/pages/RepoDocs.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import HRSubnav from "../components/HRSubnav";
-import "./RepoDocs.css";
 
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
+const LS_KEYS = {
+  folders: "repo_folders",
+  docs: "repo_docs",
+};
 
-export default function RepositorioDocs() {
+const loadLS = (k) => {
+  try {
+    const v = JSON.parse(localStorage.getItem(k));
+    if (Array.isArray(v)) return v;
+  } catch {}
+  return null;
+};
+const saveLS = (k, v) => {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch {}
+};
+
+const normalize = (s = "") =>
+  s.toString().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+
+export default function RepoDocs() {
+  const [loading, setLoading] = useState(true);
   const [folders, setFolders] = useState([]);
   const [docs, setDocs] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // UI state
+  // Filtros
   const [q, setQ] = useState("");
-  const [fCat, setFCat] = useState("Todas");
-  const [fFolder, setFFolder] = useState("Todas");
-  const [activeFolder, setActiveFolder] = useState(null);
+  const [folderFilter, setFolderFilter] = useState("Todas");
+  const [catFilter, setCatFilter] = useState("Todas");
 
-  // Modales
-  const [openUpload, setOpenUpload] = useState(false);
-  const [openNewFolder, setOpenNewFolder] = useState(false);
-  const [renameTarget, setRenameTarget] = useState(null); // {id, nombre}
-  const [upload, setUpload] = useState({
+  // Modal documento
+  const [openDoc, setOpenDoc] = useState(false);
+  const [savingDoc, setSavingDoc] = useState(false);
+  const [docForm, setDocForm] = useState({
     nombre: "",
     descripcion: "",
     carpeta: "",
     categoria: "",
     etiquetas: "",
-    version: "1.0",
+    version: "",
     vence: "",
-    url: ""
+    url: "",
   });
-  const [newFolderName, setNewFolderName] = useState("");
 
-  // Cargar datos
-  const loadAll = async () => {
-    setLoading(true);
-    try {
-      const [rf, rd] = await Promise.all([
-        fetch(`${API}/repo_folders`).then(r => r.json()),
-        fetch(`${API}/repo_docs`).then(r => r.json())
-      ]);
-      setFolders(Array.isArray(rf) ? rf : []);
-      setDocs(Array.isArray(rd) ? rd : []);
-    } catch (e) {
-      console.error("Repositorio: no se pudo cargar", e);
-      setFolders([]);
-      setDocs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Modal carpeta
+  const [openFolder, setOpenFolder] = useState(false);
+  const [savingFolder, setSavingFolder] = useState(false);
+  const [folderName, setFolderName] = useState("");
 
+  // Carga inicial: localStorage → fallback a /data/db.json
   useEffect(() => {
-    loadAll();
+    let cancel = false;
+    (async () => {
+      setLoading(true);
+      let f = loadLS(LS_KEYS.folders);
+      let d = loadLS(LS_KEYS.docs);
+
+      if (!f || !d) {
+        try {
+          const r = await fetch("/data/db.json");
+          if (r.ok) {
+            const j = await r.json();
+            if (!f) f = Array.isArray(j.repo_folders) ? j.repo_folders : [];
+            if (!d) d = Array.isArray(j.repo_docs) ? j.repo_docs : [];
+          }
+        } catch {
+          // no-op, quedará vacío pero sin romper
+          if (!f) f = [];
+          if (!d) d = [];
+        }
+      }
+
+      if (!cancel) {
+        setFolders(f || []);
+        setDocs(d || []);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
   }, []);
 
-  // Derivados
-  const categorias = useMemo(() => {
-    const set = new Set();
-    docs.forEach(d => d?.categoria && set.add(d.categoria));
+  // Persistencia al vuelo
+  useEffect(() => saveLS(LS_KEYS.folders, folders), [folders]);
+  useEffect(() => saveLS(LS_KEYS.docs, docs), [docs]);
+
+  const allFolders = useMemo(
+    () => ["Todas", ...folders.map((f) => f.nombre)],
+    [folders]
+  );
+  const allCats = useMemo(() => {
+    const set = new Set(docs.map((d) => (d.categoria || "").trim()).filter(Boolean));
     return ["Todas", ...Array.from(set)];
   }, [docs]);
 
-  const foldersSelect = useMemo(() => ["Todas", ...folders.map(f => f.nombre)], [folders]);
+  const filtered = useMemo(() => {
+    const t = normalize(q);
+    return docs.filter((d) => {
+      if (folderFilter !== "Todas" && d.carpeta !== folderFilter) return false;
+      if (catFilter !== "Todas" && (d.categoria || "") !== catFilter) return false;
 
-  const docsFiltrados = useMemo(() => {
-    let list = [...docs];
-    if (q.trim()) {
-      const t = q.trim().toLowerCase();
-      list = list.filter(d =>
-        `${d.nombre} ${d.descripcion || ""} ${d.carpeta || ""} ${d.categoria || ""} ${(d.etiquetas || []).join(" ")}`
-          .toLowerCase()
-          .includes(t)
+      if (!t) return true;
+      const haystack = normalize(
+        `${d.nombre} ${d.descripcion} ${d.carpeta} ${d.categoria} ${(d.etiquetas || []).join(",")}`
       );
-    }
-    const filtroFolder = activeFolder || (fFolder !== "Todas" ? fFolder : null);
-    if (filtroFolder) list = list.filter(d => (d.carpeta || "") === filtroFolder);
-    if (fCat !== "Todas") list = list.filter(d => (d.categoria || "") === fCat);
-    return list;
-  }, [docs, q, fCat, fFolder, activeFolder]);
-
-  const countDocsIn = (folderName) => docs.filter(d => (d.carpeta || "") === folderName).length;
-
-  // Acciones
-  const handleOpenUpload = () => {
-    setUpload({
-      nombre: "",
-      descripcion: "",
-      carpeta: activeFolder || "",
-      categoria: "",
-      etiquetas: "",
-      version: "1.0",
-      vence: "",
-      url: ""
+      return haystack.includes(t);
     });
-    setOpenUpload(true);
-  };
+  }, [docs, q, folderFilter, catFilter]);
 
-  const saveUpload = async () => {
-    const carpetaDef =
-      upload.carpeta ||
-      activeFolder ||
-      (folders[0]?.nombre || "Otros Documentos");
-
-    const payload = {
-      id: `r-${Date.now()}`,
-      nombre: upload.nombre || "Documento sin título",
-      descripcion: upload.descripcion || "",
-      carpeta: carpetaDef,
-      categoria: upload.categoria || "",
-      etiquetas: (upload.etiquetas || "")
-        .split(",")
-        .map(s => s.trim())
-        .filter(Boolean),
-      version: upload.version || "1.0",
-      vence: upload.vence || "",
-      url: upload.url || "",
-      actualizadoTs: new Date().toISOString().slice(0, 16).replace("T", " ")
-    };
-    try {
-      await fetch(`${API}/repo_docs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      setDocs(p => [payload, ...p]);
-      setOpenUpload(false);
-    } catch (e) {
-      console.error("No se pudo crear doc", e);
-      alert("No se pudo crear el documento");
-    }
-  };
-
+  // Crear/editar carpeta
   const createFolder = async () => {
-    if (!newFolderName.trim()) return;
-    const payload = { id: `f-${Date.now()}`, nombre: newFolderName.trim() };
-    try {
-      await fetch(`${API}/repo_folders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      setFolders(p => [...p, payload]);
-      setActiveFolder(payload.nombre);
-      setNewFolderName("");
-      setOpenNewFolder(false);
-    } catch (e) {
-      console.error("No se pudo crear carpeta", e);
-      alert("No se pudo crear la carpeta");
-    }
-  };
-
-  const askRenameFolder = (folder) => setRenameTarget(folder);
-
-  const applyRenameFolder = async () => {
-    if (!renameTarget) return;
-    const { id, nombre: oldName } = renameTarget;
-    const input = document.getElementById("rename-folder-input");
-    const newName = (input?.value || "").trim();
-    if (!newName || newName === oldName) {
-      setRenameTarget(null);
+    const name = folderName.trim();
+    if (!name) {
+      alert("Ingresa un nombre de carpeta.");
       return;
     }
-    try {
-      // 1) renombrar carpeta
-      await fetch(`${API}/repo_folders/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: newName })
-      });
-
-      // 2) actualizar docs que estén en esa carpeta
-      const affected = docs.filter(d => (d.carpeta || "") === oldName);
-      for (const d of affected) {
-        await fetch(`${API}/repo_docs/${d.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ carpeta: newName })
-        });
-      }
-
-      // 3) actualizar estado local
-      setFolders(p => p.map(f => (f.id === id ? { ...f, nombre: newName } : f)));
-      setDocs(p => p.map(d => (d.carpeta === oldName ? { ...d, carpeta: newName } : d)));
-      if (activeFolder === oldName) setActiveFolder(newName);
-    } catch (e) {
-      console.error("No se pudo renombrar carpeta", e);
-      alert("No se pudo renombrar la carpeta");
-    } finally {
-      setRenameTarget(null);
+    setSavingFolder(true);
+    const exists = folders.some((f) => normalize(f.nombre) === normalize(name));
+    if (exists) {
+      alert("Ya existe una carpeta con ese nombre.");
+      setSavingFolder(false);
+      return;
     }
+    const nuevo = { id: `f-${Date.now()}`, nombre: name };
+    setFolders((p) => [...p, nuevo]);
+    setFolderName("");
+    setSavingFolder(false);
+    setOpenFolder(false);
   };
 
-  const deleteDoc = async (doc) => {
-    if (!confirm(`¿Eliminar "${doc.nombre}"?`)) return;
-    try {
-      await fetch(`${API}/repo_docs/${doc.id}`, { method: "DELETE" });
-      setDocs(p => p.filter(d => d.id !== doc.id));
-    } catch (e) {
-      console.error("No se pudo eliminar", e);
-      alert("No se pudo eliminar el documento");
-    }
+  // Subir/crear documento
+  const openDocModal = () => {
+    setDocForm({
+      nombre: "",
+      descripcion: "",
+      carpeta: folders[0]?.nombre || "",
+      categoria: "",
+      etiquetas: "",
+      version: "",
+      vence: "",
+      url: "",
+    });
+    setOpenDoc(true);
   };
 
-  const resetFilters = () => {
-    setQ("");
-    setFCat("Todas");
-    setFFolder("Todas");
-    setActiveFolder(null);
+  const saveDoc = async () => {
+    const f = docForm;
+    if (!f.nombre.trim()) return alert("Ingresa un nombre de documento.");
+    if (!f.carpeta?.trim()) return alert("Selecciona una carpeta.");
+    setSavingDoc(true);
+
+    const nuevo = {
+      id: `r-${Date.now()}`,
+      nombre: f.nombre.trim(),
+      descripcion: f.descripcion.trim(),
+      carpeta: f.carpeta.trim(),
+      categoria: f.categoria.trim(),
+      etiquetas: f.etiquetas
+        ? f.etiquetas
+            .split(",")
+            .map((e) => e.trim())
+            .filter(Boolean)
+        : [],
+      version: f.version.trim(),
+      vence: f.vence.trim(),
+      url: f.url.trim(),
+      actualizadoTs: new Date().toISOString().slice(0, 16).replace("T", " "),
+    };
+
+    setDocs((p) => [nuevo, ...p]);
+    setSavingDoc(false);
+    setOpenDoc(false);
+  };
+
+  const removeDoc = (id) => {
+    if (!confirm("¿Eliminar documento? Esta acción no se puede deshacer.")) return;
+    setDocs((p) => p.filter((d) => d.id !== id));
+  };
+
+  const editDocName = (id) => {
+    const d = docs.find((x) => x.id === id);
+    const nuevo = prompt("Renombrar documento:", d?.nombre || "");
+    if (!nuevo) return;
+    setDocs((p) =>
+      p.map((x) => (x.id === id ? { ...x, nombre: nuevo.trim() } : x))
+    );
   };
 
   return (
-    <div className="repo-wrap">
+    <div className="dashboard-bg" style={{ padding: 16 }}>
       <HRSubnav />
 
       {/* Header */}
-      <div className="repo-header">
-        <div>
-          <h1 className="repo-title">Repositorio Documental</h1>
-          <p className="repo-sub">
-            Archivador de documentos de la empresa (políticas, reglamentos, plantillas,
-            contratos-tipo, comunicados y más).
-          </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ fontSize: 28 }}>📚</div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>Repositorio Documental</h1>
+            <p style={{ margin: "6px 0 0", color: "#6B7280" }}>
+              Archivador de documentos de la empresa (políticas, reglamentos, plantillas, contratos tipo, comunicados y más).
+            </p>
+          </div>
         </div>
-        <div className="repo-actions">
-          <input
-            className="repo-input"
-            placeholder="Buscar por nombre, texto o etiqueta"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <button className="repo-btn ghost" onClick={() => setOpenNewFolder(true)}>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className="btn"
+            onClick={() => setOpenFolder(true)}
+            style={{ border: "1px solid #E5E7EB", background: "#fff", padding: "10px 12px", borderRadius: 10 }}
+          >
             + Carpeta
           </button>
-          <button className="repo-btn primary" onClick={handleOpenUpload}>
+          <button
+            className="btn primary"
+            onClick={openDocModal}
+            style={{ background: "#1A56DB", color: "#fff", padding: "10px 14px", borderRadius: 10, border: 0 }}
+          >
             + Subir documento
           </button>
         </div>
       </div>
 
-      {/* Folders grid */}
-      <div className="repo-grid">
-        {folders.map((f) => (
-          <div
-            key={f.id}
-            className={`repo-card ${activeFolder === f.nombre ? "is-active" : ""}`}
-            onClick={() => setActiveFolder(f.nombre)}
-            title="Click para filtrar por esta carpeta"
-          >
-            <div className="repo-card-emoji">📁</div>
-            <div>
-              <div className="repo-card-title">{f.nombre}</div>
-              <div className="repo-card-small">{countDocsIn(f.nombre)} documentos</div>
-            </div>
-            <button
-              className="repo-card-rename"
-              onClick={(e) => {
-                e.stopPropagation();
-                askRenameFolder(f);
-              }}
-              title="Renombrar carpeta"
-            >
-              ✎
-            </button>
-          </div>
-        ))}
+      {/* Filtros */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+        <select
+          value={folderFilter}
+          onChange={(e) => setFolderFilter(e.target.value)}
+          style={{ height: 40, border: "1px solid #E5E7EB", borderRadius: 10, padding: "0 10px", background: "#fff" }}
+        >
+          {allFolders.map((f) => (
+            <option key={f} value={f}>{f}</option>
+          ))}
+        </select>
+
+        <select
+          value={catFilter}
+          onChange={(e) => setCatFilter(e.target.value)}
+          style={{ height: 40, border: "1px solid #E5E7EB", borderRadius: 10, padding: "0 10px", background: "#fff" }}
+        >
+          {allCats.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar por nombre, texto, etiqueta…"
+          style={{ border: "1px solid #E5E7EB", borderRadius: 10, padding: "10px 12px", outline: "none", width: 280, background: "#fff" }}
+        />
+
+        <button
+          onClick={() => { setQ(""); setFolderFilter("Todas"); setCatFilter("Todas"); }}
+          className="btn"
+          style={{ border: "1px solid #E5E7EB", background: "#fff", padding: "10px 12px", borderRadius: 10 }}
+        >
+          Limpiar filtros
+        </button>
       </div>
 
-      {/* Listado (7 columnas para calzar con RepoDocs.css) */}
-      <div className="repo-card-full">
-        <div className="repo-filters">
-          <select
-            className="repo-input"
-            value={fFolder}
-            onChange={(e) => {
-              setFFolder(e.target.value);
-              setActiveFolder(null); // evitar conflicto con activeFolder
+      {/* Tabla */}
+      <div style={{ background: "#fff", border: "1px solid #E5E7EB", borderRadius: 12, overflow: "hidden" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr 0.7fr 0.7fr 1fr",
+            gap: 8,
+            padding: "12px 16px",
+            fontWeight: 700,
+            color: "#374151",
+            background: "#F9FAFB",
+            borderBottom: "1px solid #E5E7EB",
+          }}
+        >
+          <div>Nombre / Descripción</div>
+          <div>Carpeta</div>
+          <div>Categoría</div>
+          <div>Etiquetas</div>
+          <div>Versión</div>
+          <div>Vence</div>
+          <div>Acciones</div>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 16, color: "#6B7280" }}>Cargando…</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: 16, color: "#6B7280" }}>Sin documentos que coincidan.</div>
+        ) : (
+          filtered.map((d) => (
+            <div
+              key={d.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr 1fr 1fr 0.7fr 0.7fr 1fr",
+                gap: 8,
+                padding: "14px 16px",
+                borderTop: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 700 }}>{d.nombre}</div>
+                <div style={{ color: "#6B7280", fontSize: 12 }}>{d.descripcion || "—"}</div>
+              </div>
+              <div>{d.carpeta || "—"}</div>
+              <div>{d.categoria || "—"}</div>
+              <div>{(d.etiquetas || []).join(", ") || "—"}</div>
+              <div>{d.version || "—"}</div>
+              <div>{d.vence || "—"}</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {d.url ? (
+                  <a href={d.url} target="_blank" rel="noreferrer" style={{ color: "#1A56DB", textDecoration: "none" }}>
+                    Abrir
+                  </a>
+                ) : (
+                  <span style={{ color: "#9CA3AF" }}>Sin URL</span>
+                )}
+                <button className="btn" onClick={() => editDocName(d.id)} style={{ padding: "6px 10px", borderRadius: 8 }}>
+                  Renombrar
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => removeDoc(d.id)}
+                  style={{ padding: "6px 10px", borderRadius: 8, borderColor: "#FCA5A5", color: "#B91C1C" }}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Modal Carpeta */}
+      {openFolder && (
+        <>
+          <div
+            onClick={() => !savingFolder && setOpenFolder(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.35)", zIndex: 60 }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 480,
+              maxWidth: "92vw",
+              background: "#fff",
+              border: "1px solid #E5E7EB",
+              borderRadius: 12,
+              boxShadow: "0 12px 32px rgba(0,0,0,.18)",
+              zIndex: 80,
             }}
           >
-            {foldersSelect.map((n) => (
-              <option key={n}>{n}</option>
-            ))}
-          </select>
-          <select className="repo-input" value={fCat} onChange={(e) => setFCat(e.target.value)}>
-            {categorias.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-          <div className="repo-spacer" />
-          <button className="repo-btn ghost" onClick={resetFilters}>Limpiar filtros</button>
-        </div>
-
-        <div className="repo-table">
-          <div className="repo-tr repo-th">
-            <div>Nombre / Descripción</div>
-            <div>Carpeta</div>
-            <div>Categoría</div>
-            <div>Etiquetas</div>
-            <div>Versión</div>
-            <div>Vence</div>
-            <div>Acciones</div>
+            <div style={{ padding: 12, borderBottom: "1px solid #E5E7EB", fontWeight: 700 }}>Crear Carpeta</div>
+            <div style={{ padding: 12, display: "grid", gap: 10 }}>
+              <label style={{ fontSize: 12, color: "#6B7280" }}>Nombre</label>
+              <input
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                style={{ border: "1px solid #E5E7EB", borderRadius: 10, padding: "10px 12px", outline: "none" }}
+              />
+            </div>
+            <div style={{ padding: 12, borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="btn" onClick={() => setOpenFolder(false)} disabled={savingFolder}>
+                Cancelar
+              </button>
+              <button
+                className="btn primary"
+                onClick={createFolder}
+                disabled={savingFolder}
+                style={{ background: "#1A56DB", color: "#fff", border: 0 }}
+              >
+                {savingFolder ? "Guardando…" : "Crear"}
+              </button>
+            </div>
           </div>
-
-          {loading && <div className="repo-empty">Cargando…</div>}
-
-          {!loading && docsFiltrados.length === 0 && (
-            <div className="repo-empty">Sin documentos que coincidan.</div>
-          )}
-
-          {!loading &&
-            docsFiltrados.map((d) => (
-              <div key={d.id} className="repo-tr">
-                <div>
-                  <div className="repo-doc-name">{d.nombre}</div>
-                  {d.descripcion && <div className="repo-doc-desc">{d.descripcion}</div>}
-                </div>
-                <div>{d.carpeta || "—"}</div>
-                <div>{d.categoria || "—"}</div>
-                <div>
-                  {(d.etiquetas || []).map((t, i) => (
-                    <span key={i} className="repo-tag">#{t}</span>
-                  ))}
-                </div>
-                <div>{d.version || "—"}</div>
-                <div>{d.vence || "—"}</div>
-                <div className="actions">
-                  {d.url ? (
-                    <a className="repo-icon" href={d.url} target="_blank" rel="noreferrer" title="Abrir">
-                      👁️
-                    </a>
-                  ) : (
-                    <button className="repo-icon" onClick={() => alert("Documento sin URL")} title="Abrir">👁️</button>
-                  )}
-                  <button
-                    className="repo-icon"
-                    onClick={() => navigator.clipboard?.writeText(d.url || "")}
-                    title="Copiar enlace"
-                  >
-                    📋
-                  </button>
-                  <button className="repo-icon danger" onClick={() => deleteDoc(d)} title="Eliminar">
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      {/* Aviso si no existe colección */}
-      {!loading && folders.length === 0 && docs.length === 0 && (
-        <div className="repo-alert">
-          No se encontró colección para el Repositorio. Crea <b>"repo_folders"</b> y <b>"repo_docs"</b> en <code>db.json</code>.
-        </div>
+        </>
       )}
 
-      {/* Modal: subir documento */}
-      {openUpload && (
+      {/* Modal Documento */}
+      {openDoc && (
         <>
-          <div className="repo-backdrop" onClick={() => setOpenUpload(false)} />
-          <div className="repo-modal">
-            <div className="repo-modal-head">
-              <h3>Subir documento</h3>
-              <button className="repo-x" onClick={() => setOpenUpload(false)}>✖</button>
-            </div>
-            <div className="repo-modal-body">
-              <label className="repo-label">Nombre*</label>
-              <input
-                className="repo-input"
-                value={upload.nombre}
-                onChange={(e) => setUpload({ ...upload, nombre: e.target.value })}
-              />
-
-              <label className="repo-label">Descripción</label>
-              <textarea
-                className="repo-input"
-                rows={3}
-                value={upload.descripcion}
-                onChange={(e) => setUpload({ ...upload, descripcion: e.target.value })}
-              />
-
-              <div className="repo-grid-3">
-                <div>
-                  <label className="repo-label">Carpeta*</label>
+          <div
+            onClick={() => !savingDoc && setOpenDoc(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.35)", zIndex: 60 }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 640,
+              maxWidth: "92vw",
+              background: "#fff",
+              border: "1px solid #E5E7EB",
+              borderRadius: 12,
+              boxShadow: "0 12px 32px rgba(0,0,0,.18)",
+              zIndex: 80,
+            }}
+          >
+            <div style={{ padding: 12, borderBottom: "1px solid #E5E7EB", fontWeight: 700 }}>Subir documento</div>
+            <div style={{ padding: 12, display: "grid", gap: 10 }}>
+              <Field label="Nombre">
+                <input
+                  value={docForm.nombre}
+                  onChange={(e) => setDocForm({ ...docForm, nombre: e.target.value })}
+                  className="repo-input"
+                />
+              </Field>
+              <Field label="Descripción">
+                <input
+                  value={docForm.descripcion}
+                  onChange={(e) => setDocForm({ ...docForm, descripcion: e.target.value })}
+                  className="repo-input"
+                />
+              </Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <Field label="Carpeta">
                   <select
+                    value={docForm.carpeta}
+                    onChange={(e) => setDocForm({ ...docForm, carpeta: e.target.value })}
                     className="repo-input"
-                    value={upload.carpeta}
-                    onChange={(e) => setUpload({ ...upload, carpeta: e.target.value })}
                   >
-                    <option value="">— Selecciona carpeta —</option>
-                    {folders.map(f => <option key={f.id} value={f.nombre}>{f.nombre}</option>)}
+                    {folders.map((f) => (
+                      <option key={f.id} value={f.nombre}>{f.nombre}</option>
+                    ))}
                   </select>
-                </div>
-                <div>
-                  <label className="repo-label">Categoría</label>
+                </Field>
+                <Field label="Categoría">
                   <input
+                    value={docForm.categoria}
+                    onChange={(e) => setDocForm({ ...docForm, categoria: e.target.value })}
                     className="repo-input"
-                    value={upload.categoria}
-                    onChange={(e) => setUpload({ ...upload, categoria: e.target.value })}
                   />
-                </div>
-                <div>
-                  <label className="repo-label">Versión</label>
-                  <input
-                    className="repo-input"
-                    value={upload.version}
-                    onChange={(e) => setUpload({ ...upload, version: e.target.value })}
-                  />
-                </div>
+                </Field>
               </div>
-
-              <div className="repo-grid-2">
-                <div>
-                  <label className="repo-label">Vence</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <Field label="Etiquetas (coma)">
+                  <input
+                    value={docForm.etiquetas}
+                    onChange={(e) => setDocForm({ ...docForm, etiquetas: e.target.value })}
+                    className="repo-input"
+                  />
+                </Field>
+                <Field label="Versión">
+                  <input
+                    value={docForm.version}
+                    onChange={(e) => setDocForm({ ...docForm, version: e.target.value })}
+                    className="repo-input"
+                  />
+                </Field>
+                <Field label="Vence">
                   <input
                     type="date"
+                    value={docForm.vence}
+                    onChange={(e) => setDocForm({ ...docForm, vence: e.target.value })}
                     className="repo-input"
-                    value={upload.vence}
-                    onChange={(e) => setUpload({ ...upload, vence: e.target.value })}
                   />
-                </div>
-                <div>
-                  <label className="repo-label">URL (si aplica)</label>
-                  <input
-                    className="repo-input"
-                    placeholder="https://..."
-                    value={upload.url}
-                    onChange={(e) => setUpload({ ...upload, url: e.target.value })}
-                  />
-                </div>
+                </Field>
               </div>
-
-              <label className="repo-label">Etiquetas (coma separadas)</label>
-              <input
-                className="repo-input"
-                placeholder="reglamento, seguridad, interno"
-                value={upload.etiquetas}
-                onChange={(e) => setUpload({ ...upload, etiquetas: e.target.value })}
-              />
+              <Field label="URL (opcional)">
+                <input
+                  value={docForm.url}
+                  onChange={(e) => setDocForm({ ...docForm, url: e.target.value })}
+                  className="repo-input"
+                  placeholder="https://…"
+                />
+              </Field>
             </div>
-            <div className="repo-modal-foot">
-              <button className="repo-btn ghost" onClick={() => setOpenUpload(false)}>Cancelar</button>
-              <button className="repo-btn primary" onClick={saveUpload}>Guardar</button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Modal: nueva carpeta */}
-      {openNewFolder && (
-        <>
-          <div className="repo-backdrop" onClick={() => setOpenNewFolder(false)} />
-          <div className="repo-modal">
-            <div className="repo-modal-head">
-              <h3>Nueva carpeta</h3>
-              <button className="repo-x" onClick={() => setOpenNewFolder(false)}>✖</button>
-            </div>
-            <div className="repo-modal-body">
-              <label className="repo-label">Nombre de la carpeta*</label>
-              <input
-                className="repo-input"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-              />
-            </div>
-            <div className="repo-modal-foot">
-              <button className="repo-btn ghost" onClick={() => setOpenNewFolder(false)}>Cancelar</button>
-              <button className="repo-btn primary" onClick={createFolder}>Crear</button>
+            <div style={{ padding: 12, borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button className="btn" onClick={() => setOpenDoc(false)} disabled={savingDoc}>
+                Cancelar
+              </button>
+              <button
+                className="btn primary"
+                onClick={saveDoc}
+                disabled={savingDoc || folders.length === 0}
+                style={{ background: "#1A56DB", color: "#fff", border: 0 }}
+              >
+                {savingDoc ? "Guardando…" : "Guardar"}
+              </button>
             </div>
           </div>
         </>
       )}
 
-      {/* Modal: renombrar carpeta */}
-      {renameTarget && (
-        <>
-          <div className="repo-backdrop" onClick={() => setRenameTarget(null)} />
-          <div className="repo-modal">
-            <div className="repo-modal-head">
-              <h3>Renombrar carpeta</h3>
-              <button className="repo-x" onClick={() => setRenameTarget(null)}>✖</button>
-            </div>
-            <div className="repo-modal-body">
-              <label className="repo-label">Nombre actual</label>
-              <div className="repo-input" style={{ background: "#f9fafb" }}>{renameTarget.nombre}</div>
-              <label className="repo-label">Nuevo nombre*</label>
-              <input id="rename-folder-input" className="repo-input" defaultValue={renameTarget.nombre} />
-              <p className="repo-sub" style={{ marginTop: 6 }}>
-                Se actualizarán los documentos asignados a esta carpeta.
-              </p>
-            </div>
-            <div className="repo-modal-foot">
-              <button className="repo-btn ghost" onClick={() => setRenameTarget(null)}>Cancelar</button>
-              <button className="repo-btn primary" onClick={applyRenameFolder}>Guardar</button>
-            </div>
-          </div>
-        </>
-      )}
+      {/* estilos mínimos locales */}
+      <style>{`
+        .btn{border:1px solid #E5E7EB;background:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+        .btn.primary{background:#1A56DB;color:#fff;border-color:#1A56DB}
+        .repo-input{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:10px 12px;outline:none}
+        .repo-input:focus{border-color:#C7D2FE;box-shadow:0 0 0 4px rgba(26,86,219,.10)}
+      `}</style>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 4 }}>{label}</div>
+      {children}
     </div>
   );
 }
