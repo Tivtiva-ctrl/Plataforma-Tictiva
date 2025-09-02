@@ -349,7 +349,7 @@ export default function ListadoFichas() {
     setKpiFilter(prev => (prev === key ? "todos" : key));
   };
 
-  // ===== CARGA MASIVA (CSV / JSON) =====
+  // ===== CARGA MASIVA (CSV / JSON / XLSX) =====
   const clickCargaMasiva = () => {
     fileRef.current?.click();
   };
@@ -360,14 +360,26 @@ export default function ListadoFichas() {
     if (!file) return;
 
     try {
-      const text = await file.text();
+      const name = file.name.toLowerCase();
       let rows = [];
 
-      if (file.name.toLowerCase().endsWith(".json")) {
+      if (name.endsWith(".json")) {
+        const text = await file.text();
         const parsed = JSON.parse(text);
         rows = Array.isArray(parsed) ? parsed : [];
-      } else {
+      } else if (name.endsWith(".csv")) {
+        const text = await file.text();
         rows = parseCSV(text);
+      } else if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+        // ⚠️ requiere dependencia: npm i xlsx
+        const XLSX = (await import("xlsx")).default || (await import("xlsx"));
+        const ab = await file.arrayBuffer();
+        const wb = XLSX.read(ab, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { defval: "" }); // usa cabeceras de la primera fila
+      } else {
+        alert("Formato no soportado. Sube CSV, JSON o Excel (.xlsx/.xls).");
+        return;
       }
 
       // Mapeo flexible de columnas
@@ -451,7 +463,7 @@ export default function ListadoFichas() {
       alert(`Carga masiva realizada: ${nuevos.length} empleados agregados.`);
     } catch (err) {
       console.error(err);
-      alert("No se pudo procesar el archivo. Asegúrate de subir CSV o JSON válido.");
+      alert("No se pudo procesar el archivo. Asegúrate de subir CSV, JSON o Excel válido.");
     }
   };
 
@@ -492,11 +504,11 @@ export default function ListadoFichas() {
             }}
           />
 
-          {/* 🔥 CARGA MASIVA ACTIVADA */}
+          {/* 🔥 CARGA MASIVA ACTIVADA (CSV / JSON / XLSX) */}
           <input
             ref={fileRef}
             type="file"
-            accept=".csv,.json"
+            accept=".csv,.json,.xlsx,.xls"
             onChange={handleBulkFile}
             style={{ display: "none" }}
           />
@@ -511,7 +523,7 @@ export default function ListadoFichas() {
               cursor: "pointer",
             }}
             type="button"
-            title="Sube un CSV o JSON con columnas: nombre, rut, (cargo, área, estado, etc.)"
+            title="Sube un CSV, JSON o Excel (.xlsx/.xls) con columnas: nombre, rut, (cargo, área, estado, etc.)"
           >
             Carga Masiva
           </button>
