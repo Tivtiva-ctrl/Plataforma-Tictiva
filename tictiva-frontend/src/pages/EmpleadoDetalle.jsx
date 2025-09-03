@@ -10,7 +10,7 @@ import DocumentosTab from "../components/DocumentosTab";
 import PrevisionTab from "../components/PrevisionTab";
 import BancariosTab from "../components/BancariosTab";
 import HojaDeVida from "../components/HojaDeVida";
-import { EmpleadosAPI } from "../api"; // ✅ misma capa que ListadoFichas
+import { EmpleadosAPI } from "../api";
 
 /* ===========================
    Utils
@@ -233,6 +233,94 @@ function AsistenciaTab({ empleado }) {
 }
 
 /* ===========================
+   Tab: Historial (auditoría DT)
+   =========================== */
+function HistorialTab({ empleado }) {
+  // Une distintas fuentes posibles para compatibilidad
+  const base = [
+    ...(Array.isArray(empleado?.historial) ? empleado.historial : []),
+    ...(Array.isArray(empleado?.movimientos) ? empleado.movimientos : []),
+    ...(Array.isArray(empleado?._audit) ? empleado._audit : []),
+  ];
+
+  // Si no hay nada, “siembra” el ingreso a la empresa (solo visual)
+  if (!base.length && empleado?.fechaIngreso) {
+    base.push({
+      id: "seed-ingreso",
+      fecha: empleado.fechaIngreso,
+      hora: "09:00",
+      actor: "Sistema",
+      accion: "Ingreso a la empresa",
+      detalle: `Fecha de ingreso registrada (${fmtFechaLarga(empleado.fechaIngreso)})`,
+      categoria: "Contrato",
+    });
+  }
+
+  // Ordena desc por fecha/hora
+  const items = [...base].sort((a, b) => {
+    const ta = new Date(`${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`).getTime();
+    const tb = new Date(`${b.fecha || b.timestamp || b.fechaHora || ""}T${b.hora || "00:00"}`).getTime();
+    return tb - ta;
+  });
+
+  const exportCSV = () => {
+    const headers = ["fecha","hora","actor","accion","categoria","detalle"];
+    const rows = items.map(i => [
+      i.fecha || "",
+      i.hora || "",
+      i.actor || "",
+      i.accion || "",
+      i.categoria || "",
+      (i.detalle || "").toString().replace(/\n/g, " "),
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `historial-${(empleado?.rut || empleado?.id || "empleado")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="htl-wrap ed-card">
+      <div className="htl-head">
+        <div>
+          <h3 className="ed-card-title" style={{ margin: 0 }}>Historial del Empleado</h3>
+          <div className="htl-sub">Bitácora de eventos requerida por la Dirección del Trabajo (DT).</div>
+        </div>
+        <button type="button" className="ed-btn" onClick={exportCSV}>⬇ Exportar CSV</button>
+      </div>
+
+      {items.length === 0 ? (
+        <div style={{ color:"#6B7280" }}>Aún no hay movimientos registrados.</div>
+      ) : (
+        <ul className="htl-list">
+          {items.map((it, idx) => (
+            <li key={it.id || idx} className="htl-item">
+              <div className="htl-time">
+                <div className="htl-date">{it.fecha ? fmtFechaLarga(it.fecha) : "—"}</div>
+                <div className="htl-hour">{it.hora || "—"}</div>
+              </div>
+              <div className="htl-dot" />
+              <div className="htl-body">
+                <div className="htl-row1">
+                  <span className="htl-accion">{it.accion || "Evento"}</span>
+                  {it.categoria ? <span className="htl-cat">{it.categoria}</span> : null}
+                </div>
+                <div className="htl-det">{it.detalle || "—"}</div>
+                <div className="htl-foot">Por <b>{it.actor || "Sistema"}</b></div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ===========================
    Detalle empleado (UI renovada)
    =========================== */
 export default function EmpleadoDetalle() {
@@ -250,6 +338,7 @@ export default function EmpleadoDetalle() {
   const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
 
   const [empleado, setEmpleado] = useState(null);
+  const [original, setOriginal] = useState(null);        // ← para auditar cambios
   const [notFound, setNotFound] = useState(false);
   const [tabActiva, setTabActiva] = useState("personales");
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -285,7 +374,7 @@ export default function EmpleadoDetalle() {
     );
   }
 
-  // Carga del empleado: primero EmpleadosAPI (local/overlay), luego HTTP (dev)
+  // Carga del empleado
   useEffect(() => {
     let cancel = false;
 
@@ -303,7 +392,7 @@ export default function EmpleadoDetalle() {
             : null;
 
           const found = byId || byRut || byEither;
-          if (found && !cancel) { setEmpleado(found); return; }
+          if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
         }
       } catch {/* ignore */}
 
@@ -312,7 +401,7 @@ export default function EmpleadoDetalle() {
           const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
           if (r.ok) {
             const emp = await r.json();
-            if (emp && !cancel && (emp.id != null || emp.nombre)) { setEmpleado(emp); return; }
+            if (emp && !cancel && (emp.id != null || emp.nombre)) { setEmpleado(emp); setOriginal(JSON.parse(JSON.stringify(emp))); return; }
           }
         } catch {/* noop */}
       }
@@ -331,7 +420,7 @@ export default function EmpleadoDetalle() {
             if (!r.ok) continue;
             const data = await r.json();
             const emp = Array.isArray(data) ? data[0] : data;
-            if (emp && !cancel) { setEmpleado(emp); return; }
+            if (emp && !cancel) { setEmpleado(emp); setOriginal(JSON.parse(JSON.stringify(emp))); return; }
           } catch {/* noop */}
         }
         try {
@@ -341,7 +430,7 @@ export default function EmpleadoDetalle() {
             const found = (Array.isArray(arr) ? arr : []).find(
               (e) => normalizeRut(e?.rut) === normRut
             );
-            if (found && !cancel) { setEmpleado(found); return; }
+            if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
           }
         } catch {/* noop */}
       }
@@ -351,7 +440,7 @@ export default function EmpleadoDetalle() {
           const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
           if (r.ok) {
             const arr = await r.json();
-            if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); return; }
+            if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); setOriginal(JSON.parse(JSON.stringify(arr[0]))); return; }
           }
         } catch {/* noop */}
       }
@@ -370,13 +459,43 @@ export default function EmpleadoDetalle() {
   const guardarEmpleado = async () => {
     if (!empleado) return;
     try {
-      const id = empleado.id ?? encodeURIComponent(empleado.rut);
+      // --- Auditar cambios vs. original ---
+      const diffs = [];
+      const keys = new Set([
+        ...Object.keys(original || {}),
+        ...Object.keys(empleado || {}),
+      ]);
+      keys.forEach((k) => {
+        const a = JSON.stringify(original?.[k]);
+        const b = JSON.stringify(empleado?.[k]);
+        if (a !== b) diffs.push(k);
+      });
+
+      const nuevaEntrada = {
+        id: Date.now(),
+        fecha: new Date().toISOString().slice(0,10),
+        hora: new Date().toTimeString().slice(0,5),
+        actor: "Sistema",
+        accion: "Actualización de ficha",
+        categoria: "Ficha",
+        detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
+      };
+
+      const payload = {
+        ...empleado,
+        historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada],
+      };
+
+      const id = payload.id ?? encodeURIComponent(payload.rut);
       const url = `${API}/${RESOURCE}/${id}`;
       await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(empleado),
+        body: JSON.stringify(payload),
       });
+
+      setEmpleado(payload);
+      setOriginal(JSON.parse(JSON.stringify(payload)));
       alert("Cambios guardados correctamente");
       setModoEdicion(false);
     } catch (error) {
@@ -466,7 +585,8 @@ export default function EmpleadoDetalle() {
           { id: "prevision", label: "Previsión" },
           { id: "bancarios", label: "Bancarios" },
           { id: "asistencia", label: "Asistencia" },
-          { id: "historial", label: "Historial" }, // usa HojaDeVida
+          { id: "hojaVida", label: "Hoja de Vida" },
+          { id: "historial", label: "Historial" }, // ← auditoría DT
         ].map((t) => (
           <button
             key={t.id}
@@ -508,7 +628,8 @@ export default function EmpleadoDetalle() {
           {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
           {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
-          {(tabActiva === "historial") && <HojaDeVida empleado={empleado} />}
+          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
+          {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
         <aside className="ed-right">
@@ -621,6 +742,23 @@ export default function EmpleadoDetalle() {
         .ed-bar-fill.blue{background:#3B82F6}
         .ed-bar-fill.green{background:#10B981}
         .ed-bar-fill.purple{background:#8B5CF6}
+
+        /* Historial (timeline) */
+        .htl-wrap{padding:12px}
+        .htl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .htl-sub{color:#6B7280;margin-top:4px}
+        .htl-list{list-style:none;margin:0;padding:0;position:relative}
+        .htl-item{display:grid;grid-template-columns:140px 24px 1fr;gap:8px;padding:10px 0;border-top:1px solid #F3F4F6}
+        .htl-item:first-child{border-top:none}
+        .htl-time{color:#6B7280}
+        .htl-date{font-weight:700;color:#374151}
+        .htl-hour{font-size:12px}
+        .htl-dot{width:10px;height:10px;border-radius:999px;background:#3B82F6;margin:auto}
+        .htl-row1{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+        .htl-accion{font-weight:800;color:#111827}
+        .htl-cat{background:#EEF2FF;color:#1E3A8A;border:1px solid #C7D2FE;padding:2px 8px;border-radius:999px;font-size:12px}
+        .htl-det{color:#374151}
+        .htl-foot{color:#6B7280;font-size:12px;margin-top:4px}
       `}</style>
     </div>
   );
