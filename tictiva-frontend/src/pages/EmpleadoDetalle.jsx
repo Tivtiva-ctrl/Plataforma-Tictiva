@@ -9,7 +9,7 @@ import DocumentosTab from "../components/DocumentosTab";
 import PrevisionTab from "../components/PrevisionTab";
 import BancariosTab from "../components/BancariosTab";
 import HojaDeVida from "../components/HojaDeVida";
-import { EmpleadosAPI } from "../api"; // ✅ usar la misma capa que ListadoFichas
+import { EmpleadosAPI } from "../api"; // ✅ misma capa que ListadoFichas
 
 /* ===========================
    Utils
@@ -21,12 +21,14 @@ const mesesEs = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
 ];
+
 const fmtFechaLarga = (iso) => {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d)) return "—";
   return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
 };
+
 const antiguedadStr = (desdeISO) => {
   if (!desdeISO) return "";
   const start = new Date(desdeISO);
@@ -38,6 +40,56 @@ const antiguedadStr = (desdeISO) => {
   const aTxt = y === 1 ? "1 año" : `${y} años`;
   const mTxt = m === 1 ? "1 mes" : `${m} meses`;
   return `${aTxt} y ${mTxt}`;
+};
+
+// ---------- helpers robustos ----------
+const pickCI = (obj, keys = [], fallback = undefined) => {
+  if (!obj) return fallback;
+  const map = Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v])
+  );
+  for (const k of keys) {
+    const v = map[String(k).toLowerCase()];
+    if (v !== undefined && v !== null && String(v) !== "") return v;
+  }
+  return fallback;
+};
+const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+const monthsBetween = (a, b) => {
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (b.getDate() < a.getDate()) m -= 1;
+  return Math.max(0, m);
+};
+/** Vacaciones: 1.25 d/mes; si jornada contiene “Parcial” → factor 0.5 */
+const computeVacaciones = (empleado) => {
+  const ingreso = empleado?.fechaIngreso ? new Date(empleado.fechaIngreso) : null;
+  if (!ingreso || isNaN(ingreso)) {
+    return { devengadas: 0, tomadas: 0, saldo: 0, detalle: "Sin fecha de ingreso" };
+  }
+  const now = new Date();
+  const months = monthsBetween(ingreso, now);
+
+  const jornada =
+    pickCI(empleado, ["jornada"], undefined) ??
+    pickCI(empleado?.datosContractuales, ["jornada"], "Jornada Completa");
+
+  const rate = 1.25;
+  const factor = (typeof jornada === "string" && jornada.toLowerCase().includes("parcial")) ? 0.5 : 1;
+  const dev = months * rate * factor;
+
+  const tomadas =
+    Number(
+      pickCI(empleado, ["vacacionesTomadas","diasVacTomados","vacaciones_tomadas"], 0) ??
+      pickCI(empleado?.vacaciones, ["tomadas"], 0)
+    ) || 0;
+
+  return {
+    devengadas: round1(dev),
+    tomadas: round1(tomadas),
+    saldo: round1(dev - tomadas),
+    jornada: jornada || "",
+    months
+  };
 };
 
 /* ===========================
@@ -221,14 +273,13 @@ export default function EmpleadoDetalle() {
     );
   }
 
-  // Carga del empleado: primero desde EmpleadosAPI (localStorage/DB embebida), luego fallbacks HTTP
+  // Carga del empleado: primero EmpleadosAPI (local/overlay), luego HTTP (dev)
   useEffect(() => {
     let cancel = false;
 
     const fetchEmpleado = async () => {
       setNotFound(false);
 
-      // 1) Buscar en la capa centralizada (lo mismo que usa ListadoFichas)
       try {
         const arr = await EmpleadosAPI.list();
         if (Array.isArray(arr) && arr.length) {
@@ -244,8 +295,6 @@ export default function EmpleadoDetalle() {
         }
       } catch {/* ignore */}
 
-      // 2) Fallbacks HTTP (solo para dev con json-server)
-      // por ID directo
       if (idParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
@@ -256,7 +305,6 @@ export default function EmpleadoDetalle() {
         } catch {/* noop */}
       }
 
-      // por RUT (queries)
       if (rutParam) {
         const normRut = normalizeRut(rutParam);
         const urls = [
@@ -274,8 +322,6 @@ export default function EmpleadoDetalle() {
             if (emp && !cancel) { setEmpleado(emp); return; }
           } catch {/* noop */}
         }
-
-        // traer todo y filtrar
         try {
           const rAll = await fetch(`${API}/${RESOURCE}`);
           if (rAll.ok) {
@@ -288,7 +334,6 @@ export default function EmpleadoDetalle() {
         } catch {/* noop */}
       }
 
-      // query por id cuando vino como string
       if (!idParam && rawParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
@@ -357,6 +402,15 @@ export default function EmpleadoDetalle() {
   const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `) : "—";
   const ingresoTxt = empleado.fechaIngreso ? fmtFechaLarga(empleado.fechaIngreso) : "—";
   const antig = antiguedadStr(empleado.fechaIngreso);
+
+  // extras para Info Rápida
+  const horario =
+    pickCI(empleado, ["horario"], "") ??
+    pickCI(empleado?.datosContractuales, ["horario"], "");
+  const centro =
+    pickCI(empleado, ["centro","oficina"], "") ??
+    pickCI(empleado?.datosContractuales, ["centro","oficina"], "");
+  const vac = computeVacaciones(empleado);
 
   const selectTab = (tab) => {
     setTabActiva(tab);
@@ -458,17 +512,29 @@ export default function EmpleadoDetalle() {
                 <span className="ed-quick-ico">⏰</span>
                 <div>
                   <div className="ed-quick-label">Horario</div>
-                  <div className="ed-quick-val">{empleado.horario || "08:30 - 18:00"}</div>
+                  <div className="ed-quick-val">{horario || "08:30 - 18:00"}</div>
                 </div>
               </li>
               <li>
                 <span className="ed-quick-ico">📌</span>
                 <div>
                   <div className="ed-quick-label">Oficina</div>
-                  <div className="ed-quick-val">{empleado.centro || "Santiago Centro"}</div>
+                  <div className="ed-quick-val">{centro || "Santiago Centro"}</div>
                 </div>
               </li>
             </ul>
+
+            <div className="ed-sep" />
+
+            <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
+            <div className="ed-vac">
+              <div className="ed-vac-row">
+                <span>Saldo</span>
+                <b>{vac.saldo} días</b>
+              </div>
+              <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
+              {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
+            </div>
           </div>
 
           <div className="ed-card">
@@ -492,6 +558,7 @@ export default function EmpleadoDetalle() {
         </aside>
       </div>
 
+      {/* Estilos mínimos embebidos (se suman a tu .css) */}
       <style>{`
         .ed-wrap{padding:16px 16px 32px}
         .ed-card{background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:16px;box-shadow:0 4px 10px rgba(0,0,0,.04)}
@@ -525,6 +592,10 @@ export default function EmpleadoDetalle() {
         .ed-quick-ico{font-size:20px;line-height:1}
         .ed-quick-label{color:#6B7280}
         .ed-quick-val{font-weight:700;color:#111827}
+        .ed-sep{height:1px;background:#F3F4F6;margin:12px 0}
+        .ed-vac{margin-top:6px}
+        .ed-vac-row{display:flex;justify-content:space-between;align-items:center}
+        .ed-vac-sub{color:#6B7280;font-size:12px;margin-top:4px}
         .ed-metric{margin:10px 0}
         .ed-metric-row{display:flex;justify-content:space-between;color:#374151;margin-bottom:6px}
         .ed-metric-num{font-weight:800}
