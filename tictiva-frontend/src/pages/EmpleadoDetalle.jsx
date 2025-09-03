@@ -1,4 +1,3 @@
-// src/pages/EmpleadoDetalle.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { differenceInMinutes, parseISO } from "date-fns";
@@ -10,6 +9,7 @@ import DocumentosTab from "../components/DocumentosTab";
 import PrevisionTab from "../components/PrevisionTab";
 import BancariosTab from "../components/BancariosTab";
 import HojaDeVida from "../components/HojaDeVida";
+import { EmpleadosAPI } from "../api"; // ✅ usar la misma capa que ListadoFichas
 
 /* ===========================
    Utils
@@ -173,20 +173,16 @@ function AsistenciaTab({ empleado }) {
    Detalle empleado (UI renovada)
    =========================== */
 export default function EmpleadoDetalle() {
-  // Puede venir :rut o :id en la URL
   const params = useParams();
   const location = useLocation();
 
-  // 1) Toma el valor crudo del parámetro
   const rawParam = decodeURIComponent(String(params.rut ?? params.id ?? params.param ?? ""));
   const hasParam = rawParam.trim().length > 0;
 
-  // 2) Deriva si es numérico (id) o no (rut)
   const isNumericId = /^\d+$/.test(rawParam);
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
-  // 3) ENV
   const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
   const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
 
@@ -195,7 +191,7 @@ export default function EmpleadoDetalle() {
   const [tabActiva, setTabActiva] = useState("personales");
   const [modoEdicion, setModoEdicion] = useState(false);
 
-  // Deep-link de pestañas: #documentos o ?tab=documentos
+  // Deep-link de pestañas
   useEffect(() => {
     const hash = (location.hash || "").replace("#", "").toLowerCase();
     const q = (new URLSearchParams(location.search).get("tab") || "").toLowerCase();
@@ -214,10 +210,9 @@ export default function EmpleadoDetalle() {
     if (map[wanted]) setTabActiva(map[wanted]);
   }, [location]);
 
-  // Si NO hay parámetro en la URL, no intentamos fetchear y avisamos elegante
   if (!hasParam) {
     return (
-      <div className="detalle-container">
+      <div className="ed-wrap">
         <VolverAtras />
         <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
           ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
@@ -226,28 +221,42 @@ export default function EmpleadoDetalle() {
     );
   }
 
-  // Carga del empleado por id O por rut
+  // Carga del empleado: primero desde EmpleadosAPI (localStorage/DB embebida), luego fallbacks HTTP
   useEffect(() => {
     let cancel = false;
 
     const fetchEmpleado = async () => {
       setNotFound(false);
 
-      // Intento por ID directo (/empleados/:id)
+      // 1) Buscar en la capa centralizada (lo mismo que usa ListadoFichas)
+      try {
+        const arr = await EmpleadosAPI.list();
+        if (Array.isArray(arr) && arr.length) {
+          const norm = (v) => normalizeRut(v);
+          const byId = idParam ? arr.find((e) => String(e?.id) === String(idParam)) : null;
+          const byRut = rutParam ? arr.find((e) => norm(e?.rut) === norm(rutParam)) : null;
+          const byEither = !byId && !byRut && rawParam
+            ? arr.find((e) => String(e?.id) === String(rawParam) || norm(e?.rut) === norm(rawParam))
+            : null;
+
+          const found = byId || byRut || byEither;
+          if (found && !cancel) { setEmpleado(found); return; }
+        }
+      } catch {/* ignore */}
+
+      // 2) Fallbacks HTTP (solo para dev con json-server)
+      // por ID directo
       if (idParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
           if (r.ok) {
             const emp = await r.json();
-            if (emp && !cancel && (emp.id != null || emp.nombre)) {
-              setEmpleado(emp);
-              return;
-            }
+            if (emp && !cancel && (emp.id != null || emp.nombre)) { setEmpleado(emp); return; }
           }
         } catch {/* noop */}
       }
 
-      // Intentos por RUT (query)
+      // por RUT (queries)
       if (rutParam) {
         const normRut = normalizeRut(rutParam);
         const urls = [
@@ -263,10 +272,10 @@ export default function EmpleadoDetalle() {
             const data = await r.json();
             const emp = Array.isArray(data) ? data[0] : data;
             if (emp && !cancel) { setEmpleado(emp); return; }
-          } catch { /* noop */ }
+          } catch {/* noop */}
         }
 
-        // Fallback: traer todo y filtrar por RUT normalizado
+        // traer todo y filtrar
         try {
           const rAll = await fetch(`${API}/${RESOURCE}`);
           if (rAll.ok) {
@@ -276,10 +285,10 @@ export default function EmpleadoDetalle() {
             );
             if (found && !cancel) { setEmpleado(found); return; }
           }
-        } catch { /* noop */ }
+        } catch {/* noop */}
       }
 
-      // Último intento: query por id cuando vino como string
+      // query por id cuando vino como string
       if (!idParam && rawParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
@@ -287,7 +296,7 @@ export default function EmpleadoDetalle() {
             const arr = await r.json();
             if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); return; }
           }
-        } catch { /* noop */ }
+        } catch {/* noop */}
       }
 
       if (!cancel) setNotFound(true);
@@ -321,10 +330,10 @@ export default function EmpleadoDetalle() {
 
   if (notFound) {
     return (
-      <div className="detalle-container">
+      <div className="ed-wrap">
         <VolverAtras />
         <div style={{ padding: 16, color: "#6B7280" }}>
-          Empleado no encontrado. Verifica el RUT/ID o el json-server.
+          Empleado no encontrado. Verifica el RUT/ID o los datos locales.
         </div>
       </div>
     );
@@ -332,7 +341,7 @@ export default function EmpleadoDetalle() {
 
   if (!empleado) {
     return (
-      <div className="detalle-container">
+      <div className="ed-wrap">
         <VolverAtras />
         <div style={{ padding: 16 }}>Cargando datos del empleado…</div>
       </div>
@@ -340,35 +349,25 @@ export default function EmpleadoDetalle() {
   }
 
   const iniciales =
-    empleado.nombre
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase() || "";
+    empleado.nombre?.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase() || "";
 
   const activo = (empleado.estado || "").toLowerCase() === "activo";
 
-  // Quick info (cumpleaños con 🎈)
   const cumpleISO = empleado.fechaNacimiento || empleado.nacimiento || empleado?.personales?.fechaNacimiento;
-  const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^(\d{2}) de /, (_, d) => `${parseInt(d,10)} `) : "—";
+  const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `) : "—";
   const ingresoTxt = empleado.fechaIngreso ? fmtFechaLarga(empleado.fechaIngreso) : "—";
   const antig = antiguedadStr(empleado.fechaIngreso);
 
-  // Helper para actualizar hash al cambiar de tab (opcional)
   const selectTab = (tab) => {
     setTabActiva(tab);
-    try {
-      const newUrl = `${location.pathname}#${tab}`;
-      window.history.replaceState(null, "", newUrl);
-    } catch {}
+    try { window.history.replaceState(null, "", `${location.pathname}#${tab}`); } catch {}
   };
 
   return (
     <div className="ed-wrap">
       <VolverAtras />
 
-      {/* Encabezado grande */}
+      {/* Encabezado */}
       <div className="ed-card ed-head">
         <div className="ed-avatar">{iniciales}</div>
 
@@ -392,7 +391,7 @@ export default function EmpleadoDetalle() {
         )}
       </div>
 
-      {/* Tabs tipo pill */}
+      {/* Tabs */}
       <div className="ed-tabs">
         {[
           { id: "personales", label: "Personales" },
@@ -412,42 +411,20 @@ export default function EmpleadoDetalle() {
         ))}
       </div>
 
-      {/* Grid 2 columnas: izquierda contenido, derecha sidebar */}
+      {/* Grid 2 columnas */}
       <div className="ed-grid">
-        {/* Izquierda */}
         <div className="ed-left">
           {tabActiva === "personales" ? (
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
               <div className="ed-kv">
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">👤 Nombre Completo:</span>
-                  <span className="ed-kv-value">{empleado.nombre || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">🪪 Cédula:</span>
-                  <span className="ed-kv-value">{empleado.rut || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">🎂 Fecha de Nacimiento:</span>
-                  <span className="ed-kv-value">{cumpleTxt}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">✉️ Email:</span>
-                  <span className="ed-kv-value">{empleado.correo || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">📞 Teléfono:</span>
-                  <span className="ed-kv-value">{empleado.telefono || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">📍 Dirección:</span>
-                  <span className="ed-kv-value">{empleado.direccion || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">❤️‍💑 Estado Civil:</span>
-                  <span className="ed-kv-value">{empleado.estadoCivil || "—"}</span>
-                </div>
+                <div className="ed-kv-row"><span className="ed-kv-label">👤 Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">🪪 Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">🎂 Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">✉️ Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">📞 Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">📍 Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">❤️‍💑 Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
               </div>
             </div>
           ) : null}
@@ -460,17 +437,12 @@ export default function EmpleadoDetalle() {
             />
           )}
           {tabActiva === "documentos" && <DocumentosTab rut={empleado.rut} />}
-          {tabActiva === "prevision" && (
-            <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-          )}
-          {tabActiva === "bancarios" && (
-            <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-          )}
+          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
+          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
           {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
         </div>
 
-        {/* Derecha: Sidebar */}
         <aside className="ed-right">
           <div className="ed-card">
             <h4 className="ed-card-title">Información Rápida</h4>
@@ -479,9 +451,7 @@ export default function EmpleadoDetalle() {
                 <span className="ed-quick-ico">🎈</span>
                 <div>
                   <div className="ed-quick-label">Próximo cumpleaños</div>
-                  <div className="ed-quick-val">
-                    {cumpleTxt} <span aria-hidden>🎉🎈</span>
-                  </div>
+                  <div className="ed-quick-val">{cumpleTxt} <span aria-hidden>🎉🎈</span></div>
                 </div>
               </li>
               <li>
@@ -505,100 +475,56 @@ export default function EmpleadoDetalle() {
             <h4 className="ed-card-title">Rendimiento</h4>
 
             <div className="ed-metric">
-              <div className="ed-metric-row">
-                <span>Productividad</span>
-                <span className="ed-metric-num">92%</span>
-              </div>
-              <div className="ed-bar">
-                <div className="ed-bar-fill blue" style={{ width: "92%" }} />
-              </div>
+              <div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div>
+              <div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div>
             </div>
 
             <div className="ed-metric">
-              <div className="ed-metric-row">
-                <span>Puntualidad</span>
-                <span className="ed-metric-num">96%</span>
-              </div>
-              <div className="ed-bar">
-                <div className="ed-bar-fill green" style={{ width: "96%" }} />
-              </div>
+              <div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div>
+              <div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div>
             </div>
 
             <div className="ed-metric">
-              <div className="ed-metric-row">
-                <span>Colaboración</span>
-                <span className="ed-metric-num">88%</span>
-              </div>
-              <div className="ed-bar">
-                <div className="ed-bar-fill purple" style={{ width: "88%" }} />
-              </div>
+              <div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div>
+              <div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div>
             </div>
           </div>
         </aside>
       </div>
 
-      {/* Estilos del rediseño (aislados con prefijo .ed-) */}
       <style>{`
         .ed-wrap{padding:16px 16px 32px}
-        .ed-card{
-          background:#fff;
-          border:1px solid #E5E7EB;
-          border-radius:16px;
-          padding:16px;
-          box-shadow:0 4px 10px rgba(0,0,0,.04);
-        }
-        .ed-head{
-          display:flex; gap:16px; align-items:center; margin-bottom:12px;
-        }
-        .ed-avatar{
-          width:64px;height:64px;border-radius:16px;
-          background:#E0E7FF;color:#1E3A8A;font-weight:800;
-          display:flex;align-items:center;justify-content:center;font-size:22px;
-        }
+        .ed-card{background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:16px;box-shadow:0 4px 10px rgba(0,0,0,.04)}
+        .ed-head{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+        .ed-avatar{width:64px;height:64px;border-radius:16px;background:#E0E7FF;color:#1E3A8A;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:22px}
         .ed-head-main{flex:1;min-width:0}
         .ed-name-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .ed-name{margin:0;font-size:24px;font-weight:800;color:#111827}
-        .ed-badge{
-          font-weight:700;font-size:12px;border-radius:999px;padding:6px 10px;border:1px solid transparent;
-        }
+        .ed-badge{font-weight:700;font-size:12px;border-radius:999px;padding:6px 10px;border:1px solid transparent}
         .ed-badge.is-ok{background:#D1FAE5;color:#065F46;border-color:#A7F3D0}
         .ed-badge.is-warn{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
         .ed-sub{color:#374151;margin-top:2px}
         .ed-sub.light{color:#6B7280}
-
-        .ed-btn{
-          background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:8px 12px;cursor:pointer
-        }
+        .ed-btn{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:8px 12px;cursor:pointer}
         .ed-btn.primary{background:#1A56DB;color:#fff;border-color:#1A56DB}
-
         .ed-tabs{display:flex;gap:8px;margin:12px 0 16px;flex-wrap:wrap}
-        .ed-tab{
-          background:#fff;border:1px solid #E5E7EB;border-radius:999px;padding:8px 14px;cursor:pointer;color:#374151
-        }
+        .ed-tab{background:#fff;border:1px solid #E5E7EB;border-radius:999px;padding:8px 14px;cursor:pointer;color:#374151}
         .ed-tab.is-active{background:#EEF2FF;border-color:#C7D2FE;color:#1E3A8A;font-weight:700}
-
         .ed-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px}
         @media (max-width: 980px){ .ed-grid{grid-template-columns:1fr} }
-
         .ed-left{display:grid;gap:16px}
         .ed-right{display:grid;gap:16px}
-
         .ed-card-title{margin:0 0 10px;font-size:18px;color:#111827;font-weight:800}
-
         .ed-kv{display:grid}
-        .ed-kv-row{
-          display:flex;justify-content:space-between;gap:12px;padding:14px 2px;border-top:1px solid #F3F4F6;
-        }
+        .ed-kv-row{display:flex;justify-content:space-between;gap:12px;padding:14px 2px;border-top:1px solid #F3F4F6}
         .ed-kv-row:first-child{border-top:none}
         .ed-kv-label{color:#6B7280;min-width:220px}
         .ed-kv-value{font-weight:700;color:#111827;text-align:right}
-
         .ed-quick{list-style:none;margin:0;padding:0;display:grid;gap:12px}
         .ed-quick li{display:flex;gap:10px;align-items:flex-start}
         .ed-quick-ico{font-size:20px;line-height:1}
         .ed-quick-label{color:#6B7280}
         .ed-quick-val{font-weight:700;color:#111827}
-
         .ed-metric{margin:10px 0}
         .ed-metric-row{display:flex;justify-content:space-between;color:#374151;margin-bottom:6px}
         .ed-metric-num{font-weight:800}
