@@ -1,3 +1,4 @@
+// src/pages/EmpleadoDetalle.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { differenceInMinutes, parseISO } from "date-fns";
@@ -243,22 +244,35 @@ export default function EmpleadoDetalle() {
   const [tabActiva, setTabActiva] = useState("personales");
   const [modoEdicion, setModoEdicion] = useState(false);
 
-  // Deep-link de pestañas
+  // Deep-link de pestañas (incluye alias)
   useEffect(() => {
     const hash = (location.hash || "").replace("#", "").toLowerCase();
     const q = (new URLSearchParams(location.search).get("tab") || "").toLowerCase();
     const wanted = hash || q;
+
     const map = {
       personales: "personales",
       contractuales: "contractuales",
       documentos: "documentos",
       docs: "documentos",
+
+      // ✅ checklist previsional
       prevision: "prevision",
+      previsional: "prevision",
+      "checklist-previsional": "prevision",
+      checklist: "prevision",
+
+      // ✅ bancarios
       bancarios: "bancarios",
+
       asistencia: "asistencia",
-      hojavida: "hojaVida",
-      "hoja-vida": "hojaVida",
+
+      // ✅ historial (alias de hoja de vida para deep-link)
+      historial: "historial",
+      hojavida: "historial",
+      "hoja-vida": "historial",
     };
+
     if (map[wanted]) setTabActiva(map[wanted]);
   }, [location]);
 
@@ -286,23 +300,38 @@ export default function EmpleadoDetalle() {
           const norm = (v) => normalizeRut(v);
           const byId = idParam ? arr.find((e) => String(e?.id) === String(idParam)) : null;
           const byRut = rutParam ? arr.find((e) => norm(e?.rut) === norm(rutParam)) : null;
-          const byEither = !byId && !byRut && rawParam
-            ? arr.find((e) => String(e?.id) === String(rawParam) || norm(e?.rut) === norm(rawParam))
-            : null;
+          const byEither =
+            !byId && !byRut && rawParam
+              ? arr.find(
+                  (e) =>
+                    String(e?.id) === String(rawParam) ||
+                    norm(e?.rut) === norm(rawParam)
+                )
+              : null;
 
           const found = byId || byRut || byEither;
-          if (found && !cancel) { setEmpleado(found); return; }
+          if (found && !cancel) {
+            setEmpleado(found);
+            return;
+          }
         }
-      } catch {/* ignore */}
+      } catch {
+        /* ignore */
+      }
 
       if (idParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
           if (r.ok) {
             const emp = await r.json();
-            if (emp && !cancel && (emp.id != null || emp.nombre)) { setEmpleado(emp); return; }
+            if (emp && !cancel && (emp.id != null || emp.nombre)) {
+              setEmpleado(emp);
+              return;
+            }
           }
-        } catch {/* noop */}
+        } catch {
+          /* noop */
+        }
       }
 
       if (rutParam) {
@@ -319,8 +348,13 @@ export default function EmpleadoDetalle() {
             if (!r.ok) continue;
             const data = await r.json();
             const emp = Array.isArray(data) ? data[0] : data;
-            if (emp && !cancel) { setEmpleado(emp); return; }
-          } catch {/* noop */}
+            if (emp && !cancel) {
+              setEmpleado(emp);
+              return;
+            }
+          } catch {
+            /* noop */
+          }
         }
         try {
           const rAll = await fetch(`${API}/${RESOURCE}`);
@@ -329,9 +363,14 @@ export default function EmpleadoDetalle() {
             const found = (Array.isArray(arr) ? arr : []).find(
               (e) => normalizeRut(e?.rut) === normRut
             );
-            if (found && !cancel) { setEmpleado(found); return; }
+            if (found && !cancel) {
+              setEmpleado(found);
+              return;
+            }
           }
-        } catch {/* noop */}
+        } catch {
+          /* noop */
+        }
       }
 
       if (!idParam && rawParam) {
@@ -339,16 +378,23 @@ export default function EmpleadoDetalle() {
           const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
           if (r.ok) {
             const arr = await r.json();
-            if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); return; }
+            if (Array.isArray(arr) && arr.length > 0 && !cancel) {
+              setEmpleado(arr[0]);
+              return;
+            }
           }
-        } catch {/* noop */}
+        } catch {
+          /* noop */
+        }
       }
 
       if (!cancel) setNotFound(true);
     };
 
     fetchEmpleado();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [rutParam, idParam, rawParam, API, RESOURCE]);
 
   const handleChange = (campo, valor) => {
@@ -398,8 +444,13 @@ export default function EmpleadoDetalle() {
 
   const activo = (empleado.estado || "").toLowerCase() === "activo";
 
-  const cumpleISO = empleado.fechaNacimiento || empleado.nacimiento || empleado?.personales?.fechaNacimiento;
-  const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `) : "—";
+  const cumpleISO =
+    empleado.fechaNacimiento ||
+    empleado.nacimiento ||
+    empleado?.personales?.fechaNacimiento;
+  const cumpleTxt = cumpleISO
+    ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `)
+    : "—";
   const ingresoTxt = empleado.fechaIngreso ? fmtFechaLarga(empleado.fechaIngreso) : "—";
   const antig = antiguedadStr(empleado.fechaIngreso);
 
@@ -408,13 +459,15 @@ export default function EmpleadoDetalle() {
     pickCI(empleado, ["horario"], "") ??
     pickCI(empleado?.datosContractuales, ["horario"], "");
   const centro =
-    pickCI(empleado, ["centro","oficina"], "") ??
-    pickCI(empleado?.datosContractuales, ["centro","oficina"], "");
+    pickCI(empleado, ["centro", "oficina"], "") ??
+    pickCI(empleado?.datosContractuales, ["centro", "oficina"], "");
   const vac = computeVacaciones(empleado);
 
   const selectTab = (tab) => {
     setTabActiva(tab);
-    try { window.history.replaceState(null, "", `${location.pathname}#${tab}`); } catch {}
+    try {
+      window.history.replaceState(null, "", `${location.pathname}#${tab}`);
+    } catch {}
   };
 
   return (
@@ -428,7 +481,9 @@ export default function EmpleadoDetalle() {
         <div className="ed-head-main">
           <div className="ed-name-row">
             <h2 className="ed-name">{empleado.nombre || "—"}</h2>
-            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>{empleado.estado || "—"}</span>
+            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>
+              {empleado.estado || "—"}
+            </span>
           </div>
           <div className="ed-sub">{empleado.cargo || "—"}</div>
           {empleado.fechaIngreso && (
@@ -439,9 +494,13 @@ export default function EmpleadoDetalle() {
         </div>
 
         {modoEdicion ? (
-          <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
+          <button className="ed-btn primary" onClick={guardarEmpleado}>
+            Guardar Cambios
+          </button>
         ) : (
-          <button className="ed-btn" onClick={() => setModoEdicion(true)}>Editar Ficha</button>
+          <button className="ed-btn" onClick={() => setModoEdicion(true)}>
+            Editar Ficha
+          </button>
         )}
       </div>
 
@@ -451,8 +510,11 @@ export default function EmpleadoDetalle() {
           { id: "personales", label: "Personales" },
           { id: "contractuales", label: "Contractuales" },
           { id: "documentos", label: "Documentos" },
+          { id: "prevision", label: "Previsión" },   // ✅ añadida
+          { id: "bancarios", label: "Bancarios" },   // ✅ añadida
           { id: "asistencia", label: "Asistencia" },
-          { id: "hojaVida", label: "Hoja de Vida" },
+          { id: "historial", label: "Historial" },   // ✅ añadida
+          { id: "hojaVida", label: "Hoja de Vida" }, // mantenida
         ].map((t) => (
           <button
             key={t.id}
@@ -472,13 +534,34 @@ export default function EmpleadoDetalle() {
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
               <div className="ed-kv">
-                <div className="ed-kv-row"><span className="ed-kv-label">👤 Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">🪪 Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">🎂 Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">✉️ Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">📞 Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">📍 Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">❤️‍💑 Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">👤 Nombre Completo:</span>
+                  <span className="ed-kv-value">{empleado.nombre || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">🪪 Cédula:</span>
+                  <span className="ed-kv-value">{empleado.rut || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">🎂 Fecha de Nacimiento:</span>
+                  <span className="ed-kv-value">{cumpleTxt}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">✉️ Email:</span>
+                  <span className="ed-kv-value">{empleado.correo || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">📞 Teléfono:</span>
+                  <span className="ed-kv-value">{empleado.telefono || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">📍 Dirección:</span>
+                  <span className="ed-kv-value">{empleado.direccion || "—"}</span>
+                </div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">❤️‍💑 Estado Civil:</span>
+                  <span className="ed-kv-value">{empleado.estadoCivil || "—"}</span>
+                </div>
               </div>
             </div>
           ) : null}
@@ -491,9 +574,31 @@ export default function EmpleadoDetalle() {
             />
           )}
           {tabActiva === "documentos" && <DocumentosTab rut={empleado.rut} />}
-          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
-          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
+
+          {/* ✅ Previsión */}
+          {tabActiva === "prevision" && (
+            <PrevisionTab
+              empleado={empleado}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+            />
+          )}
+
+          {/* ✅ Bancarios */}
+          {tabActiva === "bancarios" && (
+            <BancariosTab
+              empleado={empleado}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+            />
+          )}
+
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
+
+          {/* ✅ Historial (reutiliza Hoja de Vida) */}
+          {tabActiva === "historial" && <HojaDeVida empleado={empleado} />}
+
+          {/* Hoja de Vida (mantenida) */}
           {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
         </div>
 
@@ -505,7 +610,9 @@ export default function EmpleadoDetalle() {
                 <span className="ed-quick-ico">🎈</span>
                 <div>
                   <div className="ed-quick-label">Próximo cumpleaños</div>
-                  <div className="ed-quick-val">{cumpleTxt} <span aria-hidden>🎉🎈</span></div>
+                  <div className="ed-quick-val">
+                    {cumpleTxt} <span aria-hidden>🎉🎈</span>
+                  </div>
                 </div>
               </li>
               <li>
@@ -526,14 +633,20 @@ export default function EmpleadoDetalle() {
 
             <div className="ed-sep" />
 
-            <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
+            <h4 className="ed-card-title" style={{ marginTop: 8 }}>
+              Vacaciones
+            </h4>
             <div className="ed-vac">
               <div className="ed-vac-row">
                 <span>Saldo</span>
                 <b>{vac.saldo} días</b>
               </div>
-              <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
-              {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
+              <div className="ed-vac-sub">
+                Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}
+              </div>
+              {vac.jornada ? (
+                <div className="ed-vac-sub">Jornada: {vac.jornada}</div>
+              ) : null}
             </div>
           </div>
 
@@ -541,18 +654,33 @@ export default function EmpleadoDetalle() {
             <h4 className="ed-card-title">Rendimiento</h4>
 
             <div className="ed-metric">
-              <div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div>
-              <div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div>
+              <div className="ed-metric-row">
+                <span>Productividad</span>
+                <span className="ed-metric-num">92%</span>
+              </div>
+              <div className="ed-bar">
+                <div className="ed-bar-fill blue" style={{ width: "92%" }} />
+              </div>
             </div>
 
             <div className="ed-metric">
-              <div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div>
-              <div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div>
+              <div className="ed-metric-row">
+                <span>Puntualidad</span>
+                <span className="ed-metric-num">96%</span>
+              </div>
+              <div className="ed-bar">
+                <div className="ed-bar-fill green" style={{ width: "96%" }} />
+              </div>
             </div>
 
             <div className="ed-metric">
-              <div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div>
-              <div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div>
+              <div className="ed-metric-row">
+                <span>Colaboración</span>
+                <span className="ed-metric-num">88%</span>
+              </div>
+              <div className="ed-bar">
+                <div className="ed-bar-fill purple" style={{ width: "88%" }} />
+              </div>
             </div>
           </div>
         </aside>
