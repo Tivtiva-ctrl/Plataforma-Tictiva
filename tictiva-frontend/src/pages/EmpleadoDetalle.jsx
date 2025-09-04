@@ -33,18 +33,194 @@ const EmpleadosAPI = {
     telefono: "+56 9 8765 4321",
     direccion: "Av. Providencia 1234, Santiago",
     estadoCivil: "Casado(a)",
+    horario: "08:30 - 18:00",
+    centro: "Casa Matriz",
+    datosContractuales: {
+      cargoActual: "Gerente de Operaciones",
+      tipoContrato: "Indefinido",
+      jornada: "Jornada Completa",
+      lugarTrabajo: "Casa Matriz",
+      responsable: "Claudia R.",
+      fechaIngreso: "2021-03-02",
+      centroCosto: "Operaciones",
+      sueldoBase: 1800000,
+      horario: "08:30 - 18:00",
+      pinMarcacion: "8421",
+      ultimaActualizacion: "2024-12-20",
+      anexosFirmados: "Pacto HE 2023; Teletrabajo 2024",
+      licencias: "Ninguna",
+      contratoFirmado: "Contrato 2021-03-01",
+      finiquitoFirmado: ""
+    },
+    credencialesApp: { pin: "8421" },
     marcas: [
       { fecha: "2025-09-01", hora: "08:58", tipo: "Entrada", estado: "A tiempo", metodo: "Facial", ip: "192.168.1.100" },
       { fecha: "2025-09-01", hora: "18:02", tipo: "Salida", estado: "A tiempo", metodo: "Facial", ip: "192.168.1.100" },
     ],
     historial: [
-        { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
-        { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." },
+      { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
+      { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." },
     ]
   }])
 };
 
-const ContractualesTab = ({ datos, modoEdicion, onChange }) => <div className="ed-card"><h3 className="ed-card-title">Datos Contractuales</h3><p>Contenido de datos contractuales...</p></div>;
+// ✅ ContractualesTab completo con fallbacks al empleado y edición
+const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
+  const pick = (v, ...fallbacks) => {
+    if (v !== undefined && v !== null && String(v) !== "") return v;
+    for (const f of fallbacks) {
+      if (f !== undefined && f !== null && String(f) !== "") return f;
+    }
+    return "";
+  };
+  const safe = (v, dash = "—") => (v || v === 0 ? String(v) : dash);
+
+  const view = {
+    cargoActual:         pick(datos.cargoActual, empleado?.cargo),
+    tipoContrato:        pick(datos.tipoContrato, "Indefinido"),
+    jornada:             pick(datos.jornada, empleado?.datosContractuales?.jornada, "Jornada Completa"),
+    horario:             pick(datos.horario, empleado?.horario),
+    lugarTrabajo:        pick(datos.lugarTrabajo, empleado?.centro, empleado?.oficina),
+    centroCosto:         pick(datos.centroCosto, empleado?.area, empleado?.centroCosto),
+    responsable:         pick(datos.responsable, empleado?.responsable),
+    fechaIngreso:        pick(datos.fechaIngreso, empleado?.fechaIngreso?.slice(0,10)),
+    sueldoBase:          pick(datos.sueldoBase, empleado?.datosContractuales?.sueldoBase),
+    pinMarcacion:        pick(datos.pinMarcacion, empleado?.credencialesApp?.pin, empleado?.pin),
+    ultimaActualizacion: pick(datos.ultimaActualizacion, ""),
+    anexosFirmados:      pick(datos.anexosFirmados, ""),
+    licencias:           pick(datos.licencias, ""),
+    contratoFirmado:     pick(datos.contratoFirmado, ""),
+    finiquitoFirmado:    pick(datos.finiquitoFirmado, ""),
+  };
+
+  const handleChange = (campo, valor) => {
+    onChange?.("datosContractuales", { ...datos, [campo]: valor });
+  };
+
+  return (
+    <div className="ed-card">
+      <h3 className="ed-card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span aria-hidden>📄</span>
+        <span>Datos Contractuales</span>
+      </h3>
+
+      <div className="datos-grid" style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+        <div className="dato-item">
+          <strong>Cargo Actual:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.cargoActual} onChange={(e) => handleChange("cargoActual", e.target.value)} />
+          ) : (safe(view.cargoActual))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Tipo de Contrato:</strong>{" "}
+          {modoEdicion ? (
+            <select value={view.tipoContrato} onChange={(e) => handleChange("tipoContrato", e.target.value)}>
+              <option>Indefinido</option>
+              <option>Plazo Fijo</option>
+              <option>Honorarios</option>
+              <option>Obra o Faena</option>
+            </select>
+          ) : (safe(view.tipoContrato))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Jornada:</strong>{" "}
+          {modoEdicion ? (
+            <select value={view.jornada} onChange={(e) => handleChange("jornada", e.target.value)}>
+              <option>Jornada Completa</option>
+              <option>Jornada Parcial</option>
+              <option>Por Turnos</option>
+            </select>
+          ) : (safe(view.jornada))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Horario:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.horario} onChange={(e) => handleChange("horario", e.target.value)} placeholder="Ej: 08:30 - 18:00" />
+          ) : (safe(view.horario, "08:30 - 18:00"))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Sucursal / Lugar de Trabajo:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.lugarTrabajo} onChange={(e) => handleChange("lugarTrabajo", e.target.value)} placeholder="Ej: Casa Matriz" />
+          ) : (safe(view.lugarTrabajo))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Centro de Costo / Área:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.centroCosto} onChange={(e) => handleChange("centroCosto", e.target.value)} placeholder="Ej: Operaciones" />
+          ) : (safe(view.centroCosto))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Responsable Directo:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.responsable} onChange={(e) => handleChange("responsable", e.target.value)} placeholder="Ej: Jefe de Área" />
+          ) : (safe(view.responsable))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Fecha de Ingreso:</strong>{" "}
+          {modoEdicion ? (
+            <input type="date" value={view.fechaIngreso} onChange={(e) => handleChange("fechaIngreso", e.target.value)} />
+          ) : (safe(view.fechaIngreso))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Sueldo Base:</strong>{" "}
+          {modoEdicion ? (
+            <input type="number" min="0" step="1000" value={view.sueldoBase} onChange={(e) => handleChange("sueldoBase", e.target.value)} placeholder="Ej: 800000" />
+          ) : (view.sueldoBase ? `$${Number(view.sueldoBase).toLocaleString("es-CL")}` : "—")}
+        </div>
+
+        <div className="dato-item">
+          <strong>PIN de Marcación:</strong>{" "}
+          <span style={{ fontWeight: 600, color: "#181e23" }}>{safe(view.pinMarcacion, "Sin PIN")}</span>
+        </div>
+
+        <div className="dato-item">
+          <strong>Últ. Actualización de Contrato:</strong>{" "}
+          {modoEdicion ? (
+            <input type="date" value={view.ultimaActualizacion} onChange={(e) => handleChange("ultimaActualizacion", e.target.value)} />
+          ) : (safe(view.ultimaActualizacion))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Anexos Firmados:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.anexosFirmados} onChange={(e) => handleChange("anexosFirmados", e.target.value)} placeholder="Pacto HE 2023, Teletrabajo 2024…" />
+          ) : (safe(view.anexosFirmados))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Licencias/Permisos:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.licencias} onChange={(e) => handleChange("licencias", e.target.value)} placeholder="Ej: Médica 2024-08, Parental 2023-10" />
+          ) : (safe(view.licencias))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Contrato Firmado:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.contratoFirmado} onChange={(e) => handleChange("contratoFirmado", e.target.value)} placeholder="N° doc, fecha, etc." />
+          ) : (safe(view.contratoFirmado))}
+        </div>
+
+        <div className="dato-item">
+          <strong>Finiquito Firmado:</strong>{" "}
+          {modoEdicion ? (
+            <input value={view.finiquitoFirmado} onChange={(e) => handleChange("finiquitoFirmado", e.target.value)} placeholder="N° doc, fecha, etc." />
+          ) : (safe(view.finiquitoFirmado))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DocumentosTab = ({ rut }) => <div className="ed-card"><h3 className="ed-card-title">Documentos</h3><p>Contenido de documentos...</p></div>;
 const PrevisionTab = ({ empleado, modoEdicion, onChange }) => <div className="ed-card"><h3 className="ed-card-title">Previsión</h3><p>Contenido de previsión...</p></div>;
 const BancariosTab = ({ empleado, modoEdicion, onChange }) => <div className="ed-card"><h3 className="ed-card-title">Datos Bancarios</h3><p>Contenido de datos bancarios...</p></div>;
@@ -528,7 +704,12 @@ export default function EmpleadoDetalle() {
           ) : null}
 
           {tabActiva === "contractuales" && (
-            <ContractualesTab datos={empleado.datosContractuales || {}} modoEdicion={modoEdicion} onChange={handleChange} />
+            <ContractualesTab
+              datos={empleado.datosContractuales || {}}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+              empleado={empleado}   // 👈 importante para fallbacks
+            />
           )}
           {tabActiva === "documentos" && <DocumentosTab rut={empleado.rut} />}
           {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
@@ -538,7 +719,7 @@ export default function EmpleadoDetalle() {
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
-        {/* --- CAMBIO PRINCIPAL: Se quita la lógica condicional --- */}
+        {/* Cards laterales compactas */}
         <aside className="ed-right is-compact">
           <div className="ed-card">
             <h4 className="ed-card-title">Información Rápida</h4>
@@ -547,7 +728,7 @@ export default function EmpleadoDetalle() {
                 <span className="ed-quick-ico">🎈</span>
                 <div>
                   <div className="ed-quick-label">Próximo cumpleaños</div>
-                  <div className="ed-quick-val">{cumpleTxt}</div>
+                  <div className="ed-quick-val">{cumpleTxt} <span aria-hidden>🎉🎈</span></div>
                 </div>
               </li>
               <li>
@@ -664,4 +845,3 @@ export default function EmpleadoDetalle() {
     </div>
   );
 }
-
