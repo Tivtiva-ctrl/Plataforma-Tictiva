@@ -236,14 +236,12 @@ function AsistenciaTab({ empleado }) {
    Tab: Historial (auditoría DT)
    =========================== */
 function HistorialTab({ empleado }) {
-  // Une distintas fuentes posibles para compatibilidad
   const base = [
     ...(Array.isArray(empleado?.historial) ? empleado.historial : []),
     ...(Array.isArray(empleado?.movimientos) ? empleado.movimientos : []),
     ...(Array.isArray(empleado?._audit) ? empleado._audit : []),
   ];
 
-  // Si no hay nada, “siembra” el ingreso a la empresa (solo visual)
   if (!base.length && empleado?.fechaIngreso) {
     base.push({
       id: "seed-ingreso",
@@ -256,7 +254,6 @@ function HistorialTab({ empleado }) {
     });
   }
 
-  // Ordena desc por fecha/hora
   const items = [...base].sort((a, b) => {
     const ta = new Date(`${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`).getTime();
     const tb = new Date(`${b.fecha || b.timestamp || b.fechaHora || ""}T${b.hora || "00:00"}`).getTime();
@@ -338,7 +335,7 @@ export default function EmpleadoDetalle() {
   const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
 
   const [empleado, setEmpleado] = useState(null);
-  const [original, setOriginal] = useState(null);        // ← para auditar cambios
+  const [original, setOriginal] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [tabActiva, setTabActiva] = useState("personales");
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -459,7 +456,7 @@ export default function EmpleadoDetalle() {
   const guardarEmpleado = async () => {
     if (!empleado) return;
     try {
-      // --- Auditar cambios vs. original ---
+      // Auditar cambios vs. original
       const diffs = [];
       const keys = new Set([
         ...Object.keys(original || {}),
@@ -586,7 +583,7 @@ export default function EmpleadoDetalle() {
           { id: "bancarios", label: "Bancarios" },
           { id: "asistencia", label: "Asistencia" },
           { id: "hojaVida", label: "Hoja de Vida" },
-          { id: "historial", label: "Historial" }, // ← auditoría DT
+          { id: "historial", label: "Historial" },
         ].map((t) => (
           <button
             key={t.id}
@@ -633,7 +630,6 @@ export default function EmpleadoDetalle() {
         </div>
 
         <aside className={`ed-right ${tabActiva === "contractuales" ? "is-compact" : ""}`}>
-
           <div className="ed-card">
             <h4 className="ed-card-title">Información Rápida</h4>
             <ul className="ed-quick">
@@ -760,29 +756,37 @@ export default function EmpleadoDetalle() {
         .htl-cat{background:#EEF2FF;color:#1E3A8A;border:1px solid #C7D2FE;padding:2px 8px;border-radius:999px;font-size:12px}
         .htl-det{color:#374151}
         .htl-foot{color:#6B7280;font-size:12px;margin-top:4px}
-        /* ===== Compacta SOLO en Contractuales ===== */
-.ed-right.is-compact .ed-card{
-  padding:12px;              /* menos padding */
-  border-radius:12px;
-}
-.ed-right.is-compact .ed-card-title{
-  font-size:16px;
-  margin-bottom:8px;
-}
-.ed-right.is-compact .ed-quick{ gap:8px; }
-.ed-right.is-compact .ed-quick-ico{ font-size:18px; }
-.ed-right.is-compact .ed-quick-label{ font-size:12px; }
-.ed-right.is-compact .ed-quick-val{ font-weight:600; }
 
-.ed-right.is-compact .ed-sep{ margin:8px 0; }
-.ed-right.is-compact .ed-vac{ margin-top:4px; }
+        /* ============================
+           Variables para compactar SOLO en Contractuales
+           ============================ */
+        .ed-right{
+          --pad-card: 16px;
+          --title-size: 18px;
+          --quick-gap: 12px;
+          --quick-ico: 20px;
+          --label-size: 14px;
+          --bar-h: 8px;
+          --metric-gap: 10px;
+        }
+        .ed-right .ed-card{ padding: var(--pad-card); }
+        .ed-right .ed-card-title{ font-size: var(--title-size); margin:0 0 10px; }
+        .ed-right .ed-quick{ gap: var(--quick-gap); }
+        .ed-right .ed-quick-ico{ font-size: var(--quick-ico); }
+        .ed-right .ed-quick-label{ font-size: var(--label-size); }
+        .ed-right .ed-metric{ margin: var(--metric-gap) 0; }
+        .ed-right .ed-bar{ height: var(--bar-h); }
 
-.ed-right.is-compact .ed-metric{ margin:6px 0; }
-.ed-right.is-compact .ed-metric-row{ font-size:13px; }
-.ed-right.is-compact .ed-bar{ height:6px; }   /* barras más delgadas */
-
+        .ed-right.is-compact{
+          --pad-card: 12px;
+          --title-size: 16px;
+          --quick-gap: 8px;
+          --quick-ico: 18px;
+          --label-size: 12px;
+          --bar-h: 6px;
+          --metric-gap: 6px;
+        }
       `}</style>
     </div>
   );
 }
-
