@@ -1,302 +1,26 @@
-// Hecho por Asistente de Programación de Google
+// src/pages/EmpleadoDetalle.jsx
 import React, { useEffect, useState } from "react";
-
-/* =============================================================
-   Mocks locales para poder correr este archivo aislado.
-   En tu proyecto real, importa useParams/useLocation de react-router-dom
-   y elimina estos mocks.
-============================================================= */
-const useParams = () => ({ rut: "12345678-9" });
-const useLocation = () => ({ pathname: "/", search: "", hash: "" });
-
-const parseISO = (iso) => new Date(iso);
-const differenceInMinutes = (dateLeft, dateRight) =>
-  (dateLeft.getTime() - dateRight.getTime()) / 60000;
-
-const VolverAtras = () => (
-  <a
-    href="#"
-    style={{
-      textDecoration: "none",
-      color: "#3b82f6",
-      fontWeight: "600",
-      marginBottom: "16px",
-      display: "inline-block",
-    }}
-  >
-    &larr; Volver
-  </a>
-);
-
-const EmpleadosAPI = {
-  list: async () => [
-    {
-      id: 1,
-      rut: "12.345.678-9",
-      nombre: "Juan Díaz Morales",
-      cargo: "Gerente de Operaciones",
-      estado: "Activo",
-      fechaIngreso: "2021-03-02T00:00:00.000Z",
-      fechaNacimiento: "1985-04-15T00:00:00.000Z",
-      correo: "juan.diaz@empresa.com",
-      telefono: "+56 9 8765 4321",
-      direccion: "Av. Providencia 1234, Santiago",
-      estadoCivil: "Casado(a)",
-      horario: "08:30 - 18:00",
-      centro: "Casa Matriz",
-      datosContractuales: {
-        cargoActual: "Gerente de Operaciones",
-        tipoContrato: "Indefinido",
-        jornada: "Jornada Completa",
-        lugarTrabajo: "Casa Matriz",
-        responsable: "Claudia R.",
-        fechaIngreso: "2021-03-02",
-        centroCosto: "Operaciones",
-        sueldoBase: 1800000,
-        horario: "08:30 - 18:00",
-        pinMarcacion: "8421",
-        ultimaActualizacion: "2024-12-20",
-        anexosFirmados: "Pacto HE 2023; Teletrabajo 2024",
-        licencias: "Ninguna",
-        contratoFirmado: "Contrato 2021-03-01",
-        finiquitoFirmado: "",
-        gratificacion: "Legal",
-        modalidadTrabajo: "Presencial",
-        duracionContrato: "Indefinido",
-      },
-      credencialesApp: { pin: "8421" },
-      marcas: [
-        {
-          fecha: "2025-09-01",
-          hora: "08:58",
-          tipo: "Entrada",
-          estado: "A tiempo",
-          metodo: "Facial",
-          ip: "192.168.1.100",
-        },
-        {
-          fecha: "2025-09-01",
-          hora: "18:02",
-          tipo: "Salida",
-          estado: "A tiempo",
-          metodo: "Facial",
-          ip: "192.168.1.100",
-        },
-      ],
-      historial: [
-        {
-          id: 1,
-          fecha: "2024-08-15",
-          hora: "10:00",
-          actor: "V. Mateo",
-          accion: "Anexo de Contrato",
-          categoria: "Contrato",
-          detalle:
-            "Se firma anexo por cambio de cargo a Gerente.",
-        },
-        {
-          id: 2,
-          fecha: "2023-05-20",
-          hora: "11:30",
-          actor: "Sistema",
-          accion: "Solicitud de Vacaciones",
-          categoria: "Permisos",
-          detalle: "Se aprueban 5 días de vacaciones.",
-        },
-      ],
-    },
-  ],
-};
-/* ============================================================= */
-
-
-/* ===================== Contractuales (igual a Personales) ===================== */
-const ContractualesTab = ({ datos = {}, modoEdicion = false, onChange, empleado }) => {
-  const set = (campo, valor) =>
-    onChange?.("datosContractuales", { ...datos, [campo]: valor });
-
-  const firstNonEmpty = (...vals) => {
-    for (const v of vals) {
-      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
-    }
-    return "";
-  };
-
-  const money = (v) =>
-    v === 0 || v ? `$${Number(v).toLocaleString("es-CL")}` : "—";
-
-  const get = (name, ...fallbacks) =>
-    firstNonEmpty(datos[name], ...(fallbacks || []));
-
-  // Valores “vistos” (con fallbacks del empleado)
-  const view = {
-    cargoActual: get("cargoActual", empleado?.cargo),
-    tipoContrato: get("tipoContrato", "Indefinido"),
-    jornada: get(
-      "jornada",
-      empleado?.datosContractuales?.jornada,
-      "Jornada Completa"
-    ),
-    horario: get("horario", empleado?.horario),
-    lugarTrabajo: get("lugarTrabajo", empleado?.centro, empleado?.oficina),
-    centroCosto: get(
-      "centroCosto",
-      empleado?.area,
-      empleado?.centroCosto,
-      "—"
-    ),
-    responsable: get("responsable", empleado?.responsable),
-    fechaIngreso: get("fechaIngreso", empleado?.fechaIngreso?.slice(0, 10)),
-    duracionContrato: get("duracionContrato", "Indefinido"),
-    sueldoBase: get("sueldoBase", empleado?.datosContractuales?.sueldoBase),
-    gratificacion: get("gratificacion", "Legal"),
-    modalidadTrabajo: get("modalidadTrabajo", "Presencial"),
-    anexosFirmados: get("anexosFirmados"),
-    contratoFirmado: get("contratoFirmado"),
-    pinMarcacion: get("pinMarcacion", empleado?.credencialesApp?.pin, empleado?.pin),
-    ultimaActualizacion: get("ultimaActualizacion"),
-    licencias: get("licencias"),
-    finiquitoFirmado: get("finiquitoFirmado"),
-  };
-
-  const Row = ({ icon, label, name, type = "text", placeholder }) => {
-    const val = view[name] ?? "";
-    return (
-      <div className="ed-kv-row">
-        <span className="ed-kv-label">
-          <span style={{ marginRight: 6 }}>{icon}</span>
-          {label}
-        </span>
-        <span className="ed-kv-value">
-          {modoEdicion ? (
-            name === "tipoContrato" ? (
-              <select
-                value={val}
-                onChange={(e) => set(name, e.target.value)}
-                style={inputStyle}
-              >
-                <option>Indefinido</option>
-                <option>Plazo Fijo</option>
-                <option>Honorarios</option>
-                <option>Obra o Faena</option>
-              </select>
-            ) : name === "jornada" ? (
-              <select
-                value={val}
-                onChange={(e) => set(name, e.target.value)}
-                style={inputStyle}
-              >
-                <option>Jornada Completa</option>
-                <option>Jornada Parcial</option>
-                <option>Por Turnos</option>
-              </select>
-            ) : (
-              <input
-                type={type}
-                value={val}
-                placeholder={placeholder}
-                onChange={(e) => set(name, e.target.value)}
-                style={inputStyle}
-              />
-            )
-          ) : name === "sueldoBase" ? (
-            money(val)
-          ) : val || "—"}
-        </span>
-      </div>
-    );
-  };
-
-  return (
-    <div className="ed-card">
-      <h3 className="ed-card-title">Datos Contractuales</h3>
-      {/* MISMA CARD Y MISMAS FILAS QUE "Personales" */}
-      <div className="ed-kv">
-        <Row icon="📂" label="Cargo Actual:" name="cargoActual" />
-        <Row icon="📄" label="Tipo de Contrato:" name="tipoContrato" />
-        <Row icon="⏱️" label="Jornada / Horas Semanales:" name="jornada" />
-        <Row icon="⏰" label="Horario:" name="horario" placeholder="08:30 - 18:00" />
-        <Row icon="📍" label="Sucursal / Lugar de Trabajo:" name="lugarTrabajo" />
-        <Row icon="🧾" label="Centro de Costo / Área:" name="centroCosto" />
-        <Row icon="👤" label="Responsable Directo:" name="responsable" />
-        <Row icon="📅" label="Fecha de Ingreso:" name="fechaIngreso" type="date" />
-        <Row icon="📆" label="Duración del Contrato:" name="duracionContrato" />
-        <Row icon="💰" label="Sueldo Base:" name="sueldoBase" type="number" />
-        <Row icon="🎁" label="Gratificación:" name="gratificacion" />
-        <Row icon="🏢" label="Modalidad de Trabajo:" name="modalidadTrabajo" />
-        <Row icon="🗂️" label="Anexos Firmados:" name="anexosFirmados" />
-        <Row icon="🖊️" label="Contrato Firmado:" name="contratoFirmado" />
-        <Row icon="🔐" label="PIN de Marcación:" name="pinMarcacion" />
-        <Row icon="🛠️" label="Últ. Actualización de Contrato:" name="ultimaActualizacion" type="date" />
-        <Row icon="📜" label="Licencias / Permisos Activos:" name="licencias" />
-        <Row icon="📄" label="Finiquito Firmado:" name="finiquitoFirmado" />
-      </div>
-    </div>
-  );
-};
-
-const inputStyle = {
-  width: "min(360px, 90%)",
-  border: "1px solid #E5E7EB",
-  borderRadius: 8,
-  padding: "6px 10px",
-  fontSize: 14,
-};
-
-
-/* ================== Pestañas placeholder ================== */
-const DocumentosTab = ({ rut }) => (
-  <div className="ed-card">
-    <h3 className="ed-card-title">Documentos</h3>
-    <p>Contenido de documentos...</p>
-  </div>
-);
-const PrevisionTab = ({ empleado, modoEdicion, onChange }) => (
-  <div className="ed-card">
-    <h3 className="ed-card-title">Previsión</h3>
-    <p>Contenido de previsión...</p>
-  </div>
-);
-const BancariosTab = ({ empleado, modoEdicion, onChange }) => (
-  <div className="ed-card">
-    <h3 className="ed-card-title">Datos Bancarios</h3>
-    <p>Contenido de datos bancarios...</p>
-  </div>
-);
-const HojaDeVida = ({ empleado }) => (
-  <div className="ed-card">
-    <h3 className="ed-card-title">Hoja de Vida</h3>
-    <p>Contenido de hoja de vida...</p>
-  </div>
-);
-
+import { useParams, useLocation } from "react-router-dom";
+import { differenceInMinutes, parseISO } from "date-fns";
+import "./EmpleadoDetalle.css";
+import VolverAtras from "../components/VolverAtras";
+import ContractualesTab from "../components/ContractualesTab";
+import DocumentosTab from "../components/DocumentosTab";   // 👈 usa la card nueva
+import PrevisionTab from "../components/PrevisionTab";
+import BancariosTab from "../components/BancariosTab";
+import HojaDeVida from "../components/HojaDeVida";
+import { EmpleadosAPI } from "../api";
 
 /* =========================== Utils =========================== */
-const normalizeRut = (r) =>
-  (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
+const normalizeRut = (r) => (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
 
-const mesesEs = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
+const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const fmtFechaLarga = (iso) => {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d)) return "—";
-  return `${String(d.getDate()).padStart(2, "0")} de ${
-    mesesEs[d.getMonth()]
-  } de ${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
 };
 
 const antiguedadStr = (desdeISO) => {
@@ -304,9 +28,7 @@ const antiguedadStr = (desdeISO) => {
   const start = new Date(desdeISO);
   const now = new Date();
   if (isNaN(start)) return "";
-  const months =
-    (now.getFullYear() - start.getFullYear()) * 12 +
-    (now.getMonth() - start.getMonth());
+  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
   const y = Math.floor(months / 12);
   const m = months % 12;
   const aTxt = y === 1 ? "1 año" : `${y} años`;
@@ -316,9 +38,7 @@ const antiguedadStr = (desdeISO) => {
 
 const pickCI = (obj, keys = [], fallback = undefined) => {
   if (!obj) return fallback;
-  const map = Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v])
-  );
+  const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
   for (const k of keys) {
     const v = map[String(k).toLowerCase()];
     if (v !== undefined && v !== null && String(v) !== "") return v;
@@ -327,89 +47,50 @@ const pickCI = (obj, keys = [], fallback = undefined) => {
 };
 const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
 const monthsBetween = (a, b) => {
-  let m =
-    (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
   if (b.getDate() < a.getDate()) m -= 1;
   return Math.max(0, m);
 };
-
 /** Vacaciones: 1.25 d/mes; parcial → 0.5; progresivos: >=10 años, +1 cada 3 */
 const computeVacaciones = (empleado) => {
   const ingreso = empleado?.fechaIngreso ? new Date(empleado.fechaIngreso) : null;
   if (!ingreso || isNaN(ingreso)) {
-    return {
-      devengadas: 0,
-      tomadas: 0,
-      saldo: 0,
-      detalle: "Sin fecha de ingreso",
-      progresivos: 0,
-      months: 0,
-      jornada: "",
-    };
+    return { devengadas: 0, tomadas: 0, saldo: 0, detalle: "Sin fecha de ingreso", progresivos: 0, months: 0, jornada: "" };
   }
   const now = new Date();
   const months = monthsBetween(ingreso, now);
-
   const jornada =
     pickCI(empleado, ["jornada"], undefined) ??
     pickCI(empleado?.datosContractuales, ["jornada"], "Jornada Completa");
-
-  const factor =
-    typeof jornada === "string" && jornada.toLowerCase().includes("parcial")
-      ? 0.5
-      : 1;
+  const factor = (typeof jornada === "string" && jornada.toLowerCase().includes("parcial")) ? 0.5 : 1;
   const devBase = months * 1.25 * factor;
-
-  const prevYears = Number(pickCI(empleado, ["aniosPrevios", "añosPrevios"], 0)) || 0;
+  const prevYears = Number(pickCI(empleado, ["aniosPrevios","añosPrevios"], 0)) || 0;
   const totalYears = Math.floor(months / 12) + prevYears;
   let progresivos = 0;
   if (totalYears >= 10) progresivos = Math.floor((totalYears - 10) / 3);
-
   const tomadas =
     Number(
-      pickCI(
-        empleado,
-        ["vacacionesTomadas", "diasVacTomados", "vacaciones_tomadas"],
-        0
-      ) ?? pickCI(empleado?.vacaciones, ["tomadas"], 0)
+      pickCI(empleado, ["vacacionesTomadas","diasVacTomados","vacaciones_tomadas"], 0) ??
+      pickCI(empleado?.vacaciones, ["tomadas"], 0)
     ) || 0;
-
   const devengadas = round1(devBase + progresivos);
-  return {
-    devengadas,
-    tomadas: round1(tomadas),
-    saldo: round1(devengadas - tomadas),
-    jornada: jornada || "",
-    months,
-    progresivos,
-  };
+  return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
 };
-
 
 /* ======================= Tab: Asistencia ====================== */
 function AsistenciaTab({ empleado }) {
-  const [metricas, setMetricas] = useState({
-    horasTrabajadas: 0,
-    porcentajeAsistencia: 0,
-    atrasosMes: 0,
-    horasExtra: 0,
-  });
+  const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
 
   useEffect(() => {
     if (!empleado?.marcas) return;
-    let horas = 0,
-      atrasos = 0;
+    let horas = 0, atrasos = 0;
     const diasAsistidos = new Set();
 
     empleado.marcas.forEach((marca) => {
       diasAsistidos.add(marca.fecha);
       if ((marca.estado || "").toLowerCase() === "atraso") atrasos++;
       if ((marca.tipo || "").toLowerCase() === "entrada") {
-        const salida = empleado.marcas.find(
-          (m) =>
-            m.fecha === marca.fecha &&
-            (m.tipo || "").toLowerCase() === "salida"
-        );
+        const salida = empleado.marcas.find((m) => m.fecha === marca.fecha && (m.tipo || "").toLowerCase() === "salida");
         if (salida) {
           const inicio = parseISO(`${marca.fecha}T${marca.hora}`);
           const fin = parseISO(`${salida.fecha}T${salida.hora}`);
@@ -422,9 +103,7 @@ function AsistenciaTab({ empleado }) {
 
     setMetricas({
       horasTrabajadas: Number.isFinite(horas) ? horas.toFixed(1) : 0,
-      porcentajeAsistencia: Number.isFinite(porcentaje)
-        ? porcentaje.toFixed(0)
-        : 0,
+      porcentajeAsistencia: Number.isFinite(porcentaje) ? porcentaje.toFixed(0) : 0,
       atrasosMes: atrasos,
       horasExtra: 0,
     });
@@ -437,10 +116,7 @@ function AsistenciaTab({ empleado }) {
           <span className="icono-title">🕒</span>
           <div>
             <h2>Resumen de Últimas Marcaciones</h2>
-            <p>
-              Últimas 10 marcas registradas. Para un historial completo y
-              filtros, usa el botón &quot;Ver Historial Detallado&quot;.
-            </p>
+            <p>Últimas 10 marcas registradas. Para un historial completo y filtros, usa el botón &quot;Ver Historial Detallado&quot;.</p>
           </div>
         </div>
         <div className="asistencia-buttons">
@@ -450,68 +126,21 @@ function AsistenciaTab({ empleado }) {
       </div>
 
       <div className="metricas-grid">
-        <div className="metric-card">
-          <div className="metric-info">
-            <p className="metric-label">Horas Trabajadas (Mes)</p>
-            <p className="metric-value">{metricas.horasTrabajadas}h</p>
-          </div>
-          <div className="metric-icon">🕑</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-info">
-            <p className="metric-label">Asistencia</p>
-            <p className="metric-value green">
-              {metricas.porcentajeAsistencia}%
-            </p>
-          </div>
-          <div className="metric-icon">📅</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-info">
-            <p className="metric-label">Atrasos (Mes)</p>
-            <p className="metric-value yellow">{metricas.atrasosMes}</p>
-          </div>
-          <div className="metric-icon">⚠️</div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-info">
-            <p className="metric-label">Horas Extra</p>
-            <p className="metric-value blue">{metricas.horasExtra}h</p>
-          </div>
-          <div className="metric-icon">➕</div>
-        </div>
+        <div className="metric-card"><div className="metric-info"><p className="metric-label">Horas Trabajadas (Mes)</p><p className="metric-value">{metricas.horasTrabajadas}h</p></div><div className="metric-icon">🕑</div></div>
+        <div className="metric-card"><div className="metric-info"><p className="metric-label">Asistencia</p><p className="metric-value green">{metricas.porcentajeAsistencia}%</p></div><div className="metric-icon">📅</div></div>
+        <div className="metric-card"><div className="metric-info"><p className="metric-label">Atrasos (Mes)</p><p className="metric-value yellow">{metricas.atrasosMes}</p></div><div className="metric-icon">⚠️</div></div>
+        <div className="metric-card"><div className="metric-info"><p className="metric-label">Horas Extra</p><p className="metric-value blue">{metricas.horasExtra}h</p></div><div className="metric-icon">➕</div></div>
       </div>
 
       <table className="asistencia-tabla">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Tipo</th>
-            <th>Estado</th>
-            <th>Método</th>
-            <th>IP</th>
-            <th>Foto</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Foto</th></tr></thead>
         <tbody>
           {(empleado.marcas || []).slice(0, 10).map((marca, index) => (
             <tr key={index}>
-              <td>{marca.fecha}</td>
-              <td>{marca.hora}</td>
-              <td className={`tipo ${(marca.tipo || "").toLowerCase()}`}>
-                {marca.tipo}
-              </td>
-              <td>
-                <span
-                  className={`estado-badge ${(marca.estado || "").toLowerCase()}`}
-                >
-                  {marca.estado}
-                </span>
-              </td>
-              <td>{marca.metodo}</td>
-              <td>{marca.ip}</td>
-              <td>📷</td>
+              <td>{marca.fecha}</td><td>{marca.hora}</td>
+              <td className={`tipo ${(marca.tipo || "").toLowerCase()}`}>{marca.tipo}</td>
+              <td><span className={`estado-badge ${(marca.estado || "").toLowerCase()}`}>{marca.estado}</span></td>
+              <td>{marca.metodo}</td><td>{marca.ip}</td><td>📷</td>
             </tr>
           ))}
         </tbody>
@@ -520,7 +149,6 @@ function AsistenciaTab({ empleado }) {
     </div>
   );
 }
-
 
 /* ===================== Tab: Historial (DT) ==================== */
 function HistorialTab({ empleado }) {
@@ -531,45 +159,19 @@ function HistorialTab({ empleado }) {
   ];
 
   if (!base.length && empleado?.fechaIngreso) {
-    base.push({
-      id: "seed-ingreso",
-      fecha: empleado.fechaIngreso,
-      hora: "09:00",
-      actor: "Sistema",
-      accion: "Ingreso a la empresa",
-      detalle: `Fecha de ingreso registrada (${fmtFechaLarga(
-        empleado.fechaIngreso
-      )})`,
-      categoria: "Contrato",
-    });
+    base.push({ id: "seed-ingreso", fecha: empleado.fechaIngreso, hora: "09:00", actor: "Sistema", accion: "Ingreso a la empresa", detalle: `Fecha de ingreso registrada (${fmtFechaLarga(empleado.fechaIngreso)})`, categoria: "Contrato" });
   }
 
   const items = [...base].sort((a, b) => {
-    const ta = new Date(
-      `${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`
-    ).getTime();
-    const tb = new Date(
-      `${b.fecha || b.timestamp || b.fechaHora || ""}T${b.hora || "00:00"}`
-    ).getTime();
+    const ta = new Date(`${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`).getTime();
+    const tb = new Date(`${b.fecha || b.timestamp || b.fechaHora || ""}T${b.hora || "00:00"}`).getTime();
     return tb - ta;
   });
 
   const exportCSV = () => {
-    const headers = ["fecha", "hora", "actor", "accion", "categoria", "detalle"];
-    const rows = items.map((i) => [
-      i.fecha || "",
-      i.hora || "",
-      i.actor || "",
-      i.accion || "",
-      i.categoria || "",
-      (i.detalle || "").toString().replace(/\n/g, " "),
-    ]);
-    const csv = [
-      headers.join(","),
-      ...rows.map((r) =>
-        r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")
-      ),
-    ].join("\n");
+    const headers = ["fecha","hora","actor","accion","categoria","detalle"];
+    const rows = items.map(i => [i.fecha || "", i.hora || "", i.actor || "", i.accion || "", i.categoria || "", (i.detalle || "").toString().replace(/\n/g, " ")]);
+    const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -583,39 +185,30 @@ function HistorialTab({ empleado }) {
     <div className="htl-wrap ed-card">
       <div className="htl-head">
         <div>
-          <h3 className="ed-card-title" style={{ margin: 0 }}>
-            Historial del Empleado
-          </h3>
+          <h3 className="ed-card-title" style={{ margin: 0 }}>Historial del Empleado</h3>
+          <div className="htl-sub">Bitácora de eventos requerida por la Dirección del Trabajo (DT).</div>
         </div>
-        <button type="button" className="ed-btn" onClick={exportCSV}>
-          ⬇ Exportar CSV
-        </button>
+        <button type="button" className="ed-btn" onClick={exportCSV}>⬇ Exportar CSV</button>
       </div>
 
       {items.length === 0 ? (
-        <div style={{ color: "#6B7280" }}>Aún no hay movimientos registrados.</div>
+        <div style={{ color:"#6B7280" }}>Aún no hay movimientos registrados.</div>
       ) : (
         <ul className="htl-list">
           {items.map((it, idx) => (
             <li key={it.id || idx} className="htl-item">
               <div className="htl-time">
-                <div className="htl-date">
-                  {it.fecha ? fmtFechaLarga(it.fecha) : "—"}
-                </div>
+                <div className="htl-date">{it.fecha ? fmtFechaLarga(it.fecha) : "—"}</div>
                 <div className="htl-hour">{it.hora || "—"}</div>
               </div>
               <div className="htl-dot" />
               <div className="htl-body">
                 <div className="htl-row1">
                   <span className="htl-accion">{it.accion || "Evento"}</span>
-                  {it.categoria ? (
-                    <span className="htl-cat">{it.categoria}</span>
-                  ) : null}
+                  {it.categoria ? <span className="htl-cat">{it.categoria}</span> : null}
                 </div>
                 <div className="htl-det">{it.detalle || "—"}</div>
-                <div className="htl-foot">
-                  Por <b>{it.actor || "Sistema"}</b>
-                </div>
+                <div className="htl-foot">Por <b>{it.actor || "Sistema"}</b></div>
               </div>
             </li>
           ))}
@@ -625,24 +218,20 @@ function HistorialTab({ empleado }) {
   );
 }
 
-
 /* ================== Detalle empleado (UI) ===================== */
 export default function EmpleadoDetalle() {
   const params = useParams();
   const location = useLocation();
 
-  const rawParam = decodeURIComponent(
-    String(params.rut ?? params.id ?? params.param ?? "")
-  );
+  const rawParam = decodeURIComponent(String(params.rut ?? params.id ?? params.param ?? ""));
   const hasParam = rawParam.trim().length > 0;
 
   const isNumericId = /^\d+$/.test(rawParam);
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
-  // En tu app real usa import.meta.env
-  const API = "http://127.0.0.1:3001";
-  const RESOURCE = "empleados";
+  const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
+  const RESOURCE = import.meta.env.VITE_RESOURCE_EMPLEADOS || "empleados";
 
   const [empleado, setEmpleado] = useState(null);
   const [original, setOriginal] = useState(null);
@@ -674,23 +263,14 @@ export default function EmpleadoDetalle() {
     return (
       <div className="ed-wrap">
         <VolverAtras />
-        <div
-          style={{
-            padding: 16,
-            color: "#b45309",
-            background: "#fffbeb",
-            border: "1px solid #f59e0b",
-            borderRadius: 8,
-          }}
-        >
-          ⚠️ Falta el parámetro en la URL. Navega a{" "}
-          <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
+        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
+          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
         </div>
       </div>
     );
   }
 
-  // Carga del empleado
+  // Carga del empleado (API local + HTTP fallback)
   useEffect(() => {
     let cancel = false;
 
@@ -701,44 +281,25 @@ export default function EmpleadoDetalle() {
         const arr = await EmpleadosAPI.list();
         if (Array.isArray(arr) && arr.length) {
           const norm = (v) => normalizeRut(v);
-          const byId = idParam
-            ? arr.find((e) => String(e?.id) === String(idParam))
+          const byId = idParam ? arr.find((e) => String(e?.id) === String(idParam)) : null;
+          const byRut = rutParam ? arr.find((e) => norm(e?.rut) === norm(rutParam)) : null;
+          const byEither = !byId && !byRut && rawParam
+            ? arr.find((e) => String(e?.id) === String(rawParam) || norm(e?.rut) === norm(rawParam))
             : null;
-          const byRut = rutParam
-            ? arr.find((e) => norm(e?.rut) === norm(rutParam))
-            : null;
-          const byEither =
-            !byId && !byRut && rawParam
-              ? arr.find(
-                  (e) =>
-                    String(e?.id) === String(rawParam) ||
-                    norm(e?.rut) === norm(rawParam)
-                )
-              : null;
 
           const found = byId || byRut || byEither;
-          if (found && !cancel) {
-            setEmpleado(found);
-            setOriginal(JSON.parse(JSON.stringify(found)));
-            return;
-          }
+          if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
         }
-      } catch {
-        /* ignore */
-      }
+      } catch {/* ignore */}
 
       if (idParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
           if (r.ok) {
             const emp = await r.json();
-            if (emp && !cancel && (emp.id != null || emp.nombre)) {
-              setEmpleado(emp);
-              setOriginal(JSON.parse(JSON.stringify(emp)));
-              return;
-            }
+            if (emp && !cancel && (emp.id != null || emp.nombre)) { setEmpleado(emp); setOriginal(JSON.parse(JSON.stringify(emp))); return; }
           }
-        } catch {}
+        } catch {/* noop */}
       }
 
       if (rutParam) {
@@ -755,65 +316,43 @@ export default function EmpleadoDetalle() {
             if (!r.ok) continue;
             const data = await r.json();
             const emp = Array.isArray(data) ? data[0] : data;
-            if (emp && !cancel) {
-              setEmpleado(emp);
-              setOriginal(JSON.parse(JSON.stringify(emp)));
-              return;
-            }
-          } catch {}
+            if (emp && !cancel) { setEmpleado(emp); setOriginal(JSON.parse(JSON.stringify(emp))); return; }
+          } catch {/* noop */}
         }
         try {
           const rAll = await fetch(`${API}/${RESOURCE}`);
           if (rAll.ok) {
             const arr = await rAll.json();
-            const found = (Array.isArray(arr) ? arr : []).find(
-              (e) => normalizeRut(e?.rut) === normRut
-            );
-            if (found && !cancel) {
-              setEmpleado(found);
-              setOriginal(JSON.parse(JSON.stringify(found)));
-              return;
-            }
+            const found = (Array.isArray(arr) ? arr : []).find((e) => normalizeRut(e?.rut) === normRut);
+            if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
           }
-        } catch {}
+        } catch {/* noop */}
       }
 
       if (!idParam && rawParam) {
         try {
-          const r = await fetch(
-            `${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`
-          );
+          const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
           if (r.ok) {
             const arr = await r.json();
-            if (Array.isArray(arr) && arr.length > 0 && !cancel) {
-              setEmpleado(arr[0]);
-              setOriginal(JSON.parse(JSON.stringify(arr[0])));
-              return;
-            }
+            if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); setOriginal(JSON.parse(JSON.stringify(arr[0]))); return; }
           }
-        } catch {}
+        } catch {/* noop */}
       }
 
       if (!cancel) setNotFound(true);
     };
 
     fetchEmpleado();
-    return () => {
-      cancel = true;
-    };
+    return () => { cancel = true; };
   }, [rutParam, idParam, rawParam, API, RESOURCE]);
 
-  const handleChange = (campo, valor) =>
-    setEmpleado((prev) => ({ ...prev, [campo]: valor }));
+  const handleChange = (campo, valor) => setEmpleado((prev) => ({ ...prev, [campo]: valor }));
 
   const guardarEmpleado = async () => {
     if (!empleado) return;
     try {
       const diffs = [];
-      const keys = new Set([
-        ...Object.keys(original || {}),
-        ...Object.keys(empleado || {}),
-      ]);
+      const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
       keys.forEach((k) => {
         const a = JSON.stringify(original?.[k]);
         const b = JSON.stringify(empleado?.[k]);
@@ -822,30 +361,18 @@ export default function EmpleadoDetalle() {
 
       const nuevaEntrada = {
         id: Date.now(),
-        fecha: new Date().toISOString().slice(0, 10),
-        hora: new Date().toTimeString().slice(0, 5),
+        fecha: new Date().toISOString().slice(0,10),
+        hora: new Date().toTimeString().slice(0,5),
         actor: "Sistema",
         accion: "Actualización de ficha",
         categoria: "Ficha",
-        detalle: diffs.length
-          ? `Campos modificados: ${diffs.join(", ")}`
-          : "Sin cambios detectados",
+        detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
       };
 
-      const payload = {
-        ...empleado,
-        historial: [
-          ...(Array.isArray(empleado.historial) ? empleado.historial : []),
-          nuevaEntrada,
-        ],
-      };
+      const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
       const id = payload.id ?? encodeURIComponent(payload.rut);
       const url = `${API}/${RESOURCE}/${id}`;
-      await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 
       setEmpleado(payload);
       setOriginal(JSON.parse(JSON.stringify(payload)));
@@ -861,9 +388,7 @@ export default function EmpleadoDetalle() {
     return (
       <div className="ed-wrap">
         <VolverAtras />
-        <div style={{ padding: 16, color: "#6B7280" }}>
-          Empleado no encontrado. Verifica el RUT/ID o los datos locales.
-        </div>
+        <div style={{ padding: 16, color: "#6B7280" }}>Empleado no encontrado. Verifica el RUT/ID o los datos locales.</div>
       </div>
     );
   }
@@ -877,41 +402,21 @@ export default function EmpleadoDetalle() {
     );
   }
 
-  const iniciales =
-    empleado.nombre
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase() || "";
-
+  const iniciales = (empleado.nombre?.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()) || "";
   const activo = (empleado.estado || "").toLowerCase() === "activo";
 
-  const cumpleISO =
-    empleado.fechaNacimiento ||
-    empleado.nacimiento ||
-    empleado?.personales?.fechaNacimiento;
-  const cumpleTxt = cumpleISO
-    ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `)
-    : "—";
-  const ingresoTxt = empleado.fechaIngreso
-    ? fmtFechaLarga(empleado.fechaIngreso)
-    : "—";
+  const cumpleISO = empleado.fechaNacimiento || empleado.nacimiento || empleado?.personales?.fechaNacimiento;
+  const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `) : "—";
+  const ingresoTxt = empleado.fechaIngreso ? fmtFechaLarga(empleado.fechaIngreso) : "—";
   const antig = antiguedadStr(empleado.fechaIngreso);
 
-  const horario =
-    pickCI(empleado, ["horario"], "") ??
-    pickCI(empleado?.datosContractuales, ["horario"], "");
-  const centro =
-    pickCI(empleado, ["centro", "oficina"], "") ??
-    pickCI(empleado?.datosContractuales, ["centro", "oficina"], "");
+  const horario = pickCI(empleado, ["horario"], "") ?? pickCI(empleado?.datosContractuales, ["horario"], "");
+  const centro = pickCI(empleado, ["centro","oficina"], "") ?? pickCI(empleado?.datosContractuales, ["centro","oficina"], "");
   const vac = computeVacaciones(empleado);
 
   const selectTab = (tab) => {
     setTabActiva(tab);
-    try {
-      window.history.replaceState(null, "", `${location.pathname}#${tab}`);
-    } catch {}
+    try { window.history.replaceState(null, "", `${location.pathname}#${tab}`); } catch {}
   };
 
   return (
@@ -921,30 +426,19 @@ export default function EmpleadoDetalle() {
       {/* Encabezado */}
       <div className="ed-card ed-head">
         <div className="ed-avatar">{iniciales}</div>
-
         <div className="ed-head-main">
           <div className="ed-name-row">
             <h2 className="ed-name">{empleado.nombre || "—"}</h2>
-            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>
-              {empleado.estado || "—"}
-            </span>
+            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>{empleado.estado || "—"}</span>
           </div>
           <div className="ed-sub">{empleado.cargo || "—"}</div>
-          {empleado.fechaIngreso && (
-            <div className="ed-sub light">
-              Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}
-            </div>
-          )}
+          {empleado.fechaIngreso && (<div className="ed-sub light">Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}</div>)}
         </div>
 
         {modoEdicion ? (
-          <button className="ed-btn primary" onClick={guardarEmpleado}>
-            Guardar Cambios
-          </button>
+          <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
         ) : (
-          <button className="ed-btn" onClick={() => setModoEdicion(true)}>
-            Editar Ficha
-          </button>
+          <button className="ed-btn" onClick={() => setModoEdicion(true)}>Editar Ficha</button>
         )}
       </div>
 
@@ -960,12 +454,7 @@ export default function EmpleadoDetalle() {
           { id: "hojaVida", label: "Hoja de Vida" },
           { id: "historial", label: "Historial" },
         ].map((t) => (
-          <button
-            key={t.id}
-            className={`ed-tab ${tabActiva === t.id ? "is-active" : ""}`}
-            onClick={() => selectTab(t.id)}
-            type="button"
-          >
+          <button key={t.id} className={`ed-tab ${tabActiva === t.id ? "is-active" : ""}`} onClick={() => selectTab(t.id)} type="button">
             {t.label}
           </button>
         ))}
@@ -978,36 +467,13 @@ export default function EmpleadoDetalle() {
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
               <div className="ed-kv">
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">👤 Nombre Completo:</span>
-                  <span className="ed-kv-value">{empleado.nombre || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">🪪 Cédula:</span>
-                  <span className="ed-kv-value">{empleado.rut || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">🎂 Fecha de Nacimiento:</span>
-                  <span className="ed-kv-value">{cumpleTxt}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">✉️ Email:</span>
-                  <span className="ed-kv-value">{empleado.correo || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">📞 Teléfono:</span>
-                  <span className="ed-kv-value">{empleado.telefono || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">📍 Dirección:</span>
-                  <span className="ed-kv-value">{empleado.direccion || "—"}</span>
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">❤️‍💑 Estado Civil:</span>
-                  <span className="ed-kv-value">
-                    {empleado.estadoCivil || "—"}
-                  </span>
-                </div>
+                <div className="ed-kv-row"><span className="ed-kv-label">👤 Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">🪪 Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">🎂 Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">✉️ Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">📞 Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">📍 Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">❤️‍💑 Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
               </div>
             </div>
           ) : null}
@@ -1017,33 +483,18 @@ export default function EmpleadoDetalle() {
               datos={empleado.datosContractuales || {}}
               modoEdicion={modoEdicion}
               onChange={handleChange}
-              empleado={empleado}
             />
           )}
           {tabActiva === "documentos" && <DocumentosTab rut={empleado.rut} />}
-          {tabActiva === "prevision" && (
-            <PrevisionTab
-              empleado={empleado}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-            />
-          )}
-          {tabActiva === "bancarios" && (
-            <BancariosTab
-              empleado={empleado}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-            />
-          )}
+          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
+          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
           {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
-        {/* Cards laterales compactas SOLO en Contractuales */}
-        <aside
-          className={`ed-right ${tabActiva === "contractuales" ? "is-compact" : ""}`}
-        >
+        {/* Lateral compacto */}
+        <aside className="ed-right is-compact">
           <div className="ed-card">
             <h4 className="ed-card-title">Información Rápida</h4>
             <ul className="ed-quick">
@@ -1051,9 +502,7 @@ export default function EmpleadoDetalle() {
                 <span className="ed-quick-ico">🎈</span>
                 <div>
                   <div className="ed-quick-label">Próximo cumpleaños</div>
-                  <div className="ed-quick-val">
-                    {cumpleTxt} <span aria-hidden>🎉🎈</span>
-                  </div>
+                  <div className="ed-quick-val">{cumpleTxt} <span aria-hidden>🎉🎈</span></div>
                 </div>
               </li>
               <li>
@@ -1074,64 +523,25 @@ export default function EmpleadoDetalle() {
 
             <div className="ed-sep" />
 
-            <h4 className="ed-card-title" style={{ marginTop: 8 }}>
-              Vacaciones
-            </h4>
+            <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
             <div className="ed-vac">
-              <div className="ed-vac-row">
-                <span>Saldo</span>
-                <b>{vac.saldo} días</b>
-              </div>
-              <div className="ed-vac-sub">
-                Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}
-              </div>
-              {vac.progresivos > 0 && (
-                <div className="ed-vac-sub">
-                  Incluye {vac.progresivos} día(s) progresivo(s)
-                </div>
-              )}
-              {vac.jornada ? (
-                <div className="ed-vac-sub">Jornada: {vac.jornada}</div>
-              ) : null}
+              <div className="ed-vac-row"><span>Saldo</span><b>{vac.saldo} días</b></div>
+              <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
+              {vac.progresivos > 0 && (<div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>)}
+              {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
             </div>
           </div>
 
           <div className="ed-card">
             <h4 className="ed-card-title">Rendimiento</h4>
-            <div className="ed-metric">
-              <div className="ed-metric-row">
-                <span>Productividad</span>
-                <span className="ed-metric-num">92%</span>
-              </div>
-              <div className="ed-bar">
-                <div className="ed-bar-fill blue" style={{ width: "92%" }} />
-              </div>
-            </div>
-
-            <div className="ed-metric">
-              <div className="ed-metric-row">
-                <span>Puntualidad</span>
-                <span className="ed-metric-num">96%</span>
-              </div>
-              <div className="ed-bar">
-                <div className="ed-bar-fill green" style={{ width: "96%" }} />
-              </div>
-            </div>
-
-            <div className="ed-metric">
-              <div className="ed-metric-row">
-                <span>Colaboración</span>
-                <span className="ed-metric-num">88%</span>
-              </div>
-              <div className="ed-bar">
-                <div className="ed-bar-fill purple" style={{ width: "88%" }} />
-              </div>
-            </div>
+            <div className="ed-metric"><div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div><div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div></div>
+            <div className="ed-metric"><div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div><div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div></div>
+            <div className="ed-metric"><div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div><div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div></div>
           </div>
         </aside>
       </div>
 
-      {/* Estilos embebidos */}
+      {/* Estilos embebidos (incluye compactado lateral) */}
       <style>{`
         .ed-wrap{padding:16px 16px 32px}
         .ed-card{background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:var(--pad-card, 16px);box-shadow:0 4px 10px rgba(0,0,0,.04)}
@@ -1181,6 +591,7 @@ export default function EmpleadoDetalle() {
         /* Historial */
         .htl-wrap{padding:12px}
         .htl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .htl-sub{color:#6B7280;margin-top:4px}
         .htl-list{list-style:none;margin:0;padding:0;position:relative}
         .htl-item{display:grid;grid-template-columns:140px 24px 1fr;gap:8px;padding:10px 0;border-top:1px solid #F3F4F6}
         .htl-item:first-child{border-top:none}
@@ -1194,16 +605,8 @@ export default function EmpleadoDetalle() {
         .htl-det{color:#374151}
         .htl-foot{color:#6B7280;font-size:12px;margin-top:4px}
 
-        /* Compacto SOLO en Contractuales */
-        .ed-right.is-compact {
-          --pad-card: 12px !important;
-          --title-size: 16px !important;
-          --quick-gap: 8px !important;
-          --quick-ico: 18px !important;
-          --label-size: 12px !important;
-          --bar-h: 6px !important;
-          --metric-gap: 6px !important;
-        }
+        /* Lateral compacto */
+        .ed-right.is-compact { --pad-card: 12px; --title-size: 16px; --quick-gap: 8px; --quick-ico: 18px; --label-size: 12px; --bar-h: 6px; --metric-gap: 6px; }
       `}</style>
     </div>
   );
