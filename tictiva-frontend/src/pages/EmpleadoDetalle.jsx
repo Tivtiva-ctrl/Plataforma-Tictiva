@@ -632,7 +632,8 @@ export default function EmpleadoDetalle() {
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
-        <aside className="ed-right">
+        <aside className={`ed-right ${tabActiva === "contractuales" ? "is-compact" : ""}`}>
+
           <div className="ed-card">
             <h4 className="ed-card-title">Información Rápida</h4>
             <ul className="ed-quick">
@@ -759,7 +760,29 @@ export default function EmpleadoDetalle() {
         .htl-cat{background:#EEF2FF;color:#1E3A8A;border:1px solid #C7D2FE;padding:2px 8px;border-radius:999px;font-size:12px}
         .htl-det{color:#374151}
         .htl-foot{color:#6B7280;font-size:12px;margin-top:4px}
+        /* ===== Compacta SOLO en Contractuales ===== */
+.ed-right.is-compact .ed-card{
+  padding:12px;              /* menos padding */
+  border-radius:12px;
+}
+.ed-right.is-compact .ed-card-title{
+  font-size:16px;
+  margin-bottom:8px;
+}
+.ed-right.is-compact .ed-quick{ gap:8px; }
+.ed-right.is-compact .ed-quick-ico{ font-size:18px; }
+.ed-right.is-compact .ed-quick-label{ font-size:12px; }
+.ed-right.is-compact .ed-quick-val{ font-weight:600; }
+
+.ed-right.is-compact .ed-sep{ margin:8px 0; }
+.ed-right.is-compact .ed-vac{ margin-top:4px; }
+
+.ed-right.is-compact .ed-metric{ margin:6px 0; }
+.ed-right.is-compact .ed-metric-row{ font-size:13px; }
+.ed-right.is-compact .ed-bar{ height:6px; }   /* barras más delgadas */
+
       `}</style>
     </div>
   );
 }
+
