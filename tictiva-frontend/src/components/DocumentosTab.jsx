@@ -32,6 +32,11 @@ const IcoUpload = (props) => (
     <path d="M7 9l5-5 5 5M12 4v12" stroke="currentColor" strokeWidth="2" />
   </svg>
 );
+const IcoBack = (props) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...props}>
+    <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
 
 /* ============ Utils & helpers ============ */
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -45,29 +50,24 @@ const formatBytes = (bytes) => {
 const getExt = (name = "") => name.split(".").pop()?.toLowerCase() || "";
 const uid = (p = "id") => `${p}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-/* Estructura: { id, type:'folder'|'file', name, modified, size?, parentId?, comment? } */
-
 /**
- * DocumentosTab
- * - Persistencia local por empleado (localStorage).
- * - Callbacks opcionales para integrar backend.
+ * Estructura:
+ *  { id, type:'folder'|'file', name, modified, size?, parentId?, comment? }
+ *
+ * Persistencia: localStorage por RUT (storageKey = docs:<rut>).
  */
-export default function DocumentosTab({
-  rut,
-  items,
-  onCreateFolder,
-  onUploadFiles,
-}) {
+export default function DocumentosTab({ rut, items, onCreateFolder, onUploadFiles }) {
   const storageKey = `docs:${rut || "global"}`;
 
-  /** Lee del storage o usa lo que venga por props o demo */
   const demo = useMemo(
     () => [
       { id: "f1", type: "folder", name: "Contratos", modified: "2025-08-15" },
       { id: "f2", type: "folder", name: "Liquidaciones de Sueldo", modified: "2025-09-01" },
       { id: "f3", type: "folder", name: "Certificados", modified: "2025-07-30" },
-      { id: "d1", type: "file",   name: "Reglamento Interno 2025.pdf", modified: "2025-01-10", size: "1.2 MB" },
-      { id: "d2", type: "file",   name: "Política de Teletrabajo.docx", modified: "2025-06-22", size: "256 KB" },
+      { id: "d1", type: "file", name: "Reglamento Interno 2025.pdf", modified: "2025-01-10", size: "1.2 MB" },
+      { id: "d2", type: "file", name: "Política de Teletrabajo.docx", modified: "2025-06-22", size: "256 KB" },
+      // ejemplo: archivo dentro de “Contratos”
+      { id: "d3", type: "file", name: "Contrato 2021-03-01.pdf", modified: "2025-02-10", size: "420 KB", parentId: "f1" },
     ],
     []
   );
@@ -84,60 +84,74 @@ export default function DocumentosTab({
     return demo;
   };
   const save = (arr) => {
-    try { localStorage.setItem(storageKey, JSON.stringify(arr)); } catch {}
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(arr));
+    } catch {}
   };
 
   const [data, setData] = useState(load());
-  useEffect(() => { setData(load()); /* recarga si cambia rut */ }, [rut]);
+  useEffect(() => { setData(load()); }, [rut]); // recarga si cambia rut
 
-  // Orden: carpetas primero, luego archivos (por nombre)
-  const ordered = useMemo(() => {
-    const f = data.filter(d => d.type === "folder").sort((a,b)=>a.name.localeCompare(b.name));
-    const files = data.filter(d => d.type === "file").sort((a,b)=>a.name.localeCompare(b.name));
-    return [...f, ...files];
-  }, [data]);
+  const folders = useMemo(
+    () => data.filter((d) => d.type === "folder").sort((a, b) => a.name.localeCompare(b.name)),
+    [data]
+  );
+  const rootFiles = useMemo(
+    () => data.filter((d) => d.type === "file" && !d.parentId).sort((a, b) => a.name.localeCompare(b.name)),
+    [data]
+  );
 
-  const folders = useMemo(() => ordered.filter(d => d.type === "folder"), [ordered]);
+  /* ========== Navegación de carpetas (abrir/cerrar) ========== */
+  const [currentFolderId, setCurrentFolderId] = useState(null);
+  const currentFolder = useMemo(() => folders.find((f) => f.id === currentFolderId) || null, [folders, currentFolderId]);
+  const filesInCurrent = useMemo(
+    () => data.filter((d) => d.type === "file" && d.parentId === currentFolderId).sort((a, b) => a.name.localeCompare(b.name)),
+    [data, currentFolderId]
+  );
 
-  /* ===== Nueva carpeta ===== */
+  const openFolder = (id) => setCurrentFolderId(id);
+  const goRoot = () => setCurrentFolderId(null);
+
+  // filas visibles: raíz → carpetas + archivos raíz; dentro de carpeta → sólo archivos de esa carpeta
+  const visibleRows = useMemo(() => {
+    if (!currentFolderId) {
+      return [...folders, ...rootFiles];
+    }
+    return filesInCurrent;
+  }, [folders, rootFiles, filesInCurrent, currentFolderId]);
+
+  /* ========== Nueva carpeta ========== */
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [folderName, setFolderName] = useState("");
-
-  const handleCreateFolder = async () => {
+  const createFolder = async () => {
     const name = folderName.trim();
     if (!name) return;
-
     const newFolder = { id: uid("f"), type: "folder", name, modified: todayISO() };
-
-    // persistimos inmediatamente
-    setData(prev => {
+    setData((prev) => {
       const arr = [newFolder, ...prev];
       save(arr);
       return arr;
     });
-
     setShowNewFolder(false);
     setFolderName("");
-
     try { if (typeof onCreateFolder === "function") await onCreateFolder(name); } catch {}
   };
 
-  /* ===== PushPub: Subir archivo ===== */
+  /* ========== PushPub: Subir archivo ========== */
   const [showUpload, setShowUpload] = useState(false);
   const [destFolder, setDestFolder] = useState("");
   const [comment, setComment] = useState("");
-  const [picked, setPicked] = useState([]); // [{file, name, size}]
+  const [picked, setPicked] = useState([]); // {file,name,size}
   const fileInputRef = useRef(null);
 
-  // Asegura que el selector siempre tenga una carpeta válida
+  // Si estás dentro de una carpeta, preseleccionarla como destino
   useEffect(() => {
-    setDestFolder((prev) => (prev || folders[0]?.id || ""));
-  }, [folders]);
-
-  const openFilePicker = () => fileInputRef.current?.click();
+    if (currentFolderId) setDestFolder(currentFolderId);
+    else setDestFolder(folders[0]?.id || "");
+  }, [currentFolderId, folders]);
 
   const allowed = new Set(["pdf", "xls", "xlsx"]);
-  const handleFilesChosen = (filesArr) => {
+  const pickFiles = (filesArr) => {
     const arr = Array.from(filesArr || []);
     const invalid = arr.filter((f) => !allowed.has(getExt(f.name)));
     if (invalid.length) {
@@ -146,12 +160,11 @@ export default function DocumentosTab({
     }
     setPicked(arr.map((f) => ({ file: f, name: f.name, size: f.size })));
   };
-
-  const onInputChange = (e) => handleFilesChosen(e.target.files);
-  const onDrop = (e) => { e.preventDefault(); e.stopPropagation(); handleFilesChosen(e.dataTransfer.files); };
+  const onInputChange = (e) => pickFiles(e.target.files);
+  const onDrop = (e) => { e.preventDefault(); e.stopPropagation(); pickFiles(e.dataTransfer.files); };
   const onDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
 
-  const handleUploadConfirm = async () => {
+  const confirmUpload = async () => {
     if (!picked.length) return alert("Selecciona al menos un archivo.");
     const folderId = destFolder || null;
     const rows = picked.map((p) => ({
@@ -163,9 +176,7 @@ export default function DocumentosTab({
       parentId: folderId,
       comment: comment?.trim() || "",
     }));
-
-    // Persistimos inmediatamente
-    setData(prev => {
+    setData((prev) => {
       const arr = [...rows, ...prev];
       save(arr);
       return arr;
@@ -175,37 +186,93 @@ export default function DocumentosTab({
       if (typeof onUploadFiles === "function") {
         await onUploadFiles(
           picked.map((p) => p.file),
-          {
-            folderId,
-            folderName: folderId ? (folders.find(f => f.id === folderId)?.name || "") : "Documentos",
-            comment: comment?.trim() || "",
-          }
+          { folderId, folderName: folderId ? (folders.find((f) => f.id === folderId)?.name || "") : "Documentos", comment: comment?.trim() || "" }
         );
       }
-    } catch {
-      // Si backend falla, ya quedaron guardados en localStorage igualmente.
-    }
+    } catch {}
 
-    // Limpiar y cerrar
-    setPicked([]);
-    setComment("");
-    setShowUpload(false);
+    setPicked([]); setComment(""); setShowUpload(false);
   };
 
-  // Si creamos carpeta mientras está abierto el PushPub, preferimos esa como destino
-  useEffect(() => {
-    if (!showUpload) return;
-    if (folderName && data.find(d => d.name === folderName && d.type === "folder")) {
-      const f = data.find(d => d.name === folderName && d.type === "folder");
-      if (f) setDestFolder(f.id);
+  /* ========== Menú ⋯ (acciones por fila) ========== */
+  const [menu, setMenu] = useState(null); // {id, type, x, y}
+  const openMenu = (e, it) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenu({ id: it.id, type: it.type, x: rect.left, y: rect.bottom + 6 });
+  };
+  const closeMenu = () => setMenu(null);
+
+  // Modales de acciones
+  const [renameOf, setRenameOf] = useState(null);     // item
+  const [moveOf, setMoveOf] = useState(null);         // file
+  const [newName, setNewName] = useState("");
+
+  const doRename = () => {
+    const name = newName.trim();
+    if (!name || !renameOf) return;
+    setData((prev) => {
+      const arr = prev.map((x) => (x.id === renameOf.id ? { ...x, name, modified: todayISO() } : x));
+      save(arr);
+      return arr;
+    });
+    if (currentFolderId && renameOf.id === currentFolderId) {
+      // si renombraste la carpeta abierta, actualiza breadcrumb
+      const found = folders.find((f) => f.id === renameOf.id);
+      if (found) setCurrentFolderId(found.id);
     }
-  }, [data, folderName, showUpload]);
+    setRenameOf(null);
+    setNewName("");
+  };
+
+  const doDelete = (it) => {
+    if (!it) return;
+    if (it.type === "folder") {
+      const count = data.filter((x) => x.parentId === it.id).length;
+      const ok = window.confirm(`Eliminar carpeta "${it.name}"${count ? ` y ${count} elemento(s) adentro` : ""}?`);
+      if (!ok) return;
+      setData((prev) => {
+        const arr = prev.filter((x) => x.id !== it.id && x.parentId !== it.id);
+        save(arr);
+        return arr;
+      });
+      if (currentFolderId === it.id) goRoot();
+    } else {
+      const ok = window.confirm(`Eliminar archivo "${it.name}"?`);
+      if (!ok) return;
+      setData((prev) => {
+        const arr = prev.filter((x) => x.id !== it.id);
+        save(arr);
+        return arr;
+      });
+    }
+    closeMenu();
+  };
+
+  const doMove = (fileId, folderId) => {
+    setData((prev) => {
+      const arr = prev.map((x) => (x.id === fileId ? { ...x, parentId: folderId || null, modified: todayISO() } : x));
+      save(arr);
+      return arr;
+    });
+    setMoveOf(null);
+  };
 
   return (
     <div className="ed-card doc-card">
-      {/* Encabezado */}
+      {/* Encabezado + breadcrumb */}
       <div className="doc-head">
-        <h3 className="ed-card-title" style={{ margin: 0 }}>Documentos</h3>
+        <div className="doc-bread">
+          {!currentFolder ? (
+            <h3 className="ed-card-title" style={{ margin: 0 }}>Documentos</h3>
+          ) : (
+            <div className="doc-crumbs">
+              <button className="doc-back" onClick={goRoot}><IcoBack /> Volver</button>
+              <span className="doc-crumb-root">Documentos</span>
+              <span className="doc-crumb-sep">/</span>
+              <span className="doc-crumb-here">{currentFolder.name}</span>
+            </div>
+          )}
+        </div>
         <div className="doc-actions">
           <button type="button" className="doc-btn" onClick={() => setShowNewFolder(true)}>
             <IcoPlusFolder /> <span>Nueva Carpeta</span>
@@ -213,14 +280,14 @@ export default function DocumentosTab({
           <button type="button" className="doc-btn primary" onClick={() => setShowUpload(true)}>
             <IcoUpload /> <span>Subir Archivo</span>
           </button>
-          {/* input oculto para file picker del PushPub */}
+          {/* input oculto para el PushPub */}
           <input
-            ref={fileInputRef}
             type="file"
             multiple
+            ref={fileInputRef}
             accept=".pdf,application/pdf,.xls,application/vnd.ms-excel,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             style={{ display: "none" }}
-            onChange={onInputChange}
+            onChange={(e) => pickFiles(e.target.files)}
           />
         </div>
       </div>
@@ -237,32 +304,43 @@ export default function DocumentosTab({
             </tr>
           </thead>
           <tbody>
-            {ordered.map((it) => {
+            {visibleRows.map((it) => {
               const parentName = it.parentId ? folders.find((f) => f.id === it.parentId)?.name : null;
+              const isFolder = it.type === "folder";
               return (
-                <tr key={it.id}>
+                <tr key={it.id} onDoubleClick={() => isFolder && openFolder(it.id)}>
                   <td>
                     <div className="doc-namecell">
-                      {it.type === "folder" ? <IcoFolder /> : <IcoFile />}
+                      {isFolder ? (
+                        <button className="doc-inline-btn" onClick={() => openFolder(it.id)} title="Abrir carpeta">
+                          <IcoFolder />
+                        </button>
+                      ) : (
+                        <IcoFile />
+                      )}
                       <div className="doc-namecol">
-                        <span className="doc-name">{it.name}</span>
+                        {isFolder ? (
+                          <button className="doc-namebtn" onClick={() => openFolder(it.id)}>{it.name}</button>
+                        ) : (
+                          <span className="doc-name">{it.name}</span>
+                        )}
                         {parentName ? <span className="doc-sub">En: {parentName}</span> : null}
                         {it.type === "file" && it.comment ? <span className="doc-sub">Nota: {it.comment}</span> : null}
                       </div>
                     </div>
                   </td>
                   <td className="doc-dim">{it.modified || "—"}</td>
-                  <td className="doc-dim">{it.type === "file" ? (it.size || "—") : "—"}</td>
+                  <td className="doc-dim">{isFolder ? "—" : (it.size || "—")}</td>
                   <td className="doc-actions-cell">
-                    <button type="button" className="doc-morebtn" title="Más acciones">
+                    <button type="button" className="doc-morebtn" title="Más acciones" onClick={(e) => openMenu(e, it)}>
                       <IcoDots />
                     </button>
                   </td>
                 </tr>
               );
             })}
-            {ordered.length === 0 && (
-              <tr><td colSpan={4} className="doc-empty">Sin documentos por ahora.</td></tr>
+            {visibleRows.length === 0 && (
+              <tr><td colSpan={4} className="doc-empty">{currentFolder ? "Esta carpeta está vacía." : "Sin documentos por ahora."}</td></tr>
             )}
           </tbody>
         </table>
@@ -280,11 +358,11 @@ export default function DocumentosTab({
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
               autoFocus
-              onKeyDown={(e)=>{ if(e.key==='Enter') handleCreateFolder(); }}
+              onKeyDown={(e)=>{ if(e.key==='Enter') createFolder(); }}
             />
             <div className="doc-modal-actions">
               <button className="doc-btn" onClick={() => setShowNewFolder(false)}>Cancelar</button>
-              <button className="doc-btn primary" onClick={handleCreateFolder}>Crear</button>
+              <button className="doc-btn primary" onClick={createFolder}>Crear</button>
             </div>
           </div>
         </>
@@ -304,7 +382,7 @@ export default function DocumentosTab({
             </select>
 
             <label className="pp-label">Archivo(s) (PDF / Excel)</label>
-            <div className="pp-drop" onDrop={onDrop} onDragOver={onDragOver} onClick={openFilePicker}>
+            <div className="pp-drop" onDrop={onDrop} onDragOver={onDragOver} onClick={() => fileInputRef.current?.click()}>
               <div className="pp-drop-text">Arrastra aquí o <b>elige</b></div>
               <div className="pp-accept">.pdf · .xls · .xlsx</div>
             </div>
@@ -331,7 +409,103 @@ export default function DocumentosTab({
 
             <div className="pp-actions">
               <button className="doc-btn" onClick={() => setShowUpload(false)}>Cancelar</button>
-              <button className="doc-btn primary" onClick={handleUploadConfirm}>Subir</button>
+              <button className="doc-btn primary" onClick={confirmUpload}>Subir</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===== Menú ⋯ ===== */}
+      {menu && (
+        <>
+          <button className="menu-overlay" onClick={closeMenu} aria-hidden />
+          <div className="menu" style={{ left: menu.x, top: menu.y }}>
+            {menu.type === "folder" ? (
+              <>
+                <button className="menu-item" onClick={() => { openFolder(menu.id); closeMenu(); }}>Abrir</button>
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    const it = data.find((x) => x.id === menu.id);
+                    setRenameOf(it);
+                    setNewName(it?.name || "");
+                    closeMenu();
+                  }}
+                >Renombrar</button>
+                <button
+                  className="menu-item danger"
+                  onClick={() => {
+                    const it = data.find((x) => x.id === menu.id);
+                    doDelete(it);
+                  }}
+                >Eliminar</button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    const it = data.find((x) => x.id === menu.id);
+                    setRenameOf(it);
+                    setNewName(it?.name || "");
+                    closeMenu();
+                  }}
+                >Renombrar</button>
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    const it = data.find((x) => x.id === menu.id);
+                    setMoveOf(it);
+                    closeMenu();
+                  }}
+                >Mover a…</button>
+                <button
+                  className="menu-item danger"
+                  onClick={() => {
+                    const it = data.find((x) => x.id === menu.id);
+                    doDelete(it);
+                  }}
+                >Eliminar</button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ===== Modal: Renombrar ===== */}
+      {renameOf && (
+        <>
+          <div className="doc-backdrop" onClick={() => setRenameOf(null)} />
+          <div className="doc-modal" role="dialog" aria-modal="true">
+            <h4 className="doc-modal-title">Renombrar {renameOf.type === "folder" ? "carpeta" : "archivo"}</h4>
+            <input
+              className="doc-input"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === "Enter") doRename(); }}
+            />
+            <div className="doc-modal-actions">
+              <button className="doc-btn" onClick={() => setRenameOf(null)}>Cancelar</button>
+              <button className="doc-btn primary" onClick={doRename}>Guardar</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===== Modal: Mover archivo ===== */}
+      {moveOf && (
+        <>
+          <div className="doc-backdrop" onClick={() => setMoveOf(null)} />
+          <div className="doc-modal" role="dialog" aria-modal="true">
+            <h4 className="doc-modal-title">Mover “{moveOf.name}”</h4>
+            <label className="doc-label">Destino</label>
+            <select className="doc-input" value={moveOf.parentId || ""} onChange={(e) => doMove(moveOf.id, e.target.value || null)}>
+              <option value="">📁 Documentos (raíz)</option>
+              {folders.map((f) => <option key={f.id} value={f.id}>📁 {f.name}</option>)}
+            </select>
+            <div className="doc-modal-actions">
+              <button className="doc-btn" onClick={() => setMoveOf(null)}>Cerrar</button>
             </div>
           </div>
         </>
@@ -347,6 +521,12 @@ export default function DocumentosTab({
         .doc-btn:hover{ background:#F9FAFB; }
         .doc-btn.primary:hover{ background:#1744B3; }
 
+        .doc-crumbs{ display:flex; align-items:center; gap:8px; }
+        .doc-back{ display:inline-flex; align-items:center; gap:6px; border:1px solid #E5E7EB; background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:700; }
+        .doc-crumb-root{ font-weight:800; color:#111827; }
+        .doc-crumb-sep{ color:#9CA3AF; }
+        .doc-crumb-here{ font-weight:800; color:#1E3A8A; }
+
         .doc-tablewrap{ border:1px solid #E5E7EB; border-radius:12px; overflow:hidden; background:#fff; }
         .doc-table{ width:100%; border-collapse:collapse; }
         .doc-table thead th{ text-align:left; padding:12px 14px; font-size:12px; font-weight:800; text-transform:uppercase;
@@ -354,25 +534,30 @@ export default function DocumentosTab({
         .doc-table tbody td{ padding:12px 14px; border-bottom:1px solid #F3F4F6; color:#111827; }
         .doc-table tbody tr:hover{ background:#FAFBFF; }
         .doc-namecell{ display:flex; align-items:center; gap:10px; }
+        .doc-inline-btn{ background:transparent; border:none; padding:0; display:inline-flex; align-items:center; color:#111827; cursor:pointer; }
+        .doc-inline-btn:hover{ color:#1E3A8A; }
+        .doc-namebtn{ background:transparent; border:none; padding:0; margin:0; font-weight:800; color:#111827; cursor:pointer; text-align:left; }
+        .doc-namebtn:hover{ text-decoration:underline; color:#1E3A8A; }
         .doc-namecol{ display:flex; flex-direction:column; }
-        .doc-name{ font-weight:700; color:#111827; max-width:520px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .doc-name{ font-weight:800; color:#111827; max-width:520px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .doc-sub{ font-size:12px; color:#6B7280; }
-        .doc-dim{ color:#374151; font-weight:600; }
+        .doc-dim{ color:#111827; font-weight:800; }
         .doc-actions-cell{ width:48px; text-align:right; }
         .doc-morebtn{ background:transparent; border:none; border-radius:999px; padding:4px; cursor:pointer; color:#374151; }
         .doc-morebtn:hover{ background:#EEF2FF; color:#1E3A8A; }
         .doc-empty{ text-align:center; color:#6B7280; padding:18px; }
 
-        /* Modal Nueva Carpeta */
+        /* Modal Nueva Carpeta / genérico */
         .doc-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:999; }
         .doc-modal{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
           width:420px; max-width:92vw; background:#fff; border:1px solid #E5E7EB; border-radius:12px;
           box-shadow:0 18px 42px rgba(0,0,0,.22); z-index:1000; padding:16px; }
         .doc-modal-title{ margin:0 0 10px; font-size:18px; font-weight:800; color:#111827; }
         .doc-input{ width:100%; border:1px solid #E5E7EB; border-radius:10px; padding:10px 12px; font-size:14px; }
+        .doc-label{ display:block; color:#6B7280; font-weight:700; font-size:12px; margin:8px 0 6px; text-transform:uppercase; }
         .doc-modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
-        /* PushPub pequeño (arriba-derecha) */
+        /* PushPub (pequeño) */
         .pp-overlay{ position:fixed; inset:0; background:transparent; border:none; padding:0; margin:0; z-index:998; }
         .pp{ position:fixed; right:24px; top:110px; z-index:999; width:360px; max-width:92vw; background:#fff;
              border:1px solid #E5E7EB; border-radius:12px; box-shadow:0 18px 42px rgba(0,0,0,.16); padding:12px; }
@@ -389,6 +574,14 @@ export default function DocumentosTab({
         .pp-size{ color:#6B7280; font-size:12px; }
         .pp-textarea{ width:100%; border:1px solid #E5E7EB; border-radius:10px; padding:8px 10px; font-size:14px; }
         .pp-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+
+        /* Menú ⋯ */
+        .menu-overlay{ position:fixed; inset:0; background:transparent; border:none; padding:0; margin:0; z-index:1000; }
+        .menu{ position:fixed; z-index:1001; background:#fff; border:1px solid #E5E7EB; border-radius:10px; box-shadow:0 12px 28px rgba(0,0,0,.18); min-width:170px; }
+        .menu-item{ width:100%; text-align:left; border:none; background:#fff; padding:8px 12px; cursor:pointer; font-weight:600; color:#111827; }
+        .menu-item:hover{ background:#F3F4F6; }
+        .menu-item.danger{ color:#B91C1C; }
+        .menu-item.danger:hover{ background:#FEF2F2; }
       `}</style>
     </div>
   );
