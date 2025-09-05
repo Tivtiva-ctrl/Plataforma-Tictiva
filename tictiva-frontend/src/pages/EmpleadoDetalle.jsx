@@ -609,6 +609,8 @@ export default function EmpleadoDetalle() {
                 <div className="ed-kv-row"><span className="ed-kv-label">Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Región:</span><span className="ed-kv-value">{regionTxt || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Comuna:</span><span className="ed-kv-value">{empleado.comuna || "—"}</span></div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
               </div>
             </div>
