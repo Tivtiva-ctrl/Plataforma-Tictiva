@@ -66,7 +66,37 @@ const EmpleadosAPI = {
       { id: "f3", tipo: "folder", nombre: "Liquidaciones de Sueldo", mod: "2025-09-01", tam: "" },
       { id: "d1", tipo: "file",   nombre: "Política de Teletrabajo.docx", mod: "2025-06-22", tam: "256 KB" },
       { id: "d2", tipo: "file",   nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" },
-    ]
+    ],
+    // mocks mínimos para Hoja de Vida (si no vienen del backend)
+    hojaVida: {
+      alertaMedica: "Alergia a la Penicilina",
+      emergencia: [
+        { nombre: "María Morales", relacion: "Madre", telefono: "+56 9 1234 5678" },
+        { nombre: "Pedro Díaz", relacion: "Padre", telefono: "+56 9 8765 4321" },
+      ],
+      medico: {
+        grupoSanguineo: "O+",
+        aceptaTransfusion: true,
+        alergias: ["Penicilina", "Maní"],
+        condicionesCronicas: ["Asma Leve"],
+        medicamentos: "Salbutamol (Inhalador) solo en caso de crisis.",
+        observaciones: "Ninguna observación adicional."
+      },
+      trayectoria: [
+        { cargo: "Gerente de Operaciones", desde: "2025-07-31", detalle: "Promoción a rol gerencial." },
+        { cargo: "Jefe de Operaciones", desde: "2024-01-14", detalle: "Asume liderazgo de nuevo equipo." },
+        { cargo: "Analista de Operaciones Semi-Senior", desde: "2022-08-31", detalle: "Promoción por desempeño." },
+        { cargo: "Analista de Operaciones Jr.", desde: "2021-02-28", detalle: "Ingreso a la compañía." },
+      ],
+      educacion: [
+        { titulo: "Ingeniería Civil Industrial", institucion: "Universidad de Chile", desde: "2008", hasta: "2013" },
+        { titulo: "Enseñanza Media", institucion: "Liceo Nacional", desde: "2004", hasta: "2007" },
+      ],
+      experiencia: [
+        { cargo: "Jefe de Proyectos", empresa: "Empresa B", desde: "2015", hasta: "2021", descripcion: "Gestión de proyectos de implementación de software." },
+        { cargo: "Analista de Procesos", empresa: "Empresa C", desde: "2013", hasta: "2015", descripcion: "" },
+      ]
+    }
   }])
 };
 
@@ -378,8 +408,8 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
   };
 
   const getWeekRange = (d = new Date()) => {
-    const day = d.getDay();            // 0 dom ... 6 sáb
-    const diffToMon = (day + 6) % 7;   // lunes como inicio
+    const day = d.getDay();
+    const diffToMon = (day + 6) % 7;
     const lunes = new Date(d); lunes.setDate(d.getDate() - diffToMon);
     const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
     const f = (x) => x.toISOString().slice(0,10);
@@ -460,7 +490,7 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
 
   const abrirHistorialDetallado = () => {
     if (typeof onVerHistorial === "function") onVerHistorial();
-    else setShowModal(true); // fallback
+    else setShowModal(true);
   };
 
   const filtradasModal = filtrar(marcas);
@@ -634,6 +664,193 @@ function HistorialTab({ empleado }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/* =================== Hoja de Vida (nuevo) ===================== */
+function HojaDeVida({ empleado }) {
+  const hv = empleado?.hojaVida || empleado || {};
+  const emergencia = hv.emergencia || [];
+  const md = hv.medico || {};
+  const trayectoria = hv.trayectoria || [];
+  const educacion = hv.educacion || [];
+  const experiencia = hv.experiencia || [];
+
+  const imprimir = () => {
+    const html = `
+      <html><head><meta charset="utf-8" />
+      <title>Hoja de Vida - ${empleado?.nombre || ""}</title>
+      <style>
+        body{font-family: Inter, Arial; margin:24px; color:#111827}
+        h1{margin:0 0 6px;font-size:22px}
+        .sub{color:#6B7280;margin-bottom:14px}
+        .card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px}
+        .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .row{padding:10px 0;border-top:1px solid #F3F4F6}
+        .row:first-child{border-top:none}
+        .lbl{color:#6B7280}
+        .val{font-weight:700}
+        ul.tl{list-style:none;margin:0;padding:0}
+        li.tl-it{border-left:2px solid #E5E7EB;padding:8px 12px;margin-left:6px}
+        .muted{color:#6B7280}
+      </style></head>
+      <body>
+        <h1>Hoja de Vida</h1>
+        <div class="sub">${empleado?.nombre || "—"} · RUT ${empleado?.rut || "—"}</div>
+
+        ${hv.alertaMedica ? `<div class="card" style="background:#FFFBEB;border-color:#FDE68A"><b>Alerta Médica:</b> ${hv.alertaMedica}</div>`:""}
+
+        <div class="card">
+          <h3>Contactos de Emergencia</h3>
+          <div class="grid2">
+            ${(emergencia.length?emergencia:[{nombre:"N/D",relacion:"",telefono:""}]).slice(0,2).map(c=>`
+              <div class="card" style="margin:0">
+                <div class="val">${c.nombre||"N/D"}</div>
+                <div class="muted">${c.relacion||""}</div>
+                <div class="row"><span class="lbl">Teléfono: </span><span class="val">${c.telefono||"—"}</span></div>
+              </div>`).join("")}
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Ficha Médica</h3>
+          <div class="grid2">
+            <div class="row"><span class="lbl">Grupo Sanguíneo: </span><span class="val">${md.grupoSanguineo||"N/D"}</span></div>
+            <div class="row"><span class="lbl">Acepta Transfusión: </span><span class="val">${md.aceptaTransfusion? "Sí":"No"}</span></div>
+          </div>
+          <div class="row"><span class="lbl">Alergias: </span><span class="val">${Array.isArray(md.alergias)?md.alergias.join(", "): (md.alergias||"N/D")}</span></div>
+          <div class="row"><span class="lbl">Condiciones Crónicas: </span><span class="val">${Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "): (md.condicionesCronicas||"N/D")}</span></div>
+          <div class="row"><span class="lbl">Medicamentos Habituales: </span><span class="val">${md.medicamentos||"N/D"}</span></div>
+          <div class="row"><span class="lbl">Observaciones: </span><span class="val">${md.observaciones||"N/D"}</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Trayectoria en la Empresa</h3>
+          <ul class="tl">
+            ${(trayectoria.length?trayectoria:[{cargo:"N/D",desde:"",detalle:""}]).map(t=>`<li class="tl-it"><div class="val">${t.cargo}</div><div class="muted">Desde el ${t.desde||"—"}</div><div>${t.detalle||""}</div></li>`).join("")}
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Educación y Formación</h3>
+          <ul class="tl">
+            ${(educacion.length?educacion:[{titulo:"N/D",institucion:"",desde:"",hasta:""}]).map(e=>`<li class="tl-it"><div class="val">${e.titulo}</div><div>${e.institucion||""}</div><div class="muted">${e.desde||"—"} - ${e.hasta||"—"}</div></li>`).join("")}
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Experiencia Laboral Previa</h3>
+          <ul class="tl">
+            ${(experiencia.length?experiencia:[{cargo:"N/D",empresa:"",desde:"",hasta:"",descripcion:""}]).map(x=>`<li class="tl-it"><div class="val">${x.cargo}</div><div>${x.empresa||""}</div><div class="muted">${x.desde||"—"} - ${x.hasta||"—"}</div><div>${x.descripcion||""}</div></li>`).join("")}
+          </ul>
+        </div>
+
+        <script>window.onload = () => setTimeout(() => window.print(), 150);</script>
+      </body></html>`;
+    const w = window.open("", "_blank");
+    w.document.open(); w.document.write(html); w.document.close();
+  };
+
+  return (
+    <div className="ed-card hv-wrap">
+      <div className="hv-head">
+        <div>
+          <h3 className="ed-card-title" style={{margin:0}}>Hoja de Vida y Ficha Médica</h3>
+          <div className="ed-sub light" style={{marginTop:2}}>Información integral del colaborador</div>
+        </div>
+        <button className="ed-btn" onClick={imprimir}>Imprimir / Exportar</button>
+      </div>
+
+      {hv.alertaMedica && (
+        <div className="hv-alert">
+          <b>Alerta Médica Importante</b>
+          <div>{hv.alertaMedica}</div>
+        </div>
+      )}
+
+      <div className="hv-card">
+        <h4 className="hv-title">Contactos de Emergencia</h4>
+        <div className="hv-grid2">
+          {(emergencia.length?emergencia:[{nombre:"N/D",relacion:"",telefono:""}]).slice(0,2).map((c,idx)=>(
+            <div key={idx} className="hv-contact">
+              <div className="hv-strong">{c.nombre||"N/D"}</div>
+              <div className="hv-muted">{c.relacion||""}</div>
+              <div className="hv-row"><span className="hv-label">Teléfono:</span><span className="hv-val">{c.telefono||"—"}</span></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="hv-card">
+        <h4 className="hv-title">Ficha Médica</h4>
+        <div className="hv-grid2">
+          <div className="hv-row"><span className="hv-label">Grupo Sanguíneo:</span><span className="hv-val">{md.grupoSanguineo||"N/D"}</span></div>
+          <div className="hv-row"><span className="hv-label">Acepta Transfusión:</span><span className="hv-val">{md.aceptaTransfusion? "Sí":"No"}</span></div>
+        </div>
+        <div className="hv-row"><span className="hv-label">Alergias:</span><span className="hv-val">{Array.isArray(md.alergias)?md.alergias.join(", "):(md.alergias||"N/D")}</span></div>
+        <div className="hv-row"><span className="hv-label">Condiciones Crónicas:</span><span className="hv-val">{Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "):(md.condicionesCronicas||"N/D")}</span></div>
+        <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span><span className="hv-val">{md.medicamentos||"N/D"}</span></div>
+        <div className="hv-row"><span className="hv-label">Observaciones Adicionales:</span><span className="hv-val">{md.observaciones||"N/D"}</span></div>
+      </div>
+
+      <div className="hv-card">
+        <h4 className="hv-title">Trayectoria en la Empresa</h4>
+        <ul className="hv-tl">
+          {(trayectoria.length?trayectoria:[{cargo:"N/D",desde:"",detalle:""}]).map((t,i)=>(
+            <li key={i} className="hv-tl-it">
+              <div className="hv-strong">{t.cargo}</div>
+              <div className="hv-muted">Desde el {t.desde||"—"}</div>
+              {t.detalle ? <div>{t.detalle}</div> : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="hv-card">
+        <h4 className="hv-title">Educación y Formación</h4>
+        <ul className="hv-tl">
+          {(educacion.length?educacion:[{titulo:"N/D",institucion:"",desde:"",hasta:""}]).map((e,i)=>(
+            <li key={i} className="hv-tl-it">
+              <div className="hv-strong">{e.titulo}</div>
+              <div>{e.institucion||""}</div>
+              <div className="hv-muted">{e.desde||"—"} - {e.hasta||"—"}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="hv-card">
+        <h4 className="hv-title">Experiencia Laboral Previa</h4>
+        <ul className="hv-tl">
+          {(experiencia.length?experiencia:[{cargo:"N/D",empresa:"",desde:"",hasta:"",descripcion:""}]).map((x,i)=>(
+            <li key={i} className="hv-tl-it">
+              <div className="hv-strong">{x.cargo}</div>
+              <div>{x.empresa||""}</div>
+              <div className="hv-muted">{x.desde||"—"} - {x.hasta||"—"}</div>
+              {x.descripcion ? <div>{x.descripcion}</div> : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <style>{`
+        .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .hv-alert{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-bottom:12px}
+        .hv-card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px;background:#fff}
+        .hv-title{margin:0 0 8px;font-size:16px;font-weight:800;color:#111827}
+        .hv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        @media (max-width: 860px){ .hv-grid2{grid-template-columns:1fr} }
+        .hv-contact{border:1px solid #F3F4F6;border-radius:10px;padding:10px}
+        .hv-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #F3F4F6}
+        .hv-row:first-child{border-top:none}
+        .hv-label{color:#6B7280}
+        .hv-val{font-weight:700}
+        .hv-strong{font-weight:800}
+        .hv-muted{color:#6B7280}
+        .hv-tl{list-style:none;margin:0;padding:0}
+        .hv-tl-it{border-left:2px solid #E5E7EB;margin-left:8px;padding:8px 12px}
+      `}</style>
     </div>
   );
 }
@@ -913,9 +1130,7 @@ export default function EmpleadoDetalle() {
 
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
 
-          {tabActiva === "hojaVida" && (
-            <div className="ed-card"><h3 className="ed-card-title">Hoja de Vida</h3><p style={{margin:0,color:"#6B7280"}}>Contenido de hoja de vida…</p></div>
-          )}
+          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
@@ -1030,7 +1245,7 @@ export default function EmpleadoDetalle() {
         .htl-det{color:#374151}
         .htl-foot{color:#6B7280;font-size:12px;margin-top:4px}
 
-        /* Asistencia mini estilos */
+        /* Asistencia */
         .asistencia-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
         .asistencia-title{display:flex;gap:10px;align-items:flex-start}
         .icono-title{font-size:22px;margin-top:2px}
