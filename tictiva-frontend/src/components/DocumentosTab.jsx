@@ -1,7 +1,7 @@
 // src/components/DocumentosTab.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-/* ============ Iconos livianos (sin libs) ============ */
+/* ============ Iconos (sin dependencias) ============ */
 const IcoFolder = (props) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
     <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" strokeWidth="2" />
@@ -33,7 +33,7 @@ const IcoUpload = (props) => (
   </svg>
 );
 
-/* ============ Utils ============ */
+/* ============ Utils & helpers ============ */
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const formatBytes = (bytes) => {
   if (typeof bytes !== "number") return "—";
@@ -42,24 +42,15 @@ const formatBytes = (bytes) => {
   const mb = kb / 1024;
   return `${mb.toFixed(1)} MB`;
 };
-const ext = (name = "") => name.split(".").pop()?.toLowerCase() || "";
+const getExt = (name = "") => name.split(".").pop()?.toLowerCase() || "";
+const uid = (p = "id") => `${p}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-/* ============ Datos demo si no llegan por props ============ */
-const demoItems = [
-  { id: "f1", type: "folder", name: "Contratos", modified: "2025-08-15", size: null },
-  { id: "f2", type: "folder", name: "Liquidaciones de Sueldo", modified: "2025-09-01", size: null },
-  { id: "f3", type: "folder", name: "Certificados", modified: "2025-07-30", size: null },
-  { id: "d1", type: "file",   name: "Reglamento Interno 2025.pdf", modified: "2025-01-10", size: "1.2 MB", parentId: null },
-  { id: "d2", type: "file",   name: "Política de Teletrabajo.docx", modified: "2025-06-22", size: "256 KB", parentId: null },
-];
+/* Estructura: { id, type:'folder'|'file', name, modified, size?, parentId?, comment? } */
 
 /**
  * DocumentosTab
- * Props:
- * - rut?: string
- * - items?: Array<{id,type,name,modified,size,parentId?}>
- * - onCreateFolder?: (name: string) => Promise<any> | any
- * - onUploadFiles?: (files: File[], ctx: {folderId, folderName, comment}) => Promise<any> | any
+ * - Persistencia local por empleado (localStorage).
+ * - Callbacks opcionales para integrar backend.
  */
 export default function DocumentosTab({
   rut,
@@ -67,14 +58,48 @@ export default function DocumentosTab({
   onCreateFolder,
   onUploadFiles,
 }) {
-  const initial = useMemo(
-    () => (Array.isArray(items) && items.length ? items : demoItems),
-    [items]
-  );
-  const [data, setData] = useState(initial);
-  useEffect(() => setData(initial), [initial]);
+  const storageKey = `docs:${rut || "global"}`;
 
-  /* ====== NUEVA CARPETA ====== */
+  /** Lee del storage o usa lo que venga por props o demo */
+  const demo = useMemo(
+    () => [
+      { id: "f1", type: "folder", name: "Contratos", modified: "2025-08-15" },
+      { id: "f2", type: "folder", name: "Liquidaciones de Sueldo", modified: "2025-09-01" },
+      { id: "f3", type: "folder", name: "Certificados", modified: "2025-07-30" },
+      { id: "d1", type: "file",   name: "Reglamento Interno 2025.pdf", modified: "2025-01-10", size: "1.2 MB" },
+      { id: "d2", type: "file",   name: "Política de Teletrabajo.docx", modified: "2025-06-22", size: "256 KB" },
+    ],
+    []
+  );
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch {}
+    if (Array.isArray(items) && items.length) return items;
+    return demo;
+  };
+  const save = (arr) => {
+    try { localStorage.setItem(storageKey, JSON.stringify(arr)); } catch {}
+  };
+
+  const [data, setData] = useState(load());
+  useEffect(() => { setData(load()); /* recarga si cambia rut */ }, [rut]);
+
+  // Orden: carpetas primero, luego archivos (por nombre)
+  const ordered = useMemo(() => {
+    const f = data.filter(d => d.type === "folder").sort((a,b)=>a.name.localeCompare(b.name));
+    const files = data.filter(d => d.type === "file").sort((a,b)=>a.name.localeCompare(b.name));
+    return [...f, ...files];
+  }, [data]);
+
+  const folders = useMemo(() => ordered.filter(d => d.type === "folder"), [ordered]);
+
+  /* ===== Nueva carpeta ===== */
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [folderName, setFolderName] = useState("");
 
@@ -82,32 +107,31 @@ export default function DocumentosTab({
     const name = folderName.trim();
     if (!name) return;
 
-    const newFolder = { id: `nf-${Date.now()}`, type: "folder", name, modified: todayISO(), size: null };
-    setData((prev) => [newFolder, ...prev]); // optimista
+    const newFolder = { id: uid("f"), type: "folder", name, modified: todayISO() };
+
+    // persistimos inmediatamente
+    setData(prev => {
+      const arr = [newFolder, ...prev];
+      save(arr);
+      return arr;
+    });
+
     setShowNewFolder(false);
     setFolderName("");
 
-    try {
-      if (typeof onCreateFolder === "function") await onCreateFolder(name);
-    } catch {
-      // revertir si falla
-      setData((prev) => prev.filter((x) => x.id !== newFolder.id));
-      alert("No se pudo crear la carpeta.");
-    }
+    try { if (typeof onCreateFolder === "function") await onCreateFolder(name); } catch {}
   };
 
-  /* ====== PUSH-PUB: SUBIR ARCHIVO ====== */
+  /* ===== PushPub: Subir archivo ===== */
   const [showUpload, setShowUpload] = useState(false);
   const [destFolder, setDestFolder] = useState("");
   const [comment, setComment] = useState("");
   const [picked, setPicked] = useState([]); // [{file, name, size}]
   const fileInputRef = useRef(null);
 
-  const folders = useMemo(() => data.filter((d) => d.type === "folder"), [data]);
-
+  // Asegura que el selector siempre tenga una carpeta válida
   useEffect(() => {
-    // carpeta por defecto: primera o "sin carpeta"
-    setDestFolder((prev) => (prev ? prev : (folders[0]?.id || "")));
+    setDestFolder((prev) => (prev || folders[0]?.id || ""));
   }, [folders]);
 
   const openFilePicker = () => fileInputRef.current?.click();
@@ -115,62 +139,67 @@ export default function DocumentosTab({
   const allowed = new Set(["pdf", "xls", "xlsx"]);
   const handleFilesChosen = (filesArr) => {
     const arr = Array.from(filesArr || []);
-    const bad = arr.filter((f) => !allowed.has(ext(f.name)));
-    if (bad.length) {
-      alert("Sólo se permiten archivos PDF o Excel (.xls, .xlsx).");
+    const invalid = arr.filter((f) => !allowed.has(getExt(f.name)));
+    if (invalid.length) {
+      alert("Sólo se permiten PDF y Excel (.xls, .xlsx).");
       return;
     }
     setPicked(arr.map((f) => ({ file: f, name: f.name, size: f.size })));
   };
 
   const onInputChange = (e) => handleFilesChosen(e.target.files);
-
-  // Dropzone soporte
-  const onDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleFilesChosen(e.dataTransfer.files);
-  };
-  const onDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  const onDrop = (e) => { e.preventDefault(); e.stopPropagation(); handleFilesChosen(e.dataTransfer.files); };
+  const onDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
 
   const handleUploadConfirm = async () => {
     if (!picked.length) return alert("Selecciona al menos un archivo.");
     const folderId = destFolder || null;
-    const folderName = folderId ? folders.find((f) => f.id === folderId)?.name : "Documentos";
-
-    // Optimista en UI
-    const rows = picked.map((p, i) => ({
-      id: `u-${Date.now()}-${i}`,
+    const rows = picked.map((p) => ({
+      id: uid("d"),
       type: "file",
       name: p.name,
       modified: todayISO(),
       size: formatBytes(p.size),
       parentId: folderId,
-      __file: p.file,
-      __comment: comment,
+      comment: comment?.trim() || "",
     }));
-    setData((prev) => [...rows, ...prev]);
+
+    // Persistimos inmediatamente
+    setData(prev => {
+      const arr = [...rows, ...prev];
+      save(arr);
+      return arr;
+    });
 
     try {
       if (typeof onUploadFiles === "function") {
         await onUploadFiles(
           picked.map((p) => p.file),
-          { folderId, folderName, comment }
+          {
+            folderId,
+            folderName: folderId ? (folders.find(f => f.id === folderId)?.name || "") : "Documentos",
+            comment: comment?.trim() || "",
+          }
         );
       }
-      // cerrar y limpiar
-      setShowUpload(false);
-      setComment("");
-      setPicked([]);
     } catch {
-      // revertir en caso de error
-      setData((prev) => prev.filter((r) => !String(r.id).startsWith("u-")));
-      alert("No se pudieron subir los archivos.");
+      // Si backend falla, ya quedaron guardados en localStorage igualmente.
     }
+
+    // Limpiar y cerrar
+    setPicked([]);
+    setComment("");
+    setShowUpload(false);
   };
+
+  // Si creamos carpeta mientras está abierto el PushPub, preferimos esa como destino
+  useEffect(() => {
+    if (!showUpload) return;
+    if (folderName && data.find(d => d.name === folderName && d.type === "folder")) {
+      const f = data.find(d => d.name === folderName && d.type === "folder");
+      if (f) setDestFolder(f.id);
+    }
+  }, [data, folderName, showUpload]);
 
   return (
     <div className="ed-card doc-card">
@@ -184,6 +213,7 @@ export default function DocumentosTab({
           <button type="button" className="doc-btn primary" onClick={() => setShowUpload(true)}>
             <IcoUpload /> <span>Subir Archivo</span>
           </button>
+          {/* input oculto para file picker del PushPub */}
           <input
             ref={fileInputRef}
             type="file"
@@ -207,7 +237,7 @@ export default function DocumentosTab({
             </tr>
           </thead>
           <tbody>
-            {data.map((it) => {
+            {ordered.map((it) => {
               const parentName = it.parentId ? folders.find((f) => f.id === it.parentId)?.name : null;
               return (
                 <tr key={it.id}>
@@ -217,11 +247,12 @@ export default function DocumentosTab({
                       <div className="doc-namecol">
                         <span className="doc-name">{it.name}</span>
                         {parentName ? <span className="doc-sub">En: {parentName}</span> : null}
+                        {it.type === "file" && it.comment ? <span className="doc-sub">Nota: {it.comment}</span> : null}
                       </div>
                     </div>
                   </td>
                   <td className="doc-dim">{it.modified || "—"}</td>
-                  <td className="doc-dim">{it.size || "—"}</td>
+                  <td className="doc-dim">{it.type === "file" ? (it.size || "—") : "—"}</td>
                   <td className="doc-actions-cell">
                     <button type="button" className="doc-morebtn" title="Más acciones">
                       <IcoDots />
@@ -230,10 +261,8 @@ export default function DocumentosTab({
                 </tr>
               );
             })}
-            {data.length === 0 && (
-              <tr>
-                <td colSpan={4} className="doc-empty">Sin documentos por ahora.</td>
-              </tr>
+            {ordered.length === 0 && (
+              <tr><td colSpan={4} className="doc-empty">Sin documentos por ahora.</td></tr>
             )}
           </tbody>
         </table>
@@ -251,6 +280,7 @@ export default function DocumentosTab({
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
               autoFocus
+              onKeyDown={(e)=>{ if(e.key==='Enter') handleCreateFolder(); }}
             />
             <div className="doc-modal-actions">
               <button className="doc-btn" onClick={() => setShowNewFolder(false)}>Cancelar</button>
@@ -263,44 +293,20 @@ export default function DocumentosTab({
       {/* ===== PushPub: Subir Archivo ===== */}
       {showUpload && (
         <>
-          {/* Overlay transparente para cerrar al hacer click afuera */}
           <button aria-hidden className="pp-overlay" onClick={() => setShowUpload(false)} />
           <div className="pp" role="dialog" aria-modal="true">
-            <div className="pp-head">
-              <strong>Subir archivo</strong>
-            </div>
+            <div className="pp-head"><strong>Subir archivo</strong></div>
 
             <label className="pp-label">Guardar en carpeta</label>
-            <select
-              className="pp-select"
-              value={destFolder}
-              onChange={(e) => setDestFolder(e.target.value)}
-            >
+            <select className="pp-select" value={destFolder} onChange={(e) => setDestFolder(e.target.value)}>
               <option value="">📁 Documentos (raíz)</option>
-              {folders.map((f) => (
-                <option key={f.id} value={f.id}>📁 {f.name}</option>
-              ))}
+              {folders.map((f) => <option key={f.id} value={f.id}>📁 {f.name}</option>)}
             </select>
 
             <label className="pp-label">Archivo(s) (PDF / Excel)</label>
-            <div
-              className="pp-drop"
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onClick={openFilePicker}
-            >
-              <div className="pp-drop-text">
-                Arrastra aquí o <b>elige</b>
-              </div>
+            <div className="pp-drop" onDrop={onDrop} onDragOver={onDragOver} onClick={openFilePicker}>
+              <div className="pp-drop-text">Arrastra aquí o <b>elige</b></div>
               <div className="pp-accept">.pdf · .xls · .xlsx</div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept=".pdf,application/pdf,.xls,application/vnd.ms-excel,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                style={{ display: "none" }}
-                onChange={onInputChange}
-              />
             </div>
 
             {picked.length > 0 && (
@@ -366,24 +372,14 @@ export default function DocumentosTab({
         .doc-input{ width:100%; border:1px solid #E5E7EB; border-radius:10px; padding:10px 12px; font-size:14px; }
         .doc-modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
-        /* PushPub pequeño: anclado arriba-derecha */
-        .pp-overlay{
-          position:fixed; inset:0; background:transparent; border:none; padding:0; margin:0; z-index:998; cursor:default;
-        }
-        .pp{
-          position:fixed; right:24px; top:110px; z-index:999;
-          width:360px; max-width:92vw;
-          background:#fff; border:1px solid #E5E7EB; border-radius:12px;
-          box-shadow:0 18px 42px rgba(0,0,0,.16);
-          padding:12px;
-        }
+        /* PushPub pequeño (arriba-derecha) */
+        .pp-overlay{ position:fixed; inset:0; background:transparent; border:none; padding:0; margin:0; z-index:998; }
+        .pp{ position:fixed; right:24px; top:110px; z-index:999; width:360px; max-width:92vw; background:#fff;
+             border:1px solid #E5E7EB; border-radius:12px; box-shadow:0 18px 42px rgba(0,0,0,.16); padding:12px; }
         .pp-head{ font-size:14px; margin-bottom:6px; color:#111827; }
         .pp-label{ display:block; font-size:12px; font-weight:700; color:#6B7280; margin-top:8px; margin-bottom:6px; text-transform:uppercase; }
         .pp-select{ width:100%; border:1px solid #E5E7EB; border-radius:10px; padding:8px 10px; font-weight:600; }
-        .pp-drop{
-          border:1.5px dashed #C7D2FE; border-radius:10px; padding:14px; text-align:center; cursor:pointer;
-          background:#F9FAFF;
-        }
+        .pp-drop{ border:1.5px dashed #C7D2FE; border-radius:10px; padding:14px; text-align:center; cursor:pointer; background:#F9FAFF; }
         .pp-drop:hover{ background:#F4F6FF; }
         .pp-drop-text{ color:#1E3A8A; font-weight:800; }
         .pp-accept{ color:#6B7280; font-size:12px; margin-top:4px; }
