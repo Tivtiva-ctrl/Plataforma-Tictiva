@@ -603,13 +603,13 @@ export default function EmpleadoDetalle() {
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
               <div className="ed-kv">
-                <div className="ed-kv-row"><span className="ed-kv-label">👤 Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">🪪 Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">🎂 Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">✉️ Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">📞 Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">📍 Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">❤️‍💑 Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
               </div>
             </div>
           ) : null}
