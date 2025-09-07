@@ -186,15 +186,15 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
 };
 
 // Documentos – card simple (visible) con tabla
-const DocumentosTab = ({ empleado }) => {
+const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
   return (
     <div className="ed-card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex',gap:8}}>
-          <button className="ed-btn">Nueva Carpeta</button>
-          <button className="ed-btn primary">Subir Archivo</button>
+          <button className="ed-btn" onClick={onNuevaCarpeta}>Nueva Carpeta</button>
+          <button className="ed-btn primary" onClick={onSubirArchivo}>Subir Archivo</button>
         </div>
       </div>
       <table className="asistencia-tabla">
@@ -373,7 +373,7 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
       atrasosMes: atrasos,
       horasExtra: 0,
     });
-  }, [empleado]);
+  }, [empleado]); // suficiente para mock
 
   const filtrar = (arr) => {
     return arr.filter(m => {
@@ -985,6 +985,85 @@ export default function EmpleadoDetalle() {
 
   const handleChange = (campo, valor) => setEmpleado((prev) => ({ ...prev, [campo]: valor }));
 
+  // ===== Helper: registrarMovimiento (persistente y con setEstado) =====
+  const registrarMovimiento = async (empSnapshot, {
+    accion,
+    categoria = "General",
+    detalle = "",
+    actor = "Sistema",
+  }) => {
+    if (!empSnapshot) return;
+    const item = {
+      id: Date.now(),
+      fecha: new Date().toISOString().slice(0,10),
+      hora: new Date().toTimeString().slice(0,5),
+      actor, accion, categoria, detalle,
+    };
+    const updated = {
+      ...empSnapshot,
+      historial: [...(empSnapshot.historial || []), item],
+    };
+    setEmpleado(updated);
+    try {
+      const id = updated.id ?? encodeURIComponent(updated.rut);
+      await fetch(`${API}/${RESOURCE}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+    } catch (e) {
+      console.warn("No se pudo persistir el movimiento:", e);
+    }
+  };
+
+  // Utilitario: tamaño legible
+  const humanSize = (bytes) => {
+    const units = ["B","KB","MB","GB"];
+    let i = 0; let n = Number(bytes) || 0;
+    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+    const fixed = n >= 10 || i === 0 ? 0 : 1;
+    return `${n.toFixed(fixed)} ${units[i]}`;
+  };
+
+  // Acciones Documentos
+  const onNuevaCarpeta = async () => {
+    if (!empleado) return;
+    const nombre = (window.prompt("Nombre de la nueva carpeta") || "").trim();
+    if (!nombre) return;
+    const hoy = new Date().toISOString().slice(0,10);
+    const nueva = { id: `f_${Date.now()}`, tipo: "folder", nombre, mod: hoy, tam: "" };
+    const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nueva] };
+    await registrarMovimiento(empAfter, {
+      accion: "Creación de carpeta",
+      categoria: "Documentos",
+      detalle: `Se creó la carpeta “${nombre}”`,
+      actor: "Usuario",
+    });
+    alert("Carpeta creada.");
+  };
+
+  const onSubirArchivo = async () => {
+    if (!empleado) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
+    input.onchange = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const hoy = new Date().toISOString().slice(0,10);
+      const nuevo = { id: `d_${Date.now()}`, tipo: "file", nombre: file.name, mod: hoy, tam: humanSize(file.size) };
+      const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
+      await registrarMovimiento(empAfter, {
+        accion: "Subida de archivo",
+        categoria: "Documentos",
+        detalle: `Se subió “${file.name}”`,
+        actor: "Usuario",
+      });
+      alert("Archivo agregado (mock).");
+    };
+    input.click();
+  };
+
   const guardarEmpleado = async () => {
     if (!empleado) return;
     try {
@@ -1124,7 +1203,7 @@ export default function EmpleadoDetalle() {
             />
           )}
 
-          {tabActiva === "documentos" && <DocumentosTab empleado={empleado} />}
+          {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
           {tabActiva === "prevision" && <PrevisionTab empleado={empleado} />}
           {tabActiva === "bancarios" && <BancariosTab empleado={empleado} />}
 
