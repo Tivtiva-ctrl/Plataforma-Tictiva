@@ -680,7 +680,7 @@ export default function ListadoFichas() {
 
                 <div>
                   <Link to={hrefDetalle} style={{ color: "#1A56DB", textDecoration: "none" }}>
-                    👁️ Ver Detalles
+                     Ver Detalles
                   </Link>
                 </div>
               </div>
