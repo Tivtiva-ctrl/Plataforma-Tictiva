@@ -10,11 +10,27 @@ const parseISO = (iso) => new Date(iso);
 const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
 // --- mocks de componentes y API
-const VolverAtras = () => (
-  <a href="#" style={{ textDecoration: 'none', color: '#3b82f6', fontWeight: '600', marginBottom: '16px', display: 'inline-block' }}>
-    &larr; Volver
-  </a>
-);
+const VolverAtras = () => {
+  const go = (e) => {
+    e?.preventDefault?.();
+    try {
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+    } catch {}
+    window.location.assign("/rrhh/empleados");
+  };
+  return (
+    <a
+      href="/rrhh/empleados"
+      onClick={go}
+      style={{ textDecoration: 'none', color: '#3b82f6', fontWeight: '600', marginBottom: '16px', display: 'inline-block' }}
+    >
+      &larr; Volver
+    </a>
+  );
+};
 
 const EmpleadosAPI = {
   list: async () => ([{
@@ -1185,7 +1201,19 @@ export default function EmpleadoDetalle() {
               <div className="ed-kv">
                 <div className="ed-kv-row"><span className="ed-kv-label">Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">Fecha de Nacimiento:</span>
+                  {modoEdicion ? (
+                    <input
+                      type="date"
+                      value={(empleado.fechaNacimiento || "").slice(0,10)}
+                      onChange={(e)=>handleChange("fechaNacimiento", e.target.value)}
+                      style={{ width: "100%", border: "1px solid #E5E7EB", borderRadius: 8, padding: "6px 8px", fontSize: 14 }}
+                    />
+                  ) : (
+                    <span className="ed-kv-value">{cumpleTxt}</span>
+                  )}
+                </div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
                 <div className="ed-kv-row"><span className="ed-kv-label">Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
@@ -1306,44 +1334,6 @@ export default function EmpleadoDetalle() {
         .ed-bar-fill.blue{background:#3B82F6}
         .ed-bar-fill.green{background:#10B981}
         .ed-bar-fill.purple{background:#8B5CF6}
-
-        /* Historial */
-        .htl-wrap{padding:12px}
-        .htl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-        .htl-sub{color:#6B7280;margin-top:4px}
-        .htl-list{list-style:none;margin:0;padding:0;position:relative}
-        .htl-item{display:grid;grid-template-columns:140px 24px 1fr;gap:8px;padding:10px 0;border-top:1px solid #F3F4F6}
-        .htl-item:first-child{border-top:none}
-        .htl-time{color:#6B7280}
-        .htl-date{font-weight:700;color:#374151}
-        .htl-hour{font-size:12px}
-        .htl-dot{width:10px;height:10px;border-radius:999px;background:#3B82F6;margin:auto}
-        .htl-row1{display:flex;gap:8px;align-items:center;margin-bottom:4px}
-        .htl-accion{font-weight:800;color:#111827}
-        .htl-cat{background:#EEF2FF;color:#1E3A8A;border:1px solid #C7D2FE;padding:2px 8px;border-radius:999px;font-size:12px}
-        .htl-det{color:#374151}
-        .htl-foot{color:#6B7280;font-size:12px;margin-top:4px}
-
-        /* Asistencia */
-        .asistencia-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-        .asistencia-title{display:flex;gap:10px;align-items:flex-start}
-        .icono-title{font-size:22px;margin-top:2px}
-        .asistencia-buttons{display:flex;gap:8px;flex-wrap:wrap}
-        .metricas-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 12px}
-        @media (max-width: 900px){ .metricas-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
-        .metric-card{display:flex;align-items:center;justify-content:space-between;border:1px solid #E5E7EB;border-radius:12px;padding:10px 12px;background:#fff}
-        .metric-label{color:#6B7280;margin:0}
-        .metric-value{font-weight:800;margin:0}
-        .metric-value.green{color:#059669}
-        .metric-value.yellow{color:#D97706}
-        .metric-value.blue{color:#2563EB}
-        .metric-icon{font-size:18px}
-        .asistencia-tabla{width:100%;border-collapse:collapse}
-        .asistencia-tabla th,.asistencia-tabla td{border-bottom:1px solid #F3F4F6;padding:10px 8px;text-align:left}
-        .estado-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #E5E7EB;color:#374151}
-        .estado-badge.atraso{background:#FEF3C7;color:#92400E;border-color:#FDE68A}
-        .tipo.entrada{color:#059669;font-weight:700}
-        .tipo.salida{color:#7C3AED;font-weight:700}
       `}</style>
     </div>
   );
