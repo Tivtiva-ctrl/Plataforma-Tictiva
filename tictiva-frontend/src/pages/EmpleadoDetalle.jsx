@@ -1,4 +1,4 @@
-// Hecho por Asistente de Programación de Google (ajustado y corregido)
+// Hecho por Asistente de Programación de Google
 import React, { useEffect, useState } from "react";
 
 /* ========= Config rutas (ajusta si tu listado es otra) ========= */
@@ -25,17 +25,7 @@ const VolverAtras = ({ href = DEFAULT_LIST_ROUTE }) => {
     window.location.assign(href);
   };
   return (
-    <a
-      href={href}
-      onClick={go}
-      style={{
-        textDecoration: "none",
-        color: "#3b82f6",
-        fontWeight: 600,
-        marginBottom: 16,
-        display: "inline-block",
-      }}
-    >
+    <a href={href} onClick={go} style={{ textDecoration: "none", color: "#3b82f6", fontWeight: 600, marginBottom: 16, display: "inline-block" }}>
       &larr; Volver
     </a>
   );
@@ -43,7 +33,7 @@ const VolverAtras = ({ href = DEFAULT_LIST_ROUTE }) => {
 
 /* ======== mock API ======== */
 const EmpleadosAPI = {
-  list: async () => [
+  list: async () => ([
     {
       id: 1,
       rut: "12.345.678-9",
@@ -73,7 +63,7 @@ const EmpleadosAPI = {
         anexosFirmados: "Pacto HE 2023; Teletrabajo 2024",
         licencias: "Ninguna",
         contratoFirmado: "Contrato 2021-03-01",
-        finiquitoFirmado: "",
+        finiquitoFirmado: ""
       },
       credencialesApp: { pin: "8421" },
       prevision: {
@@ -89,53 +79,37 @@ const EmpleadosAPI = {
         resolucionPension: "",
         apvInstitucion: "",
         apvCuenta: "",
-        tasaAccidente: "0,93%",
+        tasaAccidente: "0,93%"
       },
       bancarios: {
         banco: "Banco Estado",
         tipoCuenta: "CuentaRUT",
         numeroCuenta: "12345678",
         titular: "Juan Díaz Morales",
-        rutTitular: "12.345.678-9",
+        rutTitular: "12.345.678-9"
       },
       documentos: [
         { id: "f1", tipo: "folder", nombre: "Certificados", mod: "2025-07-30", tam: "" },
         { id: "f2", tipo: "folder", nombre: "Contratos", mod: "2025-08-15", tam: "" },
         { id: "f3", tipo: "folder", nombre: "Liquidaciones de Sueldo", mod: "2025-09-01", tam: "" },
         { id: "d1", tipo: "file", nombre: "Política de Teletrabajo.docx", mod: "2025-06-22", tam: "256 KB" },
-        { id: "d2", tipo: "file", nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" },
+        { id: "d2", tipo: "file", nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" }
       ],
       marcas: [
         { fecha: "2025-09-01", hora: "08:58:00", tipo: "Entrada", estado: "Válida", metodo: "App", ip: "192.168.1.10" },
         { fecha: "2025-09-01", hora: "18:02:00", tipo: "Salida", estado: "Válida", metodo: "App", ip: "192.168.1.10" },
         { fecha: "2025-09-02", hora: "09:12:00", tipo: "Entrada", estado: "Atraso", metodo: "Web", ip: "192.168.1.11" },
-        { fecha: "2025-09-02", hora: "18:05:00", tipo: "Salida", estado: "Válida", metodo: "Web", ip: "192.168.1.11" },
+        { fecha: "2025-09-02", hora: "18:05:00", tipo: "Salida", estado: "Válida", metodo: "Web", ip: "192.168.1.11" }
       ],
       historial: [
-        {
-          id: 1,
-          fecha: "2024-08-15",
-          hora: "10:00",
-          actor: "V. Mateo",
-          accion: "Anexo de Contrato",
-          categoria: "Contrato",
-          detalle: "Se firma anexo por cambio de cargo a Gerente.",
-        },
-        {
-          id: 2,
-          fecha: "2023-05-20",
-          hora: "11:30",
-          actor: "Sistema",
-          accion: "Solicitud de Vacaciones",
-          categoria: "Permisos",
-          detalle: "Se aprueban 5 días de vacaciones.",
-        },
+        { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
+        { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." }
       ],
       hojaVida: {
         alertaMedica: "Alergia a la Penicilina",
         emergencia: [
           { nombre: "María Morales", relacion: "Madre", telefono: "+56 9 1234 5678" },
-          { nombre: "Pedro Díaz", relacion: "Padre", telefono: "+56 9 8765 4321" },
+          { nombre: "Pedro Díaz", relacion: "Padre", telefono: "+56 9 8765 4321" }
         ],
         medico: {
           grupoSanguineo: "O+",
@@ -143,136 +117,85 @@ const EmpleadosAPI = {
           alergias: ["Penicilina", "Maní"],
           condicionesCronicas: ["Asma Leve"],
           medicamentos: "Salbutamol (Inhalador) solo en caso de crisis.",
-          observaciones: "Ninguna observación adicional.",
+          observaciones: "Ninguna observación adicional."
         },
         trayectoria: [
           { cargo: "Gerente de Operaciones", desde: "2025-07-31", detalle: "Promoción a rol gerencial." },
           { cargo: "Jefe de Operaciones", desde: "2024-01-14", detalle: "Asume liderazgo de nuevo equipo." },
           { cargo: "Analista de Operaciones Semi-Senior", desde: "2022-08-31", detalle: "Promoción por desempeño." },
-          { cargo: "Analista de Operaciones Jr.", desde: "2021-02-28", detalle: "Ingreso a la compañía." },
+          { cargo: "Analista de Operaciones Jr.", desde: "2021-02-28", detalle: "Ingreso a la compañía." }
         ],
         educacion: [
           { titulo: "Ingeniería Civil Industrial", institucion: "Universidad de Chile", desde: "2008", hasta: "2013" },
-          { titulo: "Enseñanza Media", institucion: "Liceo Nacional", desde: "2004", hasta: "2007" },
+          { titulo: "Enseñanza Media", institucion: "Liceo Nacional", desde: "2004", hasta: "2007" }
         ],
         experiencia: [
-          {
-            cargo: "Jefe de Proyectos",
-            empresa: "Empresa B",
-            desde: "2015",
-            hasta: "2021",
-            descripcion: "Gestión de proyectos de implementación de software.",
-          },
-          { cargo: "Analista de Procesos", empresa: "Empresa C", desde: "2013", hasta: "2015", descripcion: "" },
-        ],
-      },
-    },
-  ],
+          { cargo: "Jefe de Proyectos", empresa: "Empresa B", desde: "2015", hasta: "2021", descripcion: "Gestión de proyectos de implementación de software." },
+          { cargo: "Analista de Procesos", empresa: "Empresa C", desde: "2013", hasta: "2015", descripcion: "" }
+        ]
+      }
+    }
+  ])
 };
 
 /* ====================== Utils comunes ====================== */
 const normalizeRut = (r) =>
   (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
-
-const mesesEs = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
-
+const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const fmtFechaLarga = (iso) => {
   if (!iso) return "—";
   const d = new Date(iso);
   if (isNaN(d)) return "—";
-  return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2,"0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
 };
-
 const antiguedadStr = (desdeISO) => {
   if (!desdeISO) return "";
   const start = new Date(desdeISO);
   const now = new Date();
   if (isNaN(start)) return "";
-  const months =
-    (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
   const y = Math.floor(months / 12);
   const m = months % 12;
   const aTxt = y === 1 ? "1 año" : `${y} años`;
   const mTxt = m === 1 ? "1 mes" : `${m} meses`;
   return `${aTxt} y ${mTxt}`;
 };
-
 const pickCI = (obj, keys = [], fallback = undefined) => {
   if (!obj) return fallback;
-  const map = Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v])
-  );
+  const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
   for (const k of keys) {
     const v = map[String(k).toLowerCase()];
     if (v !== undefined && v !== null && String(v) !== "") return v;
   }
   return fallback;
 };
-
 const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
-
 const monthsBetween = (a, b) => {
   let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
   if (b.getDate() < a.getDate()) m -= 1;
   return Math.max(0, m);
 };
-
 const computeVacaciones = (empleado) => {
   const ingreso = empleado?.fechaIngreso ? new Date(empleado.fechaIngreso) : null;
   if (!ingreso || isNaN(ingreso)) {
-    return {
-      devengadas: 0,
-      tomadas: 0,
-      saldo: 0,
-      detalle: "Sin fecha de ingreso",
-      progresivos: 0,
-      months: 0,
-      jornada: "",
-    };
+    return { devengadas: 0, tomadas: 0, saldo: 0, detalle: "Sin fecha de ingreso", progresivos: 0, months: 0, jornada: "" };
   }
   const now = new Date();
   const months = monthsBetween(ingreso, now);
-  const jornada =
-    pickCI(empleado, ["jornada"], undefined) ??
-    pickCI(empleado?.datosContractuales, ["jornada"], "Jornada Completa");
-  const factor =
-    typeof jornada === "string" && jornada.toLowerCase().includes("parcial") ? 0.5 : 1;
+  const jornada = pickCI(empleado, ["jornada"], undefined) ?? pickCI(empleado?.datosContractuales, ["jornada"], "Jornada Completa");
+  const factor = (typeof jornada === "string" && jornada.toLowerCase().includes("parcial")) ? 0.5 : 1;
   const devBase = months * 1.25 * factor;
-  const prevYears = Number(pickCI(empleado, ["aniosPrevios", "añosPrevios"], 0)) || 0;
+  const prevYears = Number(pickCI(empleado, ["aniosPrevios","añosPrevios"], 0)) || 0;
   const totalYears = Math.floor(months / 12) + prevYears;
   let progresivos = 0;
   if (totalYears >= 10) progresivos = Math.floor((totalYears - 10) / 3);
-  const tomadas =
-    Number(
-      pickCI(empleado, ["vacacionesTomadas", "diasVacTomados", "vacaciones_tomadas"], 0) ??
-        pickCI(empleado?.vacaciones, ["tomadas"], 0)
-    ) || 0;
+  const tomadas = Number(pickCI(empleado, ["vacacionesTomadas","diasVacTomados","vacaciones_tomadas"], 0) ?? pickCI(empleado?.vacaciones, ["tomadas"], 0)) || 0;
   const devengadas = round1(devBase + progresivos);
-  return {
-    devengadas,
-    tomadas: round1(tomadas),
-    saldo: round1(devengadas - tomadas),
-    jornada: jornada || "",
-    months,
-    progresivos,
-  };
+  return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
 };
 
 /* ====================== TABS ====================== */
-/* Personales – editable */
+/* Personales – ahora editable con modoEdicion */
 const PersonalesTab = ({ empleado, modoEdicion, onChange }) => {
   const row = (label, key, type = "text") => (
     <div className="ed-kv-row" key={key}>
@@ -282,13 +205,7 @@ const PersonalesTab = ({ empleado, modoEdicion, onChange }) => {
           type={type}
           value={String(empleado?.[key] ?? "")}
           onChange={(e) => onChange?.(key, e.target.value)}
-          style={{
-            width: "100%",
-            border: "1px solid #E5E7EB",
-            borderRadius: 8,
-            padding: "6px 8px",
-            fontSize: 14,
-          }}
+          style={{ width: "100%", border: "1px solid #E5E7EB", borderRadius: 8, padding: "6px 8px", fontSize: 14 }}
         />
       ) : (
         <span className="ed-kv-value">{empleado?.[key] || "—"}</span>
@@ -296,9 +213,8 @@ const PersonalesTab = ({ empleado, modoEdicion, onChange }) => {
     </div>
   );
 
-  const fechaNac =
-    empleado?.fechaNacimiento || empleado?.personales?.fechaNacimiento || "";
-
+  /* Fecha Nacimiento: soporta tanto fechaNacimiento como personales.fechaNacimiento si quisieras */
+  const fechaNac = empleado?.fechaNacimiento || empleado?.personales?.fechaNacimiento || "";
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Información Personal</h3>
@@ -312,18 +228,10 @@ const PersonalesTab = ({ empleado, modoEdicion, onChange }) => {
               type="date"
               value={(fechaNac || "").slice(0, 10)}
               onChange={(e) => onChange?.("fechaNacimiento", e.target.value)}
-              style={{
-                width: "100%",
-                border: "1px solid #E5E7EB",
-                borderRadius: 8,
-                padding: "6px 8px",
-                fontSize: 14,
-              }}
+              style={{ width: "100%", border: "1px solid #E5E7EB", borderRadius: 8, padding: "6px 8px", fontSize: 14 }}
             />
           ) : (
-            <span className="ed-kv-value">
-              {fechaNac ? fmtFechaLarga(fechaNac) : "—"}
-            </span>
+            <span className="ed-kv-value">{fechaNac ? fmtFechaLarga(fechaNac) : "—"}</span>
           )}
         </div>
         {row("Email", "correo", "email")}
@@ -335,36 +243,28 @@ const PersonalesTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
-/* Contractuales – editable */
+/* Contractuales – editable (ya soportado) */
 const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
-  const pick = (v, ...fb) =>
-    v !== undefined && v !== null && String(v) !== ""
-      ? v
-      : fb.find((x) => x !== undefined && x !== null && String(x) !== "") || "";
-  const safe = (v, dash = "—") => (v || v === 0 ? String(v) : dash);
+  const pick = (v, ...fb) => (v !== undefined && v !== null && String(v) !== "" ? v : fb.find(x => x !== undefined && x !== null && String(x) !== "") || "");
+  const safe = (v, dash="—") => (v || v === 0 ? String(v) : dash);
   const view = {
-    cargoActual: pick(datos.cargoActual, empleado?.cargo),
-    tipoContrato: pick(datos.tipoContrato, "Indefinido"),
-    jornada: pick(
-      datos.jornada,
-      empleado?.datosContractuales?.jornada,
-      "Jornada Completa"
-    ),
-    horario: pick(datos.horario, empleado?.horario),
-    lugarTrabajo: pick(datos.lugarTrabajo, empleado?.centro, empleado?.oficina),
-    centroCosto: pick(datos.centroCosto, empleado?.area, empleado?.centroCosto),
-    responsable: pick(datos.responsable, empleado?.responsable),
-    fechaIngreso: pick(datos.fechaIngreso, empleado?.fechaIngreso?.slice(0, 10)),
-    sueldoBase: pick(datos.sueldoBase, empleado?.datosContractuales?.sueldoBase),
-    pinMarcacion: pick(datos.pinMarcacion, empleado?.credencialesApp?.pin, empleado?.pin),
+    cargoActual:         pick(datos.cargoActual, empleado?.cargo),
+    tipoContrato:        pick(datos.tipoContrato, "Indefinido"),
+    jornada:             pick(datos.jornada, empleado?.datosContractuales?.jornada, "Jornada Completa"),
+    horario:             pick(datos.horario, empleado?.horario),
+    lugarTrabajo:        pick(datos.lugarTrabajo, empleado?.centro, empleado?.oficina),
+    centroCosto:         pick(datos.centroCosto, empleado?.area, empleado?.centroCosto),
+    responsable:         pick(datos.responsable, empleado?.responsable),
+    fechaIngreso:        pick(datos.fechaIngreso, empleado?.fechaIngreso?.slice(0,10)),
+    sueldoBase:          pick(datos.sueldoBase, empleado?.datosContractuales?.sueldoBase),
+    pinMarcacion:        pick(datos.pinMarcacion, empleado?.credencialesApp?.pin, empleado?.pin),
     ultimaActualizacion: pick(datos.ultimaActualizacion, ""),
-    anexosFirmados: pick(datos.anexosFirmados, ""),
-    licencias: pick(datos.licencias, ""),
-    contratoFirmado: pick(datos.contratoFirmado, ""),
-    finiquitoFirmado: pick(datos.finiquitoFirmado, ""),
+    anexosFirmados:      pick(datos.anexosFirmados, ""),
+    licencias:           pick(datos.licencias, ""),
+    contratoFirmado:     pick(datos.contratoFirmado, ""),
+    finiquitoFirmado:    pick(datos.finiquitoFirmado, ""),
   };
-  const handleChange = (campo, valor) =>
-    onChange?.("datosContractuales", { ...datos, [campo]: valor });
+  const handleChange = (campo, valor) => onChange?.("datosContractuales", { ...datos, [campo]: valor });
 
   return (
     <div className="ed-card">
@@ -379,12 +279,7 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
           ["Centro de Costo / Área", view.centroCosto, "centroCosto", "text"],
           ["Responsable Directo", view.responsable, "responsable", "text"],
           ["Fecha de Ingreso", view.fechaIngreso, "fechaIngreso", "date"],
-          [
-            "Sueldo Base",
-            view.sueldoBase ? `$${Number(view.sueldoBase).toLocaleString("es-CL")}` : "",
-            "sueldoBase",
-            "number",
-          ],
+          ["Sueldo Base", view.sueldoBase ? `$${Number(view.sueldoBase).toLocaleString("es-CL")}` : "", "sueldoBase", "number"],
           ["PIN de Marcación", view.pinMarcacion || "Sin PIN", "pinMarcacion", "text"],
           ["Últ. Actualización de Contrato", view.ultimaActualizacion, "ultimaActualizacion", "date"],
           ["Anexos Firmados", view.anexosFirmados, "anexosFirmados", "text"],
@@ -396,14 +291,14 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
             <span className="ed-kv-label">{label}:</span>
             {modoEdicion ? (
               type === "selectContrato" ? (
-                <select value={val} onChange={(e) => handleChange(key, e.target.value)}>
+                <select value={val} onChange={(e)=>handleChange(key, e.target.value)}>
                   <option>Indefinido</option>
                   <option>Plazo Fijo</option>
                   <option>Honorarios</option>
                   <option>Obra o Faena</option>
                 </select>
               ) : type === "selectJornada" ? (
-                <select value={val} onChange={(e) => handleChange(key, e.target.value)}>
+                <select value={val} onChange={(e)=>handleChange(key, e.target.value)}>
                   <option>Jornada Completa</option>
                   <option>Jornada Parcial</option>
                   <option>Por Turnos</option>
@@ -411,8 +306,8 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
               ) : (
                 <input
                   type={type === "number" ? "number" : type}
-                  value={type === "number" ? String(val).replace(/[^\d]/g, "") : val}
-                  onChange={(e) => handleChange(key, e.target.value)}
+                  value={type==="number" ? String(val).replace(/[^\d]/g,"") : val}
+                  onChange={(e)=>handleChange(key, e.target.value)}
                 />
               )
             ) : (
@@ -431,49 +326,31 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
   );
 };
 
-/* Documentos – acciones mock */
+/* Documentos – visible (acciones mock) */
 const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
   return (
     <div className="ed-card">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 6,
-        }}
-      >
-        <h3 className="ed-card-title" style={{ margin: 0 }}>
-          Documentos
-        </h3>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="ed-btn" onClick={onNuevaCarpeta}>
-            Nueva Carpeta
-          </button>
-          <button className="ed-btn primary" onClick={onSubirArchivo}>
-            Subir Archivo
-          </button>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
+        <div style={{display:'flex',gap:8}}>
+          <button className="ed-btn" onClick={onNuevaCarpeta}>Nueva Carpeta</button>
+          <button className="ed-btn primary" onClick={onSubirArchivo}>Subir Archivo</button>
         </div>
       </div>
       <table className="asistencia-tabla">
         <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Fecha de Modificación</th>
-            <th>Tamaño</th>
-            <th></th>
-          </tr>
+          <tr><th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th></th></tr>
         </thead>
         <tbody>
-          {items.map((it) => (
+          {items.map(it => (
             <tr key={it.id}>
-              <td style={{ fontWeight: 600 }}>{it.tipo === "folder" ? "📁 " : "📄 "}{it.nombre}</td>
+              <td style={{fontWeight:600}}>
+                {it.tipo === "folder" ? "📁 " : "📄 "}{it.nombre}
+              </td>
               <td>{it.mod || "—"}</td>
               <td>{it.tam || "—"}</td>
-              <td>
-                <button className="ed-btn">⋯</button>
-              </td>
+              <td><button className="ed-btn">⋯</button></td>
             </tr>
           ))}
         </tbody>
@@ -482,26 +359,20 @@ const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   );
 };
 
-/* Previsión – editable */
+/* Previsión – AHORA editable con modoEdicion */
 const PrevisionTab = ({ empleado, modoEdicion, onChange }) => {
   const pv = empleado?.prevision || {};
   const set = (k, v) => onChange?.("prevision", { ...(empleado.prevision || {}), [k]: v });
 
-  const entry = (l, k, type = "text") => (
+  const entry = (l, k, type="text") => (
     <div className="ed-kv-row" key={k}>
       <span className="ed-kv-label">{l}:</span>
       {modoEdicion ? (
         <input
           type={type}
           value={String(pv?.[k] ?? "")}
-          onChange={(e) => set(k, e.target.value)}
-          style={{
-            width: "100%",
-            border: "1px solid #E5E7EB",
-            borderRadius: 8,
-            padding: "6px 8px",
-            fontSize: 14,
-          }}
+          onChange={(e)=>set(k, e.target.value)}
+          style={{ width: "100%", border: "1px solid #E5E7EB", borderRadius: 8, padding: "6px 8px", fontSize: 14 }}
         />
       ) : (
         <span className="ed-kv-value">{pv?.[k] || "N/D"}</span>
@@ -532,7 +403,7 @@ const PrevisionTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
-/* Bancarios – editable */
+/* Bancarios – AHORA editable con modoEdicion */
 const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   const b = empleado?.bancarios || {};
   const set = (k, v) => onChange?.("bancarios", { ...(empleado.bancarios || {}), [k]: v });
@@ -544,21 +415,14 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
         <input
           type="text"
           value={String(b?.[k] ?? "")}
-          onChange={(e) => set(k, e.target.value)}
-          style={{
-            width: "100%",
-            border: "1px solid #E5E7EB",
-            borderRadius: 8,
-            padding: "6px 8px",
-            fontSize: 14,
-          }}
+          onChange={(e)=>set(k, e.target.value)}
+          style={{ width: "100%", border: "1px solid #E5E7EB", borderRadius: 8, padding: "6px 8px", fontSize: 14 }}
         />
       ) : (
         <span className="ed-kv-value">{b?.[k] || "N/D"}</span>
       )}
     </div>
   );
-
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Bancarios</h3>
@@ -574,243 +438,22 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
-/* ======================= Tab: Hoja de Vida (editable) ======================= */
-function HojaDeVida({ empleado, modoEdicion, onChange }) {
-  const hv = empleado?.hojaVida || {};
-  const set = (k, v) => onChange?.("hojaVida", { ...(empleado.hojaVida || {}), [k]: v });
-
-  return (
-    <div className="ed-card">
-      <h3 className="ed-card-title">Hoja de Vida</h3>
-
-      <div className="ed-kv">
-        <div className="ed-kv-row">
-          <span className="ed-kv-label">Alerta Médica:</span>
-          {modoEdicion ? (
-            <input
-              type="text"
-              value={hv.alertaMedica || ""}
-              onChange={(e) => set("alertaMedica", e.target.value)}
-            />
-          ) : (
-            <span className="ed-kv-value">{hv.alertaMedica || "—"}</span>
-          )}
-        </div>
-
-        <div className="ed-kv-row" style={{ alignItems: "flex-start" }}>
-          <span className="ed-kv-label">Contacto de Emergencia:</span>
-          <div style={{ width: "100%" }}>
-            {(hv.emergencia || []).map((c, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 8 }}>
-                {modoEdicion ? (
-                  <>
-                    <input
-                      placeholder="Nombre"
-                      value={c.nombre || ""}
-                      onChange={(e) => {
-                        const arr = [...(hv.emergencia || [])];
-                        arr[i] = { ...arr[i], nombre: e.target.value };
-                        set("emergencia", arr);
-                      }}
-                    />
-                    <input
-                      placeholder="Relación"
-                      value={c.relacion || ""}
-                      onChange={(e) => {
-                        const arr = [...(hv.emergencia || [])];
-                        arr[i] = { ...arr[i], relacion: e.target.value };
-                        set("emergencia", arr);
-                      }}
-                    />
-                    <input
-                      placeholder="Teléfono"
-                      value={c.telefono || ""}
-                      onChange={(e) => {
-                        const arr = [...(hv.emergencia || [])];
-                        arr[i] = { ...arr[i], telefono: e.target.value };
-                        set("emergencia", arr);
-                      }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <span className="ed-kv-value" style={{ textAlign: "left" }}>
-                      {c.nombre || "—"}
-                    </span>
-                    <span className="ed-kv-value" style={{ textAlign: "left" }}>
-                      {c.relacion || "—"}
-                    </span>
-                    <span className="ed-kv-value" style={{ textAlign: "left" }}>
-                      {c.telefono || "—"}
-                    </span>
-                  </>
-                )}
-              </div>
-            ))}
-            {modoEdicion && (
-              <button
-                className="ed-btn"
-                onClick={() => set("emergencia", [...(hv.emergencia || []), { nombre: "", relacion: "", telefono: "" }])}
-              >
-                + Agregar contacto
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="ed-kv-row" style={{ alignItems: "flex-start" }}>
-          <span className="ed-kv-label">Información Médica:</span>
-          <div style={{ width: "100%", display: "grid", gap: 8 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <label style={{ color: "#6B7280" }}>Grupo sanguíneo</label>
-              <label style={{ color: "#6B7280" }}>Acepta transfusión</label>
-              {modoEdicion ? (
-                <>
-                  <input
-                    value={hv.medico?.grupoSanguineo || ""}
-                    onChange={(e) =>
-                      set("medico", { ...(hv.medico || {}), grupoSanguineo: e.target.value })
-                    }
-                  />
-                  <select
-                    value={hv.medico?.aceptaTransfusion ? "si" : "no"}
-                    onChange={(e) =>
-                      set("medico", {
-                        ...(hv.medico || {}),
-                        aceptaTransfusion: e.target.value === "si",
-                      })
-                    }
-                  >
-                    <option value="si">Sí</option>
-                    <option value="no">No</option>
-                  </select>
-                </>
-              ) : (
-                <>
-                  <span className="ed-kv-value" style={{ textAlign: "left" }}>
-                    {hv.medico?.grupoSanguineo || "—"}
-                  </span>
-                  <span className="ed-kv-value" style={{ textAlign: "left" }}>
-                    {hv.medico?.aceptaTransfusion ? "Sí" : "No"}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <div>
-              <label style={{ color: "#6B7280" }}>Alergias</label>
-              {modoEdicion ? (
-                <input
-                  placeholder="Separadas por coma"
-                  value={(hv.medico?.alergias || []).join(", ")}
-                  onChange={(e) =>
-                    set("medico", {
-                      ...(hv.medico || {}),
-                      alergias: e.target.value
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                />
-              ) : (
-                <div className="ed-kv-value" style={{ textAlign: "left" }}>
-                  {(hv.medico?.alergias || []).join(", ") || "—"}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label style={{ color: "#6B7280" }}>Condiciones crónicas</label>
-              {modoEdicion ? (
-                <input
-                  placeholder="Separadas por coma"
-                  value={(hv.medico?.condicionesCronicas || []).join(", ")}
-                  onChange={(e) =>
-                    set("medico", {
-                      ...(hv.medico || {}),
-                      condicionesCronicas: e.target.value
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                />
-              ) : (
-                <div className="ed-kv-value" style={{ textAlign: "left" }}>
-                  {(hv.medico?.condicionesCronicas || []).join(", ") || "—"}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label style={{ color: "#6B7280" }}>Medicamentos</label>
-              {modoEdicion ? (
-                <input
-                  value={hv.medico?.medicamentos || ""}
-                  onChange={(e) =>
-                    set("medico", { ...(hv.medico || {}), medicamentos: e.target.value })
-                  }
-                />
-              ) : (
-                <div className="ed-kv-value" style={{ textAlign: "left" }}>
-                  {hv.medico?.medicamentos || "—"}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label style={{ color: "#6B7280" }}>Observaciones</label>
-              {modoEdicion ? (
-                <input
-                  value={hv.medico?.observaciones || ""}
-                  onChange={(e) =>
-                    set("medico", { ...(hv.medico || {}), observaciones: e.target.value })
-                  }
-                />
-              ) : (
-                <div className="ed-kv-value" style={{ textAlign: "left" }}>
-                  {hv.medico?.observaciones || "—"}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ======================= Tab: Asistencia (solo lectura) ======================= */
 function AsistenciaTab({ empleado }) {
-  const [metricas, setMetricas] = useState({
-    horasTrabajadas: 0,
-    porcentajeAsistencia: 0,
-    atrasosMes: 0,
-    horasExtra: 0,
-  });
+  const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
   const [showModal, setShowModal] = useState(false);
-  const [filtros, setFiltros] = useState({
-    desde: "",
-    hasta: "",
-    tipo: "",
-    estado: "",
-    metodo: "",
-  });
+  const [filtros, setFiltros] = useState({ desde: "", hasta: "", tipo: "", estado: "", metodo: "" });
   const marcas = Array.isArray(empleado?.marcas) ? empleado.marcas : [];
 
   useEffect(() => {
     if (!marcas.length) return;
-    let horas = 0,
-      atrasos = 0;
+    let horas = 0, atrasos = 0;
     const diasAsistidos = new Set();
     marcas.forEach((marca) => {
       diasAsistidos.add(marca.fecha);
       if ((marca.estado || "").toLowerCase() === "atraso") atrasos++;
       if ((marca.tipo || "").toLowerCase() === "entrada") {
-        const salida = marcas.find(
-          (m) => m.fecha === marca.fecha && (m.tipo || "").toLowerCase() === "salida"
-        );
+        const salida = marcas.find((m) => m.fecha === marca.fecha && (m.tipo || "").toLowerCase() === "salida");
         if (salida) {
           const inicio = parseISO(`${marca.fecha}T${marca.hora}`);
           const fin = parseISO(`${salida.fecha}T${salida.hora}`);
@@ -825,64 +468,47 @@ function AsistenciaTab({ empleado }) {
       atrasosMes: atrasos,
       horasExtra: 0,
     });
-  }, [empleado]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [empleado]);
 
-  const filtrar = (arr) =>
-    arr.filter((m) => {
-      if (filtros.tipo && (m.tipo || "").toLowerCase() !== filtros.tipo.toLowerCase())
-        return false;
-      if (
-        filtros.estado &&
-        (m.estado || "").toLowerCase() !== filtros.estado.toLowerCase()
-      )
-        return false;
-      if (
-        filtros.metodo &&
-        (m.metodo || "").toLowerCase() !== filtros.metodo.toLowerCase()
-      )
-        return false;
-      if (filtros.desde && m.fecha < filtros.desde) return false;
-      if (filtros.hasta && m.fecha > filtros.hasta) return false;
-      return true;
-    });
+  const filtrar = (arr) => arr.filter((m) => {
+    if (filtros.tipo && (m.tipo || "").toLowerCase() !== filtros.tipo.toLowerCase()) return false;
+    if (filtros.estado && (m.estado || "").toLowerCase() !== filtros.estado.toLowerCase()) return false;
+    if (filtros.metodo && (m.metodo || "").toLowerCase() !== filtros.metodo.toLowerCase()) return false;
+    if (filtros.desde && m.fecha < filtros.desde) return false;
+    if (filtros.hasta && m.fecha > filtros.hasta) return false;
+    return true;
+  });
 
   const exportResumenCSV = () => {
-    const head = ["Fecha", "Hora", "Tipo", "Estado", "Método", "IP"];
-    const rows = marcas.slice(0, 50).map((m) => [m.fecha, m.hora, m.tipo, m.estado, m.metodo, m.ip]);
+    const head = ["Fecha","Hora","Tipo","Estado","Método","IP"];
+    const rows = marcas.slice(0, 50).map(m => [m.fecha, m.hora, m.tipo, m.estado, m.metodo, m.ip]);
     const meta = [
       ["Resumen de Asistencia"],
       ["Horas Trabajadas (Mes)", metricas.horasTrabajadas],
       ["Asistencia %", metricas.porcentajeAsistencia],
       ["Atrasos (Mes)", metricas.atrasosMes],
       ["Horas Extra", metricas.horasExtra],
-      [""],
+      [""]
     ];
-    const csv = [...meta, head, ...rows]
-      .map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+    const csv = [...meta, head, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `asistencia-resumen-${empleado?.rut || empleado?.id || "empleado"}.csv`;
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `asistencia-resumen-${empleado?.rut || empleado?.id || "empleado"}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
   const getWeekRange = (d = new Date()) => {
     const day = d.getDay();
     const diffToMon = (day + 6) % 7;
-    const lunes = new Date(d);
-    lunes.setDate(d.getDate() - diffToMon);
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    const f = (x) => x.toISOString().slice(0, 10);
+    const lunes = new Date(d); lunes.setDate(d.getDate() - diffToMon);
+    const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+    const f = (x) => x.toISOString().slice(0,10);
     return { lunes: f(lunes), domingo: f(domingo) };
   };
 
   const generarReporteSemanalPDF = () => {
     const { lunes, domingo } = getWeekRange(new Date());
-    const data = filtrar(marcas.filter((m) => m.fecha >= lunes && m.fecha <= domingo));
+    const data = filtrar(marcas.filter(m => m.fecha >= lunes && m.fecha <= domingo));
     const html = `
       <html><head><meta charset="utf-8" />
       <title>Reporte Semanal de Asistencia</title>
@@ -906,22 +532,14 @@ function AsistenciaTab({ empleado }) {
         <table>
           <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th></tr></thead>
           <tbody>
-            ${data
-              .map(
-                (m) =>
-                  `<tr><td>${m.fecha}</td><td>${m.hora}</td><td>${m.tipo}</td><td>${m.estado}</td><td>${m.metodo}</td><td>${m.ip || ""}</td></tr>`
-              )
-              .join("")}
+            ${data.map(m => `<tr><td>${m.fecha}</td><td>${m.hora}</td><td>${m.tipo}</td><td>${m.estado}</td><td>${m.metodo}</td><td>${m.ip || ""}</td></tr>`).join("")}
           </tbody>
         </table>
         <div class="foot">Generado el ${new Date().toLocaleString()}</div>
         <div class="firma"><div>Firma Colaborador</div><div>Firma Supervisor</div></div>
         <script>window.onload = () => setTimeout(() => window.print(), 150);</script>
       </body></html>`;
-    const w = window.open("", "_blank");
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    const w = window.open("", "_blank"); w.document.open(); w.document.write(html); w.document.close();
   };
 
   const descargarComprobante = (m) => {
@@ -947,10 +565,7 @@ function AsistenciaTab({ empleado }) {
         <div class="muted">Documento generado el ${new Date().toLocaleString()}</div>
         <script>window.onload = () => setTimeout(() => window.print(), 150);</script>
       </body></html>`;
-    const w = window.open("", "_blank");
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    const w = window.open("", "_blank"); w.document.open(); w.document.write(html); w.document.close();
   };
 
   const filtradasModal = filtrar(marcas);
@@ -960,211 +575,92 @@ function AsistenciaTab({ empleado }) {
       <div className="ed-card">
         <div className="asistencia-header">
           <div className="asistencia-title">
-            <div className="icono-title" aria-hidden>
-              🕒
-            </div>
+            <div className="icono-title" aria-hidden>🕒</div>
             <div>
-              <h3 className="ed-card-title" style={{ margin: 0 }}>
-                Resumen de Últimas Marcaciones
-              </h3>
+              <h3 className="ed-card-title" style={{ margin: 0 }}>Resumen de Últimas Marcaciones</h3>
               <p className="ed-sub light" style={{ margin: 0 }}>
-                Últimas 10 marcas registradas. Para un historial completo y filtros, usa “Ver
-                Historial Detallado”.
+                Últimas 10 marcas registradas. Para un historial completo y filtros, usa “Ver Historial Detallado”.
               </p>
             </div>
           </div>
           <div className="asistencia-buttons">
-            <button className="ed-btn" onClick={() => setShowModal(true)}>
-              Ver Historial Detallado
-            </button>
-            <button className="ed-btn" onClick={generarReporteSemanalPDF}>
-              Generar Reporte Semanal (PDF)
-            </button>
-            <button className="ed-btn primary" onClick={exportResumenCSV}>
-              ⬇ Exportar Resumen
-            </button>
+            <button className="ed-btn" onClick={()=>setShowModal(true)}>Ver Historial Detallado</button>
+            <button className="ed-btn" onClick={generarReporteSemanalPDF}>Generar Reporte Semanal (PDF)</button>
+            <button className="ed-btn primary" onClick={exportResumenCSV}>⬇ Exportar Resumen</button>
           </div>
         </div>
 
         <div className="metricas-grid">
-          <div className="metric-card">
-            <div className="metric-info">
-              <p className="metric-label">Horas Trabajadas (Mes)</p>
-              <p className="metric-value">{metricas.horasTrabajadas}h</p>
-            </div>
-            <div className="metric-icon">🕑</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-info">
-              <p className="metric-label">Asistencia</p>
-              <p className="metric-value green">{metricas.porcentajeAsistencia}%</p>
-            </div>
-            <div className="metric-icon">📅</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-info">
-              <p className="metric-label">Atrasos (Mes)</p>
-              <p className="metric-value yellow">{metricas.atrasosMes}</p>
-            </div>
-            <div className="metric-icon">⚠️</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-info">
-              <p className="metric-label">Horas Extra</p>
-              <p className="metric-value blue">{metricas.horasExtra}h</p>
-            </div>
-            <div className="metric-icon">➕</div>
-          </div>
+          <div className="metric-card"><div className="metric-info"><p className="metric-label">Horas Trabajadas (Mes)</p><p className="metric-value">{metricas.horasTrabajadas}h</p></div><div className="metric-icon">🕑</div></div>
+          <div className="metric-card"><div className="metric-info"><p className="metric-label">Asistencia</p><p className="metric-value green">{metricas.porcentajeAsistencia}%</p></div><div className="metric-icon">📅</div></div>
+          <div className="metric-card"><div className="metric-info"><p className="metric-label">Atrasos (Mes)</p><p className="metric-value yellow">{metricas.atrasosMes}</p></div><div className="metric-icon">⚠️</div></div>
+          <div className="metric-card"><div className="metric-info"><p className="metric-label">Horas Extra</p><p className="metric-value blue">{metricas.horasExtra}h</p></div><div className="metric-icon">➕</div></div>
         </div>
 
         <table className="asistencia-tabla">
           <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Tipo</th>
-              <th>Estado</th>
-              <th>Método</th>
-              <th>IP</th>
-              <th>Foto</th>
-              <th>Comprobante</th>
-            </tr>
+            <tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Foto</th><th>Comprobante</th></tr>
           </thead>
           <tbody>
-            {marcas.slice(0, 10).map((m, i) => (
+            {marcas.slice(0,10).map((m,i)=>(
               <tr key={i}>
                 <td>{m.fecha}</td>
                 <td>{m.hora}</td>
                 <td className={`tipo ${(m.tipo || "").toLowerCase()}`}>{m.tipo}</td>
-                <td>
-                  <span className={`estado-badge ${(m.estado || "").toLowerCase()}`}>
-                    {m.estado}
-                  </span>
-                </td>
+                <td><span className={`estado-badge ${(m.estado || "").toLowerCase()}`}>{m.estado}</span></td>
                 <td>{m.metodo}</td>
                 <td>{m.ip}</td>
                 <td>📷</td>
-                <td>
-                  <button className="ed-btn" onClick={() => descargarComprobante(m)}>
-                    ⬇
-                  </button>
-                </td>
+                <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="asistencia-paginacion">
-          Mostrando 10 de {marcas.length} registros
-        </p>
+        <p className="asistencia-paginacion">Mostrando 10 de {marcas.length} registros</p>
       </div>
 
       {showModal && (
         <>
-          <div className="ed-backdrop" onClick={() => setShowModal(false)} />
+          <div className="ed-backdrop" onClick={()=>setShowModal(false)} />
           <div className="ed-modal">
             <div className="ed-modal-head">
               <h4>Historial Detallado de Marcaciones</h4>
-              <button className="ed-btn" onClick={() => setShowModal(false)}>
-                Cerrar
-              </button>
+              <button className="ed-btn" onClick={()=>setShowModal(false)}>Cerrar</button>
             </div>
 
             <div className="ed-filtros">
-              <div>
-                <label>Desde</label>
-                <input
-                  type="date"
-                  value={filtros.desde}
-                  onChange={(e) => setFiltros((f) => ({ ...f, desde: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label>Hasta</label>
-                <input
-                  type="date"
-                  value={filtros.hasta}
-                  onChange={(e) => setFiltros((f) => ({ ...f, hasta: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label>Tipo</label>
-                <select
-                  value={filtros.tipo}
-                  onChange={(e) => setFiltros((f) => ({ ...f, tipo: e.target.value }))}
-                >
-                  <option value="">Todos</option>
-                  <option>Entrada</option>
-                  <option>Salida</option>
+              <div><label>Desde</label><input type="date" value={filtros.desde} onChange={e=>setFiltros(f=>({...f,desde:e.target.value}))} /></div>
+              <div><label>Hasta</label><input type="date" value={filtros.hasta} onChange={e=>setFiltros(f=>({...f,hasta:e.target.value}))} /></div>
+              <div><label>Tipo</label>
+                <select value={filtros.tipo} onChange={e=>setFiltros(f=>({...f,tipo:e.target.value}))}>
+                  <option value="">Todos</option><option>Entrada</option><option>Salida</option>
                 </select>
               </div>
-              <div>
-                <label>Estado</label>
-                <select
-                  value={filtros.estado}
-                  onChange={(e) => setFiltros((f) => ({ ...f, estado: e.target.value }))}
-                >
-                  <option value="">Todos</option>
-                  <option>Válida</option>
-                  <option>Atraso</option>
+              <div><label>Estado</label>
+                <select value={filtros.estado} onChange={e=>setFiltros(f=>({...f,estado:e.target.value}))}>
+                  <option value="">Todos</option><option>Válida</option><option>Atraso</option>
                 </select>
               </div>
-              <div>
-                <label>Método</label>
-                <select
-                  value={filtros.metodo}
-                  onChange={(e) => setFiltros((f) => ({ ...f, metodo: e.target.value }))}
-                >
-                  <option value="">Todos</option>
-                  <option>App</option>
-                  <option>Web</option>
-                  <option>Facial</option>
+              <div><label>Método</label>
+                <select value={filtros.metodo} onChange={e=>setFiltros(f=>({...f,metodo:e.target.value}))}>
+                  <option value="">Todos</option><option>App</option><option>Web</option><option>Facial</option>
                 </select>
               </div>
               <div className="ed-filtros-actions">
-                <button
-                  className="ed-btn"
-                  onClick={() =>
-                    setFiltros({ desde: "", hasta: "", tipo: "", estado: "", metodo: "" })
-                  }
-                >
-                  Limpiar
-                </button>
-                <button className="ed-btn primary" onClick={exportResumenCSV}>
-                  ⬇ Exportar CSV
-                </button>
-                <button className="ed-btn" onClick={generarReporteSemanalPDF}>
-                  Imprimir / PDF
-                </button>
+                <button className="ed-btn" onClick={()=>setFiltros({desde:"",hasta:"",tipo:"",estado:"",metodo:""})}>Limpiar</button>
+                <button className="ed-btn primary" onClick={exportResumenCSV}>⬇ Exportar CSV</button>
+                <button className="ed-btn" onClick={generarReporteSemanalPDF}>Imprimir / PDF</button>
               </div>
             </div>
 
             <div className="ed-modal-table">
               <table className="asistencia-tabla">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Método</th>
-                    <th>IP</th>
-                    <th>Comprobante</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Comprobante</th></tr></thead>
                 <tbody>
                   {filtradasModal.map((m, i) => (
                     <tr key={i}>
-                      <td>{m.fecha}</td>
-                      <td>{m.hora}</td>
-                      <td>{m.tipo}</td>
-                      <td>{m.estado}</td>
-                      <td>{m.metodo}</td>
-                      <td>{m.ip || ""}</td>
-                      <td>
-                        <button className="ed-btn" onClick={() => descargarComprobante(m)}>
-                          ⬇
-                        </button>
-                      </td>
+                      <td>{m.fecha}</td><td>{m.hora}</td><td>{m.tipo}</td><td>{m.estado}</td><td>{m.metodo}</td><td>{m.ip || ""}</td>
+                      <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -1185,15 +681,7 @@ function HistorialTab({ empleado }) {
     ...(Array.isArray(empleado?._audit) ? empleado._audit : []),
   ];
   if (!base.length && empleado?.fechaIngreso) {
-    base.push({
-      id: "seed-ingreso",
-      fecha: empleado.fechaIngreso,
-      hora: "09:00",
-      actor: "Sistema",
-      accion: "Ingreso a la empresa",
-      detalle: `Fecha de ingreso registrada (${fmtFechaLarga(empleado.fechaIngreso)})`,
-      categoria: "Contrato",
-    });
+    base.push({ id: "seed-ingreso", fecha: empleado.fechaIngreso, hora: "09:00", actor: "Sistema", accion: "Ingreso a la empresa", detalle: `Fecha de ingreso registrada (${fmtFechaLarga(empleado.fechaIngreso)})`, categoria: "Contrato" });
   }
   const items = [...base].sort((a, b) => {
     const ta = new Date(`${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`).getTime();
@@ -1202,22 +690,12 @@ function HistorialTab({ empleado }) {
   });
 
   const exportCSV = () => {
-    const headers = ["fecha", "hora", "actor", "accion", "categoria", "detalle"];
-    const rows = items.map((i) => [
-      i.fecha || "",
-      i.hora || "",
-      i.actor || "",
-      i.accion || "",
-      i.categoria || "",
-      (i.detalle || "").toString().replace(/\n/g, " "),
-    ]);
-    const csv = [headers.join(","), ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const headers = ["fecha","hora","actor","accion","categoria","detalle"];
+    const rows = items.map(i => [i.fecha || "", i.hora || "", i.actor || "", i.accion || "", i.categoria || "", (i.detalle || "").toString().replace(/\n/g, " ")]);
+    const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `historial-${empleado?.rut || empleado?.id || "empleado"}.csv`;
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `historial-${(empleado?.rut || empleado?.id || "empleado")}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -1225,20 +703,14 @@ function HistorialTab({ empleado }) {
     <div className="htl-wrap ed-card">
       <div className="htl-head">
         <div>
-          <h3 className="ed-card-title" style={{ margin: 0 }}>
-            Historial del Empleado
-          </h3>
-          <div className="htl-sub">
-            Bitácora de eventos requerida por la Dirección del Trabajo (DT).
-          </div>
+          <h3 className="ed-card-title" style={{ margin: 0 }}>Historial del Empleado</h3>
+          <div className="htl-sub">Bitácora de eventos requerida por la Dirección del Trabajo (DT).</div>
         </div>
-        <button type="button" className="ed-btn" onClick={exportCSV}>
-          ⬇ Exportar CSV
-        </button>
+        <button type="button" className="ed-btn" onClick={exportCSV}>⬇ Exportar CSV</button>
       </div>
 
       {items.length === 0 ? (
-        <div style={{ color: "#6B7280" }}>Aún no hay movimientos registrados.</div>
+        <div style={{ color:"#6B7280" }}>Aún no hay movimientos registrados.</div>
       ) : (
         <ul className="htl-list">
           {items.map((it, idx) => (
@@ -1254,9 +726,7 @@ function HistorialTab({ empleado }) {
                   {it.categoria ? <span className="htl-cat">{it.categoria}</span> : null}
                 </div>
                 <div className="htl-det">{it.detalle || "—"}</div>
-                <div className="htl-foot">
-                  Por <b>{it.actor || "Sistema"}</b>
-                </div>
+                <div className="htl-foot">Por <b>{it.actor || "Sistema"}</b></div>
               </div>
             </li>
           ))}
@@ -1274,7 +744,7 @@ export default function EmpleadoDetalle() {
   const rawParam = decodeURIComponent(String(params.rut ?? params.id ?? params.param ?? ""));
   const hasParam = rawParam.trim().length > 0;
 
-  const isNumericId = /^\d+$/.test(rawParam); // FIX: correcto (antes tenía un $ escapado)
+  const isNumericId = /^\d+$/.test(rawParam);
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
@@ -1311,17 +781,8 @@ export default function EmpleadoDetalle() {
     return (
       <div className="ed-wrap">
         <VolverAtras />
-        <div
-          style={{
-            padding: 16,
-            color: "#b45309",
-            background: "#fffbeb",
-            border: "1px solid #f59e0b",
-            borderRadius: 8,
-          }}
-        >
-          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o{" "}
-          <code>/rrhh/empleado/:rut</code>.
+        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
+          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
         </div>
       </div>
     );
@@ -1338,159 +799,76 @@ export default function EmpleadoDetalle() {
           const norm = (v) => normalizeRut(v);
           const byId = idParam ? arr.find((e) => String(e?.id) === String(idParam)) : null;
           const byRut = rutParam ? arr.find((e) => norm(e?.rut) === norm(rutParam)) : null;
-          const byEither =
-            !byId && !byRut && rawParam
-              ? arr.find(
-                  (e) =>
-                    String(e?.id) === String(rawParam) || norm(e?.rut) === norm(rawParam)
-                )
-              : null;
+          const byEither = !byId && !byRut && rawParam ? arr.find((e) => String(e?.id) === String(rawParam) || norm(e?.rut) === norm(rawParam)) : null;
           const found = byId || byRut || byEither;
-          if (found && !cancel) {
-            setEmpleado(found);
-            setOriginal(JSON.parse(JSON.stringify(found)));
-            return;
-          }
+          if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
         }
       } catch {}
       if (!cancel) setNotFound(true);
     };
     fetchEmpleado();
-    return () => {
-      cancel = true;
-    };
+    return () => { cancel = true; };
   }, [rutParam, idParam, rawParam]);
 
-  const handleChange = (campo, valor) =>
-    setEmpleado((prev) => ({ ...prev, [campo]: valor }));
+  const handleChange = (campo, valor) => setEmpleado((prev) => ({ ...prev, [campo]: valor }));
 
   /* Historial de cambios y guardar */
-  const registrarMovimiento = async (
-    empSnapshot,
-    { accion, categoria = "General", detalle = "", actor = "Sistema" }
-  ) => {
+  const registrarMovimiento = async (empSnapshot, { accion, categoria = "General", detalle = "", actor = "Sistema" }) => {
     if (!empSnapshot) return;
-    const item = {
-      id: Date.now(),
-      fecha: new Date().toISOString().slice(0, 10),
-      hora: new Date().toTimeString().slice(0, 5),
-      actor,
-      accion,
-      categoria,
-      detalle,
-    };
+    const item = { id: Date.now(), fecha: new Date().toISOString().slice(0,10), hora: new Date().toTimeString().slice(0,5), actor, accion, categoria, detalle };
     const updated = { ...empSnapshot, historial: [...(empSnapshot.historial || []), item] };
     setEmpleado(updated);
     try {
       const id = updated.id ?? encodeURIComponent(updated.rut);
-      await fetch(`${API}/${RESOURCE}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
+      await fetch(`${API}/${RESOURCE}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updated) });
     } catch {}
   };
 
-  const humanSize = (bytes) => {
-    const units = ["B", "KB", "MB", "GB"];
-    let i = 0,
-      n = Number(bytes) || 0;
-    while (n >= 1024 && i < units.length - 1) {
-      n /= 1024;
-      i++;
-    }
-    const fixed = n >= 10 || i === 0 ? 0 : 1;
-    return `${n.toFixed(fixed)} ${units[i]}`;
-  };
+  const humanSize = (bytes) => { const units = ["B","KB","MB","GB"]; let i=0, n=Number(bytes)||0; while(n>=1024 && i<units.length-1){ n/=1024; i++; } const fixed = n>=10||i===0?0:1; return `${n.toFixed(fixed)} ${units[i]}`; };
 
   const onNuevaCarpeta = async () => {
     if (!empleado) return;
     const nombre = (window.prompt("Nombre de la nueva carpeta") || "").trim();
     if (!nombre) return;
-    const hoy = new Date().toISOString().slice(0, 10);
+    const hoy = new Date().toISOString().slice(0,10);
     const nueva = { id: `f_${Date.now()}`, tipo: "folder", nombre, mod: hoy, tam: "" };
-    const empAfter = {
-      ...empleado,
-      documentos: [...(empleado.documentos || []), nueva],
-    };
-    await registrarMovimiento(empAfter, {
-      accion: "Creación de carpeta",
-      categoria: "Documentos",
-      detalle: `Se creó la carpeta “${nombre}”`,
-      actor: "Usuario",
-    });
+    const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nueva] };
+    await registrarMovimiento(empAfter, { accion: "Creación de carpeta", categoria: "Documentos", detalle: `Se creó la carpeta “${nombre}”`, actor: "Usuario" });
     alert("Carpeta creada.");
   };
 
   const onSubirArchivo = async () => {
     if (!empleado) return;
     const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
+    input.type = "file"; input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
     input.onchange = async (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const hoy = new Date().toISOString().slice(0, 10);
-      const nuevo = {
-        id: `d_${Date.now()}`,
-        tipo: "file",
-        nombre: file.name,
-        mod: hoy,
-        tam: humanSize(file.size),
-      };
-      const empAfter = {
-        ...empleado,
-        documentos: [...(empleado.documentos || []), nuevo],
-      };
-      await registrarMovimiento(empAfter, {
-        accion: "Subida de archivo",
-        categoria: "Documentos",
-        detalle: `Se subió “${file.name}”`,
-        actor: "Usuario",
-      });
+      const file = e.target.files && e.target.files[0]; if (!file) return;
+      const hoy = new Date().toISOString().slice(0,10);
+      const nuevo = { id: `d_${Date.now()}`, tipo: "file", nombre: file.name, mod: hoy, tam: humanSize(file.size) };
+      const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
+      await registrarMovimiento(empAfter, { accion: "Subida de archivo", categoria: "Documentos", detalle: `Se subió “${file.name}”`, actor: "Usuario" });
       alert("Archivo agregado (mock).");
     };
     input.click();
   };
 
-  const cancelarEdicion = () => {
-    setEmpleado(JSON.parse(JSON.stringify(original)));
-    setModoEdicion(false);
-  };
+  const cancelarEdicion = () => { setEmpleado(JSON.parse(JSON.stringify(original))); setModoEdicion(false); };
 
   const guardarEmpleado = async () => {
     if (!empleado) return;
     try {
       const diffs = [];
-      const keys = new Set([
-        ...Object.keys(original || {}),
-        ...Object.keys(empleado || {}),
-      ]);
+      const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
       keys.forEach((k) => {
         const a = JSON.stringify(original?.[k]);
         const b = JSON.stringify(empleado?.[k]);
         if (a !== b) diffs.push(k);
       });
-      const nuevaEntrada = {
-        id: Date.now(),
-        fecha: new Date().toISOString().slice(0, 10),
-        hora: new Date().toTimeString().slice(0, 5),
-        actor: "Sistema",
-        accion: "Actualización de ficha",
-        categoria: "Ficha",
-        detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
-      };
-      const payload = {
-        ...empleado,
-        historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada],
-      };
+      const nuevaEntrada = { id: Date.now(), fecha: new Date().toISOString().slice(0,10), hora: new Date().toTimeString().slice(0,5), actor: "Sistema", accion: "Actualización de ficha", categoria: "Ficha", detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados" };
+      const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
       const id = payload.id ?? encodeURIComponent(payload.rut);
       const url = `${API}/${RESOURCE}/${id}`;
-      await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       setEmpleado(payload);
       setOriginal(JSON.parse(JSON.stringify(payload)));
       alert("Cambios guardados correctamente");
@@ -1505,9 +883,7 @@ export default function EmpleadoDetalle() {
     return (
       <div className="ed-wrap">
         <VolverAtras />
-        <div style={{ padding: 16, color: "#6B7280" }}>
-          Empleado no encontrado. Verifica el RUT/ID o los datos locales.
-        </div>
+        <div style={{ padding: 16, color: "#6B7280" }}>Empleado no encontrado. Verifica el RUT/ID o los datos locales.</div>
       </div>
     );
   }
@@ -1521,31 +897,19 @@ export default function EmpleadoDetalle() {
     );
   }
 
-  const iniciales =
-    empleado.nombre?.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase() || "";
+  const iniciales = empleado.nombre?.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase() || "";
   const activo = (empleado.estado || "").toLowerCase() === "activo";
-  const cumpleISO =
-    empleado.fechaNacimiento || empleado.nacimiento || empleado?.personales?.fechaNacimiento;
-  const cumpleTxt = cumpleISO
-    ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `)
-    : "—";
+  const cumpleISO = empleado.fechaNacimiento || empleado.nacimiento || empleado?.personales?.fechaNacimiento;
+  const cumpleTxt = cumpleISO ? fmtFechaLarga(cumpleISO).replace(/^0?(\d{1,2}) de /, (_, d) => `${d} de `) : "—";
   const ingresoTxt = empleado.fechaIngreso ? fmtFechaLarga(empleado.fechaIngreso) : "—";
   const antig = antiguedadStr(empleado.fechaIngreso);
-  const horario =
-    pickCI(empleado, ["horario"], "") ?? pickCI(empleado?.datosContractuales, ["horario"], "");
-  const centro =
-    pickCI(empleado, ["centro", "oficina"], "") ??
-    pickCI(empleado?.datosContractuales, ["centro", "oficina"], "");
+  const horario = pickCI(empleado, ["horario"], "") ?? pickCI(empleado?.datosContractuales, ["horario"], "");
+  const centro   = pickCI(empleado, ["centro","oficina"], "") ?? pickCI(empleado?.datosContractuales, ["centro","oficina"], "");
   const vac = computeVacaciones(empleado);
 
-  const selectTab = (tab) => {
-    setTabActiva(tab);
-    try {
-      window.history.replaceState(null, "", `${location.pathname}#${tab}`);
-    } catch {}
-  };
+  const selectTab = (tab) => { setTabActiva(tab); try { window.history.replaceState(null, "", `${location.pathname}#${tab}`); } catch {} };
 
-  const isReadOnlyTab = tabActiva === "asistencia" || tabActiva === "historial";
+  const isReadOnlyTab = (tabActiva === "asistencia" || tabActiva === "historial");
 
   return (
     <div className="ed-wrap">
@@ -1557,36 +921,21 @@ export default function EmpleadoDetalle() {
         <div className="ed-head-main">
           <div className="ed-name-row">
             <h2 className="ed-name">{empleado.nombre || "—"}</h2>
-            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>
-              {empleado.estado || "—"}
-            </span>
+            <span className={`ed-badge ${activo ? "is-ok" : "is-warn"}`}>{empleado.estado || "—"}</span>
           </div>
           <div className="ed-sub">{empleado.cargo || "—"}</div>
-          {empleado.fechaIngreso && (
-            <div className="ed-sub light">
-              Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}
-            </div>
-          )}
+          {empleado.fechaIngreso && (<div className="ed-sub light">Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}</div>)}
         </div>
 
-        {/* Acciones edición */}
+        {/* Acciones edición: deshabilitadas visualmente si estás en tabs de solo lectura */}
         {!modoEdicion ? (
-          <button
-            className={`ed-btn ${!isReadOnlyTab ? "primary" : ""}`}
-            onClick={() => setModoEdicion(true)}
-            disabled={isReadOnlyTab}
-            title={isReadOnlyTab ? "No editable en esta pestaña" : "Editar ficha"}
-          >
+          <button className="ed-btn" onClick={() => setModoEdicion(true)} disabled={isReadOnlyTab} title={isReadOnlyTab ? "No editable en esta pestaña" : "Editar ficha"}>
             Editar Ficha
           </button>
         ) : (
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="ed-btn" onClick={cancelarEdicion}>
-              Cancelar
-            </button>
-            <button className="ed-btn primary" onClick={guardarEmpleado}>
-              Guardar Cambios
-            </button>
+          <div style={{display:"flex",gap:8}}>
+            <button className="ed-btn" onClick={cancelarEdicion}>Cancelar</button>
+            <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
           </div>
         )}
       </div>
@@ -1603,71 +952,37 @@ export default function EmpleadoDetalle() {
           { id: "hojaVida", label: "Hoja de Vida" },
           { id: "historial", label: "Historial" },
         ].map((t) => (
-          <button
-            key={t.id}
-            className={`ed-tab ${tabActiva === t.id ? "is-active" : ""}`}
-            onClick={() => selectTab(t.id)}
-            type="button"
-          >
+          <button key={t.id} className={`ed-tab ${tabActiva === t.id ? "is-active" : ""}`} onClick={() => selectTab(t.id)} type="button">
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Grid */}
+      {/* Grid: en Asistencia una sola columna */}
       <div className={`ed-grid ${tabActiva === "asistencia" ? "is-single" : ""}`}>
         <div className="ed-left">
           {tabActiva === "personales" && (
-            <PersonalesTab
-              empleado={empleado}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-            />
+            <PersonalesTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
           )}
 
           {tabActiva === "contractuales" && (
-            <ContractualesTab
-              datos={empleado.datosContractuales || {}}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-              empleado={empleado}
-            />
+            <ContractualesTab datos={empleado.datosContractuales || {}} modoEdicion={modoEdicion} onChange={handleChange} empleado={empleado} />
           )}
 
           {tabActiva === "documentos" && (
-            <DocumentosTab
-              empleado={empleado}
-              onNuevaCarpeta={onNuevaCarpeta}
-              onSubirArchivo={onSubirArchivo}
-            />
+            <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />
           )}
 
           {tabActiva === "prevision" && (
-            <PrevisionTab
-              empleado={empleado}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-            />
+            <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
           )}
 
           {tabActiva === "bancarios" && (
-            <BancariosTab
-              empleado={empleado}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-            />
+            <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
           )}
 
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
-
-          {tabActiva === "hojaVida" && (
-            <HojaDeVida
-              empleado={empleado}
-              modoEdicion={modoEdicion}
-              onChange={handleChange}
-            />
-          )}
-
+          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
@@ -1677,75 +992,27 @@ export default function EmpleadoDetalle() {
             <div className="ed-card">
               <h4 className="ed-card-title">Información Rápida</h4>
               <ul className="ed-quick">
-                <li>
-                  <div>
-                    <div className="ed-quick-label">Próximo cumpleaños</div>
-                    <div className="ed-quick-val">{cumpleTxt}</div>
-                  </div>
-                </li>
-                <li>
-                  <div>
-                    <div className="ed-quick-label">Horario</div>
-                    <div className="ed-quick-val">{horario || "08:30 - 18:00"}</div>
-                  </div>
-                </li>
-                <li>
-                  <div>
-                    <div className="ed-quick-label">Oficina</div>
-                    <div className="ed-quick-val">{centro || "Santiago Centro"}</div>
-                  </div>
-                </li>
+                <li><div><div className="ed-quick-label">Próximo cumpleaños</div><div className="ed-quick-val">{cumpleTxt}</div></div></li>
+                <li><div><div className="ed-quick-label">Horario</div><div className="ed-quick-val">{horario || "08:30 - 18:00"}</div></div></li>
+                <li><div><div className="ed-quick-label">Oficina</div><div className="ed-quick-val">{centro || "Santiago Centro"}</div></div></li>
               </ul>
 
               <div className="ed-sep" />
 
-              <h4 className="ed-card-title" style={{ marginTop: 8 }}>
-                Vacaciones
-              </h4>
+              <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
               <div className="ed-vac">
-                <div className="ed-vac-row">
-                  <span>Saldo</span>
-                  <b>{vac.saldo} días</b>
-                </div>
-                <div className="ed-vac-sub">
-                  Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}
-                </div>
-                {vac.progresivos > 0 && (
-                  <div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>
-                )}
+                <div className="ed-vac-row"><span>Saldo</span><b>{vac.saldo} días</b></div>
+                <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
+                {vac.progresivos > 0 && (<div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>)}
                 {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
               </div>
             </div>
 
             <div className="ed-card">
               <h4 className="ed-card-title">Rendimiento</h4>
-              <div className="ed-metric">
-                <div className="ed-metric-row">
-                  <span>Productividad</span>
-                  <span className="ed-metric-num">92%</span>
-                </div>
-                <div className="ed-bar">
-                  <div className="ed-bar-fill blue" style={{ width: "92%" }} />
-                </div>
-              </div>
-              <div className="ed-metric">
-                <div className="ed-metric-row">
-                  <span>Puntualidad</span>
-                  <span className="ed-metric-num">96%</span>
-                </div>
-                <div className="ed-bar">
-                  <div className="ed-bar-fill green" style={{ width: "96%" }} />
-                </div>
-              </div>
-              <div className="ed-metric">
-                <div className="ed-metric-row">
-                  <span>Colaboración</span>
-                  <span className="ed-metric-num">88%</span>
-                </div>
-                <div className="ed-bar">
-                  <div className="ed-bar-fill purple" style={{ width: "88%" }} />
-                </div>
-              </div>
+              <div className="ed-metric"><div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div><div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div></div>
+              <div className="ed-metric"><div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div><div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div></div>
+              <div className="ed-metric"><div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div><div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div></div>
             </div>
           </aside>
         )}
