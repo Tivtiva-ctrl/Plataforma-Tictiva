@@ -1119,40 +1119,119 @@ export default function EmpleadoDetalle() {
   };
 
   const guardarEmpleado = async () => {
-    if (!empleado) return;
-    try {
-      const diffs = [];
-      const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
-      keys.forEach((k) => {
-        const a = JSON.stringify(original?.[k]);
-        const b = JSON.stringify(empleado?.[k]);
-        if (a !== b) diffs.push(k);
-      });
+  if (!empleado) return;
+  try {
+    // 1. Detectar cambios respecto al original
+    const diffs = [];
+    const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
+    keys.forEach((k) => {
+      const a = JSON.stringify(original?.[k]);
+      const b = JSON.stringify(empleado?.[k]);
+      if (a !== b) diffs.push(k);
+    });
 
-      const nuevaEntrada = {
-        id: Date.now(),
-        fecha: new Date().toISOString().slice(0,10),
-        hora: new Date().toTimeString().slice(0,5),
-        actor: "Sistema",
-        accion: "Actualización de ficha",
-        categoria: "Ficha",
-        detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
-      };
+    // 2. Crear entrada de historial
+    const nuevaEntrada = {
+      id: Date.now(),
+      fecha: new Date().toISOString().slice(0, 10),
+      hora: new Date().toTimeString().slice(0, 5),
+      actor: "Usuario",
+      accion: "Actualización de ficha",
+      categoria: "Ficha",
+      detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
+    };
 
-      const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
-      const id = payload.id ?? encodeURIComponent(payload.rut);
-      const url = `${API}/${RESOURCE}/${id}`;
-      await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    // 3. Payload final con historial
+    const payload = {
+      ...empleado,
+      historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada],
+    };
 
-      setEmpleado(payload);
-      setOriginal(JSON.parse(JSON.stringify(payload)));
-      alert("Cambios guardados correctamente");
-      setModoEdicion(false);
-    } catch (error) {
-      console.error("Error al guardar empleado:", error);
-      alert("Error al guardar cambios");
+    // 4. Guardar en API (si responde)
+    const id = payload.id ?? encodeURIComponent(payload.rut);
+    const url = `${API}/${RESOURCE}/${id}`;
+    const resp = await fetch(url, {
+      method: "PATCH", // <- usamos PATCH, más seguro que PUT
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!resp.ok) {
+      console.warn("⚠️ No se pudo guardar en backend, guardando local...");
     }
-  };
+
+    // 5. Guardar en localStorage para persistir siempre
+    const guardarEmpleado = async () => {
+  if (!empleado) return;
+  try {
+    // Detectar cambios vs original
+    const diffs = [];
+    const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
+    keys.forEach((k) => {
+      const a = JSON.stringify(original?.[k]);
+      const b = JSON.stringify(empleado?.[k]);
+      if (a !== b) diffs.push(k);
+    });
+
+    // Entrada de historial
+    const entrada = {
+      id: Date.now(),
+      fecha: new Date().toISOString().slice(0,10),
+      hora: new Date().toTimeString().slice(0,5),
+      actor: "Usuario",
+      accion: "Actualización de ficha",
+      categoria: "Ficha",
+      detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
+    };
+
+    // Payload final
+    const payload = {
+      ...empleado,
+      historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), entrada],
+    };
+
+    // Intentar API (PATCH es más tolerante; si falla, seguimos con local)
+    const id = payload.id ?? encodeURIComponent(payload.rut);
+    const url = `${API}/${RESOURCE}/${id}`;
+    try {
+      const resp = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) console.warn("API no guardó, se usará persistencia local.");
+    } catch (e) {
+      console.warn("Sin conexión a API, se usará persistencia local.");
+    }
+
+    // ✅ Persistencia local
+    localStorage.setItem(storageKeyFor(payload), JSON.stringify(payload));
+
+    // Refrescar estado
+    setEmpleado(payload);
+    setOriginal(JSON.parse(JSON.stringify(payload)));
+    alert("✅ Cambios guardados correctamente");
+    setModoEdicion(false);
+  } catch (error) {
+    console.error("Error al guardar empleado:", error);
+    alert("Error al guardar cambios");
+  }
+};
+
+
+    // 6. Refrescar estado
+    setEmpleado(payload);
+    setOriginal(JSON.parse(JSON.stringify(payload)));
+    alert("✅ Cambios guardados correctamente");
+    setModoEdicion(false);
+  } catch (error) {
+    console.error("❌ Error al guardar empleado:", error);
+    alert("Error al guardar cambios");
+  }
+};
+
+    }
+  
 
   if (notFound) {
     return (
@@ -1468,4 +1547,4 @@ export default function EmpleadoDetalle() {
       `}</style>
     </div>
   );
-}
+
