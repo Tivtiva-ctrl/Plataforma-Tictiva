@@ -1,20 +1,57 @@
 // Hecho por Asistente de Programación de Google
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom'; // <- ¡IMPORTANTE! En tu app real, importa esto.
 
-// --- mocks para este entorno. En tu app usa: useParams/useLocation de react-router-dom
+// --- mocks para este entorno. En tu app usa los hooks reales de react-router-dom
 const useParams = () => ({ rut: "12345678-9" });
 const useLocation = () => ({ pathname: "/", search: "", hash: "" });
+
+// Agregamos un mock para useNavigate. En tu app, react-router-dom lo proveerá.
+// const useNavigate = () => (path) => {
+//   if (path === -1) {
+//     alert("Acción: Volver a la página anterior (listado de empleados).");
+//   } else {
+//     alert(`Acción: Navegar a la ruta: ${path}.`);
+//   }
+// };
+
 
 // --- mocks date-fns
 const parseISO = (iso) => new Date(iso);
 const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
 // --- mocks de componentes y API
-const VolverAtras = () => (
-  <a href="#" style={{ textDecoration: 'none', color: '#3b82f6', fontWeight: '600', marginBottom: '16px', display: 'inline-block' }}>
-    &larr; Volver
-  </a>
-);
+
+// ==================================================================
+//  ✅ MEJORA: Componente "VolverAtras" modificado
+//  Ahora usa el hook `useNavigate` para una navegación correcta en React.
+// ==================================================================
+const VolverAtras = () => {
+    const navigate = useNavigate();
+  
+    // Usamos onClick con navigate(-1) para ir a la página anterior en el historial.
+    // Esto es más flexible que una URL fija.
+    return (
+      <button 
+        onClick={() => navigate(-1)} 
+        style={{ 
+          textDecoration: 'none', 
+          color: '#3b82f6', 
+          fontWeight: '600', 
+          marginBottom: '16px', 
+          display: 'inline-block',
+          // Estilos adicionales para que parezca un enlace pero sea un botón
+          background: 'none',
+          border: 'none',
+          padding: '0',
+          cursor: 'pointer',
+          fontSize: '1em'
+        }}
+      >
+        &larr; Volver
+      </button>
+    );
+  };
 
 const EmpleadosAPI = {
   list: async () => ([{
@@ -791,7 +828,8 @@ function HojaDeVida({ empleado }) {
         <div className="hv-row"><span className="hv-label">Alergias:</span><span className="hv-val">{Array.isArray(md.alergias)?md.alergias.join(", "):(md.alergias||"N/D")}</span></div>
         <div className="hv-row"><span className="hv-label">Condiciones Crónicas:</span><span className="hv-val">{Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "):(md.condicionesCronicas||"N/D")}</span></div>
         <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span><span className="hv-val">{md.medicamentos||"N/D"}</span></div>
-        <div className="hv-row"><span className="hv-label">Observaciones Adicionales:</span><span className="hv-val">{md.observaciones||"N/D"}</span></div>
+        <div className="hv-row"><span className="hv-label">Observaciones Adicionale
+s:</span><span className="hv-val">{md.observaciones||"N/D"}</span></div>
       </div>
 
       <div className="hv-card">
@@ -1150,7 +1188,11 @@ export default function EmpleadoDetalle() {
           <div className="ed-sub">{empleado.cargo || "—"}</div>
           {empleado.fechaIngreso && (<div className="ed-sub light">Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}</div>)}
         </div>
-
+        
+        {/* ================================================================== */}
+        {/* ✅ LÓGICA BOTÓN "EDITAR FICHA": ¡ESTO YA FUNCIONA PERFECTO!      */}
+        {/* Al hacer clic, cambia el estado `modoEdicion` a `true`.           */}
+        {/* ================================================================== */}
         {modoEdicion ? (
           <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
         ) : (
