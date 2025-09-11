@@ -1259,12 +1259,34 @@ export default function EmpleadoDetalle() {
           )}
 
           {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
-          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} />}
-          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} />}
+          {tabActiva === "prevision" && (
+  <PrevisionTab
+    empleado={empleado}
+    modoEdicion={modoEdicion}
+    onChange={handleChange}
+  />
+)}
+
+          {tabActiva === "bancarios" && (
+  <BancariosTab
+    empleado={empleado}
+    modoEdicion={modoEdicion}
+    onChange={handleChange}
+  />
+)}
+
+
 
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
 
-          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
+          {tabActiva === "hojaVida" && (
+  <HojaDeVida
+    empleado={empleado}
+    modoEdicion={modoEdicion}
+    onChange={handleChange}
+  />
+)}
+
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
