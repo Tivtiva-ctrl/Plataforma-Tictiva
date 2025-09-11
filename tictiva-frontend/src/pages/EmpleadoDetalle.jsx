@@ -1194,10 +1194,23 @@ export default function EmpleadoDetalle() {
         {/* Al hacer clic, cambia el estado `modoEdicion` a `true`.           */}
         {/* ================================================================== */}
         {modoEdicion ? (
-          <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
-        ) : (
-          <button className="ed-btn" onClick={() => setModoEdicion(true)}>Editar Ficha</button>
-        )}
+  <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
+) : (
+  <button
+  className="ed-btn primary"
+  onClick={() => setModoEdicion(true)}
+  disabled={["asistencia", "historial"].includes(tabActiva)}
+  title={["asistencia", "historial"].includes(tabActiva) ? "Esta sección no es editable" : ""}
+  style={{
+    opacity: ["asistencia", "historial"].includes(tabActiva) ? 0.5 : 1,
+    cursor: ["asistencia", "historial"].includes(tabActiva) ? "not-allowed" : "pointer"
+  }}
+>
+  Editar Ficha
+</button>
+
+)}
+
       </div>
 
       {/* Tabs */}
