@@ -139,6 +139,37 @@ const EmpleadosAPI = {
 
 /* =================== TABS ===================== */
 
+// Personales – datos básicos del empleado
+const PersonalesTab = ({ empleado = {}, modoEdicion, onChange }) => {
+  const handleChange = (campo, valor) => onChange?.(campo, valor);
+  const fields = [
+    ["Nombre Completo", empleado.nombre || "", "nombre", "text"],
+    ["Cédula", empleado.rut || "", "rut", "text"],
+    ["Fecha de Nacimiento", (empleado.fechaNacimiento || "").slice(0,10), "fechaNacimiento", "date"],
+    ["Email", empleado.correo || "", "correo", "email"],
+    ["Teléfono", empleado.telefono || "", "telefono", "text"],
+    ["Dirección", empleado.direccion || "", "direccion", "text"],
+    ["Estado Civil", empleado.estadoCivil || "", "estadoCivil", "text"],
+  ];
+  return (
+    <div className="ed-card">
+      <h3 className="ed-card-title">Información Personal</h3>
+      <div className="ed-kv">
+        {fields.map(([label, val, key, type]) => (
+          <div className="ed-kv-row" key={key}>
+            <span className="ed-kv-label">{label}:</span>
+            {modoEdicion ? (
+              <input type={type} value={val} onChange={e => handleChange(key, e.target.value)} />
+            ) : (
+              <span className="ed-kv-value">{val || "—"}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Contractuales – 2 columnas, sin emojis
 const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
   const pick = (v, ...fb) => (v !== undefined && v !== null && String(v) !== "" ? v : fb.find(x => x !== undefined && x !== null && String(x) !== "") || "");
@@ -256,31 +287,42 @@ const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
 };
 
 // Previsión – campos más comunes DT
-const PrevisionTab = ({ empleado }) => {
+const PrevisionTab = ({ empleado, modoEdicion, onChange }) => {
   const pv = empleado?.prevision || {};
-  const entry = (l, v) => (
-    <div className="ed-kv-row" key={l}>
-      <span className="ed-kv-label">{l}:</span>
-      <span className="ed-kv-value">{v || "N/D"}</span>
-    </div>
-  );
+  const handleChange = (campo, valor) => onChange?.("prevision", { ...pv, [campo]: valor });
+  const fields = [
+    ["AFP", "afp"],
+    ["Sistema de Salud", "sistemaSalud"],
+    ["Nombre Isapre", "isapre"],
+    ["Caja de Compensación", "cajaCompensacion"],
+    ["Mutual de Seguridad", "mutual"],
+    ["Seguro de Cesantía (AFC)", "afc"],
+    ["Asignación Familiar (Tramo)", "tramo"],
+    ["Cargas Familiares (N°)", "cargas", "number"],
+    ["Pensión de Alimentos (Monto)", "pensionAlimentos"],
+    ["Resolución Pensión", "resolucionPension"],
+    ["APV (Institución)", "apvInstitucion"],
+    ["APV (Cuenta/Contrato)", "apvCuenta"],
+    ["Tasa Cot. Accidente Trabajo", "tasaAccidente"],
+  ];
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Previsionales y Legales</h3>
       <div className="ed-2col">
-        {entry("AFP", pv.afp)}
-        {entry("Sistema de Salud", pv.sistemaSalud)}
-        {entry("Nombre Isapre", pv.isapre)}
-        {entry("Caja de Compensación", pv.cajaCompensacion)}
-        {entry("Mutual de Seguridad", pv.mutual)}
-        {entry("Seguro de Cesantía (AFC)", pv.afc)}
-        {entry("Asignación Familiar (Tramo)", pv.tramo)}
-        {entry("Cargas Familiares (N°)", pv.cargas)}
-        {entry("Pensión de Alimentos (Monto)", pv.pensionAlimentos)}
-        {entry("Resolución Pensión", pv.resolucionPension)}
-        {entry("APV (Institución)", pv.apvInstitucion)}
-        {entry("APV (Cuenta/Contrato)", pv.apvCuenta)}
-        {entry("Tasa Cot. Accidente Trabajo", pv.tasaAccidente)}
+        {fields.map(([label, key, type]) => (
+          <div className="ed-kv-row" key={key}>
+            <span className="ed-kv-label">{label}:</span>
+            {modoEdicion ? (
+              <input
+                type={type || "text"}
+                value={pv[key] || ""}
+                onChange={e => handleChange(key, e.target.value)}
+              />
+            ) : (
+              <span className="ed-kv-value">{pv[key] || "N/D"}</span>
+            )}
+          </div>
+        ))}
       </div>
       <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
@@ -288,23 +330,30 @@ const PrevisionTab = ({ empleado }) => {
 };
 
 // Bancarios – sin emojis, mínimos DT
-const BancariosTab = ({ empleado }) => {
+const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   const b = empleado?.bancarios || {};
-  const row = (l, v) => (
-    <div className="ed-kv-row" key={l}>
-      <span className="ed-kv-label">{l}:</span>
-      <span className="ed-kv-value">{v || "N/D"}</span>
-    </div>
-  );
+  const handleChange = (campo, valor) => onChange?.("bancarios", { ...b, [campo]: valor });
+  const fields = [
+    ["Banco", "banco"],
+    ["Tipo de Cuenta", "tipoCuenta"],
+    ["Número de Cuenta", "numeroCuenta"],
+    ["Titular de la Cuenta", "titular"],
+    ["RUT Titular", "rutTitular"],
+  ];
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Bancarios</h3>
       <div className="ed-2col">
-        {row("Banco", b.banco)}
-        {row("Tipo de Cuenta", b.tipoCuenta)}
-        {row("Número de Cuenta", b.numeroCuenta)}
-        {row("Titular de la Cuenta", b.titular)}
-        {row("RUT Titular", b.rutTitular)}
+        {fields.map(([label, key]) => (
+          <div className="ed-kv-row" key={key}>
+            <span className="ed-kv-label">{label}:</span>
+            {modoEdicion ? (
+              <input type="text" value={b[key] || ""} onChange={e => handleChange(key, e.target.value)} />
+            ) : (
+              <span className="ed-kv-value">{b[key] || "N/D"}</span>
+            )}
+          </div>
+        ))}
       </div>
       <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
@@ -1222,18 +1271,11 @@ export default function EmpleadoDetalle() {
       <div className={`ed-grid ${tabActiva === "asistencia" ? "is-single" : ""}`}>
         <div className="ed-left">
           {tabActiva === "personales" && (
-            <div className="ed-card">
-              <h3 className="ed-card-title">Información Personal</h3>
-              <div className="ed-kv">
-                <div className="ed-kv-row"><span className="ed-kv-label">Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
-              </div>
-            </div>
+            <PersonalesTab
+              empleado={empleado}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+            />
           )}
 
           {tabActiva === "contractuales" && (
@@ -1246,8 +1288,20 @@ export default function EmpleadoDetalle() {
           )}
 
           {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
-          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} />}
-          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} />}
+          {tabActiva === "prevision" && (
+            <PrevisionTab
+              empleado={empleado}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+            />
+          )}
+          {tabActiva === "bancarios" && (
+            <BancariosTab
+              empleado={empleado}
+              modoEdicion={modoEdicion}
+              onChange={handleChange}
+            />
+          )}
 
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
 
