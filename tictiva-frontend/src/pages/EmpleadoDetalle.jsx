@@ -1,40 +1,47 @@
 // Hecho por Asistente de Programación de Google
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from 'react-router-dom'; // <- En tu app real, importa estos hooks
+import { useNavigate, useParams, useLocation } from 'react-router-dom'; // En tu app real, importa estos hooks
 
 // --- mocks date-fns (para este entorno)
 const parseISO = (iso) => new Date(iso);
 const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
-// ==================================================================
-//  ✅ VolverAtras con navigate(-1)
-// ==================================================================
-const VolverAtras = () => {
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => navigate(-1)}
-      style={{
-        textDecoration: 'none',
-        color: '#3b82f6',
-        fontWeight: '600',
-        marginBottom: '16px',
-        display: 'inline-block',
-        background: 'none',
-        border: 'none',
-        padding: '0',
-        cursor: 'pointer',
-        fontSize: '1em',
-      }}
-    >
-      &larr; Volver
-    </button>
-  );
+/* =========================== Persistencia (localStorage) =========================== */
+const LS_KEY = "tictiva.empleados.v1";
+
+const normalizeRut = (r) =>
+  (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
+
+const empKeyFrom = (ref) => {
+  if (!ref) return "";
+  if (typeof ref === "string") return ref;
+  if (ref.id != null) return `id:${String(ref.id)}`;
+  if (ref.rut) return `rut:${normalizeRut(ref.rut)}`;
+  return "";
 };
 
-// ==================================================================
-//  ✅ Mock API
-// ==================================================================
+const lsRead = () => {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
+  catch { return {}; }
+};
+const lsWrite = (map) => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(map)); }
+  catch {}
+};
+const lsGetByKey = (key) => (key ? lsRead()[key] : undefined);
+
+// Guarda por ambas claves (id y rut) para que siempre se encuentre
+const lsSaveEmp = (emp) => {
+  if (!emp) return;
+  const map = lsRead();
+  const byId = emp.id != null ? `id:${String(emp.id)}` : "";
+  const byRut = emp.rut ? `rut:${normalizeRut(emp.rut)}` : "";
+  if (byId) map[byId] = emp;
+  if (byRut) map[byRut] = emp;
+  lsWrite(map);
+};
+
+/* =========================== Mock API =========================== */
 const EmpleadosAPI = {
   list: async () => ([{
     id: 1,
@@ -68,7 +75,6 @@ const EmpleadosAPI = {
       finiquitoFirmado: ""
     },
     credencialesApp: { pin: "8421" },
-    // Puedes agregar acá prevision/bancarios si quieres valores iniciales:
     prevision: {
       afp: "Habitat",
       sistemaSalud: "Isapre",
@@ -140,12 +146,8 @@ const EmpleadosAPI = {
   }])
 };
 
-/* =========================== Utils =========================== */
-const normalizeRut = (r) =>
-  (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
-
+/* =========================== Utils de fecha/texto =========================== */
 const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-
 const fmtFechaLarga = (iso) => {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -160,7 +162,6 @@ const toDateInput = (iso) => {
 };
 const fromDateInput = (val) => (val ? `${val}` : "");
 
-// Case-insensitive pick
 const pickCI = (obj, keys = [], fallback = undefined) => {
   if (!obj) return fallback;
   const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
@@ -211,6 +212,30 @@ const computeVacaciones = (empleado) => {
     ) || 0;
   const devengadas = round1(devBase + progresivos);
   return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
+};
+
+/* =================== UI: Volver =================== */
+const VolverAtras = () => {
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate(-1)}
+      style={{
+        textDecoration: 'none',
+        color: '#3b82f6',
+        fontWeight: '600',
+        marginBottom: '16px',
+        display: 'inline-block',
+        background: 'none',
+        border: 'none',
+        padding: '0',
+        cursor: 'pointer',
+        fontSize: '1em',
+      }}
+    >
+      &larr; Volver
+    </button>
+  );
 };
 
 /* =================== TABS ===================== */
@@ -410,7 +435,7 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
-/* ======================= Tab: Asistencia ====================== */
+/* ======================= Tab: Asistencia (NO editable) ====================== */
 function AsistenciaTab({ empleado, onVerHistorial }) {
   const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
   const [showModal, setShowModal] = useState(false);
@@ -558,11 +583,6 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
     w.document.open(); w.document.write(html); w.document.close();
   };
 
-  const abrirHistorialDetallado = () => {
-    if (typeof onVerHistorial === "function") onVerHistorial();
-    else setShowModal(true);
-  };
-
   const filtradasModal = filtrar(marcas);
 
   return (
@@ -579,7 +599,7 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
             </div>
           </div>
           <div className="asistencia-buttons">
-            <button className="ed-btn" onClick={abrirHistorialDetallado}>Ver Historial Detallado</button>
+            <button className="ed-btn" onClick={()=>window.alert("Abrir historial en otra vista (mock)")}>Ver Historial Detallado</button>
             <button className="ed-btn" onClick={generarReporteSemanalPDF}>Generar Reporte Semanal (PDF)</button>
             <button className="ed-btn primary" onClick={exportResumenCSV}>⬇ Exportar Resumen</button>
           </div>
@@ -615,64 +635,11 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
         </table>
         <p className="asistencia-paginacion">Mostrando 10 de {marcas.length} registros</p>
       </div>
-
-      {showModal && (
-        <>
-          <div className="ed-backdrop" onClick={()=>setShowModal(false)} />
-          <div className="ed-modal">
-            <div className="ed-modal-head">
-              <h4>Historial Detallado de Marcaciones</h4>
-              <button className="ed-btn" onClick={()=>setShowModal(false)}>Cerrar</button>
-            </div>
-
-            <div className="ed-filtros">
-              <div><label>Desde</label><input type="date" value={filtros.desde} onChange={e=>setFiltros(f=>({...f,desde:e.target.value}))} /></div>
-              <div><label>Hasta</label><input type="date" value={filtros.hasta} onChange={e=>setFiltros(f=>({...f,hasta:e.target.value}))} /></div>
-              <div><label>Tipo</label>
-                <select value={filtros.tipo} onChange={e=>setFiltros(f=>({...f,tipo:e.target.value}))}>
-                  <option value="">Todos</option><option>Entrada</option><option>Salida</option>
-                </select>
-              </div>
-              <div><label>Estado</label>
-                <select value={filtros.estado} onChange={e=>setFiltros(f=>({...f,estado:e.target.value}))}>
-                  <option value="">Todos</option><option>Válida</option><option>Atraso</option>
-                </select>
-              </div>
-              <div><label>Método</label>
-                <select value={filtros.metodo} onChange={e=>setFiltros(f=>({...f,metodo:e.target.value}))}>
-                  <option value="">Todos</option><option>App</option><option>Web</option><option>Facial</option>
-                </select>
-              </div>
-              <div className="ed-filtros-actions">
-                <button className="ed-btn" onClick={()=>setFiltros({desde:"",hasta:"",tipo:"",estado:"",metodo:""})}>Limpiar</button>
-                <button className="ed-btn primary" onClick={exportResumenCSV}>⬇ Exportar CSV</button>
-                <button className="ed-btn" onClick={generarReporteSemanalPDF}>Imprimir / PDF</button>
-              </div>
-            </div>
-
-            <div className="ed-modal-table">
-              <table className="asistencia-tabla">
-                <thead>
-                  <tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Comprobante</th></tr>
-                </thead>
-                <tbody>
-                  {filtradasModal.map((m, i) => (
-                    <tr key={i}>
-                      <td>{m.fecha}</td><td>{m.hora}</td><td>{m.tipo}</td><td>{m.estado}</td><td>{m.metodo}</td><td>{m.ip || ""}</td>
-                      <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
     </>
   );
 }
 
-/* ===================== Tab: Historial (DT) ==================== */
+/* ===================== Tab: Historial (DT, NO editable) ==================== */
 function HistorialTab({ empleado }) {
   const base = [
     ...(Array.isArray(empleado?.historial) ? empleado.historial : []),
@@ -938,7 +905,7 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         </div>
       </div>
 
-      {/* Trayectoria / Educación / Experiencia (solo lectura, mantienen estilo) */}
+      {/* Listados (solo lectura) */}
       <div className="hv-card">
         <h4 className="hv-title">Trayectoria en la Empresa</h4>
         <ul className="hv-tl">
@@ -978,24 +945,6 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
           ))}
         </ul>
       </div>
-
-      <style>{`
-        .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-        .hv-alert{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-bottom:12px}
-        .hv-card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px;background:#fff}
-        .hv-title{margin:0 0 8px;font-size:16px;font-weight:800;color:#111827}
-        .hv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        @media (max-width: 860px){ .hv-grid2{grid-template-columns:1fr} }
-        .hv-contact{border:1px solid #F3F4F6;border-radius:10px;padding:10px}
-        .hv-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #F3F4F6}
-        .hv-row:first-child{border-top:none}
-        .hv-label{color:#6B7280}
-        .hv-val{font-weight:700}
-        .hv-strong{font-weight:800}
-        .hv-muted{color:#6B7280}
-        .hv-tl{list-style:none;margin:0;padding:0}
-        .hv-tl-it{border-left:2px solid #E5E7EB;margin-left:8px;padding:8px 12px}
-      `}</style>
     </div>
   );
 }
@@ -1048,24 +997,32 @@ export default function EmpleadoDetalle() {
     }
   }, [tabActiva, modoEdicion]);
 
-  if (!hasParam) {
-    return (
-      <div className="ed-wrap">
-        <VolverAtras />
-        <div style={{ padding: 16, color: "#b45309", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8 }}>
-          ⚠️ Falta el parámetro en la URL. Navega a <code>/rrhh/empleado/:id</code> o <code>/rrhh/empleado/:rut</code>.
-        </div>
-      </div>
-    );
-  }
-
-  // Carga del empleado
+  // Carga del empleado (prioriza localStorage, luego mock y/o API)
   useEffect(() => {
     let cancel = false;
+
+    const getCachedFirst = () => {
+      const keyGuess = idParam
+        ? `id:${String(idParam)}`
+        : rutParam
+        ? `rut:${normalizeRut(rutParam)}`
+        : "";
+      const cached = lsGetByKey(keyGuess);
+      if (cached && !cancel) {
+        setEmpleado(cached);
+        setOriginal(JSON.parse(JSON.stringify(cached)));
+        return true;
+      }
+      return false;
+    };
 
     const fetchEmpleado = async () => {
       setNotFound(false);
 
+      // 1) Intento directo localStorage por clave
+      if (getCachedFirst()) return;
+
+      // 2) Mock local
       try {
         const arr = await EmpleadosAPI.list();
         if (Array.isArray(arr) && arr.length) {
@@ -1077,20 +1034,35 @@ export default function EmpleadoDetalle() {
             : null;
 
           const found = byId || byRut || byEither;
-          if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
+          if (found && !cancel) {
+            // Si hay override en LS, úsalo
+            const lsOverride = lsGetByKey(empKeyFrom(found)) || (found.rut && lsGetByKey(`rut:${normalizeRut(found.rut)}`)) || (found.id != null && lsGetByKey(`id:${String(found.id)}`));
+            const finalEmp = lsOverride || found;
+            setEmpleado(finalEmp);
+            setOriginal(JSON.parse(JSON.stringify(finalEmp)));
+            return;
+          }
         }
-      } catch {/* ignore */}
+      } catch { /* ignore */ }
 
+      // 3) API por ID
       if (idParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}/${encodeURIComponent(idParam)}`);
           if (r.ok) {
             const emp = await r.json();
-            if (emp && !cancel && (emp.id != null || emp.nombre)) { setEmpleado(emp); setOriginal(JSON.parse(JSON.stringify(emp))); return; }
+            if (emp && !cancel && (emp.id != null || emp.nombre)) {
+              const lsOverride = lsGetByKey(empKeyFrom(emp)) || (emp.rut && lsGetByKey(`rut:${normalizeRut(emp.rut)}`));
+              const finalEmp = lsOverride || emp;
+              setEmpleado(finalEmp);
+              setOriginal(JSON.parse(JSON.stringify(finalEmp)));
+              return;
+            }
           }
-        } catch {/* noop */}
+        } catch { /* noop */ }
       }
 
+      // 4) API por RUT
       if (rutParam) {
         const normRut = normalizeRut(rutParam);
         const urls = [
@@ -1105,27 +1077,47 @@ export default function EmpleadoDetalle() {
             if (!r.ok) continue;
             const data = await r.json();
             const emp = Array.isArray(data) ? data[0] : data;
-            if (emp && !cancel) { setEmpleado(emp); setOriginal(JSON.parse(JSON.stringify(emp))); return; }
-          } catch {/* noop */}
+            if (emp && !cancel) {
+              const lsOverride = lsGetByKey(empKeyFrom(emp)) || (emp.rut && lsGetByKey(`rut:${normalizeRut(emp.rut)}`));
+              const finalEmp = lsOverride || emp;
+              setEmpleado(finalEmp);
+              setOriginal(JSON.parse(JSON.stringify(finalEmp)));
+              return;
+            }
+          } catch { /* noop */ }
         }
         try {
           const rAll = await fetch(`${API}/${RESOURCE}`);
           if (rAll.ok) {
             const arr = await rAll.json();
             const found = (Array.isArray(arr) ? arr : []).find((e) => normalizeRut(e?.rut) === normRut);
-            if (found && !cancel) { setEmpleado(found); setOriginal(JSON.parse(JSON.stringify(found))); return; }
+            if (found && !cancel) {
+              const lsOverride = lsGetByKey(empKeyFrom(found)) || (found.rut && lsGetByKey(`rut:${normalizeRut(found.rut)}`));
+              const finalEmp = lsOverride || found;
+              setEmpleado(finalEmp);
+              setOriginal(JSON.parse(JSON.stringify(finalEmp)));
+              return;
+            }
           }
-        } catch {/* noop */}
+        } catch { /* noop */ }
       }
 
+      // 5) Último intento: API por parámetro genérico
       if (!idParam && rawParam) {
         try {
           const r = await fetch(`${API}/${RESOURCE}?id=${encodeURIComponent(rawParam)}`);
           if (r.ok) {
             const arr = await r.json();
-            if (Array.isArray(arr) && arr.length > 0 && !cancel) { setEmpleado(arr[0]); setOriginal(JSON.parse(JSON.stringify(arr[0]))); return; }
+            if (Array.isArray(arr) && arr.length > 0 && !cancel) {
+              const emp = arr[0];
+              const lsOverride = lsGetByKey(empKeyFrom(emp)) || (emp.rut && lsGetByKey(`rut:${normalizeRut(emp.rut)}`));
+              const finalEmp = lsOverride || emp;
+              setEmpleado(finalEmp);
+              setOriginal(JSON.parse(JSON.stringify(finalEmp)));
+              return;
+            }
           }
-        } catch {/* noop */}
+        } catch { /* noop */ }
       }
 
       if (!cancel) setNotFound(true);
@@ -1137,7 +1129,7 @@ export default function EmpleadoDetalle() {
 
   const handleChange = (campo, valor) => setEmpleado((prev) => ({ ...prev, [campo]: valor }));
 
-  // ===== Helper: registrarMovimiento (persistente y con setEstado) =====
+  // ===== Helper: registrarMovimiento (persiste en LS y API) =====
   const registrarMovimiento = async (empSnapshot, {
     accion,
     categoria = "General",
@@ -1155,6 +1147,10 @@ export default function EmpleadoDetalle() {
       ...empSnapshot,
       historial: [...(empSnapshot.historial || []), item],
     };
+
+    // Persistencia "eterna" en localStorage
+    lsSaveEmp(updated);
+
     setEmpleado(updated);
     try {
       const id = updated.id ?? encodeURIComponent(updated.rut);
@@ -1164,7 +1160,7 @@ export default function EmpleadoDetalle() {
         body: JSON.stringify(updated),
       });
     } catch (e) {
-      console.warn("No se pudo persistir el movimiento:", e);
+      console.warn("No se pudo persistir en API (se mantiene en localStorage):", e);
     }
   };
 
@@ -1238,9 +1234,18 @@ export default function EmpleadoDetalle() {
       };
 
       const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
-      const id = payload.id ?? encodeURIComponent(payload.rut);
-      const url = `${API}/${RESOURCE}/${id}`;
-      await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+
+      // Persistencia "eterna" en localStorage
+      lsSaveEmp(payload);
+
+      // Intento API (opcional)
+      try {
+        const id = payload.id ?? encodeURIComponent(payload.rut);
+        const url = `${API}/${RESOURCE}/${id}`;
+        await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      } catch (e) {
+        console.warn("No se pudo guardar en API. Guardado local OK.", e);
+      }
 
       setEmpleado(payload);
       setOriginal(JSON.parse(JSON.stringify(payload)));
@@ -1303,7 +1308,7 @@ export default function EmpleadoDetalle() {
           {empleado.fechaIngreso && (<div className="ed-sub light">Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}</div>)}
         </div>
 
-        {/* Botón Editar / Guardar */}
+        {/* Botón Editar / Guardar (bloqueado en Asistencia/Historial) */}
         {modoEdicion ? (
           <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
         ) : (
@@ -1387,13 +1392,13 @@ export default function EmpleadoDetalle() {
             />
           )}
 
-          {/* Documentos (mantiene acciones propias) */}
+          {/* Documentos */}
           {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
 
-          {/* Previsión (editable) */}
+          {/* Previsión */}
           {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
 
-          {/* Bancarios (editable) */}
+          {/* Bancarios */}
           {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
 
           {/* Asistencia (no editable) */}
@@ -1453,7 +1458,7 @@ export default function EmpleadoDetalle() {
         )}
       </div>
 
-      {/* Estilos base */}
+      {/* Estilos base (sin cambios) */}
       <style>{`
         .ed-wrap{padding:16px 16px 32px}
         .ed-card{background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:var(--pad-card, 16px);box-shadow:0 4px 10px rgba(0,0,0,.04)}
