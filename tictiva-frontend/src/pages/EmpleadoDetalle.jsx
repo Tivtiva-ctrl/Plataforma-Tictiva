@@ -6,35 +6,52 @@ import { useNavigate } from 'react-router-dom'; // <- ¡IMPORTANTE! En tu app re
 const useParams = () => ({ rut: "12345678-9" });
 const useLocation = () => ({ pathname: "/", search: "", hash: "" });
 
+// Agregamos un mock para useNavigate. En tu app, react-router-dom lo proveerá.
+// const useNavigate = () => (path) => {
+//   if (path === -1) {
+//     alert("Acción: Volver a la página anterior (listado de empleados).");
+//   } else {
+//     alert(`Acción: Navegar a la ruta: ${path}.`);
+//   }
+// };
+
+
 // --- mocks date-fns
 const parseISO = (iso) => new Date(iso);
 const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
+// --- mocks de componentes y API
+
 // ==================================================================
-//  ✅ VolverAtras con navigate(-1)
+//  ✅ MEJORA: Componente "VolverAtras" modificado
+//  Ahora usa el hook `useNavigate` para una navegación correcta en React.
 // ==================================================================
 const VolverAtras = () => {
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => navigate(-1)}
-      style={{
-        textDecoration: 'none',
-        color: '#3b82f6',
-        fontWeight: '600',
-        marginBottom: '16px',
-        display: 'inline-block',
-        background: 'none',
-        border: 'none',
-        padding: '0',
-        cursor: 'pointer',
-        fontSize: '1em'
-      }}
-    >
-      &larr; Volver
-    </button>
-  );
-};
+    const navigate = useNavigate();
+  
+    // Usamos onClick con navigate(-1) para ir a la página anterior en el historial.
+    // Esto es más flexible que una URL fija.
+    return (
+      <button 
+        onClick={() => navigate(-1)} 
+        style={{ 
+          textDecoration: 'none', 
+          color: '#3b82f6', 
+          fontWeight: '600', 
+          marginBottom: '16px', 
+          display: 'inline-block',
+          // Estilos adicionales para que parezca un enlace pero sea un botón
+          background: 'none',
+          border: 'none',
+          padding: '0',
+          cursor: 'pointer',
+          fontSize: '1em'
+        }}
+      >
+        &larr; Volver
+      </button>
+    );
+  };
 
 const EmpleadosAPI = {
   list: async () => ([{
@@ -79,6 +96,7 @@ const EmpleadosAPI = {
       { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
       { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." },
     ],
+    // mock documentos
     documentos: [
       { id: "f1", tipo: "folder", nombre: "Certificados", mod: "2025-07-30", tam: "" },
       { id: "f2", tipo: "folder", nombre: "Contratos", mod: "2025-08-15", tam: "" },
@@ -86,6 +104,7 @@ const EmpleadosAPI = {
       { id: "d1", tipo: "file",   nombre: "Política de Teletrabajo.docx", mod: "2025-06-22", tam: "256 KB" },
       { id: "d2", tipo: "file",   nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" },
     ],
+    // mocks mínimos para Hoja de Vida (si no vienen del backend)
     hojaVida: {
       alertaMedica: "Alergia a la Penicilina",
       emergencia: [
@@ -203,7 +222,7 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
   );
 };
 
-// Documentos – card simple (acciones de carpeta/archivo)
+// Documentos – card simple (visible) con tabla
 const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
   return (
@@ -236,94 +255,58 @@ const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   );
 };
 
-// Previsión – AHORA editable con modoEdicion
-const PrevisionTab = ({ empleado, modoEdicion, onChange }) => {
+// Previsión – campos más comunes DT
+const PrevisionTab = ({ empleado }) => {
   const pv = empleado?.prevision || {};
-  const safe = (v) => (v ?? "N/D");
-  const handleChange = (campo, valor) => onChange?.("prevision", { ...pv, [campo]: valor });
-
-  const row = (label, key, type="text", opts=[]) => (
-    <div className="ed-kv-row" key={key}>
-      <span className="ed-kv-label">{label}:</span>
-      {modoEdicion ? (
-        type === "select" ? (
-          <select value={pv[key] || ""} onChange={(e)=>handleChange(key, e.target.value)}>
-            {opts.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        ) : (
-          <input
-            type={type}
-            value={pv[key] ?? ""}
-            onChange={(e)=>handleChange(key, e.target.value)}
-          />
-        )
-      ) : (
-        <span className="ed-kv-value">{safe(pv[key])}</span>
-      )}
+  const entry = (l, v) => (
+    <div className="ed-kv-row" key={l}>
+      <span className="ed-kv-label">{l}:</span>
+      <span className="ed-kv-value">{v || "N/D"}</span>
     </div>
   );
-
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Previsionales y Legales</h3>
       <div className="ed-2col">
-        {row("AFP", "afp")}
-        {row("Sistema de Salud", "sistemaSalud", "select", ["","Fonasa","Isapre"])}
-        {row("Nombre Isapre", "isapre")}
-        {row("Caja de Compensación", "cajaCompensacion")}
-        {row("Mutual de Seguridad", "mutual")}
-        {row("Seguro de Cesantía (AFC)", "afc")}
-        {row("Asignación Familiar (Tramo)", "tramo")}
-        {row("Cargas Familiares (N°)", "cargas", "number")}
-        {row("Pensión de Alimentos (Monto)", "pensionAlimentos", "number")}
-        {row("Resolución Pensión", "resolucionPension")}
-        {row("APV (Institución)", "apvInstitucion")}
-        {row("APV (Cuenta/Contrato)", "apvCuenta")}
-        {row("Tasa Cot. Accidente Trabajo", "tasaAccidente", "number")}
+        {entry("AFP", pv.afp)}
+        {entry("Sistema de Salud", pv.sistemaSalud)}
+        {entry("Nombre Isapre", pv.isapre)}
+        {entry("Caja de Compensación", pv.cajaCompensacion)}
+        {entry("Mutual de Seguridad", pv.mutual)}
+        {entry("Seguro de Cesantía (AFC)", pv.afc)}
+        {entry("Asignación Familiar (Tramo)", pv.tramo)}
+        {entry("Cargas Familiares (N°)", pv.cargas)}
+        {entry("Pensión de Alimentos (Monto)", pv.pensionAlimentos)}
+        {entry("Resolución Pensión", pv.resolucionPension)}
+        {entry("APV (Institución)", pv.apvInstitucion)}
+        {entry("APV (Cuenta/Contrato)", pv.apvCuenta)}
+        {entry("Tasa Cot. Accidente Trabajo", pv.tasaAccidente)}
       </div>
-      <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}.ed-2col input,.ed-2col select{width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:6px 8px;font-size:14px}`}</style>
+      <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
   );
 };
 
-// Bancarios – AHORA editable con modoEdicion
-const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
+// Bancarios – sin emojis, mínimos DT
+const BancariosTab = ({ empleado }) => {
   const b = empleado?.bancarios || {};
-  const safe = (v) => (v ?? "N/D");
-  const handleChange = (campo, valor) => onChange?.("bancarios", { ...b, [campo]: valor });
-
-  const row = (label, key, type="text", opts=[]) => (
-    <div className="ed-kv-row" key={key}>
-      <span className="ed-kv-label">{label}:</span>
-      {modoEdicion ? (
-        type === "select" ? (
-          <select value={b[key] || ""} onChange={(e)=>handleChange(key, e.target.value)}>
-            {opts.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        ) : (
-          <input
-            type={type}
-            value={b[key] ?? ""}
-            onChange={(e)=>handleChange(key, e.target.value)}
-          />
-        )
-      ) : (
-        <span className="ed-kv-value">{safe(b[key])}</span>
-      )}
+  const row = (l, v) => (
+    <div className="ed-kv-row" key={l}>
+      <span className="ed-kv-label">{l}:</span>
+      <span className="ed-kv-value">{v || "N/D"}</span>
     </div>
   );
-
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Bancarios</h3>
       <div className="ed-2col">
-        {row("Banco", "banco")}
-        {row("Tipo de Cuenta", "tipoCuenta", "select", ["","Cuenta Corriente","Cuenta Vista","Cuenta de Ahorro","RUT"])}
-        {row("Número de Cuenta", "numeroCuenta")}
-        {row("Titular de la Cuenta", "titular")}
-        {row("RUT Titular", "rutTitular")}
+        {row("Banco", b.banco)}
+        {row("Tipo de Cuenta", b.tipoCuenta)}
+        {row("Número de Cuenta", b.numeroCuenta)}
+        {row("Titular de la Cuenta", b.titular)}
+        {row("RUT Titular", b.rutTitular)}
       </div>
-      <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}.ed-2col input,.ed-2col select{width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:6px 8px;font-size:14px}`}</style>
+      <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
   );
 };
@@ -394,7 +377,7 @@ const computeVacaciones = (empleado) => {
   return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
 };
 
-/* ======================= Tab: Asistencia (solo lectura) ====================== */
+/* ======================= Tab: Asistencia ====================== */
 function AsistenciaTab({ empleado, onVerHistorial }) {
   const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
   const [showModal, setShowModal] = useState(false);
@@ -427,7 +410,7 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
       atrasosMes: atrasos,
       horasExtra: 0,
     });
-  }, [empleado]); // mock
+  }, [empleado]); // suficiente para mock
 
   const filtrar = (arr) => {
     return arr.filter(m => {
@@ -582,20 +565,20 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
               <th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Foto</th><th>Comprobante</th>
             </tr>
           </thead>
-        <tbody>
-          {marcas.slice(0, 10).map((m, i) => (
-            <tr key={i}>
-              <td>{m.fecha}</td>
-              <td>{m.hora}</td>
-              <td className={`tipo ${(m.tipo || "").toLowerCase()}`}>{m.tipo}</td>
-              <td><span className={`estado-badge ${(m.estado || "").toLowerCase()}`}>{m.estado}</span></td>
-              <td>{m.metodo}</td>
-              <td>{m.ip}</td>
-              <td>📷</td>
-              <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
-            </tr>
-          ))}
-        </tbody>
+          <tbody>
+            {marcas.slice(0, 10).map((m, i) => (
+              <tr key={i}>
+                <td>{m.fecha}</td>
+                <td>{m.hora}</td>
+                <td className={`tipo ${(m.tipo || "").toLowerCase()}`}>{m.tipo}</td>
+                <td><span className={`estado-badge ${(m.estado || "").toLowerCase()}`}>{m.estado}</span></td>
+                <td>{m.metodo}</td>
+                <td>{m.ip}</td>
+                <td>📷</td>
+                <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
+              </tr>
+            ))}
+          </tbody>
         </table>
         <p className="asistencia-paginacion">Mostrando 10 de {marcas.length} registros</p>
       </div>
@@ -640,7 +623,7 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
                   <tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Comprobante</th></tr>
                 </thead>
                 <tbody>
-                  {filtrar(marcas).map((m, i) => (
+                  {filtradasModal.map((m, i) => (
                     <tr key={i}>
                       <td>{m.fecha}</td><td>{m.hora}</td><td>{m.tipo}</td><td>{m.estado}</td><td>{m.metodo}</td><td>{m.ip || ""}</td>
                       <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
@@ -656,7 +639,7 @@ function AsistenciaTab({ empleado, onVerHistorial }) {
   );
 }
 
-/* ===================== Tab: Historial (DT) – solo lectura ==================== */
+/* ===================== Tab: Historial (DT) ==================== */
 function HistorialTab({ empleado }) {
   const base = [
     ...(Array.isArray(empleado?.historial) ? empleado.historial : []),
@@ -722,7 +705,7 @@ function HistorialTab({ empleado }) {
   );
 }
 
-/* =================== Hoja de Vida (igual) ===================== */
+/* =================== Hoja de Vida (nuevo) ===================== */
 function HojaDeVida({ empleado }) {
   const hv = empleado?.hojaVida || empleado || {};
   const emergencia = hv.emergencia || [];
@@ -845,7 +828,8 @@ function HojaDeVida({ empleado }) {
         <div className="hv-row"><span className="hv-label">Alergias:</span><span className="hv-val">{Array.isArray(md.alergias)?md.alergias.join(", "):(md.alergias||"N/D")}</span></div>
         <div className="hv-row"><span className="hv-label">Condiciones Crónicas:</span><span className="hv-val">{Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "):(md.condicionesCronicas||"N/D")}</span></div>
         <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span><span className="hv-val">{md.medicamentos||"N/D"}</span></div>
-        <div className="hv-row"><span className="hv-label">Observaciones Adicionales:</span><span className="hv-val">{md.observaciones||"N/D"}</span></div>
+        <div className="hv-row"><span className="hv-label">Observaciones Adicionale
+s:</span><span className="hv-val">{md.observaciones||"N/D"}</span></div>
       </div>
 
       <div className="hv-card">
@@ -1039,7 +1023,7 @@ export default function EmpleadoDetalle() {
 
   const handleChange = (campo, valor) => setEmpleado((prev) => ({ ...prev, [campo]: valor }));
 
-  // ===== registrarMovimiento (persistente) =====
+  // ===== Helper: registrarMovimiento (persistente y con setEstado) =====
   const registrarMovimiento = async (empSnapshot, {
     accion,
     categoria = "General",
@@ -1119,119 +1103,40 @@ export default function EmpleadoDetalle() {
   };
 
   const guardarEmpleado = async () => {
-  if (!empleado) return;
-  try {
-    // 1. Detectar cambios respecto al original
-    const diffs = [];
-    const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
-    keys.forEach((k) => {
-      const a = JSON.stringify(original?.[k]);
-      const b = JSON.stringify(empleado?.[k]);
-      if (a !== b) diffs.push(k);
-    });
-
-    // 2. Crear entrada de historial
-    const nuevaEntrada = {
-      id: Date.now(),
-      fecha: new Date().toISOString().slice(0, 10),
-      hora: new Date().toTimeString().slice(0, 5),
-      actor: "Usuario",
-      accion: "Actualización de ficha",
-      categoria: "Ficha",
-      detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
-    };
-
-    // 3. Payload final con historial
-    const payload = {
-      ...empleado,
-      historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada],
-    };
-
-    // 4. Guardar en API (si responde)
-    const id = payload.id ?? encodeURIComponent(payload.rut);
-    const url = `${API}/${RESOURCE}/${id}`;
-    const resp = await fetch(url, {
-      method: "PATCH", // <- usamos PATCH, más seguro que PUT
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!resp.ok) {
-      console.warn("⚠️ No se pudo guardar en backend, guardando local...");
-    }
-
-    // 5. Guardar en localStorage para persistir siempre
-    const guardarEmpleado = async () => {
-  if (!empleado) return;
-  try {
-    // Detectar cambios vs original
-    const diffs = [];
-    const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
-    keys.forEach((k) => {
-      const a = JSON.stringify(original?.[k]);
-      const b = JSON.stringify(empleado?.[k]);
-      if (a !== b) diffs.push(k);
-    });
-
-    // Entrada de historial
-    const entrada = {
-      id: Date.now(),
-      fecha: new Date().toISOString().slice(0,10),
-      hora: new Date().toTimeString().slice(0,5),
-      actor: "Usuario",
-      accion: "Actualización de ficha",
-      categoria: "Ficha",
-      detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
-    };
-
-    // Payload final
-    const payload = {
-      ...empleado,
-      historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), entrada],
-    };
-
-    // Intentar API (PATCH es más tolerante; si falla, seguimos con local)
-    const id = payload.id ?? encodeURIComponent(payload.rut);
-    const url = `${API}/${RESOURCE}/${id}`;
+    if (!empleado) return;
     try {
-      const resp = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const diffs = [];
+      const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
+      keys.forEach((k) => {
+        const a = JSON.stringify(original?.[k]);
+        const b = JSON.stringify(empleado?.[k]);
+        if (a !== b) diffs.push(k);
       });
-      if (!resp.ok) console.warn("API no guardó, se usará persistencia local.");
-    } catch (e) {
-      console.warn("Sin conexión a API, se usará persistencia local.");
+
+      const nuevaEntrada = {
+        id: Date.now(),
+        fecha: new Date().toISOString().slice(0,10),
+        hora: new Date().toTimeString().slice(0,5),
+        actor: "Sistema",
+        accion: "Actualización de ficha",
+        categoria: "Ficha",
+        detalle: diffs.length ? `Campos modificados: ${diffs.join(", ")}` : "Sin cambios detectados",
+      };
+
+      const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
+      const id = payload.id ?? encodeURIComponent(payload.rut);
+      const url = `${API}/${RESOURCE}/${id}`;
+      await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+
+      setEmpleado(payload);
+      setOriginal(JSON.parse(JSON.stringify(payload)));
+      alert("Cambios guardados correctamente");
+      setModoEdicion(false);
+    } catch (error) {
+      console.error("Error al guardar empleado:", error);
+      alert("Error al guardar cambios");
     }
-
-    // ✅ Persistencia local
-    localStorage.setItem(storageKeyFor(payload), JSON.stringify(payload));
-
-    // Refrescar estado
-    setEmpleado(payload);
-    setOriginal(JSON.parse(JSON.stringify(payload)));
-    alert("✅ Cambios guardados correctamente");
-    setModoEdicion(false);
-  } catch (error) {
-    console.error("Error al guardar empleado:", error);
-    alert("Error al guardar cambios");
-  }
-};
-
-
-    // 6. Refrescar estado
-    setEmpleado(payload);
-    setOriginal(JSON.parse(JSON.stringify(payload)));
-    alert("✅ Cambios guardados correctamente");
-    setModoEdicion(false);
-  } catch (error) {
-    console.error("❌ Error al guardar empleado:", error);
-    alert("Error al guardar cambios");
-  }
-};
-
-    }
-  
+  };
 
   if (notFound) {
     return (
@@ -1268,18 +1173,6 @@ export default function EmpleadoDetalle() {
     try { window.history.replaceState(null, "", `${location.pathname}#${tab}`); } catch {}
   };
 
-  // Helper: input simple que mantiene estilos
-  const InputInline = ({type="text", value, onChange}) => (
-    <input
-      type={type}
-      value={value ?? ""}
-      onChange={onChange}
-      style={{ width:"100%", border:"1px solid #E5E7EB", borderRadius:8, padding:"6px 8px", fontSize:14 }}
-    />
-  );
-
-  const fechaISOaInput = (v) => (v ? String(v).slice(0,10) : "");
-
   return (
     <div className="ed-wrap">
       <VolverAtras />
@@ -1295,8 +1188,11 @@ export default function EmpleadoDetalle() {
           <div className="ed-sub">{empleado.cargo || "—"}</div>
           {empleado.fechaIngreso && (<div className="ed-sub light">Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}</div>)}
         </div>
-
-        {/* Botón Editar/Guardar */}
+        
+        {/* ================================================================== */}
+        {/* ✅ LÓGICA BOTÓN "EDITAR FICHA": ¡ESTO YA FUNCIONA PERFECTO!      */}
+        {/* Al hacer clic, cambia el estado `modoEdicion` a `true`.           */}
+        {/* ================================================================== */}
         {modoEdicion ? (
           <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
         ) : (
@@ -1329,61 +1225,13 @@ export default function EmpleadoDetalle() {
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
               <div className="ed-kv">
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Nombre Completo:</span>
-                  {modoEdicion
-                    ? <InputInline value={empleado.nombre} onChange={e=>handleChange("nombre", e.target.value)} />
-                    : <span className="ed-kv-value">{empleado.nombre || "—"}</span>}
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Cédula:</span>
-                  {modoEdicion
-                    ? <InputInline value={empleado.rut} onChange={e=>handleChange("rut", e.target.value)} />
-                    : <span className="ed-kv-value">{empleado.rut || "—"}</span>}
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Fecha de Nacimiento:</span>
-                  {modoEdicion
-                    ? <InputInline type="date" value={fechaISOaInput(empleado.fechaNacimiento)} onChange={e=>handleChange("fechaNacimiento", e.target.value)} />
-                    : <span className="ed-kv-value">{cumpleTxt}</span>}
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Email:</span>
-                  {modoEdicion
-                    ? <InputInline type="email" value={empleado.correo} onChange={e=>handleChange("correo", e.target.value)} />
-                    : <span className="ed-kv-value">{empleado.correo || "—"}</span>}
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Teléfono:</span>
-                  {modoEdicion
-                    ? <InputInline value={empleado.telefono} onChange={e=>handleChange("telefono", e.target.value)} />
-                    : <span className="ed-kv-value">{empleado.telefono || "—"}</span>}
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Dirección:</span>
-                  {modoEdicion
-                    ? <InputInline value={empleado.direccion} onChange={e=>handleChange("direccion", e.target.value)} />
-                    : <span className="ed-kv-value">{empleado.direccion || "—"}</span>}
-                </div>
-                <div className="ed-kv-row">
-                  <span className="ed-kv-label">Estado Civil:</span>
-                  {modoEdicion
-                    ? (
-                      <select
-                        value={empleado.estadoCivil || ""}
-                        onChange={(e)=>handleChange("estadoCivil", e.target.value)}
-                        style={{ width:"100%", border:"1px solid #E5E7EB", borderRadius:8, padding:"6px 8px", fontSize:14 }}
-                      >
-                        <option value=""></option>
-                        <option>Soltero(a)</option>
-                        <option>Casado(a)</option>
-                        <option>Divorciado(a)</option>
-                        <option>Viudo(a)</option>
-                        <option>Conviviente</option>
-                      </select>
-                    )
-                    : <span className="ed-kv-value">{empleado.estadoCivil || "—"}</span>}
-                </div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
+                <div className="ed-kv-row"><span className="ed-kv-label">Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
               </div>
             </div>
           )}
@@ -1398,14 +1246,8 @@ export default function EmpleadoDetalle() {
           )}
 
           {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
-
-          {tabActiva === "prevision" && (
-            <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-          )}
-
-          {tabActiva === "bancarios" && (
-            <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />
-          )}
+          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} />}
+          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} />}
 
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
 
@@ -1547,4 +1389,4 @@ export default function EmpleadoDetalle() {
       `}</style>
     </div>
   );
-
+}
