@@ -1,58 +1,40 @@
 // Hecho por Asistente de Programación de Google
 import React, { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom'; // <- ¡IMPORTANTE! En tu app real, importa esto.
+import { useNavigate, useParams, useLocation } from 'react-router-dom'; // <- En tu app real, importa estos hooks
 
-// --- mocks para este entorno. En tu app usa los hooks reales de react-router-dom
-const useParams = () => ({ rut: "12345678-9" });
-const useLocation = () => ({ pathname: "/", search: "", hash: "" });
-
-// Agregamos un mock para useNavigate. En tu app, react-router-dom lo proveerá.
-// const useNavigate = () => (path) => {
-//   if (path === -1) {
-//     alert("Acción: Volver a la página anterior (listado de empleados).");
-//   } else {
-//     alert(`Acción: Navegar a la ruta: ${path}.`);
-//   }
-// };
-
-
-// --- mocks date-fns
+// --- mocks date-fns (para este entorno)
 const parseISO = (iso) => new Date(iso);
 const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
-// --- mocks de componentes y API
-
 // ==================================================================
-//  ✅ MEJORA: Componente "VolverAtras" modificado
-//  Ahora usa el hook `useNavigate` para una navegación correcta en React.
+//  ✅ VolverAtras con navigate(-1)
 // ==================================================================
 const VolverAtras = () => {
-    const navigate = useNavigate();
-  
-    // Usamos onClick con navigate(-1) para ir a la página anterior en el historial.
-    // Esto es más flexible que una URL fija.
-    return (
-      <button 
-        onClick={() => navigate(-1)} 
-        style={{ 
-          textDecoration: 'none', 
-          color: '#3b82f6', 
-          fontWeight: '600', 
-          marginBottom: '16px', 
-          display: 'inline-block',
-          // Estilos adicionales para que parezca un enlace pero sea un botón
-          background: 'none',
-          border: 'none',
-          padding: '0',
-          cursor: 'pointer',
-          fontSize: '1em'
-        }}
-      >
-        &larr; Volver
-      </button>
-    );
-  };
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate(-1)}
+      style={{
+        textDecoration: 'none',
+        color: '#3b82f6',
+        fontWeight: '600',
+        marginBottom: '16px',
+        display: 'inline-block',
+        background: 'none',
+        border: 'none',
+        padding: '0',
+        cursor: 'pointer',
+        fontSize: '1em',
+      }}
+    >
+      &larr; Volver
+    </button>
+  );
+};
 
+// ==================================================================
+//  ✅ Mock API
+// ==================================================================
 const EmpleadosAPI = {
   list: async () => ([{
     id: 1,
@@ -86,6 +68,29 @@ const EmpleadosAPI = {
       finiquitoFirmado: ""
     },
     credencialesApp: { pin: "8421" },
+    // Puedes agregar acá prevision/bancarios si quieres valores iniciales:
+    prevision: {
+      afp: "Habitat",
+      sistemaSalud: "Isapre",
+      isapre: "Colmena",
+      cajaCompensacion: "Los Andes",
+      mutual: "ACHS",
+      afc: "Sí",
+      tramo: "B",
+      cargas: "2",
+      pensionAlimentos: "",
+      resolucionPension: "",
+      apvInstitucion: "",
+      apvCuenta: "",
+      tasaAccidente: "0.95%"
+    },
+    bancarios: {
+      banco: "BancoEstado",
+      tipoCuenta: "CuentaRUT",
+      numeroCuenta: "12345678",
+      titular: "Juan Díaz Morales",
+      rutTitular: "12.345.678-9"
+    },
     marcas: [
       { fecha: "2025-09-01", hora: "08:58:00", tipo: "Entrada", estado: "Válida", metodo: "App", ip: "192.168.1.10" },
       { fecha: "2025-09-01", hora: "18:02:00", tipo: "Salida",  estado: "Válida", metodo: "App", ip: "192.168.1.10" },
@@ -96,7 +101,6 @@ const EmpleadosAPI = {
       { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
       { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." },
     ],
-    // mock documentos
     documentos: [
       { id: "f1", tipo: "folder", nombre: "Certificados", mod: "2025-07-30", tam: "" },
       { id: "f2", tipo: "folder", nombre: "Contratos", mod: "2025-08-15", tam: "" },
@@ -104,7 +108,6 @@ const EmpleadosAPI = {
       { id: "d1", tipo: "file",   nombre: "Política de Teletrabajo.docx", mod: "2025-06-22", tam: "256 KB" },
       { id: "d2", tipo: "file",   nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" },
     ],
-    // mocks mínimos para Hoja de Vida (si no vienen del backend)
     hojaVida: {
       alertaMedica: "Alergia a la Penicilina",
       emergencia: [
@@ -137,9 +140,82 @@ const EmpleadosAPI = {
   }])
 };
 
+/* =========================== Utils =========================== */
+const normalizeRut = (r) =>
+  (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
+
+const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+const fmtFechaLarga = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d)) return "—";
+  return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
+};
+const toDateInput = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toISOString().slice(0,10);
+};
+const fromDateInput = (val) => (val ? `${val}` : "");
+
+// Case-insensitive pick
+const pickCI = (obj, keys = [], fallback = undefined) => {
+  if (!obj) return fallback;
+  const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
+  for (const k of keys) {
+    const v = map[String(k).toLowerCase()];
+    if (v !== undefined && v !== null && String(v) !== "") return v;
+  }
+  return fallback;
+};
+const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+const monthsBetween = (a, b) => {
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (b.getDate() < a.getDate()) m -= 1;
+  return Math.max(0, m);
+};
+const antiguedadStr = (desdeISO) => {
+  if (!desdeISO) return "";
+  const start = new Date(desdeISO);
+  const now = new Date();
+  if (isNaN(start)) return "";
+  const months = monthsBetween(start, now);
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  const aTxt = y === 1 ? "1 año" : `${y} años`;
+  const mTxt = m === 1 ? "1 mes" : `${m} meses`;
+  return `${aTxt} y ${mTxt}`;
+};
+const computeVacaciones = (empleado) => {
+  const ingreso = empleado?.fechaIngreso ? new Date(empleado.fechaIngreso) : null;
+  if (!ingreso || isNaN(ingreso)) {
+    return { devengadas: 0, tomadas: 0, saldo: 0, detalle: "Sin fecha de ingreso", progresivos: 0, months: 0, jornada: "" };
+  }
+  const now = new Date();
+  const months = monthsBetween(ingreso, now);
+  const jornada =
+    pickCI(empleado, ["jornada"], undefined) ??
+    pickCI(empleado?.datosContractuales, ["jornada"], "Jornada Completa");
+  const factor = (typeof jornada === "string" && jornada.toLowerCase().includes("parcial")) ? 0.5 : 1;
+  const devBase = months * 1.25 * factor;
+  const prevYears = Number(pickCI(empleado, ["aniosPrevios","añosPrevios"], 0)) || 0;
+  const totalYears = Math.floor(months / 12) + prevYears;
+  let progresivos = 0;
+  if (totalYears >= 10) progresivos = Math.floor((totalYears - 10) / 3);
+  const tomadas =
+    Number(
+      pickCI(empleado, ["vacacionesTomadas","diasVacTomados","vacaciones_tomadas"], 0) ??
+      pickCI(empleado?.vacaciones, ["tomadas"], 0)
+    ) || 0;
+  const devengadas = round1(devBase + progresivos);
+  return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
+};
+
 /* =================== TABS ===================== */
 
-// Contractuales – 2 columnas, sin emojis
+// -------------------- Contractuales (editable) -----------------
 const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
   const pick = (v, ...fb) => (v !== undefined && v !== null && String(v) !== "" ? v : fb.find(x => x !== undefined && x !== null && String(x) !== "") || "");
   const safe = (v, dash="—") => (v || v === 0 ? String(v) : dash);
@@ -222,7 +298,7 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
   );
 };
 
-// Documentos – card simple (visible) con tabla
+// -------------------- Documentos (acciones propias) ------------
 const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
   return (
@@ -255,126 +331,83 @@ const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   );
 };
 
-// Previsión – campos más comunes DT
-const PrevisionTab = ({ empleado }) => {
+// -------------------- Previsión (editable) ---------------------
+const PrevisionTab = ({ empleado, modoEdicion, onChange }) => {
   const pv = empleado?.prevision || {};
-  const entry = (l, v) => (
-    <div className="ed-kv-row" key={l}>
+  const setPv = (k, v) => onChange?.("prevision", { ...pv, [k]: v });
+
+  const row = (l, key, type="text") => (
+    <div className="ed-kv-row" key={key}>
       <span className="ed-kv-label">{l}:</span>
-      <span className="ed-kv-value">{v || "N/D"}</span>
+      {modoEdicion ? (
+        <input
+          type={type}
+          value={pv[key] ?? ""}
+          onChange={(e)=>setPv(key, e.target.value)}
+          style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px', fontSize:14}}
+        />
+      ) : (
+        <span className="ed-kv-value">{pv[key] || "N/D"}</span>
+      )}
     </div>
   );
+
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Previsionales y Legales</h3>
       <div className="ed-2col">
-        {entry("AFP", pv.afp)}
-        {entry("Sistema de Salud", pv.sistemaSalud)}
-        {entry("Nombre Isapre", pv.isapre)}
-        {entry("Caja de Compensación", pv.cajaCompensacion)}
-        {entry("Mutual de Seguridad", pv.mutual)}
-        {entry("Seguro de Cesantía (AFC)", pv.afc)}
-        {entry("Asignación Familiar (Tramo)", pv.tramo)}
-        {entry("Cargas Familiares (N°)", pv.cargas)}
-        {entry("Pensión de Alimentos (Monto)", pv.pensionAlimentos)}
-        {entry("Resolución Pensión", pv.resolucionPension)}
-        {entry("APV (Institución)", pv.apvInstitucion)}
-        {entry("APV (Cuenta/Contrato)", pv.apvCuenta)}
-        {entry("Tasa Cot. Accidente Trabajo", pv.tasaAccidente)}
+        {row("AFP","afp")}
+        {row("Sistema de Salud","sistemaSalud")}
+        {row("Nombre Isapre","isapre")}
+        {row("Caja de Compensación","cajaCompensacion")}
+        {row("Mutual de Seguridad","mutual")}
+        {row("Seguro de Cesantía (AFC)","afc")}
+        {row("Asignación Familiar (Tramo)","tramo")}
+        {row("Cargas Familiares (N°)","cargas","number")}
+        {row("Pensión de Alimentos (Monto)","pensionAlimentos")}
+        {row("Resolución Pensión","resolucionPension")}
+        {row("APV (Institución)","apvInstitucion")}
+        {row("APV (Cuenta/Contrato)","apvCuenta")}
+        {row("Tasa Cot. Accidente Trabajo","tasaAccidente")}
       </div>
       <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
   );
 };
 
-// Bancarios – sin emojis, mínimos DT
-const BancariosTab = ({ empleado }) => {
+// -------------------- Bancarios (editable) ---------------------
+const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   const b = empleado?.bancarios || {};
-  const row = (l, v) => (
-    <div className="ed-kv-row" key={l}>
+  const setB = (k, v) => onChange?.("bancarios", { ...b, [k]: v });
+
+  const row = (l, key, type="text") => (
+    <div className="ed-kv-row" key={key}>
       <span className="ed-kv-label">{l}:</span>
-      <span className="ed-kv-value">{v || "N/D"}</span>
+      {modoEdicion ? (
+        <input
+          type={type}
+          value={b[key] ?? ""}
+          onChange={(e)=>setB(key, e.target.value)}
+          style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px', fontSize:14}}
+        />
+      ) : (
+        <span className="ed-kv-value">{b[key] || "N/D"}</span>
+      )}
     </div>
   );
   return (
     <div className="ed-card">
       <h3 className="ed-card-title">Datos Bancarios</h3>
       <div className="ed-2col">
-        {row("Banco", b.banco)}
-        {row("Tipo de Cuenta", b.tipoCuenta)}
-        {row("Número de Cuenta", b.numeroCuenta)}
-        {row("Titular de la Cuenta", b.titular)}
-        {row("RUT Titular", b.rutTitular)}
+        {row("Banco", "banco")}
+        {row("Tipo de Cuenta", "tipoCuenta")}
+        {row("Número de Cuenta", "numeroCuenta")}
+        {row("Titular de la Cuenta", "titular")}
+        {row("RUT Titular", "rutTitular")}
       </div>
       <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
   );
-};
-
-/* =========================== Utils =========================== */
-const normalizeRut = (r) =>
-  (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
-
-const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-
-const fmtFechaLarga = (iso) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d)) return "—";
-  return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
-};
-
-const antiguedadStr = (desdeISO) => {
-  if (!desdeISO) return "";
-  const start = new Date(desdeISO);
-  const now = new Date();
-  if (isNaN(start)) return "";
-  const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-  const y = Math.floor(months / 12);
-  const m = months % 12;
-  const aTxt = y === 1 ? "1 año" : `${y} años`;
-  const mTxt = m === 1 ? "1 mes" : `${m} meses`;
-  return `${aTxt} y ${mTxt}`;
-};
-
-const pickCI = (obj, keys = [], fallback = undefined) => {
-  if (!obj) return fallback;
-  const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
-  for (const k of keys) {
-    const v = map[String(k).toLowerCase()];
-    if (v !== undefined && v !== null && String(v) !== "") return v;
-  }
-  return fallback;
-};
-const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
-const monthsBetween = (a, b) => {
-  let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
-  if (b.getDate() < a.getDate()) m -= 1;
-  return Math.max(0, m);
-};
-const computeVacaciones = (empleado) => {
-  const ingreso = empleado?.fechaIngreso ? new Date(empleado.fechaIngreso) : null;
-  if (!ingreso || isNaN(ingreso)) {
-    return { devengadas: 0, tomadas: 0, saldo: 0, detalle: "Sin fecha de ingreso", progresivos: 0, months: 0, jornada: "" };
-  }
-  const now = new Date();
-  const months = monthsBetween(ingreso, now);
-  const jornada =
-    pickCI(empleado, ["jornada"], undefined) ??
-    pickCI(empleado?.datosContractuales, ["jornada"], "Jornada Completa");
-  const factor = (typeof jornada === "string" && jornada.toLowerCase().includes("parcial")) ? 0.5 : 1;
-  const devBase = months * 1.25 * factor;
-  const prevYears = Number(pickCI(empleado, ["aniosPrevios","añosPrevios"], 0)) || 0;
-  const totalYears = Math.floor(months / 12) + prevYears;
-  let progresivos = 0;
-  if (totalYears >= 10) progresivos = Math.floor((totalYears - 10) / 3);
-  const tomadas =
-    Number(
-      pickCI(empleado, ["vacacionesTomadas","diasVacTomados","vacaciones_tomadas"], 0) ??
-      pickCI(empleado?.vacaciones, ["tomadas"], 0)
-    ) || 0;
-  const devengadas = round1(devBase + progresivos);
-  return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
 };
 
 /* ======================= Tab: Asistencia ====================== */
@@ -705,14 +738,22 @@ function HistorialTab({ empleado }) {
   );
 }
 
-/* =================== Hoja de Vida (nuevo) ===================== */
-function HojaDeVida({ empleado }) {
+/* =================== Hoja de Vida (editable) ================== */
+function HojaDeVida({ empleado, modoEdicion, onChange }) {
   const hv = empleado?.hojaVida || empleado || {};
-  const emergencia = hv.emergencia || [];
+  const emergencia = Array.isArray(hv.emergencia) ? hv.emergencia : [];
   const md = hv.medico || {};
   const trayectoria = hv.trayectoria || [];
   const educacion = hv.educacion || [];
   const experiencia = hv.experiencia || [];
+
+  const setHv = (k, v) => onChange?.("hojaVida", { ...hv, [k]: v });
+  const setMed = (k, v) => setHv("medico", { ...(hv.medico || {}), [k]: v });
+  const setEmerg = (idx, k, v) => {
+    const arr = [...(emergencia.length ? emergencia : [{},{},])];
+    arr[idx] = { ...(arr[idx] || {}), [k]: v };
+    setHv("emergencia", arr);
+  };
 
   const imprimir = () => {
     const html = `
@@ -799,39 +840,105 @@ function HojaDeVida({ empleado }) {
         <button className="ed-btn" onClick={imprimir}>Imprimir / Exportar</button>
       </div>
 
-      {hv.alertaMedica && (
-        <div className="hv-alert">
-          <b>Alerta Médica Importante</b>
-          <div>{hv.alertaMedica}</div>
+      {/* Alerta médica */}
+      <div className="hv-alert" style={{display: (hv.alertaMedica ? 'block':'none')}}>
+        <b>Alerta Médica Importante</b>
+        <div>{hv.alertaMedica}</div>
+      </div>
+      {modoEdicion && (
+        <div className="hv-card">
+          <h4 className="hv-title">Editar Alerta Médica</h4>
+          <input
+            type="text"
+            value={hv.alertaMedica ?? ""}
+            onChange={(e)=>setHv("alertaMedica", e.target.value)}
+            style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:10, padding:'8px'}}
+          />
         </div>
       )}
 
+      {/* Emergencia */}
       <div className="hv-card">
         <h4 className="hv-title">Contactos de Emergencia</h4>
         <div className="hv-grid2">
-          {(emergencia.length?emergencia:[{nombre:"N/D",relacion:"",telefono:""}]).slice(0,2).map((c,idx)=>(
-            <div key={idx} className="hv-contact">
-              <div className="hv-strong">{c.nombre||"N/D"}</div>
-              <div className="hv-muted">{c.relacion||""}</div>
-              <div className="hv-row"><span className="hv-label">Teléfono:</span><span className="hv-val">{c.telefono||"—"}</span></div>
+          {[0,1].map((i)=>(
+            <div key={i} className="hv-contact">
+              {modoEdicion ? (
+                <>
+                  <div className="hv-row"><span className="hv-label">Nombre:</span><input className="hv-val"
+                    value={(emergencia[i]?.nombre)||""}
+                    onChange={(e)=>setEmerg(i,"nombre",e.target.value)}
+                    style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/></div>
+                  <div className="hv-row"><span className="hv-label">Relación:</span><input className="hv-val"
+                    value={(emergencia[i]?.relacion)||""}
+                    onChange={(e)=>setEmerg(i,"relacion",e.target.value)}
+                    style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/></div>
+                  <div className="hv-row"><span className="hv-label">Teléfono:</span><input className="hv-val"
+                    value={(emergencia[i]?.telefono)||""}
+                    onChange={(e)=>setEmerg(i,"telefono",e.target.value)}
+                    style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/></div>
+                </>
+              ) : (
+                <>
+                  <div className="hv-strong">{emergencia[i]?.nombre||"N/D"}</div>
+                  <div className="hv-muted">{emergencia[i]?.relacion||""}</div>
+                  <div className="hv-row"><span className="hv-label">Teléfono:</span><span className="hv-val">{emergencia[i]?.telefono||"—"}</span></div>
+                </>
+              )}
             </div>
           ))}
         </div>
       </div>
 
+      {/* Ficha Médica */}
       <div className="hv-card">
         <h4 className="hv-title">Ficha Médica</h4>
         <div className="hv-grid2">
-          <div className="hv-row"><span className="hv-label">Grupo Sanguíneo:</span><span className="hv-val">{md.grupoSanguineo||"N/D"}</span></div>
-          <div className="hv-row"><span className="hv-label">Acepta Transfusión:</span><span className="hv-val">{md.aceptaTransfusion? "Sí":"No"}</span></div>
+          <div className="hv-row"><span className="hv-label">Grupo Sanguíneo:</span>
+            {modoEdicion ? (
+              <input className="hv-val" value={md.grupoSanguineo||""} onChange={(e)=>setMed("grupoSanguineo", e.target.value)}
+                style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+            ) : <span className="hv-val">{md.grupoSanguineo||"N/D"}</span>}
+          </div>
+          <div className="hv-row"><span className="hv-label">Acepta Transfusión:</span>
+            {modoEdicion ? (
+              <select value={md.aceptaTransfusion ? "si":"no"} onChange={(e)=>setMed("aceptaTransfusion", e.target.value==="si")}
+                style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            ) : <span className="hv-val">{md.aceptaTransfusion? "Sí":"No"}</span>}
+          </div>
         </div>
-        <div className="hv-row"><span className="hv-label">Alergias:</span><span className="hv-val">{Array.isArray(md.alergias)?md.alergias.join(", "):(md.alergias||"N/D")}</span></div>
-        <div className="hv-row"><span className="hv-label">Condiciones Crónicas:</span><span className="hv-val">{Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "):(md.condicionesCronicas||"N/D")}</span></div>
-        <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span><span className="hv-val">{md.medicamentos||"N/D"}</span></div>
-        <div className="hv-row"><span className="hv-label">Observaciones Adicionale
-s:</span><span className="hv-val">{md.observaciones||"N/D"}</span></div>
+        <div className="hv-row"><span className="hv-label">Alergias:</span>
+          {modoEdicion ? (
+            <input className="hv-val" value={Array.isArray(md.alergias)?md.alergias.join(", "):(md.alergias||"")}
+              onChange={(e)=>setMed("alergias", e.target.value.split(",").map(s=>s.trim()).filter(Boolean))}
+              style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          ) : <span className="hv-val">{Array.isArray(md.alergias)?md.alergias.join(", "):(md.alergias||"N/D")}</span>}
+        </div>
+        <div className="hv-row"><span className="hv-label">Condiciones Crónicas:</span>
+          {modoEdicion ? (
+            <input className="hv-val" value={Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "):(md.condicionesCronicas||"")}
+              onChange={(e)=>setMed("condicionesCronicas", e.target.value.split(",").map(s=>s.trim()).filter(Boolean))}
+              style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          ) : <span className="hv-val">{Array.isArray(md.condicionesCronicas)?md.condicionesCronicas.join(", "):(md.condicionesCronicas||"N/D")}</span>}
+        </div>
+        <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span>
+          {modoEdicion ? (
+            <input className="hv-val" value={md.medicamentos||""} onChange={(e)=>setMed("medicamentos", e.target.value)}
+              style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          ) : <span className="hv-val">{md.medicamentos||"N/D"}</span>}
+        </div>
+        <div className="hv-row"><span className="hv-label">Observaciones:</span>
+          {modoEdicion ? (
+            <input className="hv-val" value={md.observaciones||""} onChange={(e)=>setMed("observaciones", e.target.value)}
+              style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          ) : <span className="hv-val">{md.observaciones||"N/D"}</span>}
+        </div>
       </div>
 
+      {/* Trayectoria / Educación / Experiencia (solo lectura, mantienen estilo) */}
       <div className="hv-card">
         <h4 className="hv-title">Trayectoria en la Empresa</h4>
         <ul className="hv-tl">
@@ -933,6 +1040,13 @@ export default function EmpleadoDetalle() {
     };
     if (map[wanted]) setTabActiva(map[wanted]);
   }, [location]);
+
+  // Si se cambia a Asistencia o Historial, salimos de edición automáticamente
+  useEffect(() => {
+    if (["asistencia","historial"].includes(tabActiva) && modoEdicion) {
+      setModoEdicion(false);
+    }
+  }, [tabActiva, modoEdicion]);
 
   if (!hasParam) {
     return (
@@ -1188,29 +1302,24 @@ export default function EmpleadoDetalle() {
           <div className="ed-sub">{empleado.cargo || "—"}</div>
           {empleado.fechaIngreso && (<div className="ed-sub light">Miembro desde el {ingresoTxt} {antig ? `(${antig})` : ""}</div>)}
         </div>
-        
-        {/* ================================================================== */}
-        {/* ✅ LÓGICA BOTÓN "EDITAR FICHA": ¡ESTO YA FUNCIONA PERFECTO!      */}
-        {/* Al hacer clic, cambia el estado `modoEdicion` a `true`.           */}
-        {/* ================================================================== */}
+
+        {/* Botón Editar / Guardar */}
         {modoEdicion ? (
-  <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
-) : (
-  <button
-  className="ed-btn primary"
-  onClick={() => setModoEdicion(true)}
-  disabled={["asistencia", "historial"].includes(tabActiva)}
-  title={["asistencia", "historial"].includes(tabActiva) ? "Esta sección no es editable" : ""}
-  style={{
-    opacity: ["asistencia", "historial"].includes(tabActiva) ? 0.5 : 1,
-    cursor: ["asistencia", "historial"].includes(tabActiva) ? "not-allowed" : "pointer"
-  }}
->
-  Editar Ficha
-</button>
-
-)}
-
+          <button className="ed-btn primary" onClick={guardarEmpleado}>Guardar Cambios</button>
+        ) : (
+          <button
+            className="ed-btn primary"
+            onClick={() => setModoEdicion(true)}
+            disabled={["asistencia", "historial"].includes(tabActiva)}
+            title={["asistencia", "historial"].includes(tabActiva) ? "Esta sección no es editable" : ""}
+            style={{
+              opacity: ["asistencia", "historial"].includes(tabActiva) ? 0.5 : 1,
+              cursor: ["asistencia", "historial"].includes(tabActiva) ? "not-allowed" : "pointer"
+            }}
+          >
+            Editar Ficha
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -1234,21 +1343,41 @@ export default function EmpleadoDetalle() {
       {/* Grid: en Asistencia una sola columna */}
       <div className={`ed-grid ${tabActiva === "asistencia" ? "is-single" : ""}`}>
         <div className="ed-left">
+          {/* Personales (editable) */}
           {tabActiva === "personales" && (
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
               <div className="ed-kv">
-                <div className="ed-kv-row"><span className="ed-kv-label">Nombre Completo:</span><span className="ed-kv-value">{empleado.nombre || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Cédula:</span><span className="ed-kv-value">{empleado.rut || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Fecha de Nacimiento:</span><span className="ed-kv-value">{cumpleTxt}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Email:</span><span className="ed-kv-value">{empleado.correo || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Teléfono:</span><span className="ed-kv-value">{empleado.telefono || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Dirección:</span><span className="ed-kv-value">{empleado.direccion || "—"}</span></div>
-                <div className="ed-kv-row"><span className="ed-kv-label">Estado Civil:</span><span className="ed-kv-value">{empleado.estadoCivil || "—"}</span></div>
+                {[
+                  ["Nombre Completo","nombre","text", empleado.nombre || ""],
+                  ["Cédula","rut","text", empleado.rut || ""],
+                  ["Fecha de Nacimiento","fechaNacimiento","date", toDateInput(cumpleISO)],
+                  ["Email","correo","email", empleado.correo || ""],
+                  ["Teléfono","telefono","text", empleado.telefono || ""],
+                  ["Dirección","direccion","text", empleado.direccion || ""],
+                  ["Estado Civil","estadoCivil","text", empleado.estadoCivil || ""],
+                ].map(([label, key, type, val]) => (
+                  <div className="ed-kv-row" key={key}>
+                    <span className="ed-kv-label">{label}:</span>
+                    {modoEdicion ? (
+                      <input
+                        type={type}
+                        value={val}
+                        onChange={(e)=>handleChange(key, type==="date" ? fromDateInput(e.target.value) : e.target.value)}
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px', fontSize:14}}
+                      />
+                    ) : (
+                      <span className="ed-kv-value">
+                        {key==="fechaNacimiento" ? (cumpleTxt) : (val || "—")}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
+          {/* Contractuales */}
           {tabActiva === "contractuales" && (
             <ContractualesTab
               datos={empleado.datosContractuales || {}}
@@ -1258,13 +1387,22 @@ export default function EmpleadoDetalle() {
             />
           )}
 
+          {/* Documentos (mantiene acciones propias) */}
           {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
-          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} />}
-          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} />}
 
+          {/* Previsión (editable) */}
+          {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
+
+          {/* Bancarios (editable) */}
+          {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
+
+          {/* Asistencia (no editable) */}
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
 
-          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} />}
+          {/* Hoja de Vida (editable básico) */}
+          {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
+
+          {/* Historial (no editable) */}
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
