@@ -989,7 +989,25 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
       </div>
     </div>
   );
-}
+}<style>{`
+      .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      .hv-alert{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-bottom:12px}
+      .hv-card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px;background:#fff}
+      .hv-title{margin:0 0 8px;font-size:16px;font-weight:800;color:#111827}
+      .hv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      @media (max-width: 860px){ .hv-grid2{grid-template-columns:1fr} }
+      .hv-contact{border:1px solid #F3F4F6;border-radius:10px;padding:10px}
+      .hv-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #F3F4F6}
+      .hv-row:first-child{border-top:none}
+      .hv-label{color:#6B7280}
+      .hv-val{font-weight:700}
+      .hv-strong{font-weight:800}
+      .hv-muted{color:#6B7280}
+      .hv-tl{list-style:none;margin:0;padding:0}
+      .hv-tl-it{border-left:2px solid #E5E7EB;margin-left:8px;padding:8px 12px}
+    `}</style>
+  
+
 
 /* ================== Detalle empleado (UI) ===================== */
 export default function EmpleadoDetalle() {
