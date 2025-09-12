@@ -1,5 +1,5 @@
 // Hecho por Asistente de Programación de Google
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from 'react-router-dom'; // En tu app real, importa estos hooks
 
 // --- mocks date-fns (para este entorno)
@@ -363,7 +363,6 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
       `}</style>
     </div>
   );
-
 };
 
 // -------------------- Previsión (editable) ---------------------
@@ -445,16 +444,69 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
-/* ======================= Documentos (acciones propias) ====================== */
+/* ======================= Documentos (PushPop estilo Tictiva) ====================== */
 const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
+
+  // PushPop: Nueva carpeta
+  const [showPush, setShowPush] = useState(false);
+  const [folderName, setFolderName] = useState("");
+  const inputRef = useRef(null);
+
+  // PushPop: Subir archivo
+  const [showUpload, setShowUpload] = useState(false);
+  const [picked, setPicked] = useState(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => { if (showPush && inputRef.current) { inputRef.current.focus(); inputRef.current.select(); } }, [showPush]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (showPush) {
+        if (e.key === "Escape") setShowPush(false);
+        if (e.key === "Enter") handleCreate();
+      }
+      if (showUpload) {
+        if (e.key === "Escape") setShowUpload(false);
+        if (e.key === "Enter") handleUpload();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPush, folderName, showUpload, picked]);
+
+  const openPush = () => { setFolderName(""); setShowPush(true); };
+  const closePush = () => setShowPush(false);
+
+  const openUpload = () => { setPicked(null); setShowUpload(true); };
+  const closeUpload = () => setShowUpload(false);
+
+  const handleCreate = () => {
+    const name = (folderName || "").trim();
+    if (!name) return;
+    onNuevaCarpeta?.(name);
+    setShowPush(false);
+  };
+
+  const handleUpload = () => {
+    if (!picked) return;
+    onSubirArchivo?.(picked);
+    setShowUpload(false);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer?.files?.[0];
+    if (f) setPicked(f);
+  };
+
   return (
     <div className="ed-card">
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
-          <button className="ed-btn" onClick={onNuevaCarpeta}>Nueva Carpeta</button>
-          <button className="ed-btn primary" onClick={onSubirArchivo}>Subir Archivo</button>
+          <button className="ed-btn" onClick={openPush}>Nueva Carpeta</button>
+          <button className="ed-btn primary" onClick={openUpload}>Subir Archivo</button>
         </div>
       </div>
 
@@ -480,6 +532,121 @@ const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
           )}
         </tbody>
       </table>
+
+      {/* PushPop: Nueva carpeta */}
+      {showPush && (
+        <div className="pushpop-overlay" role="dialog" aria-modal="true">
+          <div className="pushpop-card" role="document">
+            <div className="pushpop-title">Nombre de la nueva carpeta</div>
+            <input
+              ref={inputRef}
+              value={folderName}
+              onChange={(e)=>setFolderName(e.target.value)}
+              className="pushpop-input"
+              placeholder="p. ej. Contratos 2025"
+              aria-label="Nombre de la nueva carpeta"
+            />
+            <div className="pushpop-actions">
+              <button className="ed-btn" onClick={closePush}>Cancelar</button>
+              <button
+                className="ed-btn primary"
+                onClick={handleCreate}
+                disabled={!folderName.trim()}
+                style={{opacity: folderName.trim() ? 1 : .6, cursor: folderName.trim() ? 'pointer' : 'not-allowed'}}
+              >
+                Crear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PushPop: Subir archivo */}
+      {showUpload && (
+        <div className="pushpop-overlay" role="dialog" aria-modal="true">
+          <div className="pushpop-card" role="document">
+            <div className="pushpop-title">Subir archivo</div>
+
+            <div
+              className="dropzone"
+              onDragOver={(e)=>e.preventDefault()}
+              onDrop={onDrop}
+            >
+              <div className="dropzone-icon">⬆️</div>
+              <div className="dropzone-text">
+                Arrastra y suelta el archivo aquí
+                <br/><span className="muted">o</span>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                style={{display:'none'}}
+                onChange={(e)=>{ const f=e.target.files?.[0]; if (f) setPicked(f); }}
+              />
+              <button className="ed-btn" onClick={()=>fileInputRef.current?.click()}>Elegir archivo</button>
+            </div>
+
+            <div className="picked">
+              {picked ? (
+                <div className="picked-file">
+                  <span>📄 {picked.name}</span>
+                  <span className="muted">{(picked.size/1024/1024).toFixed(picked.size>10*1024*1024?0:1)} MB</span>
+                </div>
+              ) : (
+                <div className="muted">Ningún archivo seleccionado</div>
+              )}
+            </div>
+
+            <div className="pushpop-actions">
+              <button className="ed-btn" onClick={closeUpload}>Cancelar</button>
+              <button
+                className="ed-btn primary"
+                onClick={handleUpload}
+                disabled={!picked}
+                style={{opacity: picked ? 1 : .6, cursor: picked ? 'pointer' : 'not-allowed'}}
+              >
+                Subir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .pushpop-overlay{
+          position:fixed; inset:0; background:rgba(17,24,39,.5);
+          display:flex; align-items:flex-start; justify-content:center; padding-top:10vh;
+          z-index: 60; animation: pp-fade .12s ease-out;
+        }
+        .pushpop-card{
+          width:min(520px, 92vw);
+          background:#0b0b11; color:#fff; border:1px solid rgba(255,255,255,.08);
+          border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+          padding:18px; transform-origin: top center; animation: pp-drop .16s ease-out;
+        }
+        .pushpop-title{ font-weight:800; font-size:16px; margin-bottom:10px }
+        .pushpop-input{
+          width:100%; border:1px solid #2a2a36; background:#13131b; color:#fff;
+          border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
+        }
+        .pushpop-input:focus{ border-color:#6d6dff; box-shadow:0 0 0 3px rgba(109,109,255,.15) }
+        .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
+
+        .dropzone{
+          border:1px dashed #3b3b4a; border-radius:12px; padding:18px; text-align:center; margin-top:4px;
+          background:#111118;
+        }
+        .dropzone-icon{ font-size:22px; margin-bottom:6px }
+        .dropzone-text{ color:#d1d5db; margin-bottom:10px }
+        .muted{ color:#9CA3AF; font-size:12px }
+        .picked{ margin-top:10px }
+        .picked-file{ display:flex; justify-content:space-between; align-items:center; gap:8px;
+                      padding:8px 10px; border:1px solid #2a2a36; background:#13131b; border-radius:10px; }
+
+        @keyframes pp-fade { from{opacity:0} to{opacity:1} }
+        @keyframes pp-drop { from{opacity:0; transform: translateY(-8px) scale(.98)} to{opacity:1; transform: translateY(0) scale(1)} }
+      `}</style>
     </div>
   );
 };
@@ -631,8 +798,6 @@ function AsistenciaTab({ empleado }) {
     const w = window.open("", "_blank");
     w.document.open(); w.document.write(html); w.document.close();
   };
-
-  const filtradasModal = filtrar(marcas);
 
   return (
     <>
@@ -1241,9 +1406,10 @@ export default function EmpleadoDetalle() {
   };
 
   // Acciones Documentos
-  const onNuevaCarpeta = async () => {
+  // onNuevaCarpeta: ahora acepta nombre opcional (para usar desde PushPop)
+  const onNuevaCarpeta = async (nombreDesdeUI) => {
     if (!empleado) return;
-    const nombre = (window.prompt("Nombre de la nueva carpeta") || "").trim();
+    const nombre = (nombreDesdeUI ?? window.prompt("Nombre de la nueva carpeta") ?? "").trim();
     if (!nombre) return;
     const hoy = new Date().toISOString().slice(0,10);
     const nueva = { id: `f_${Date.now()}`, tipo: "folder", nombre, mod: hoy, tam: "" };
@@ -1257,26 +1423,31 @@ export default function EmpleadoDetalle() {
     alert("Carpeta creada.");
   };
 
-  const onSubirArchivo = async () => {
+  // onSubirArchivo: ahora acepta File opcional (para usar desde PushPop)
+  const onSubirArchivo = async (fileFromUI) => {
     if (!empleado) return;
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
-    input.onchange = async (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const hoy = new Date().toISOString().slice(0,10);
-      const nuevo = { id: `d_${Date.now()}`, tipo: "file", nombre: file.name, mod: hoy, tam: humanSize(file.size) };
-      const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
-      await registrarMovimiento(empAfter, {
-        accion: "Subida de archivo",
-        categoria: "Documentos",
-        detalle: `Se subió “${file.name}”`,
-        actor: "Usuario",
+    let file = fileFromUI;
+    if (!file) {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
+      const p = new Promise((resolve) => {
+        input.onchange = (e) => resolve(e.target.files?.[0] || null);
       });
-      alert("Archivo agregado (mock).");
-    };
-    input.click();
+      input.click();
+      file = await p;
+      if (!file) return;
+    }
+    const hoy = new Date().toISOString().slice(0,10);
+    const nuevo = { id: `d_${Date.now()}`, tipo: "file", nombre: file.name, mod: hoy, tam: humanSize(file.size) };
+    const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
+    await registrarMovimiento(empAfter, {
+      accion: "Subida de archivo",
+      categoria: "Documentos",
+      detalle: `Se subió “${file.name}”`,
+      actor: "Usuario",
+    });
+    alert("Archivo agregado (mock).");
   };
 
   const guardarEmpleado = async () => {
@@ -1285,7 +1456,6 @@ export default function EmpleadoDetalle() {
       const diffs = [];
       const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
       keys.forEach((k) => {
-        
         const a = JSON.stringify(original?.[k]);
         const b = JSON.stringify(empleado?.[k]);
         if (a !== b) diffs.push(k);
@@ -1504,7 +1674,13 @@ export default function EmpleadoDetalle() {
           )}
 
           {/* Documentos */}
-          {tabActiva === "documentos" && <DocumentosTab empleado={empleado} onNuevaCarpeta={onNuevaCarpeta} onSubirArchivo={onSubirArchivo} />}
+          {tabActiva === "documentos" && (
+            <DocumentosTab
+              empleado={empleado}
+              onNuevaCarpeta={onNuevaCarpeta}
+              onSubirArchivo={onSubirArchivo}
+            />
+          )}
 
           {/* Previsión */}
           {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
