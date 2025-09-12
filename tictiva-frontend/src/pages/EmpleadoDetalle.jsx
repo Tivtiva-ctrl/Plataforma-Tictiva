@@ -363,39 +363,7 @@ const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
       `}</style>
     </div>
   );
-};
 
-// -------------------- Documentos (acciones propias) ------------
-const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
-  const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
-  return (
-    <div className="ed-card">
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-        <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
-        <div style={{display:'flex',gap:8}}>
-          <button className="ed-btn" onClick={onNuevaCarpeta}>Nueva Carpeta</button>
-          <button className="ed-btn primary" onClick={onSubirArchivo}>Subir Archivo</button>
-        </div>
-      </div>
-      <table className="asistencia-tabla">
-        <thead>
-          <tr><th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th></th></tr>
-        </thead>
-        <tbody>
-          {items.map(it => (
-            <tr key={it.id}>
-              <td style={{fontWeight:600}}>
-                {it.tipo === "folder" ? "📁 " : "📄 "}{it.nombre}
-              </td>
-              <td>{it.mod || "—"}</td>
-              <td>{it.tam || "—"}</td>
-              <td><button className="ed-btn">⋯</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 };
 
 // -------------------- Previsión (editable) ---------------------
@@ -477,8 +445,47 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
+/* ======================= Documentos (acciones propias) ====================== */
+const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo }) => {
+  const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
+  return (
+    <div className="ed-card">
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
+        <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
+        <div style={{display:'flex', gap:8}}>
+          <button className="ed-btn" onClick={onNuevaCarpeta}>Nueva Carpeta</button>
+          <button className="ed-btn primary" onClick={onSubirArchivo}>Subir Archivo</button>
+        </div>
+      </div>
+
+      <table className="asistencia-tabla">
+        <thead>
+          <tr>
+            <th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((it) => (
+            <tr key={it.id}>
+              <td style={{fontWeight:600}}>
+                {it.tipo === "folder" ? "📁" : "📄"} {it.nombre}
+              </td>
+              <td>{it.mod || "—"}</td>
+              <td>{it.tipo === "folder" ? "—" : (it.tam || "—")}</td>
+              <td><button className="ed-btn">⋯</button></td>
+            </tr>
+          ))}
+          {items.length === 0 && (
+            <tr><td colSpan={4} style={{color:'#6B7280'}}>Sin documentos por ahora.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 /* ======================= Tab: Asistencia (NO editable) ====================== */
-function AsistenciaTab({ empleado, onVerHistorial }) {
+function AsistenciaTab({ empleado }) {
   const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
   const [showModal, setShowModal] = useState(false);
   const [filtros, setFiltros] = useState({ desde: "", hasta: "", tipo: "", estado: "", metodo: "" });
@@ -987,9 +994,8 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
           ))}
         </ul>
       </div>
-    </div>
-  );
-}<style>{`
+
+      <style>{`
       .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
       .hv-alert{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-bottom:12px}
       .hv-card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px;background:#fff}
@@ -1006,8 +1012,9 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
       .hv-tl{list-style:none;margin:0;padding:0}
       .hv-tl-it{border-left:2px solid #E5E7EB;margin-left:8px;padding:8px 12px}
     `}</style>
-  
-
+    </div>
+  );
+}
 
 /* ================== Detalle empleado (UI) ===================== */
 export default function EmpleadoDetalle() {
@@ -1278,6 +1285,7 @@ export default function EmpleadoDetalle() {
       const diffs = [];
       const keys = new Set([...Object.keys(original || {}), ...Object.keys(empleado || {})]);
       keys.forEach((k) => {
+        
         const a = JSON.stringify(original?.[k]);
         const b = JSON.stringify(empleado?.[k]);
         if (a !== b) diffs.push(k);
@@ -1667,4 +1675,3 @@ export default function EmpleadoDetalle() {
     </div>
   );
 }
-
