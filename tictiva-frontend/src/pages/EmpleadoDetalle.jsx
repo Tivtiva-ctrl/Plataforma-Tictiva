@@ -214,6 +214,48 @@ const computeVacaciones = (empleado) => {
   return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
 };
 
+/* ===== Chile: Regiones y Comunas (completo) ===== */
+const COMUNAS_POR_REGION = {
+  "Arica y Parinacota": ["Arica","Camarones","Putre","General Lagos"],
+  "Tarapacá": ["Iquique","Alto Hospicio","Pozo Almonte","Camiña","Colchane","Huara","Pica"],
+  "Antofagasta": ["Antofagasta","Mejillones","Sierra Gorda","Taltal","Calama","Ollagüe","San Pedro de Atacama","Tocopilla","María Elena"],
+  "Atacama": ["Copiapó","Caldera","Tierra Amarilla","Chañaral","Diego de Almagro","Vallenar","Freirina","Huasco","Alto del Carmen"],
+  "Coquimbo": ["La Serena","Coquimbo","Andacollo","La Higuera","Paihuano","Vicuña","Ovalle","Combarbalá","Monte Patria","Punitaqui","Río Hurtado","Illapel","Canela","Los Vilos","Salamanca"],
+  "Valparaíso": ["Valparaíso","Viña del Mar","Concón","Quintero","Puchuncaví","Casablanca","Juan Fernández","San Antonio","Cartagena","El Tabo","El Quisco","Algarrobo","Santo Domingo","San Felipe","Llaillay","Catemu","Panquehue","Putaendo","Santa María","Los Andes","Calle Larga","Rinconada","San Esteban","Quillota","La Cruz","La Calera","Hijuelas","Nogales","Limache","Olmué","Quilpué","Villa Alemana","Petorca","La Ligua","Cabildo","Papudo","Zapallar","Isla de Pascua"],
+  "Metropolitana de Santiago": ["Santiago","Cerrillos","Cerro Navia","Conchalí","El Bosque","Estación Central","Huechuraba","Independencia","La Cisterna","La Florida","La Granja","La Pintana","La Reina","Las Condes","Lo Barnechea","Lo Espejo","Lo Prado","Macul","Maipú","Ñuñoa","Pedro Aguirre Cerda","Peñalolén","Providencia","Pudahuel","Quilicura","Quinta Normal","Recoleta","Renca","San Joaquín","San Miguel","San Ramón","Vitacura","Puente Alto","Pirque","San José de Maipo","Colina","Lampa","Tiltil","San Bernardo","Buin","Paine","Calera de Tango","Melipilla","Alhué","Curacaví","María Pinto","San Pedro","Talagante","El Monte","Isla de Maipo","Padre Hurtado","Peñaflor"],
+  "Libertador General Bernardo O'Higgins": [
+    "Rancagua","Codegua","Coínco","Coltauco","Doñihue","Graneros","Las Cabras","Machalí","Malloa","San Francisco de Mostazal","Olivar","Peumo","Pichidegua","Quinta de Tilcoco","Rengo","Requínoa","San Vicente",
+    "San Fernando","Chimbarongo","Nancagua","Placilla","Santa Cruz","Lolol","Palmilla","Peralillo","Chépica","Pumanque",
+    "Pichilemu","La Estrella","Litueche","Marchigüe","Navidad","Paredones"
+  ],
+  "Maule": [
+    "Talca","San Clemente","Pelarco","Pencahue","Maule","San Rafael","Río Claro","Curepto","Constitución","Empedrado",
+    "Curicó","Teno","Romeral","Rauco","Sagrada Familia","Molina","Hualañé","Vichuquén",
+    "Linares","San Javier","Yerbas Buenas","Colbún","Longaví","Parral","Retiro","Villa Alegre",
+    "Cauquenes","Chanco","Pelluhue"
+  ],
+  "Ñuble": ["Chillán","Chillán Viejo","Pinto","El Carmen","Pemuco","San Ignacio","Yungay","Quillón","Bulnes","San Carlos","Ñiquén","San Fabián","Coihueco","San Nicolás","Coelemu","Trehuaco","Ránquil","Portezuelo","Quirihue","Ninhue","Cobquecura"],
+  "Biobío": [
+    "Concepción","Talcahuano","Hualpén","San Pedro de la Paz","Chiguayante","Penco","Tomé","Coronel","Lota","Santa Juana","Hualqui","Florida",
+    "Los Ángeles","Mulchén","Nacimiento","Negrete","Quilaco","Quilleco","San Rosendo","Santa Bárbara","Tucapel","Cabrero","Yumbel","Alto Biobío","Antuco","Laja",
+    "Arauco","Curanilahue","Lebu","Los Álamos","Cañete","Contulmo","Tirúa"
+  ],
+  "La Araucanía": [
+    "Temuco","Carahue","Cholchol","Cunco","Curarrehue","Freire","Galvarino","Gorbea","Lautaro","Loncoche","Melipeuco","Nueva Imperial","Padre Las Casas","Perquenco","Pitrufquén","Pucón","Saavedra","Teodoro Schmidt","Toltén","Vilcún","Villarrica",
+    "Angol","Collipulli","Curacautín","Ercilla","Lonquimay","Los Sauces","Lumaco","Purén","Renaico","Traiguén","Victoria"
+  ],
+  "Los Ríos": ["Valdivia","Corral","Lanco","Los Lagos","Máfil","Mariquina","Paillaco","Panguipulli","La Unión","Futrono","Lago Ranco","Río Bueno"],
+  "Los Lagos": [
+    "Puerto Montt","Puerto Varas","Llanquihue","Frutillar","Los Muermos","Maullín","Cochamó","Calbuco","Fresia",
+    "Osorno","San Juan de la Costa","Puerto Octay","Puyehue","Río Negro","Purranque","San Pablo",
+    "Castro","Ancud","Quellón","Quemchi","Dalcahue","Curaco de Vélez","Puqueldón","Queilén","Chonchi","Quinchao",
+    "Chaitén","Futaleufú","Hualaihué","Palena"
+  ],
+  "Aysén del General Carlos Ibáñez del Campo": ["Coyhaique","Aysén","Cisnes","Guaitecas","Cochrane","O'Higgins","Tortel","Chile Chico","Río Ibáñez","Lago Verde"],
+  "Magallanes y de la Antártica Chilena": ["Punta Arenas","Laguna Blanca","Río Verde","San Gregorio","Natales","Torres del Paine","Porvenir","Primavera","Timaukel","Cabo de Hornos","Antártica"],
+};
+const REGIONES = Object.keys(COMUNAS_POR_REGION);
+
 /* =================== UI: Volver =================== */
 const VolverAtras = () => {
   const navigate = useNavigate();
@@ -1378,6 +1420,49 @@ export default function EmpleadoDetalle() {
                     )}
                   </div>
                 ))}
+
+                {/* Región */}
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">Región:</span>
+                  {modoEdicion ? (
+                    <select
+                      value={empleado.region ?? ""}
+                      onChange={(e) => {
+                        const nuevaRegion = e.target.value;
+                        handleChange("region", nuevaRegion);
+                        handleChange("comuna", ""); // reset comuna al cambiar región
+                      }}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px', fontSize:14}}
+                    >
+                      <option value="">Seleccione…</option>
+                      {REGIONES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="ed-kv-value">{empleado.region || "—"}</span>
+                  )}
+                </div>
+
+                {/* Comuna */}
+                <div className="ed-kv-row">
+                  <span className="ed-kv-label">Comuna:</span>
+                  {modoEdicion ? (
+                    <select
+                      value={empleado.comuna ?? ""}
+                      onChange={(e)=>handleChange("comuna", e.target.value)}
+                      disabled={!empleado.region}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px', fontSize:14}}
+                    >
+                      <option value="">{empleado.region ? "Seleccione…" : "Elige región primero"}</option>
+                      {(COMUNAS_POR_REGION[empleado.region] || []).map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="ed-kv-value">{empleado.comuna || "—"}</span>
+                  )}
+                </div>
               </div>
             </div>
           )}
