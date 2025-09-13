@@ -1,32 +1,29 @@
-/* ======================= Documentos (Tictiva – con Acciones) ====================== */
+/* ======================= Documentos (Tictiva – popover chico) ====================== */
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,   // (file?, parentId?)
-  onDelete,         // opcional
-  onRename,         // opcional
+  onSubirArchivo,   // puede ignorar el 2º arg (parentId) si aún no lo usas
+  onDelete,
+  onRename,
 }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  // Estado del popover chico
-  const [menuId, setMenuId] = React.useState(null);
-  const [modal, setModal] = React.useState(null); // {type: 'create'|'folder'|'doc'|'rename', data?:any}
+  const [menuId, setMenuId] = React.useState(null);       // <-- popover anclado
+  const [modal, setModal]   = React.useState(null);       // create | folder | doc | rename
   const [inputVal, setInputVal] = React.useState("");
   const topFileRef = React.useRef(null);
   const menuRef = React.useRef(null);
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
-  const selItem   = items.find(x => x.id === menuId) || null;
+  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
 
   const closeMenu = () => setMenuId(null);
   const closeAll  = () => { closeMenu(); setModal(null); setInputVal(""); };
 
+  // Cerrar al click fuera / scroll / resize / ESC
   React.useEffect(() => {
-    const onDown = (e) => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target)) closeMenu();
-    };
-    const onKey = (e) => { if (e.key === "Escape") closeMenu(); };
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) closeMenu(); };
+    const onKey  = (e) => { if (e.key === "Escape") closeMenu(); };
     document.addEventListener("mousedown", onDown);
     window.addEventListener("scroll", closeMenu, true);
     window.addEventListener("resize", closeMenu, true);
@@ -39,8 +36,6 @@ const DocumentosTab = ({
     };
   }, []);
 
-  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
-
   const doCreateFolder = () => {
     const name = (inputVal || "").trim();
     if (!name) return;
@@ -50,6 +45,7 @@ const DocumentosTab = ({
     }
     closeAll();
   };
+
   const doRename = () => {
     const name = (inputVal || "").trim();
     if (!name || !modal?.data) return;
@@ -57,12 +53,14 @@ const DocumentosTab = ({
     else window.alert("Renombrar (mock): implementa onRename si quieres persistir.");
     closeAll();
   };
+
   const doDelete = (it) => {
     if (!it) return;
     if (typeof onDelete === "function") onDelete(it.id);
     else window.alert("Eliminar (mock): implementa onDelete si quieres persistir.");
     closeAll();
   };
+
   const humanDownload = (name) => {
     const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -106,9 +104,11 @@ const DocumentosTab = ({
         <tbody>
           {items.map((it) => (
             <tr key={it.id}>
-              <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
+              {/* SIN emojis en la lista */}
+              <td style={{fontWeight:600}}>{it.nombre}</td>
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
+
               <td className="mini-actions-cell">
                 <button
                   className="ed-btn"
@@ -118,7 +118,7 @@ const DocumentosTab = ({
                   onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuId(prev => prev === it.id ? null : it.id); }}
                 >⋯</button>
 
-                {/* Popover chico anclado hacia abajo */}
+                {/* POPOVER pequeño */}
                 {menuId === it.id && (
                   <div ref={menuRef} className="mini-menu" role="menu" aria-label="Acciones">
                     {isFolder(it) ? (
@@ -162,27 +162,18 @@ const DocumentosTab = ({
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
-
           <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
             <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>Subir aquí</button>
           </div>
-
           {childrenOf(modal.data?.id).length === 0 ? (
             <div className="muted">Esta carpeta está vacía.</div>
           ) : (
             <table className="asistencia-tabla">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Fecha de Modificación</th>
-                  <th>Tamaño</th>
-                  <th style={{width:120, textAlign:'right'}}>Acciones</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th style={{width:120, textAlign:'right'}}>Acciones</th></tr></thead>
               <tbody>
                 {childrenOf(modal.data?.id).map(child => (
                   <tr key={child.id}>
-                    <td style={{fontWeight:600}}>📄 {child.nombre}</td>
+                    <td style={{fontWeight:600}}>{child.nombre}</td>
                     <td>{child.mod || "—"}</td>
                     <td>{child.tam || "—"}</td>
                     <td style={{textAlign:'right'}}>
@@ -196,7 +187,6 @@ const DocumentosTab = ({
               </tbody>
             </table>
           )}
-
           <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
@@ -234,7 +224,7 @@ const DocumentosTab = ({
         .mini-menu{
           position:absolute; top:calc(100% + 6px); right:0;
           width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px;
-          box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:50;
+          box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:60;
         }
         .mini-menu-item{
           width:100%; text-align:left; background:transparent; border:none;
