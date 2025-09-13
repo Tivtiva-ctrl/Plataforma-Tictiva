@@ -1,49 +1,58 @@
-/* ======================= Documentos (Tictiva – popover chico) ====================== */
+/* ======================= Documentos (Tictiva – con Acciones) ====================== */
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,
-  onDelete,
-  onRename,
+  onSubirArchivo,   // puede aceptar (file?, folderId?)
+  onDelete,         // opcional
+  onRename,         // opcional
 }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  const [menuId, setMenuId] = React.useState(null);     // id del item con menú abierto
-  const [modal, setModal]   = React.useState(null);     // create | folder | doc | rename
-  const [inputVal, setInputVal] = React.useState("");
-  const topFileRef = React.useRef(null);
+  // --- estado para popover chico anclado al botón de cada fila
+  const [menuId, setMenuId] = React.useState(null);     // id del item que tiene el menú abierto
   const menuRef = React.useRef(null);
 
+  // --- estado para los PushPop (crear carpeta / ver doc / ver carpeta / renombrar)
+  const [modal, setModal] = React.useState(null);       // {type: 'create'|'folder'|'doc'|'rename', data?:any}
+  const [inputVal, setInputVal] = React.useState("");
+
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
-  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
 
-  const closeMenu = () => setMenuId(null);
-  const closeAll  = () => { closeMenu(); setModal(null); setInputVal(""); };
-
-  // Cerrar menú al hacer click fuera / scroll / resize / ESC
   React.useEffect(() => {
-    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) closeMenu(); };
-    const onKey  = (e) => { if (e.key === "Escape") closeMenu(); };
+    const onDown = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuId(null);
+    };
+    const onKey = (e) => { if (e.key === "Escape") setMenuId(null); };
     document.addEventListener("mousedown", onDown);
-    window.addEventListener("scroll", closeMenu, true);
-    window.addEventListener("resize", closeMenu, true);
     window.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onDown);
-      window.removeEventListener("scroll", closeMenu, true);
-      window.removeEventListener("resize", closeMenu, true);
       window.removeEventListener("keydown", onKey);
     };
   }, []);
 
+  // ===== helpers =====
+  const closeAll = () => { setMenuId(null); setModal(null); setInputVal(""); };
+
+  const humanDownload = (name) => {
+    const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name || "archivo.txt"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const doCreateFolder = () => {
     const name = (inputVal || "").trim();
     if (!name) return;
-    if (typeof onNuevaCarpeta === "function") {
-      if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
-      else onNuevaCarpeta();
+    try {
+      if (typeof onNuevaCarpeta === "function") {
+        if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name); // si tu handler acepta nombre
+        else onNuevaCarpeta();
+      }
+    } finally {
+      closeAll();
     }
-    closeAll();
   };
 
   const doRename = () => {
@@ -61,34 +70,13 @@ const DocumentosTab = ({
     closeAll();
   };
 
-  const humanDownload = (name) => {
-    const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = name || "archivo.txt"; a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="ed-card">
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
           <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'create'}); setInputVal(""); }}>Nueva Carpeta</button>
-
-          {/* input oculto para subir desde el header */}
-          <input
-            ref={topFileRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            style={{display:'none'}}
-            onChange={(e)=>{
-              const f = e.target.files?.[0];
-              if (f) onSubirArchivo?.(f, null);
-              e.target.value = "";
-            }}
-          />
-          <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>Subir Archivo</button>
+          <button className="ed-btn primary" type="button" onClick={()=>onSubirArchivo?.()}>Subir Archivo</button>
         </div>
       </div>
 
@@ -104,11 +92,11 @@ const DocumentosTab = ({
         <tbody>
           {items.map((it) => (
             <tr key={it.id}>
-              {/* sin emojis */}
-              <td style={{fontWeight:600}}>{it.nombre}</td>
+              <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
 
+              {/* Acciones: botón tres puntos + popover chico anclado */}
               <td className="mini-actions-cell">
                 <button
                   className="ed-btn"
@@ -118,22 +106,21 @@ const DocumentosTab = ({
                   onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuId(prev => prev === it.id ? null : it.id); }}
                 >⋯</button>
 
-                {/* menú chico anclado */}
                 {menuId === it.id && (
                   <div ref={menuRef} className="mini-menu" role="menu" aria-label="Acciones">
                     {isFolder(it) ? (
                       <>
-                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'folder', data:it}); closeMenu(); }}>Abrir carpeta</button>
-                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ onSubirArchivo?.(undefined, it.id); closeMenu(); }}>Subir aquí</button>
-                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre||""); closeMenu(); }}>Renombrar</button>
-                        <button className="mini-menu-item danger" role="menuitem" onClick={()=>doDelete(it)}>Eliminar</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'folder', data:it}); setMenuId(null); }}>Abrir carpeta</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ onSubirArchivo?.(undefined, it.id); setMenuId(null); }}>Subir aquí</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuId(null); }}>Renombrar</button>
+                        <button className="mini-menu-item danger" role="menuitem" onClick={()=>{ doDelete(it); setMenuId(null); }}>Eliminar</button>
                       </>
                     ) : (
                       <>
-                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'doc', data:it}); closeMenu(); }}>Ver</button>
-                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ humanDownload(it.nombre); closeMenu(); }}>Descargar</button>
-                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre||""); closeMenu(); }}>Renombrar</button>
-                        <button className="mini-menu-item danger" role="menuitem" onClick={()=>doDelete(it)}>Eliminar</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'doc', data:it}); setMenuId(null); }}>Ver</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ humanDownload(it.nombre); setMenuId(null); }}>Descargar</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuId(null); }}>Renombrar</button>
+                        <button className="mini-menu-item danger" role="menuitem" onClick={()=>{ doDelete(it); setMenuId(null); }}>Eliminar</button>
                       </>
                     )}
                   </div>
@@ -158,37 +145,15 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver carpeta ===== */}
+      {/* ===== PushPop: ver carpeta (mock) ===== */}
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
-          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
-          {childrenOf(modal.data?.id).length === 0
-            ? <div className="muted">Esta carpeta está vacía.</div>
-            : (
-              <table className="asistencia-tabla">
-                <thead><tr><th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th style={{width:120, textAlign:'right'}}>Acciones</th></tr></thead>
-                <tbody>
-                  {childrenOf(modal.data?.id).map(child => (
-                    <tr key={child.id}>
-                      <td style={{fontWeight:600}}>{child.nombre}</td>
-                      <td>{child.mod || "—"}</td>
-                      <td>{child.tam || "—"}</td>
-                      <td style={{textAlign:'right'}}>
-                        <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
-                        <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
-                        <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
-                        <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+          <div className="muted" style={{marginBottom:8}}>En este mock no hay hijos definidos. Cuando exista parentId, aquí listaremos su contenido.</div>
           <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver documento ===== */}
+      {/* ===== PushPop: ver documento (mock) ===== */}
       {modal?.type === "doc" && (
         <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
@@ -215,8 +180,17 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
+      {/* Estilos locales del popover y pequeños ajustes */}
       <style>{`
         .muted{ color:#6B7280; font-size:12px }
+        .pushpop-input{
+          width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827;
+          border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
+        }
+        .pushpop-input:focus{ border-color:#93C5FD; box-shadow:0 0 0 3px rgba(59,130,246,.15) }
+        .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
+
+        /* popover chico anclado */
         .mini-actions-cell{ position:relative; text-align:right; overflow:visible; }
         .mini-menu{
           position:absolute; top:calc(100% + 6px); right:0;
@@ -229,12 +203,9 @@ const DocumentosTab = ({
         }
         .mini-menu-item:hover{ background:#F9FAFB; }
         .mini-menu-item.danger{ color:#B91C1C; }
-        .pushpop-input{
-          width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827;
-          border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
-        }
-        .pushpop-input:focus{ border-color:#93C5FD; box-shadow:0 0 0 3px rgba(59,130,246,.15) }
-        .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
+
+        /* evitar que el contenedor recorte el popover */
+        .asistencia-tabla, .ed-card { overflow: visible; }
       `}</style>
     </div>
   );
