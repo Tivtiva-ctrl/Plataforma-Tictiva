@@ -448,20 +448,36 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,   // ahora recibe (file?, parentId?)
+  onSubirArchivo,   // (file?, parentId?)
   onDelete,         // opcional
   onRename,         // opcional
 }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  const [menuItem, setMenuItem] = React.useState(null);
-  const [modal, setModal] = React.useState(null); // {type: 'create'|'folder'|'doc'|'rename', data?:any}
+  const [menuItem, setMenuItem] = React.useState(null); // item activo para el menú ⋯
+  const [modal, setModal] = React.useState(null);       // {type: 'create'|'folder'|'doc'|'rename', data?:any}
   const [inputVal, setInputVal] = React.useState("");
   const topFileRef = React.useRef(null); // input oculto del header
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
+  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
 
-  // ===== helpers =====
+  // Cerrar menú al hacer click fuera o presionar Escape
+  React.useEffect(() => {
+    if (!menuItem) return;
+    const onDocClick = () => setMenuItem(null);
+    const onKey = (e) => { if (e.key === "Escape") setMenuItem(null); };
+    const t = setTimeout(() => {
+      window.addEventListener('click', onDocClick);
+      window.addEventListener('keydown', onKey);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('click', onDocClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [menuItem]);
+
   const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); };
 
   const humanDownload = (name) => {
@@ -480,9 +496,7 @@ const DocumentosTab = ({
         if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
         else onNuevaCarpeta();
       }
-    } finally {
-      closeAll();
-    }
+    } finally { closeAll(); }
   };
 
   const doRename = () => {
@@ -500,10 +514,9 @@ const DocumentosTab = ({
     closeAll();
   };
 
-  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
-
   return (
-    <div className="ed-card">
+    <div className="ed-card" style={{ overflow:'visible' }}>
+      {/* Header */}
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
@@ -521,10 +534,13 @@ const DocumentosTab = ({
               e.target.value = "";
             }}
           />
-          <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>Subir Archivo</button>
+          <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>
+            Subir Archivo
+          </button>
         </div>
       </div>
 
+      {/* Tabla */}
       <table className="asistencia-tabla">
         <thead>
           <tr>
@@ -537,16 +553,38 @@ const DocumentosTab = ({
         <tbody>
           {items.map((it) => (
             <tr key={it.id}>
-              <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
+              <td style={{fontWeight:600}}>{it.nombre}</td>
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
-              <td style={{ textAlign:'right' }}>
+
+              {/* Botón ⋯ + mini menú */}
+              <td className="mini-actions-cell" style={{ textAlign:'right', position:'relative' }}>
                 <button
                   className="ed-btn"
                   type="button"
                   aria-label="Acciones"
                   onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuItem(it); }}
                 >⋯</button>
+
+                {menuItem?.id === it.id && (
+                  <div className="mini-menu" role="menu" onClick={(e)=>e.stopPropagation()}>
+                    {isFolder(it) ? (
+                      <>
+                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'folder', data:it}); setMenuItem(null); }}>Abrir carpeta</button>
+                        <button className="mini-menu-item" onClick={()=>{ onSubirArchivo?.(undefined, it.id); setMenuItem(null); }}>Subir aquí</button>
+                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
+                        <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'doc', data:it}); setMenuItem(null); }}>Ver</button>
+                        <button className="mini-menu-item" onClick={()=>{ humanDownload(it.nombre); setMenuItem(null); }}>Descargar</button>
+                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
+                        <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
+                      </>
+                    )}
+                  </div>
+                )}
               </td>
             </tr>
           ))}
@@ -556,10 +594,7 @@ const DocumentosTab = ({
         </tbody>
       </table>
 
-      
-      
-
-     {/* ===== PushPop: crear carpeta ===== */}
+      {/* ===== PushPop: crear carpeta ===== */}
       {modal?.type === "create" && (
         <PushPop title="Nueva carpeta" onClose={closeAll}>
           <input className="pushpop-input" placeholder="Ej. Contratos 2025" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
@@ -576,7 +611,7 @@ const DocumentosTab = ({
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
 
           <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
-            <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>⬆️ Subir aquí</button>
+            <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>Subir aquí</button>
           </div>
 
           {childrenOf(modal.data?.id).length === 0 ? (
@@ -594,14 +629,14 @@ const DocumentosTab = ({
               <tbody>
                 {childrenOf(modal.data?.id).map(child => (
                   <tr key={child.id}>
-                    <td style={{fontWeight:600}}>📄 {child.nombre}</td>
+                    <td style={{fontWeight:600}}>{child.nombre}</td>
                     <td>{child.mod || "—"}</td>
                     <td>{child.tam || "—"}</td>
                     <td style={{textAlign:'right'}}>
-                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>👁️</button>
-                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>⬇️</button>
-                      <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>✏️</button>
-                      <button className="ed-btn" onClick={()=>doDelete(child)}>🗑️</button>
+                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
+                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
+                      <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
+                      <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
                     </td>
                   </tr>
                 ))}
@@ -619,7 +654,7 @@ const DocumentosTab = ({
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
           <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
             <div className="muted">Vista previa (mock)</div>
-            <div style={{height:160, display:'grid', placeItems:'center'}}>👁️ No hay previsualización disponible</div>
+            <div style={{height:160, display:'grid', placeItems:'center'}}>No hay previsualización disponible</div>
           </div>
           <div className="pushpop-actions">
             <button className="ed-btn" onClick={()=>{ humanDownload(modal.data?.nombre || "archivo"); }}>Descargar</button>
@@ -640,6 +675,7 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
+      {/* Estilos locales */}
       <style>{`
         .muted{ color:#6B7280; font-size:12px }
         .pushpop-input{
@@ -648,6 +684,20 @@ const DocumentosTab = ({
         }
         .pushpop-input:focus{ border-color:#93C5FD; box-shadow:0 0 0 3px rgba(59,130,246,.15) }
         .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
+
+        /* Mini menú ⋯ */
+        .mini-actions-cell{ position:relative; overflow:visible; }
+        .mini-menu{
+          position:absolute; top: calc(100% + 6px); right:0;
+          width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px;
+          box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:9999;
+        }
+        .mini-menu-item{
+          width:100%; text-align:left; background:transparent; border:none;
+          padding:8px 10px; border-radius:8px; font-weight:600; color:#111827; cursor:pointer;
+        }
+        .mini-menu-item:hover{ background:#F9FAFB; }
+        .mini-menu-item.danger{ color:#B91C1C; }
       `}</style>
     </div>
   );
@@ -1297,7 +1347,6 @@ export default function EmpleadoDetalle() {
 
           const found = byId || byRut || byEither;
           if (found && !cancel) {
-            // Si hay override en LS, úsalo
             const lsOverride = lsGetByKey(empKeyFrom(found)) || (found.rut && lsGetByKey(`rut:${normalizeRut(found.rut)}`)) || (found.id != null && lsGetByKey(`id:${String(found.id)}`));
             const finalEmp = lsOverride || found;
             setEmpleado(finalEmp);
@@ -1410,7 +1459,6 @@ export default function EmpleadoDetalle() {
       historial: [...(empSnapshot.historial || []), item],
     };
 
-    // Persistencia "eterna" en localStorage
     lsSaveEmp(updated);
 
     setEmpleado(updated);
@@ -1436,7 +1484,6 @@ export default function EmpleadoDetalle() {
   };
 
   // Acciones Documentos
-  // onNuevaCarpeta: ahora acepta nombre opcional (para usar desde PushPop)
   const onNuevaCarpeta = async (nombreDesdeUI) => {
     if (!empleado) return;
     const nombre = (nombreDesdeUI ?? window.prompt("Nombre de la nueva carpeta") ?? "").trim();
@@ -1453,7 +1500,6 @@ export default function EmpleadoDetalle() {
     alert("Carpeta creada.");
   };
 
-  // onSubirArchivo: ahora acepta File y parentId (para subir dentro de carpetas)
   const onSubirArchivo = async (fileFromUI, parentId = null) => {
     if (!empleado) return;
     let file = fileFromUI;
@@ -1487,6 +1533,40 @@ export default function EmpleadoDetalle() {
     alert("Archivo agregado (mock).");
   };
 
+  // IMPORTANTE: handlers de rename/delete al nivel del componente (NO dentro de guardarEmpleado)
+  const onDeleteDoc = async (id) => {
+    if (!empleado) return;
+    const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
+    const eliminado = lista.find(x => x.id === id);
+    const empAfter = { ...empleado, documentos: lista.filter(x => x.id !== id) };
+
+    await registrarMovimiento(empAfter, {
+      accion: "Eliminación",
+      categoria: "Documentos",
+      detalle: eliminado ? `Se eliminó “${eliminado.nombre}”` : `Se eliminó item ${id}`,
+      actor: "Usuario",
+    });
+    alert("Eliminado.");
+  };
+
+  const onRenameDoc = async (id, nuevoNombre) => {
+    if (!empleado) return;
+    const hoy = new Date().toISOString().slice(0,10);
+    const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
+    const empAfter = {
+      ...empleado,
+      documentos: lista.map(x => x.id === id ? { ...x, nombre: nuevoNombre, mod: hoy } : x)
+    };
+
+    await registrarMovimiento(empAfter, {
+      accion: "Renombrado",
+      categoria: "Documentos",
+      detalle: `Nuevo nombre: “${nuevoNombre}”`,
+      actor: "Usuario",
+    });
+    alert("Nombre actualizado.");
+  };
+
   const guardarEmpleado = async () => {
     if (!empleado) return;
     try {
@@ -1510,45 +1590,8 @@ export default function EmpleadoDetalle() {
 
       const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
 
-      // ===== Acciones Documentos: Eliminar y Renombrar (persisten y registran historial)
-const onDeleteDoc = async (id) => {
-  if (!empleado) return;
-  const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
-  const eliminado = lista.find(x => x.id === id);
-  const empAfter = { ...empleado, documentos: lista.filter(x => x.id !== id) };
-
-  await registrarMovimiento(empAfter, {
-    accion: "Eliminación",
-    categoria: "Documentos",
-    detalle: eliminado ? `Se eliminó “${eliminado.nombre}”` : `Se eliminó item ${id}`,
-    actor: "Usuario",
-  });
-  alert("Eliminado.");
-};
-
-const onRenameDoc = async (id, nuevoNombre) => {
-  if (!empleado) return;
-  const hoy = new Date().toISOString().slice(0,10);
-  const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
-  const empAfter = {
-    ...empleado,
-    documentos: lista.map(x => x.id === id ? { ...x, nombre: nuevoNombre, mod: hoy } : x)
-  };
-
-  await registrarMovimiento(empAfter, {
-    accion: "Renombrado",
-    categoria: "Documentos",
-    detalle: `Nuevo nombre: “${nuevoNombre}”`,
-    actor: "Usuario",
-  });
-  alert("Nombre actualizado.");
-};
-
-
-      // Persistencia "eterna" en localStorage
       lsSaveEmp(payload);
 
-      // Intento API (opcional)
       try {
         const id = payload.id ?? encodeURIComponent(payload.rut);
         const url = `${API}/${RESOURCE}/${id}`;
@@ -1751,6 +1794,8 @@ const onRenameDoc = async (id, nuevoNombre) => {
               empleado={empleado}
               onNuevaCarpeta={onNuevaCarpeta}
               onSubirArchivo={onSubirArchivo}
+              onDelete={onDeleteDoc}
+              onRename={onRenameDoc}
             />
           )}
 
@@ -1807,12 +1852,12 @@ const onRenameDoc = async (id, nuevoNombre) => {
               </div>
             </div>
 
-            <div className="ed-card">
-              <h4 className="ed-card-title">Rendimiento</h4>
-              <div className="ed-metric"><div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div><div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div></div>
-              <div className="ed-metric"><div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div><div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div></div>
-              <div className="ed-metric"><div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div><div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div></div>
-            </div>
+              <div className="ed-card">
+                <h4 className="ed-card-title">Rendimiento</h4>
+                <div className="ed-metric"><div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div><div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div></div>
+                <div className="ed-metric"><div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div><div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div></div>
+                <div className="ed-metric"><div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div><div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div></div>
+              </div>
           </aside>
         )}
       </div>
