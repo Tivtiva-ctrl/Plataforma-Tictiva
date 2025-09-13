@@ -448,7 +448,7 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,   // usa tu handler actual (abre input)
+  onSubirArchivo,   // ahora recibe (file?, parentId?)
   onDelete,         // opcional
   onRename,         // opcional
 }) => {
@@ -457,6 +457,7 @@ const DocumentosTab = ({
   const [menuItem, setMenuItem] = React.useState(null);
   const [modal, setModal] = React.useState(null); // {type: 'create'|'folder'|'doc'|'rename', data?:any}
   const [inputVal, setInputVal] = React.useState("");
+  const topFileRef = React.useRef(null); // input oculto del header
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
 
@@ -476,7 +477,6 @@ const DocumentosTab = ({
     if (!name) return;
     try {
       if (typeof onNuevaCarpeta === "function") {
-        // si tu handler acepta 1 argumento, le paso el nombre; si no, lo llamo sin args (usará su prompt interno)
         if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
         else onNuevaCarpeta();
       }
@@ -500,13 +500,28 @@ const DocumentosTab = ({
     closeAll();
   };
 
+  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
+
   return (
     <div className="ed-card">
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
           <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'create'}); setInputVal(""); }}>Nueva Carpeta</button>
-          <button className="ed-btn primary" type="button" onClick={()=>onSubirArchivo?.()}>Subir Archivo</button>
+
+          {/* input oculto para el botón del header */}
+          <input
+            ref={topFileRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            style={{display:'none'}}
+            onChange={(e)=>{
+              const f = e.target.files?.[0];
+              if (f) onSubirArchivo?.(f, null);
+              e.target.value = "";
+            }}
+          />
+          <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>Subir Archivo</button>
         </div>
       </div>
 
@@ -547,7 +562,7 @@ const DocumentosTab = ({
           {isFolder(menuItem) ? (
             <div style={{display:'grid', gap:8}}>
               <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'folder', data:menuItem}); setMenuItem(null); }}>📂 Abrir carpeta</button>
-              <button className="ed-btn" type="button" onClick={()=>{ onSubirArchivo?.(); closeAll(); }}>⬆️ Subir</button>
+              <button className="ed-btn" type="button" onClick={()=>{ onSubirArchivo?.(undefined, menuItem.id); closeAll(); }}>⬆️ Subir aquí</button>
               <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
               <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
               <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
@@ -575,15 +590,50 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver carpeta (mock) ===== */}
+      {/* ===== PushPop: ver carpeta (con hijos por parentId) ===== */}
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
-          <div className="muted" style={{marginBottom:8}}>En este mock no hay hijos definidos. Cuando exista parentId, aquí listaremos su contenido.</div>
+          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
+
+          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
+            <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>⬆️ Subir aquí</button>
+          </div>
+
+          {childrenOf(modal.data?.id).length === 0 ? (
+            <div className="muted">Esta carpeta está vacía.</div>
+          ) : (
+            <table className="asistencia-tabla">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Fecha de Modificación</th>
+                  <th>Tamaño</th>
+                  <th style={{width:120, textAlign:'right'}}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {childrenOf(modal.data?.id).map(child => (
+                  <tr key={child.id}>
+                    <td style={{fontWeight:600}}>📄 {child.nombre}</td>
+                    <td>{child.mod || "—"}</td>
+                    <td>{child.tam || "—"}</td>
+                    <td style={{textAlign:'right'}}>
+                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>👁️</button>
+                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>⬇️</button>
+                      <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>✏️</button>
+                      <button className="ed-btn" onClick={()=>doDelete(child)}>🗑️</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
           <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver documento (mock) ===== */}
+      {/* ===== PushPop: ver documento ===== */}
       {modal?.type === "doc" && (
         <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
@@ -650,9 +700,6 @@ function PushPop({ title, onClose, children }) {
     </div>
   );
 }
-
-  
-
 
 /* ======================= Tab: Asistencia (NO editable) ====================== */
 function AsistenciaTab({ empleado }) {
@@ -1426,8 +1473,8 @@ export default function EmpleadoDetalle() {
     alert("Carpeta creada.");
   };
 
-  // onSubirArchivo: ahora acepta File opcional (para usar desde PushPop)
-  const onSubirArchivo = async (fileFromUI) => {
+  // onSubirArchivo: ahora acepta File y parentId (para subir dentro de carpetas)
+  const onSubirArchivo = async (fileFromUI, parentId = null) => {
     if (!empleado) return;
     let file = fileFromUI;
     if (!file) {
@@ -1442,12 +1489,19 @@ export default function EmpleadoDetalle() {
       if (!file) return;
     }
     const hoy = new Date().toISOString().slice(0,10);
-    const nuevo = { id: `d_${Date.now()}`, tipo: "file", nombre: file.name, mod: hoy, tam: humanSize(file.size) };
+    const nuevo = {
+      id: `d_${Date.now()}`,
+      tipo: "file",
+      nombre: file.name,
+      mod: hoy,
+      tam: humanSize(file.size),
+      parentId: parentId || ""
+    };
     const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
     await registrarMovimiento(empAfter, {
       accion: "Subida de archivo",
       categoria: "Documentos",
-      detalle: `Se subió “${file.name}”`,
+      detalle: `Se subió “${file.name}”${parentId ? ` a la carpeta ${parentId}` : ""}`,
       actor: "Usuario",
     });
     alert("Archivo agregado (mock).");
