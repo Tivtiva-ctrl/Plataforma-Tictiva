@@ -1,45 +1,68 @@
-/* ======================= Documentos (Tictiva – con Acciones y upload fiable) ====================== */
+/* ======================= Documentos (Tictiva – con Acciones) ====================== */
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,   // 0 args (compat) o (file, folderId) recomendado
+  onSubirArchivo,   // (file?, parentId?)
   onDelete,         // opcional
   onRename,         // opcional
 }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  const [menuItem, setMenuItem] = React.useState(null);
-  const [modal, setModal] = React.useState(null);    // {type:'create'|'folder'|'doc'|'rename', data?}
+  // Estado del popover chico
+  const [menuId, setMenuId] = React.useState(null);
+  const [modal, setModal] = React.useState(null); // {type: 'create'|'folder'|'doc'|'rename', data?:any}
   const [inputVal, setInputVal] = React.useState("");
-  const [targetFolderId, setTargetFolderId] = React.useState(null);
-
-  const fileRef = React.useRef(null);
+  const topFileRef = React.useRef(null);
+  const menuRef = React.useRef(null);
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
-  const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); setTargetFolderId(null); };
+  const selItem   = items.find(x => x.id === menuId) || null;
 
-  // ===== Upload fiable =====
-  const supportsFileArg = typeof onSubirArchivo === "function" && onSubirArchivo.length >= 1;
-  const triggerUpload = (folderId = null) => {
-    if (supportsFileArg && fileRef.current) {
-      setTargetFolderId(folderId || null);
-      fileRef.current.click(); // abre file picker verdadero en el DOM
-    } else {
-      // compatibilidad con tu handler anterior (crea su propio input interno)
-      onSubirArchivo?.();
-      closeAll();
+  const closeMenu = () => setMenuId(null);
+  const closeAll  = () => { closeMenu(); setModal(null); setInputVal(""); };
+
+  React.useEffect(() => {
+    const onDown = (e) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target)) closeMenu();
+    };
+    const onKey = (e) => { if (e.key === "Escape") closeMenu(); };
+    document.addEventListener("mousedown", onDown);
+    window.addEventListener("scroll", closeMenu, true);
+    window.addEventListener("resize", closeMenu, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("scroll", closeMenu, true);
+      window.removeEventListener("resize", closeMenu, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
+
+  const doCreateFolder = () => {
+    const name = (inputVal || "").trim();
+    if (!name) return;
+    if (typeof onNuevaCarpeta === "function") {
+      if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
+      else onNuevaCarpeta();
     }
-  };
-  const onLocalFilePicked = (e) => {
-    const file = e.target.files && e.target.files[0];
-    // limpiamos el value para permitir volver a elegir el mismo archivo después
-    e.target.value = "";
-    if (!file) return;
-    if (supportsFileArg) onSubirArchivo(file, targetFolderId || null);
     closeAll();
   };
-
-  // ===== Acciones mock =====
+  const doRename = () => {
+    const name = (inputVal || "").trim();
+    if (!name || !modal?.data) return;
+    if (typeof onRename === "function") onRename(modal.data.id, name);
+    else window.alert("Renombrar (mock): implementa onRename si quieres persistir.");
+    closeAll();
+  };
+  const doDelete = (it) => {
+    if (!it) return;
+    if (typeof onDelete === "function") onDelete(it.id);
+    else window.alert("Eliminar (mock): implementa onDelete si quieres persistir.");
+    closeAll();
+  };
   const humanDownload = (name) => {
     const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -48,50 +71,26 @@ const DocumentosTab = ({
     URL.revokeObjectURL(url);
   };
 
-  const doCreateFolder = () => {
-    const name = (inputVal || "").trim();
-    if (!name) return;
-    try {
-      if (typeof onNuevaCarpeta === "function") {
-        if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
-        else onNuevaCarpeta();
-      }
-    } finally {
-      closeAll();
-    }
-  };
-
-  const doRename = () => {
-    const name = (inputVal || "").trim();
-    if (!name || !modal?.data) return;
-    if (typeof onRename === "function") onRename(modal.data.id, name);
-    else window.alert("Renombrar (mock): implementa onRename si quieres persistir.");
-    closeAll();
-  };
-
-  const doDelete = (it) => {
-    if (!it) return;
-    if (typeof onDelete === "function") onDelete(it.id);
-    else window.alert("Eliminar (mock): implementa onDelete si quieres persistir.");
-    closeAll();
-  };
-
   return (
     <div className="ed-card">
-      {/* input file real, oculto */}
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-        style={{ display: "none" }}
-        onChange={onLocalFilePicked}
-      />
-
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
           <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'create'}); setInputVal(""); }}>Nueva Carpeta</button>
-          <button className="ed-btn primary" type="button" onClick={()=>triggerUpload(null)}>Subir Archivo</button>
+
+          {/* input oculto para subir desde el header */}
+          <input
+            ref={topFileRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            style={{display:'none'}}
+            onChange={(e)=>{
+              const f = e.target.files?.[0];
+              if (f) onSubirArchivo?.(f, null);
+              e.target.value = "";
+            }}
+          />
+          <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>Subir Archivo</button>
         </div>
       </div>
 
@@ -110,13 +109,35 @@ const DocumentosTab = ({
               <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
-              <td style={{ textAlign:'right' }}>
+              <td className="mini-actions-cell">
                 <button
                   className="ed-btn"
                   type="button"
-                  aria-label="Acciones"
-                  onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuItem(it); }}
+                  aria-haspopup="menu"
+                  aria-expanded={menuId === it.id}
+                  onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuId(prev => prev === it.id ? null : it.id); }}
                 >⋯</button>
+
+                {/* Popover chico anclado hacia abajo */}
+                {menuId === it.id && (
+                  <div ref={menuRef} className="mini-menu" role="menu" aria-label="Acciones">
+                    {isFolder(it) ? (
+                      <>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'folder', data:it}); closeMenu(); }}>Abrir carpeta</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ onSubirArchivo?.(undefined, it.id); closeMenu(); }}>Subir aquí</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre||""); closeMenu(); }}>Renombrar</button>
+                        <button className="mini-menu-item danger" role="menuitem" onClick={()=>doDelete(it)}>Eliminar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'doc', data:it}); closeMenu(); }}>Ver</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ humanDownload(it.nombre); closeMenu(); }}>Descargar</button>
+                        <button className="mini-menu-item" role="menuitem" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre||""); closeMenu(); }}>Renombrar</button>
+                        <button className="mini-menu-item danger" role="menuitem" onClick={()=>doDelete(it)}>Eliminar</button>
+                      </>
+                    )}
+                  </div>
+                )}
               </td>
             </tr>
           ))}
@@ -125,29 +146,6 @@ const DocumentosTab = ({
           )}
         </tbody>
       </table>
-
-      {/* ===== Menú (PushPop) ===== */}
-      {menuItem && (
-        <PushPop title="Acciones" onClose={closeAll}>
-          {isFolder(menuItem) ? (
-            <div style={{display:'grid', gap:8}}>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'folder', data:menuItem}); setMenuItem(null); }}>📂 Abrir carpeta</button>
-              <button className="ed-btn" type="button" onClick={()=>triggerUpload(menuItem.id)}>⬆️ Subir</button>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
-              <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
-              <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
-            </div>
-          ) : (
-            <div style={{display:'grid', gap:8}}>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'doc', data:menuItem}); setMenuItem(null); }}>👁️ Ver</button>
-              <button className="ed-btn" type="button" onClick={()=>{ humanDownload(menuItem.nombre); closeAll(); }}>⬇️ Descargar</button>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
-              <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
-              <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
-            </div>
-          )}
-        </PushPop>
-      )}
 
       {/* ===== PushPop: crear carpeta ===== */}
       {modal?.type === "create" && (
@@ -160,21 +158,56 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver carpeta (mock) ===== */}
+      {/* ===== PushPop: ver carpeta ===== */}
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
-          <div className="muted" style={{marginBottom:8}}>En este mock no hay hijos definidos. Si manejas jerarquía (parentId), pásame esa data y lo listamos aquí.</div>
+          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
+
+          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
+            <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>Subir aquí</button>
+          </div>
+
+          {childrenOf(modal.data?.id).length === 0 ? (
+            <div className="muted">Esta carpeta está vacía.</div>
+          ) : (
+            <table className="asistencia-tabla">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Fecha de Modificación</th>
+                  <th>Tamaño</th>
+                  <th style={{width:120, textAlign:'right'}}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {childrenOf(modal.data?.id).map(child => (
+                  <tr key={child.id}>
+                    <td style={{fontWeight:600}}>📄 {child.nombre}</td>
+                    <td>{child.mod || "—"}</td>
+                    <td>{child.tam || "—"}</td>
+                    <td style={{textAlign:'right'}}>
+                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
+                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
+                      <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
+                      <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
           <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver documento (mock) ===== */}
+      {/* ===== PushPop: ver documento ===== */}
       {modal?.type === "doc" && (
         <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
           <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
             <div className="muted">Vista previa (mock)</div>
-            <div style={{height:160, display:'grid', placeItems:'center'}}>👁️ No hay previsualización disponible</div>
+            <div style={{height:160, display:'grid', placeItems:'center'}}>No hay previsualización disponible</div>
           </div>
           <div className="pushpop-actions">
             <button className="ed-btn" onClick={()=>{ humanDownload(modal.data?.nombre || "archivo"); }}>Descargar</button>
@@ -197,6 +230,18 @@ const DocumentosTab = ({
 
       <style>{`
         .muted{ color:#6B7280; font-size:12px }
+        .mini-actions-cell{ position:relative; text-align:right; }
+        .mini-menu{
+          position:absolute; top:calc(100% + 6px); right:0;
+          width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px;
+          box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:50;
+        }
+        .mini-menu-item{
+          width:100%; text-align:left; background:transparent; border:none;
+          padding:8px 10px; border-radius:8px; font-weight:600; color:#111827; cursor:pointer;
+        }
+        .mini-menu-item:hover{ background:#F9FAFB; }
+        .mini-menu-item.danger{ color:#B91C1C; }
         .pushpop-input{
           width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827;
           border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
@@ -207,31 +252,3 @@ const DocumentosTab = ({
     </div>
   );
 };
-
-/* ===== Mini PushPop (igual que antes) ===== */
-function PushPop({ title, onClose, children }) {
-  React.useEffect(() => {
-    const onEsc = (e) => { if (e.key === "Escape") onClose?.(); };
-    window.addEventListener("keydown", onEsc);
-    return () => window.removeEventListener("keydown", onEsc);
-  }, [onClose]);
-
-  return (
-    <div role="dialog" aria-modal="true" className="pp-wrap" onMouseDown={onClose}>
-      <div className="pp-card" onMouseDown={(e)=>e.stopPropagation()}>
-        <div className="pp-head">
-          <div className="pp-title">{title || "Acciones"}</div>
-          <button className="ed-btn" type="button" onClick={onClose}>✕</button>
-        </div>
-        <div className="pp-body">{children}</div>
-      </div>
-      <style>{`
-        .pp-wrap{ position:fixed; inset:0; background:rgba(17,24,39,.45); display:grid; place-items:center; z-index:9999 }
-        .pp-card{ width:min(520px, 92vw); background:#fff; border:1px solid #E5E7EB; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.25); }
-        .pp-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 12px 0 16px }
-        .pp-title{ font-weight:800; color:#111827; font-size:16px }
-        .pp-body{ padding:12px 16px 16px; }
-      `}</style>
-    </div>
-  );
-}
