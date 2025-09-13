@@ -1,35 +1,45 @@
-/* ======================= Documentos (Tictiva – menú en PushPop) ====================== */
+/* ======================= Documentos (Tictiva – con Acciones y upload fiable) ====================== */
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,   // (file, parentId?) => void  (tu handler actual ignora el 2° arg y sirve igual)
-  onDelete,         // (id) => void               (opcional: si no lo pasas, hago confirm + alerta)
-  onRename,         // (id, newName) => void      (opcional)
+  onSubirArchivo,   // 0 args (compat) o (file, folderId) recomendado
+  onDelete,         // opcional
+  onRename,         // opcional
 }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  const [menuItem, setMenuItem] = useState(null);          // item seleccionado para el menú
-  const [showCreate, setShowCreate] = useState(false);     // crear carpeta
-  const [newFolder, setNewFolder] = useState("");
+  const [menuItem, setMenuItem] = React.useState(null);
+  const [modal, setModal] = React.useState(null);    // {type:'create'|'folder'|'doc'|'rename', data?}
+  const [inputVal, setInputVal] = React.useState("");
+  const [targetFolderId, setTargetFolderId] = React.useState(null);
 
-  const [showUploadRoot, setShowUploadRoot] = useState(false);
-  const [pickedRoot, setPickedRoot] = useState(null);
-  const rootFileBtn = React.useRef(null);
-
-  const [openFolder, setOpenFolder] = useState(null);      // ver contenidos de carpeta
-  const [openDoc, setOpenDoc] = useState(null);            // ver detalle doc
-
-  const [uploadFolder, setUploadFolder] = useState(null);  // subir dentro de carpeta
-  const [pickedInFolder, setPickedInFolder] = useState(null);
-  const folderFileBtn = React.useRef(null);
-
-  const [renameTarget, setRenameTarget] = useState(null);  // renombrar (id/nombre)
-  const [renameText, setRenameText] = useState("");
+  const fileRef = React.useRef(null);
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
-  const childrenOf = (folderId) => items.filter(d => d.parentId === folderId && d.tipo !== "folder");
+  const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); setTargetFolderId(null); };
 
-  // === helpers ===
+  // ===== Upload fiable =====
+  const supportsFileArg = typeof onSubirArchivo === "function" && onSubirArchivo.length >= 1;
+  const triggerUpload = (folderId = null) => {
+    if (supportsFileArg && fileRef.current) {
+      setTargetFolderId(folderId || null);
+      fileRef.current.click(); // abre file picker verdadero en el DOM
+    } else {
+      // compatibilidad con tu handler anterior (crea su propio input interno)
+      onSubirArchivo?.();
+      closeAll();
+    }
+  };
+  const onLocalFilePicked = (e) => {
+    const file = e.target.files && e.target.files[0];
+    // limpiamos el value para permitir volver a elegir el mismo archivo después
+    e.target.value = "";
+    if (!file) return;
+    if (supportsFileArg) onSubirArchivo(file, targetFolderId || null);
+    closeAll();
+  };
+
+  // ===== Acciones mock =====
   const humanDownload = (name) => {
     const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -38,60 +48,50 @@ const DocumentosTab = ({
     URL.revokeObjectURL(url);
   };
 
-  const doDelete = (it) => {
-    if (!it) return;
-    if (!onDelete) { window.confirm("Eliminar no implementado"); return; }
-    if (isFolder(it)) {
-      const hijos = childrenOf(it.id);
-      if (hijos.length && !window.confirm(`La carpeta contiene ${hijos.length} documento(s). ¿Eliminar todo?`)) return;
-      hijos.forEach(h => onDelete(h.id));
-    }
-    onDelete(it.id);
-  };
-
-  const confirmCreateFolder = () => {
-    const name = (newFolder || "").trim();
+  const doCreateFolder = () => {
+    const name = (inputVal || "").trim();
     if (!name) return;
     try {
       if (typeof onNuevaCarpeta === "function") {
-        // compat: si tu handler no recibe nombre, solo lo llamo
         if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
         else onNuevaCarpeta();
       }
     } finally {
-      setShowCreate(false);
-      setNewFolder("");
+      closeAll();
     }
   };
 
-  const confirmUploadRoot = () => {
-    if (pickedRoot) onSubirArchivo?.(pickedRoot);
-    setShowUploadRoot(false);
-    setPickedRoot(null);
+  const doRename = () => {
+    const name = (inputVal || "").trim();
+    if (!name || !modal?.data) return;
+    if (typeof onRename === "function") onRename(modal.data.id, name);
+    else window.alert("Renombrar (mock): implementa onRename si quieres persistir.");
+    closeAll();
   };
 
-  const confirmUploadToFolder = () => {
-    if (pickedInFolder && uploadFolder) {
-      onSubirArchivo?.(pickedInFolder, uploadFolder.id);
-    }
-    setUploadFolder(null);
-    setPickedInFolder(null);
-  };
-
-  const startRename = (it) => { setRenameTarget({ id: it.id, nombre: it.nombre }); setRenameText(it.nombre || ""); };
-  const confirmRename = () => {
-    const txt = (renameText || "").trim();
-    if (txt && renameTarget) onRename?.(renameTarget.id, txt);
-    setRenameTarget(null);
+  const doDelete = (it) => {
+    if (!it) return;
+    if (typeof onDelete === "function") onDelete(it.id);
+    else window.alert("Eliminar (mock): implementa onDelete si quieres persistir.");
+    closeAll();
   };
 
   return (
     <div className="ed-card">
+      {/* input file real, oculto */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+        style={{ display: "none" }}
+        onChange={onLocalFilePicked}
+      />
+
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
-          <button className="ed-btn" type="button" onClick={()=>setShowCreate(true)}>Nueva Carpeta</button>
-          <button className="ed-btn primary" type="button" onClick={()=>setShowUploadRoot(true)}>Subir Archivo</button>
+          <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'create'}); setInputVal(""); }}>Nueva Carpeta</button>
+          <button className="ed-btn primary" type="button" onClick={()=>triggerUpload(null)}>Subir Archivo</button>
         </div>
       </div>
 
@@ -116,9 +116,7 @@ const DocumentosTab = ({
                   type="button"
                   aria-label="Acciones"
                   onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuItem(it); }}
-                >
-                  ⋯
-                </button>
+                >⋯</button>
               </td>
             </tr>
           ))}
@@ -128,125 +126,71 @@ const DocumentosTab = ({
         </tbody>
       </table>
 
-      {/* ===== Menú de Acciones (PushPop) ===== */}
+      {/* ===== Menú (PushPop) ===== */}
       {menuItem && (
-        <PushPop onClose={()=>setMenuItem(null)} title="Acciones">
+        <PushPop title="Acciones" onClose={closeAll}>
           {isFolder(menuItem) ? (
             <div style={{display:'grid', gap:8}}>
-              <button className="ed-btn" type="button" onClick={()=>{ setOpenFolder(menuItem); setMenuItem(null); }}>📂 Abrir carpeta</button>
-              <button className="ed-btn" type="button" onClick={()=>{ setUploadFolder(menuItem); setMenuItem(null); }}>⬆️ Subir</button>
-              <button className="ed-btn" type="button" onClick={()=>{ startRename(menuItem); setMenuItem(null); }}>✏️ Renombrar</button>
-              <button className="ed-btn" type="button" onClick={()=>{ doDelete(menuItem); setMenuItem(null); }}>🗑️ Eliminar</button>
-              <div style={{display:'flex', justifyContent:'flex-end', marginTop:6}}>
-                <button className="ed-btn" type="button" onClick={()=>setMenuItem(null)}>Cerrar</button>
-              </div>
+              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'folder', data:menuItem}); setMenuItem(null); }}>📂 Abrir carpeta</button>
+              <button className="ed-btn" type="button" onClick={()=>triggerUpload(menuItem.id)}>⬆️ Subir</button>
+              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
+              <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
+              <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
             </div>
           ) : (
             <div style={{display:'grid', gap:8}}>
-              <button className="ed-btn" type="button" onClick={()=>{ setOpenDoc(menuItem); setMenuItem(null); }}>👁️ Ver</button>
-              <button className="ed-btn" type="button" onClick={()=>{ humanDownload(menuItem.nombre); setMenuItem(null); }}>⬇️ Descargar</button>
-              <button className="ed-btn" type="button" onClick={()=>{ startRename(menuItem); setMenuItem(null); }}>✏️ Renombrar</button>
-              <button className="ed-btn" type="button" onClick={()=>{ doDelete(menuItem); setMenuItem(null); }}>🗑️ Eliminar</button>
-              <div style={{display:'flex', justifyContent:'flex-end', marginTop:6}}>
-                <button className="ed-btn" type="button" onClick={()=>setMenuItem(null)}>Cerrar</button>
-              </div>
+              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'doc', data:menuItem}); setMenuItem(null); }}>👁️ Ver</button>
+              <button className="ed-btn" type="button" onClick={()=>{ humanDownload(menuItem.nombre); closeAll(); }}>⬇️ Descargar</button>
+              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
+              <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
+              <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
             </div>
           )}
         </PushPop>
       )}
 
-      {/* ===== Crear carpeta ===== */}
-      {showCreate && (
-        <PushPop onClose={()=>setShowCreate(false)} title="Nombre de la nueva carpeta">
-          <input
-            className="pushpop-input"
-            value={newFolder}
-            onChange={(e)=>setNewFolder(e.target.value)}
-            placeholder="p. ej. Contratos 2025"
-          />
+      {/* ===== PushPop: crear carpeta ===== */}
+      {modal?.type === "create" && (
+        <PushPop title="Nueva carpeta" onClose={closeAll}>
+          <input className="pushpop-input" placeholder="Ej. Contratos 2025" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
           <div className="pushpop-actions">
-            <button className="ed-btn" type="button" onClick={()=>setShowCreate(false)}>Cancelar</button>
-            <button className="ed-btn primary" type="button" onClick={confirmCreateFolder} disabled={!newFolder.trim()}>Crear</button>
+            <button className="ed-btn" onClick={closeAll}>Cancelar</button>
+            <button className="ed-btn primary" onClick={doCreateFolder} disabled={!inputVal.trim()}>Crear</button>
           </div>
         </PushPop>
       )}
 
-      {/* ===== Subir (raíz) ===== */}
-      {showUploadRoot && (
-        <PushPop onClose={()=>setShowUploadRoot(false)} title="Subir archivo">
-          <Dropzone picked={pickedRoot} setPicked={setPickedRoot} btnRef={rootFileBtn} />
-          <div className="pushpop-actions">
-            <button className="ed-btn" type="button" onClick={()=>setShowUploadRoot(false)}>Cancelar</button>
-            <button className="ed-btn primary" type="button" onClick={confirmUploadRoot} disabled={!pickedRoot}>Subir</button>
-          </div>
+      {/* ===== PushPop: ver carpeta (mock) ===== */}
+      {modal?.type === "folder" && (
+        <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
+          <div className="muted" style={{marginBottom:8}}>En este mock no hay hijos definidos. Si manejas jerarquía (parentId), pásame esa data y lo listamos aquí.</div>
+          <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
 
-      {/* ===== Ver carpeta ===== */}
-      {openFolder && (
-        <PushPop onClose={()=>setOpenFolder(null)} title={`Carpeta: ${openFolder.nombre}`}>
-          <div className="muted" style={{marginBottom:8}}>Documentos dentro de esta carpeta</div>
-          {childrenOf(openFolder.id).length === 0 ? (
-            <div className="muted" style={{marginBottom:8}}>No hay documentos aquí aún.</div>
-          ) : (
-            <ul style={{listStyle:'none', margin:0, padding:0, maxHeight:280, overflow:'auto'}}>
-              {childrenOf(openFolder.id).map(doc => (
-                <li key={doc.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'8px 0', borderTop:'1px solid #E5E7EB'}}>
-                  <div style={{display:'flex', flexDirection:'column', gap:2}}>
-                    <div>📄 <b>{doc.nombre}</b></div>
-                    <div className="muted">{doc.mod || "—"} · {doc.tam || "—"}</div>
-                  </div>
-                  <div style={{display:'flex', gap:6}}>
-                    <button className="ed-btn" type="button" onClick={()=>setOpenDoc(doc)}>Ver</button>
-                    <button className="ed-btn" type="button" onClick={()=>humanDownload(doc.nombre)}>Descargar</button>
-                    <button className="ed-btn" type="button" onClick={()=>startRename(doc)}>Renombrar</button>
-                    <button className="ed-btn" type="button" onClick={()=>onDelete?.(doc.id)}>Eliminar</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="pushpop-actions" style={{marginTop:12}}>
-            <div style={{flex:1}} />
-            <input
-              ref={folderFileBtn}
-              type="file"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-              style={{display:'none'}}
-              onChange={(e)=>{ const f=e.target.files?.[0]; if (f) setPickedInFolder(f); }}
-            />
-            <button className="ed-btn" type="button" onClick={()=>folderFileBtn.current?.click()}>Elegir archivo</button>
-            <button className="ed-btn primary" type="button" onClick={confirmUploadToFolder} disabled={!pickedInFolder}>Subir a “{openFolder.nombre}”</button>
-            <button className="ed-btn" type="button" onClick={()=>setOpenFolder(null)}>Cerrar</button>
-          </div>
-        </PushPop>
-      )}
-
-      {/* ===== Ver documento ===== */}
-      {openDoc && (
-        <PushPop onClose={()=>setOpenDoc(null)} title={`Documento: ${openDoc.nombre}`}>
-          <div className="muted" style={{marginBottom:8}}>Últ. mod: {openDoc.mod || "—"} · Tamaño: {openDoc.tam || "—"}</div>
+      {/* ===== PushPop: ver documento (mock) ===== */}
+      {modal?.type === "doc" && (
+        <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
+          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
           <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
             <div className="muted">Vista previa (mock)</div>
             <div style={{height:160, display:'grid', placeItems:'center'}}>👁️ No hay previsualización disponible</div>
           </div>
           <div className="pushpop-actions">
-            <button className="ed-btn" type="button" onClick={()=>startRename(openDoc)}>Renombrar</button>
-            <button className="ed-btn" type="button" onClick={()=>humanDownload(openDoc.nombre)}>Descargar</button>
-            <button className="ed-btn danger" type="button" onClick={()=>{ onDelete?.(openDoc.id); setOpenDoc(null); }}>Eliminar</button>
+            <button className="ed-btn" onClick={()=>{ humanDownload(modal.data?.nombre || "archivo"); }}>Descargar</button>
             <div style={{flex:1}} />
-            <button className="ed-btn" type="button" onClick={()=>setOpenDoc(null)}>Cerrar</button>
+            <button className="ed-btn" onClick={closeAll}>Cerrar</button>
           </div>
         </PushPop>
       )}
 
-      {/* ===== Renombrar ===== */}
-      {renameTarget && (
-        <PushPop onClose={()=>setRenameTarget(null)} title="Renombrar">
-          <input value={renameText} onChange={(e)=>setRenameText(e.target.value)} className="pushpop-input" />
+      {/* ===== PushPop: renombrar ===== */}
+      {modal?.type === "rename" && (
+        <PushPop title="Renombrar" onClose={closeAll}>
+          <input className="pushpop-input" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
           <div className="pushpop-actions">
-            <button className="ed-btn" type="button" onClick={()=>setRenameTarget(null)}>Cancelar</button>
-            <button className="ed-btn primary" type="button" onClick={confirmRename} disabled={!renameText.trim()}>Guardar</button>
+            <button className="ed-btn" onClick={closeAll}>Cancelar</button>
+            <button className="ed-btn primary" onClick={doRename} disabled={!inputVal.trim()}>Guardar</button>
           </div>
         </PushPop>
       )}
@@ -263,3 +207,31 @@ const DocumentosTab = ({
     </div>
   );
 };
+
+/* ===== Mini PushPop (igual que antes) ===== */
+function PushPop({ title, onClose, children }) {
+  React.useEffect(() => {
+    const onEsc = (e) => { if (e.key === "Escape") onClose?.(); };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+
+  return (
+    <div role="dialog" aria-modal="true" className="pp-wrap" onMouseDown={onClose}>
+      <div className="pp-card" onMouseDown={(e)=>e.stopPropagation()}>
+        <div className="pp-head">
+          <div className="pp-title">{title || "Acciones"}</div>
+          <button className="ed-btn" type="button" onClick={onClose}>✕</button>
+        </div>
+        <div className="pp-body">{children}</div>
+      </div>
+      <style>{`
+        .pp-wrap{ position:fixed; inset:0; background:rgba(17,24,39,.45); display:grid; place-items:center; z-index:9999 }
+        .pp-card{ width:min(520px, 92vw); background:#fff; border:1px solid #E5E7EB; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.25); }
+        .pp-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 12px 0 16px }
+        .pp-title{ font-weight:800; color:#111827; font-size:16px }
+        .pp-body{ padding:12px 16px 16px; }
+      `}</style>
+    </div>
+  );
+}
