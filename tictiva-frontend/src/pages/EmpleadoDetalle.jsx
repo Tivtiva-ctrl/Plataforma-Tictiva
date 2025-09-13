@@ -1510,6 +1510,41 @@ export default function EmpleadoDetalle() {
 
       const payload = { ...empleado, historial: [...(Array.isArray(empleado.historial) ? empleado.historial : []), nuevaEntrada] };
 
+      // ===== Acciones Documentos: Eliminar y Renombrar (persisten y registran historial)
+const onDeleteDoc = async (id) => {
+  if (!empleado) return;
+  const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
+  const eliminado = lista.find(x => x.id === id);
+  const empAfter = { ...empleado, documentos: lista.filter(x => x.id !== id) };
+
+  await registrarMovimiento(empAfter, {
+    accion: "Eliminación",
+    categoria: "Documentos",
+    detalle: eliminado ? `Se eliminó “${eliminado.nombre}”` : `Se eliminó item ${id}`,
+    actor: "Usuario",
+  });
+  alert("Eliminado.");
+};
+
+const onRenameDoc = async (id, nuevoNombre) => {
+  if (!empleado) return;
+  const hoy = new Date().toISOString().slice(0,10);
+  const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
+  const empAfter = {
+    ...empleado,
+    documentos: lista.map(x => x.id === id ? { ...x, nombre: nuevoNombre, mod: hoy } : x)
+  };
+
+  await registrarMovimiento(empAfter, {
+    accion: "Renombrado",
+    categoria: "Documentos",
+    detalle: `Nuevo nombre: “${nuevoNombre}”`,
+    actor: "Usuario",
+  });
+  alert("Nombre actualizado.");
+};
+
+
       // Persistencia "eterna" en localStorage
       lsSaveEmp(payload);
 
