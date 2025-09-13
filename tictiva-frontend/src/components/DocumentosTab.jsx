@@ -16,11 +16,11 @@ const DocumentosTab = ({
   const [picked, setPicked] = useState(null);
   const fileInputRef = React.useRef(null);
 
-  // Menú ⋯ global (fuera de la tabla)
+  // Menú ⋯ global
   const [menu, setMenu] = useState({ open:false, item:null, x:0, y:0 });
   const menuRef = React.useRef(null);
 
-  // Push: ver carpeta / ver doc
+  // Vistas “pushpop”
   const [openFolder, setOpenFolder] = useState(null);
   const [openDoc, setOpenDoc] = useState(null);
 
@@ -28,7 +28,7 @@ const DocumentosTab = ({
   const [renameTarget, setRenameTarget] = useState(null);
   const [renameText, setRenameText] = useState("");
 
-  // Subir a carpeta
+  // Subir a carpeta desde menú
   const [uploadFolder, setUploadFolder] = useState(null);
   const folderFileInputRef = React.useRef(null);
   const [pickedInFolder, setPickedInFolder] = useState(null);
@@ -40,9 +40,9 @@ const DocumentosTab = ({
     if (showPush && inputRef.current) { inputRef.current.focus(); inputRef.current.select(); }
   }, [showPush]);
 
-  // Cerrar menú por click afuera y Esc
+  // Cierre global: click afuera + Escape (un solo listener, sin duplicados)
   useEffect(() => {
-    const onDown = (e) => {
+    const onDocClick = (e) => {
       if (menu.open && menuRef.current && !menuRef.current.contains(e.target)) {
         setMenu(s => ({...s, open:false}));
       }
@@ -56,33 +56,36 @@ const DocumentosTab = ({
         setOpenDoc(null);
         setRenameTarget(null);
         setUploadFolder(null);
-      }
-      if (e.key === "Enter") {
+      } else if (e.key === "Enter") {
         if (showPush) handleCreateFolder();
         if (renameTarget) confirmRename();
       }
     };
-    document.addEventListener("mousedown", onDown);
+    document.addEventListener("click", onDocClick);
     window.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("click", onDocClick);
       window.removeEventListener("keydown", onKey);
     };
   }, [menu.open, showPush, renameTarget]);
 
   const openMenu = (e, it) => {
+    e.preventDefault(); e.stopPropagation();
     const r = e.currentTarget.getBoundingClientRect();
-    setMenu({ open:true, item:it, x: r.left, y: r.bottom + 6 });
+    const menuW = 260, pad = 8;
+    const x = Math.min(Math.max(pad, r.left), window.innerWidth - menuW - pad);
+    const y = Math.min(r.bottom + 8, window.innerHeight - 10);
+    setMenu({ open:true, item:it, x, y });
   };
 
   const handleCreateFolder = () => {
     const name = (folderName || "").trim();
     if (!name) return;
-    // Soporta ambos casos: handler con o sin parámetro (para no tocar el padre)
     try {
       if (typeof onNuevaCarpeta === "function") {
+        // Si tu handler acepta nombre lo usa, si no, cae al prompt heredado
         if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
-        else onNuevaCarpeta(); // (puede abrir el prompt heredado)
+        else onNuevaCarpeta();
       }
     } finally {
       setShowPush(false);
@@ -132,15 +135,18 @@ const DocumentosTab = ({
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
         <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
         <div style={{display:'flex', gap:8}}>
-          <button className="ed-btn" onClick={()=>{ setFolderName(""); setShowPush(true); }}>Nueva Carpeta</button>
-          <button className="ed-btn primary" onClick={()=>{ setPicked(null); setShowUpload(true); }}>Subir Archivo</button>
+          <button className="ed-btn" onClick={()=>{ setFolderName(""); setShowPush(true); }} type="button">Nueva Carpeta</button>
+          <button className="ed-btn primary" onClick={()=>{ setPicked(null); setShowUpload(true); }} type="button">Subir Archivo</button>
         </div>
       </div>
 
       <table className="asistencia-tabla">
         <thead>
           <tr>
-            <th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th></th>
+            <th>Nombre</th>
+            <th>Fecha de Modificación</th>
+            <th>Tamaño</th>
+            <th style={{width:120, textAlign:'right'}}>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -149,7 +155,9 @@ const DocumentosTab = ({
               <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
-              <td><button className="ed-btn" onClick={(e)=>openMenu(e,it)}>⋯</button></td>
+              <td style={{textAlign:'right'}}>
+                <button className="ed-btn" onClick={(e)=>openMenu(e,it)} type="button" aria-label="Abrir menú de acciones">⋯</button>
+              </td>
             </tr>
           ))}
           {items.length === 0 && (
@@ -165,10 +173,11 @@ const DocumentosTab = ({
           className="kebab-menu"
           style={{ top: menu.y, left: menu.x, position:'fixed' }}
         >
+          <div className="kebab-title">Acciones</div>
           {isFolder(menu.item) ? (
             <>
-              <button onClick={()=>{ setOpenFolder(menu.item); setMenu(s=>({...s, open:false})); }}>📂 Ver</button>
-              <button onClick={()=>{ setUploadFolder(menu.item); setPickedInFolder(null); setMenu(s=>({...s, open:false})); }}>⬆️ Subir a esta carpeta</button>
+              <button onClick={()=>{ setOpenFolder(menu.item); setMenu(s=>({...s, open:false})); }}>📂 Abrir carpeta</button>
+              <button onClick={()=>{ setUploadFolder(menu.item); setPickedInFolder(null); setMenu(s=>({...s, open:false})); }}>⬆️ Subir</button>
               <button onClick={()=>askRename(menu.item)}>✏️ Renombrar</button>
               <button className="danger" onClick={()=>removeItem(menu.item)}>🗑️ Eliminar</button>
             </>
@@ -197,11 +206,12 @@ const DocumentosTab = ({
               aria-label="Nombre de la nueva carpeta"
             />
             <div className="pushpop-actions">
-              <button className="ed-btn" onClick={()=>setShowPush(false)}>Cancelar</button>
+              <button className="ed-btn" onClick={()=>setShowPush(false)} type="button">Cancelar</button>
               <button
                 className="ed-btn primary"
                 onClick={handleCreateFolder}
                 disabled={!folderName.trim()}
+                type="button"
                 style={{opacity: folderName.trim() ? 1 : .6, cursor: folderName.trim() ? 'pointer' : 'not-allowed'}}
               >
                 Crear
@@ -229,7 +239,7 @@ const DocumentosTab = ({
                 style={{display:'none'}}
                 onChange={(e)=>{ const f=e.target.files?.[0]; if (f) setPicked(f); }}
               />
-              <button className="ed-btn" onClick={()=>fileInputRef.current?.click()}>Elegir archivo</button>
+              <button className="ed-btn" onClick={()=>fileInputRef.current?.click()} type="button">Elegir archivo</button>
             </div>
             <div className="picked">
               {picked ? (
@@ -242,8 +252,8 @@ const DocumentosTab = ({
               )}
             </div>
             <div className="pushpop-actions">
-              <button className="ed-btn" onClick={()=>setShowUpload(false)}>Cancelar</button>
-              <button className="ed-btn primary" onClick={()=>{ if (picked) onSubirArchivo?.(picked); setShowUpload(false); setPicked(null); }} disabled={!picked}>Subir</button>
+              <button className="ed-btn" onClick={()=>setShowUpload(false)} type="button">Cancelar</button>
+              <button className="ed-btn primary" onClick={()=>{ if (picked) onSubirArchivo?.(picked); setShowUpload(false); setPicked(null); }} disabled={!picked} type="button">Subir</button>
             </div>
           </div>
         </div>
@@ -260,16 +270,16 @@ const DocumentosTab = ({
             ) : (
               <ul style={{listStyle:'none', margin:0, padding:0, maxHeight:280, overflow:'auto'}}>
                 {childrenOf(openFolder.id).map(doc => (
-                  <li key={doc.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'8px 0', borderTop:'1px solid #2a2a36'}}>
+                  <li key={doc.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'8px 0', borderTop:'1px solid #E5E7EB'}}>
                     <div style={{display:'flex', flexDirection:'column', gap:2}}>
                       <div>📄 <b>{doc.nombre}</b></div>
                       <div className="muted">{doc.mod || "—"} · {doc.tam || "—"}</div>
                     </div>
                     <div style={{display:'flex', gap:6}}>
-                      <button className="ed-btn" onClick={()=>setOpenDoc(doc)}>Ver</button>
-                      <button className="ed-btn" onClick={()=>fakeDownload(doc.nombre)}>Descargar</button>
-                      <button className="ed-btn" onClick={()=>askRename(doc)}>Renombrar</button>
-                      <button className="ed-btn" onClick={()=>onDelete?.(doc.id)}>Eliminar</button>
+                      <button className="ed-btn" onClick={()=>setOpenDoc(doc)} type="button">Ver</button>
+                      <button className="ed-btn" onClick={()=>fakeDownload(doc.nombre)} type="button">Descargar</button>
+                      <button className="ed-btn" onClick={()=>askRename(doc)} type="button">Renombrar</button>
+                      <button className="ed-btn" onClick={()=>onDelete?.(doc.id)} type="button">Eliminar</button>
                     </div>
                   </li>
                 ))}
@@ -284,9 +294,9 @@ const DocumentosTab = ({
                 style={{display:'none'}}
                 onChange={(e)=>{ const f=e.target.files?.[0]; if (f) setPickedInFolder(f); }}
               />
-              <button className="ed-btn" onClick={()=>folderFileInputRef.current?.click()}>Elegir archivo</button>
-              <button className="ed-btn primary" onClick={confirmUploadIntoFolder} disabled={!pickedInFolder}>Subir a “{openFolder.nombre}”</button>
-              <button className="ed-btn" onClick={()=>setOpenFolder(null)}>Cerrar</button>
+              <button className="ed-btn" onClick={()=>folderFileInputRef.current?.click()} type="button">Elegir archivo</button>
+              <button className="ed-btn primary" onClick={confirmUploadIntoFolder} disabled={!pickedInFolder} type="button">Subir a “{openFolder.nombre}”</button>
+              <button className="ed-btn" onClick={()=>setOpenFolder(null)} type="button">Cerrar</button>
             </div>
           </div>
         </div>
@@ -298,16 +308,16 @@ const DocumentosTab = ({
           <div className="pushpop-card" role="document" onClick={(e)=>e.stopPropagation()}>
             <div className="pushpop-title">Documento: {openDoc.nombre}</div>
             <div className="muted" style={{marginBottom:8}}>Últ. mod: {openDoc.mod || "—"} · Tamaño: {openDoc.tam || "—"}</div>
-            <div style={{border:'1px solid #2a2a36', borderRadius:12, padding:12, background:'#13131b'}}>
+            <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
               <div className="muted">Vista previa (mock)</div>
               <div style={{height:160, display:'grid', placeItems:'center'}}>👁️ No hay previsualización disponible</div>
             </div>
             <div className="pushpop-actions">
-              <button className="ed-btn" onClick={()=>askRename(openDoc)}>Renombrar</button>
-              <button className="ed-btn" onClick={()=>fakeDownload(openDoc.nombre)}>Descargar</button>
-              <button className="ed-btn danger" onClick={()=>{ onDelete?.(openDoc.id); setOpenDoc(null); }}>Eliminar</button>
+              <button className="ed-btn" onClick={()=>askRename(openDoc)} type="button">Renombrar</button>
+              <button className="ed-btn" onClick={()=>fakeDownload(openDoc.nombre)} type="button">Descargar</button>
+              <button className="ed-btn danger" onClick={()=>{ onDelete?.(openDoc.id); setOpenDoc(null); }} type="button">Eliminar</button>
               <div style={{flex:1}} />
-              <button className="ed-btn" onClick={()=>setOpenDoc(null)}>Cerrar</button>
+              <button className="ed-btn" onClick={()=>setOpenDoc(null)} type="button">Cerrar</button>
             </div>
           </div>
         </div>
@@ -320,8 +330,8 @@ const DocumentosTab = ({
             <div className="pushpop-title">Renombrar</div>
             <input value={renameText} onChange={(e)=>setRenameText(e.target.value)} className="pushpop-input" aria-label="Nuevo nombre" />
             <div className="pushpop-actions">
-              <button className="ed-btn" onClick={()=>setRenameTarget(null)}>Cancelar</button>
-              <button className="ed-btn primary" onClick={confirmRename} disabled={!renameText.trim()}>Guardar</button>
+              <button className="ed-btn" onClick={()=>setRenameTarget(null)} type="button">Cancelar</button>
+              <button className="ed-btn primary" onClick={confirmRename} disabled={!renameText.trim()} type="button">Guardar</button>
             </div>
           </div>
         </div>
@@ -345,14 +355,14 @@ const DocumentosTab = ({
                 onChange={(e)=>{ const f=e.target.files?.[0]; if (f) setPickedInFolder(f); }}
                 ref={folderFileInputRef}
               />
-              <button className="ed-btn" onClick={()=>folderFileInputRef.current?.click()}>Elegir archivo</button>
+              <button className="ed-btn" onClick={()=>folderFileInputRef.current?.click()} type="button">Elegir archivo</button>
             </div>
             <div className="picked" style={{marginTop:10}}>
               {pickedInFolder ? <div className="picked-file"><span>📄 {pickedInFolder.name}</span><span className="muted">{(pickedInFolder.size/1024/1024).toFixed(1)} MB</span></div> : <div className="muted">Ningún archivo seleccionado</div>}
             </div>
             <div className="pushpop-actions">
-              <button className="ed-btn" onClick={()=>setUploadFolder(null)}>Cancelar</button>
-              <button className="ed-btn primary" onClick={confirmUploadIntoFolder} disabled={!pickedInFolder}>Subir</button>
+              <button className="ed-btn" onClick={()=>setUploadFolder(null)} type="button">Cancelar</button>
+              <button className="ed-btn primary" onClick={confirmUploadIntoFolder} disabled={!pickedInFolder} type="button">Subir</button>
             </div>
           </div>
         </div>
@@ -360,39 +370,40 @@ const DocumentosTab = ({
 
       <style>{`
         .kebab-menu{
-          z-index: 1000;
-          background:#0b0b11; color:#fff; border:1px solid rgba(255,255,255,.08);
-          border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.35);
-          padding:6px; display:flex; flex-direction:column; min-width: 220px;
+          z-index: 999999;
+          background:#fff; color:#111827; border:1px solid #E5E7EB;
+          border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.12);
+          padding:6px; display:flex; flex-direction:column; min-width: 260px;
         }
-        .kebab-menu button{ text-align:left; background:transparent; border:none; color:#fff; padding:8px 10px; border-radius:8px; cursor:pointer; }
-        .kebab-menu button:hover{ background:#181826 }
-        .kebab-menu .danger{ color:#fca5a5 }
+        .kebab-title{ font-weight:800; font-size:12px; color:#6B7280; padding:6px 8px 8px 8px }
+        .kebab-menu button{ text-align:left; background:transparent; border:none; color:#111827; padding:8px 10px; border-radius:8px; cursor:pointer; }
+        .kebab-menu button:hover{ background:#F3F4F6 }
+        .kebab-menu .danger{ color:#B91C1C }
 
         .pushpop-overlay{
-          position:fixed; inset:0; background:rgba(17,24,39,.5);
+          position:fixed; inset:0; background:rgba(17,24,39,.35);
           display:flex; align-items:flex-start; justify-content:center; padding-top:10vh;
-          z-index: 999; animation: pp-fade .12s ease-out;
+          z-index: 999998; animation: pp-fade .12s ease-out;
         }
         .pushpop-card{
           width:min(560px, 92vw);
-          background:#0b0b11; color:#fff; border:1px solid rgba(255,255,255,.08);
-          border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+          background:#fff; color:#111827; border:1px solid #E5E7EB;
+          border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.12);
           padding:18px; transform-origin: top center; animation: pp-drop .16s ease-out;
         }
         .pushpop-title{ font-weight:800; font-size:16px; margin-bottom:10px }
         .pushpop-input{
-          width:100%; border:1px solid #2a2a36; background:#13131b; color:#fff;
+          width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827;
           border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
         }
-        .pushpop-input:focus{ border-color:#6d6dff; box-shadow:0 0 0 3px rgba(109,109,255,.15) }
+        .pushpop-input:focus{ border-color:#93C5FD; box-shadow:0 0 0 3px rgba(59,130,246,.15) }
         .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
 
-        .dropzone{ border:1px dashed #3b3b4a; border-radius:12px; padding:18px; text-align:center; margin-top:4px; background:#111118; }
+        .dropzone{ border:1px dashed #CBD5E1; border-radius:12px; padding:18px; text-align:center; margin-top:4px; background:#FAFAFA; }
         .dropzone-icon{ font-size:22px; margin-bottom:6px }
-        .dropzone-text{ color:#d1d5db; margin-bottom:10px }
-        .muted{ color:#9CA3AF; font-size:12px }
-        .picked-file{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border:1px solid #2a2a36; background:#13131b; border-radius:10px; }
+        .dropzone-text{ color:#374151; margin-bottom:10px }
+        .muted{ color:#6B7280; font-size:12px }
+        .picked-file{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border:1px solid #E5E7EB; background:#fff; border-radius:10px; }
 
         @keyframes pp-fade { from{opacity:0} to{opacity:1} }
         @keyframes pp-drop { from{opacity:0; transform: translateY(-8px) scale(.98)} to{opacity:1; transform: translateY(0) scale(1)} }
