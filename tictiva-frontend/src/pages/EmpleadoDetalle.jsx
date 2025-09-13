@@ -556,30 +556,10 @@ const DocumentosTab = ({
         </tbody>
       </table>
 
-      {/* ===== Menú (PushPop) ===== */}
-      {menuItem && (
-        <PushPop title="Acciones" onClose={closeAll}>
-          {isFolder(menuItem) ? (
-            <div style={{display:'grid', gap:8}}>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'folder', data:menuItem}); setMenuItem(null); }}>📂 Abrir carpeta</button>
-              <button className="ed-btn" type="button" onClick={()=>{ onSubirArchivo?.(undefined, menuItem.id); closeAll(); }}>⬆️ Subir aquí</button>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
-              <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
-              <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
-            </div>
-          ) : (
-            <div style={{display:'grid', gap:8}}>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'doc', data:menuItem}); setMenuItem(null); }}>👁️ Ver</button>
-              <button className="ed-btn" type="button" onClick={()=>{ humanDownload(menuItem.nombre); closeAll(); }}>⬇️ Descargar</button>
-              <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'rename', data:menuItem}); setInputVal(menuItem.nombre || ""); setMenuItem(null); }}>✏️ Renombrar</button>
-              <button className="ed-btn" type="button" onClick={()=>doDelete(menuItem)}>🗑️ Eliminar</button>
-              <div style={{display:'flex', justifyContent:'flex-end'}}><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
-            </div>
-          )}
-        </PushPop>
-      )}
+      
+      
 
-      {/* ===== PushPop: crear carpeta ===== */}
+     {/* ===== PushPop: crear carpeta ===== */}
       {modal?.type === "create" && (
         <PushPop title="Nueva carpeta" onClose={closeAll}>
           <input className="pushpop-input" placeholder="Ej. Contratos 2025" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
