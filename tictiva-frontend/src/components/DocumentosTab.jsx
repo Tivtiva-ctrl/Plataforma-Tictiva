@@ -2,14 +2,14 @@
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
-  onSubirArchivo,   // puede ignorar el 2º arg (parentId) si aún no lo usas
+  onSubirArchivo,
   onDelete,
   onRename,
 }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  const [menuId, setMenuId] = React.useState(null);       // <-- popover anclado
-  const [modal, setModal]   = React.useState(null);       // create | folder | doc | rename
+  const [menuId, setMenuId] = React.useState(null);     // id del item con menú abierto
+  const [modal, setModal]   = React.useState(null);     // create | folder | doc | rename
   const [inputVal, setInputVal] = React.useState("");
   const topFileRef = React.useRef(null);
   const menuRef = React.useRef(null);
@@ -20,7 +20,7 @@ const DocumentosTab = ({
   const closeMenu = () => setMenuId(null);
   const closeAll  = () => { closeMenu(); setModal(null); setInputVal(""); };
 
-  // Cerrar al click fuera / scroll / resize / ESC
+  // Cerrar menú al hacer click fuera / scroll / resize / ESC
   React.useEffect(() => {
     const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) closeMenu(); };
     const onKey  = (e) => { if (e.key === "Escape") closeMenu(); };
@@ -104,7 +104,7 @@ const DocumentosTab = ({
         <tbody>
           {items.map((it) => (
             <tr key={it.id}>
-              {/* SIN emojis en la lista */}
+              {/* sin emojis */}
               <td style={{fontWeight:600}}>{it.nombre}</td>
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
@@ -118,7 +118,7 @@ const DocumentosTab = ({
                   onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuId(prev => prev === it.id ? null : it.id); }}
                 >⋯</button>
 
-                {/* POPOVER pequeño */}
+                {/* menú chico anclado */}
                 {menuId === it.id && (
                   <div ref={menuRef} className="mini-menu" role="menu" aria-label="Acciones">
                     {isFolder(it) ? (
@@ -162,31 +162,28 @@ const DocumentosTab = ({
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
-          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
-            <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>Subir aquí</button>
-          </div>
-          {childrenOf(modal.data?.id).length === 0 ? (
-            <div className="muted">Esta carpeta está vacía.</div>
-          ) : (
-            <table className="asistencia-tabla">
-              <thead><tr><th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th style={{width:120, textAlign:'right'}}>Acciones</th></tr></thead>
-              <tbody>
-                {childrenOf(modal.data?.id).map(child => (
-                  <tr key={child.id}>
-                    <td style={{fontWeight:600}}>{child.nombre}</td>
-                    <td>{child.mod || "—"}</td>
-                    <td>{child.tam || "—"}</td>
-                    <td style={{textAlign:'right'}}>
-                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
-                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
-                      <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
-                      <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          {childrenOf(modal.data?.id).length === 0
+            ? <div className="muted">Esta carpeta está vacía.</div>
+            : (
+              <table className="asistencia-tabla">
+                <thead><tr><th>Nombre</th><th>Fecha de Modificación</th><th>Tamaño</th><th style={{width:120, textAlign:'right'}}>Acciones</th></tr></thead>
+                <tbody>
+                  {childrenOf(modal.data?.id).map(child => (
+                    <tr key={child.id}>
+                      <td style={{fontWeight:600}}>{child.nombre}</td>
+                      <td>{child.mod || "—"}</td>
+                      <td>{child.tam || "—"}</td>
+                      <td style={{textAlign:'right'}}>
+                        <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
+                        <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
+                        <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
+                        <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
@@ -220,7 +217,7 @@ const DocumentosTab = ({
 
       <style>{`
         .muted{ color:#6B7280; font-size:12px }
-        .mini-actions-cell{ position:relative; text-align:right; }
+        .mini-actions-cell{ position:relative; text-align:right; overflow:visible; }
         .mini-menu{
           position:absolute; top:calc(100% + 6px); right:0;
           width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px;

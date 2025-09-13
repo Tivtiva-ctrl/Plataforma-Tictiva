@@ -337,3 +337,4 @@ input::placeholder, textarea::placeholder { color: #8c8c8c !important; }
 .navbar-user { color: #374151; }
 .navbar-btn-logout { border: 1px solid #e5e7eb; background: #fff; color: #111827; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 .navbar-btn-logout:hover { background: #f9fafb; }
+.ed-card, .asistencia-tabla { overflow: visible !important; }
