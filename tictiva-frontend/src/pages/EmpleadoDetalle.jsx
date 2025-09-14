@@ -1501,19 +1501,50 @@ export default function EmpleadoDetalle() {
   };
 
   const onSubirArchivo = async (fileFromUI, parentId = null) => {
-    if (!empleado) return;
-    let file = fileFromUI;
-    if (!file) {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
-      const p = new Promise((resolve) => {
-        input.onchange = (e) => resolve(e.target.files?.[0] || null);
-      });
+  if (!empleado) return;
+  let file = fileFromUI;
+  if (!file) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
+    const p = new Promise((resolve) => {
+      input.onchange = (e) => resolve(e.target.files?.[0] || null);
+    });
+    input.click();
+    file = await p;
+    if (!file) return;
+  }
+
+  const hoy = new Date().toISOString().slice(0,10);
+  const url = URL.createObjectURL(file);           // 👈 URL para previsualizar
+  const nuevo = {
+    id: `d_${Date.now()}`,
+    tipo: "file",
+    nombre: file.name,
+    mod: hoy,
+    tam: humanSize(file.size),
+    parentId: parentId || "",
+    mime: file.type || "",                          // 👈 MIME
+    url,                                            // 👈 Object URL
+  };
+
+  const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
+
+  await registrarMovimiento(empAfter, {
+    accion: "Subida de archivo",
+    categoria: "Documentos",
+    detalle: `Se subió “${file.name}”${parentId ? ` a la carpeta ${parentId}` : ""}`,
+    actor: "Usuario",
+  });
+
+  alert("Archivo agregado (mock).");
+};
+
+      };
       input.click();
       file = await p;
       if (!file) return;
-    }
+    
     const hoy = new Date().toISOString().slice(0,10);
     const nuevo = {
       id: `d_${Date.now()}`,
@@ -1531,7 +1562,7 @@ export default function EmpleadoDetalle() {
       actor: "Usuario",
     });
     alert("Archivo agregado (mock).");
-  };
+  ;
 
   // IMPORTANTE: handlers de rename/delete al nivel del componente (NO dentro de guardarEmpleado)
   const onDeleteDoc = async (id) => {
@@ -1967,4 +1998,4 @@ export default function EmpleadoDetalle() {
       `}</style>
     </div>
   );
-}
+
