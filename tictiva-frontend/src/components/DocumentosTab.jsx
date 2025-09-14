@@ -1,4 +1,4 @@
-/* ======================= Documentos (Tictiva – con Acciones) ====================== */
+/* ======================= Documentos (Tictiva – con Acciones + Preview) ====================== */
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
@@ -16,6 +16,39 @@ const DocumentosTab = ({
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
   const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
 
+  // =================== Helpers para PREVIEW ===================
+  const humanSize = (bytes = 0) => {
+    if (bytes == null || bytes === "—") return "—";
+    if (typeof bytes === "string" && /\d+\s?(B|KB|MB|GB)/i.test(bytes)) return bytes; // ya viene humano
+    const n = Number(bytes);
+    if (!isFinite(n) || n <= 0) return "—";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(n) / Math.log(k));
+    return `${(n / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
+  const extFromName = (name = "") => {
+    const ix = name.lastIndexOf(".");
+    return ix !== -1 ? name.slice(ix + 1).toLowerCase() : "";
+  };
+
+  const isOffice = (ext) => ["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext);
+  const isImage = (mime) => (mime || "").startsWith("image/");
+  const isPDF = (mime, ext) => (mime || "").includes("pdf") || ext === "pdf";
+  const isTextLike = (mime, ext) =>
+    (mime || "").startsWith("text/") || ["csv", "txt", "log"].includes(ext);
+
+  // Obtén URL de visualización (preferimos previewUrl > url)
+  const getPreviewUrl = (file) => {
+    if (!file) return null;
+    if (file.previewUrl) return file.previewUrl;
+    if (file.url) return file.url;
+    // Si solo tienes un path, aquí podrías construir tu endpoint:
+    // return `/api/files/${encodeURIComponent(file.path)}`
+    return null;
+  };
+
   // Cerrar menú ⋯ al hacer click fuera
   React.useEffect(() => {
     if (!menuItem) return;
@@ -27,12 +60,21 @@ const DocumentosTab = ({
   // ===== helpers =====
   const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); };
 
-  const humanDownload = (name) => {
+  const humanDownload = (name, url) => {
+    // Si tienes URL real, usa esa para descargar:
+    if (url) {
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noreferrer";
+      a.download = name || "archivo";
+      a.click();
+      return;
+    }
+    // Placeholder si no hay URL:
     const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    const mockUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = name || "archivo.txt"; a.click();
-    URL.revokeObjectURL(url);
+    a.href = mockUrl; a.download = name || "archivo.txt"; a.click();
+    URL.revokeObjectURL(mockUrl);
   };
 
   const doCreateFolder = () => {
@@ -76,7 +118,7 @@ const DocumentosTab = ({
           <input
             ref={topFileRef}
             type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt,.csv"
             style={{display:'none'}}
             onChange={(e)=>{
               const f = e.target.files?.[0];
@@ -105,7 +147,7 @@ const DocumentosTab = ({
             <tr key={it.id}>
               <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
               <td>{it.mod || "—"}</td>
-              <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
+              <td>{isFolder(it) ? "—" : (humanSize(it.tam))}</td>
 
               {/* Botón ⋯ + mini menú */}
               <td className="mini-actions-cell" style={{ textAlign:'right', position:'relative' }}>
@@ -128,7 +170,12 @@ const DocumentosTab = ({
                     ) : (
                       <>
                         <button className="mini-menu-item" onClick={()=>{ setModal({type:'doc', data:it}); setMenuItem(null); }}>Ver</button>
-                        <button className="mini-menu-item" onClick={()=>{ humanDownload(it.nombre); setMenuItem(null); }}>Descargar</button>
+                        <button
+                          className="mini-menu-item"
+                          onClick={()=>{ humanDownload(it.nombre, it.url || it.previewUrl); setMenuItem(null); }}
+                        >
+                          Descargar
+                        </button>
                         <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
                         <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
                       </>
@@ -181,10 +228,10 @@ const DocumentosTab = ({
                   <tr key={child.id}>
                     <td style={{fontWeight:600}}>📄 {child.nombre}</td>
                     <td>{child.mod || "—"}</td>
-                    <td>{child.tam || "—"}</td>
+                    <td>{humanSize(child.tam) || "—"}</td>
                     <td style={{textAlign:'right'}}>
                       <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
-                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
+                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre, child.url || child.previewUrl)}>Descargar</button>
                       <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
                       <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
                     </td>
@@ -198,19 +245,98 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver documento ===== */}
+      {/* ===== PushPop: ver documento (CON PREVIEW REAL) ===== */}
       {modal?.type === "doc" && (
         <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
-          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
-          <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
-            <div className="muted">Vista previa (mock)</div>
-            <div style={{height:160, display:'grid', placeItems:'center'}}>No hay previsualización disponible</div>
-          </div>
-          <div className="pushpop-actions">
-            <button className="ed-btn" onClick={()=>{ humanDownload(modal.data?.nombre || "archivo"); }}>Descargar</button>
-            <div style={{flex:1}} />
-            <button className="ed-btn" onClick={closeAll}>Cerrar</button>
-          </div>
+          {(() => {
+            const file = modal.data || {};
+            const mime = file.mimeType || file.mimetype || ""; // por si llega con otra key
+            const ext = extFromName(file.nombre || "");
+            const rawUrl = getPreviewUrl(file);
+            const officeViewer = rawUrl && isOffice(ext)
+              ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`
+              : null;
+            const googleViewer = rawUrl
+              ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}`
+              : null;
+
+            return (
+              <>
+                <div className="muted" style={{marginBottom:8}}>
+                  Últ. mod: {file.mod || "—"} · Tamaño: {humanSize(file.tam)}
+                </div>
+
+                <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
+                  {/* Imágenes */}
+                  {isImage(mime) && rawUrl && (
+                    <img
+                      src={rawUrl}
+                      alt={file.nombre}
+                      style={{maxHeight: '60vh', width:'auto', display:'block', margin:'0 auto', borderRadius:10, objectFit:'contain'}}
+                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
+                    />
+                  )}
+
+                  {/* PDF */}
+                  {isPDF(mime, ext) && rawUrl && (
+                    <iframe
+                      title="PDF"
+                      src={rawUrl}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
+                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
+                    />
+                  )}
+
+                  {/* Office */}
+                  {isOffice(ext) && officeViewer && (
+                    <iframe
+                      title="Office"
+                      src={officeViewer}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
+                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
+                    />
+                  )}
+
+                  {/* Texto / CSV */}
+                  {isTextLike(mime, ext) && rawUrl && (
+                    <iframe
+                      title="Texto"
+                      src={rawUrl}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10, background:'#fff'}}
+                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
+                    />
+                  )}
+
+                  {/* Fallback genérico con Google Viewer (sirve también para PDF si el server bloquea embed) */}
+                  {!isImage(mime) && !isPDF(mime, ext) && !isOffice(ext) && !isTextLike(mime, ext) && googleViewer && (
+                    <iframe
+                      title="Visor genérico"
+                      src={googleViewer}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
+                    />
+                  )}
+
+                  {/* Mensaje si NO se pudo mostrar nada */}
+                  {(!rawUrl) && (
+                    <div style={{height:160, display:'grid', placeItems:'center'}} className="muted">
+                      No hay previsualización disponible (falta URL accesible).
+                    </div>
+                  )}
+                </div>
+
+                <div className="pushpop-actions">
+                  <button
+                    className="ed-btn"
+                    onClick={()=>{ humanDownload(file.nombre || "archivo", rawUrl); }}
+                  >
+                    Descargar
+                  </button>
+                  <div style={{flex:1}} />
+                  <button className="ed-btn" onClick={closeAll}>Cerrar</button>
+                </div>
+              </>
+            );
+          })()}
         </PushPop>
       )}
 
