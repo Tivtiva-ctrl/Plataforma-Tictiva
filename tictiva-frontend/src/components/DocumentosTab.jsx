@@ -1,4 +1,5 @@
 import React from "react";
+import PushPop from "./PushPop";
 // Asegúrate de tener disponible el componente PushPop en tu proyecto.
 // Si tu bucket de Supabase es PRIVADO, expón el cliente en window.supabase (ver notas al final).
 
@@ -88,7 +89,20 @@ const DocumentosTab = ({
     closeAll();
   };
 
-  // --- RESOLVER URL DE PREVIEW (Drive / Supabase privado / genérico)
+  // Helpers de storage (bucket/path heurísticos + URL pública Supabase)
+const guessBucket = (it) => it?.bucket || it?.bucketName || it?.storageBucket || it?.bucket_id || null;
+const guessPath = (it) => it?.path || it?.filePath || it?.storagePath || it?.key || it?.objectKey || null;
+const getEnvSupabaseUrl = () => {
+  try { return import.meta.env?.VITE_SUPABASE_URL || ""; } catch { /* no-op en build servers sin import.meta */ }
+  return (typeof process !== "undefined" ? (process.env?.VITE_SUPABASE_URL || process.env?.REACT_APP_SUPABASE_URL) : "") || "";
+};
+const buildPublicSupabaseUrl = (bucket, path) => {
+  const base = (getEnvSupabaseUrl() || "").replace(/\/$/, "");
+  if (!base || !bucket || !path) return null;
+  return `${base}/storage/v1/object/public/${encodeURIComponent(bucket)}/${encodeURIComponent(path)}`;
+};
+
+// --- RESOLVER URL DE PREVIEW (Drive / Supabase privado / genérico)
   const resolvePreview = async (it) => {
     // 1) Si ya hay url/previewUrl, listo
     if (it.previewUrl || it.url) return { ...it, previewUrl: it.previewUrl || it.url };
@@ -101,17 +115,25 @@ const DocumentosTab = ({
       };
     }
 
-    // 3) Supabase privado → firmar si hay cliente disponible
-    if (it?.bucket && it?.path && window?.supabase?.storage?.from) {
-      try {
-        const { data, error } = await window.supabase
-          .storage.from(it.bucket)
-          .createSignedUrl(it.path, 3600); // 1 hora
-        if (data?.signedUrl) return { ...it, previewUrl: data.signedUrl };
-        if (error) console.warn("[Tictiva] createSignedUrl error:", error);
-      } catch (e) {
-        console.warn("[Tictiva] Excepción firmando URL:", e);
+    // 3) Supabase (privado o público)
+    const bucket = guessBucket(it);
+    const path = guessPath(it);
+    if (bucket && path) {
+      // 3a) PRIVADO con cliente -> signed URL
+      if (window?.supabase?.storage?.from) {
+        try {
+          const { data, error } = await window.supabase
+            .storage.from(bucket)
+            .createSignedUrl(path, 3600); // 1 hora
+          if (data?.signedUrl) return { ...it, previewUrl: data.signedUrl };
+          if (error) console.warn("[Tictiva] createSignedUrl error:", error);
+        } catch (e) {
+          console.warn("[Tictiva] Excepción firmando URL:", e);
+        }
       }
+      // 3b) PÚBLICO -> construir URL pública
+      const pub = buildPublicSupabaseUrl(bucket, path);
+      if (pub) return { ...it, previewUrl: pub };
     }
 
     // 4) Otras propiedades comunes
