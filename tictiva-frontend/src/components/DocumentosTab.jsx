@@ -1,4 +1,7 @@
-/* ======================= Documentos (Tictiva – con Acciones + Preview robusto) ====================== */
+// DocumentosTab.jsx
+import React from "react";
+// Asegúrate de tener disponible el componente PushPop en tu proyecto.
+
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
@@ -12,6 +15,7 @@ const DocumentosTab = ({
   const [modal, setModal] = React.useState(null);       // {type: 'create'|'folder'|'doc'|'rename', data?:any}
   const [inputVal, setInputVal] = React.useState("");
   const topFileRef = React.useRef(null); // input oculto del botón "Subir Archivo" del header
+  const [loadingPreview, setLoadingPreview] = React.useState(false);
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
   const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
@@ -30,10 +34,11 @@ const DocumentosTab = ({
     const ix = name.lastIndexOf(".");
     return ix !== -1 ? name.slice(ix + 1).toLowerCase() : "";
   };
-  const isOffice = (ext) => ["doc","docx","xls","xlsx","ppt","pptx"].includes(ext);
+  const getExt = (file) => file?.ext || extFromName(file?.nombre || file?.name || "");
+  const isOffice = (ext) => ["doc","docx","xls","xlsx","ppt","pptx"].includes((ext||"").toLowerCase());
   const isImage = (mime) => (mime || "").startsWith("image/");
-  const isPDF = (mime, ext) => (mime || "").includes("pdf") || ext === "pdf";
-  const isTextLike = (mime, ext) => (mime || "").startsWith("text/") || ["csv","txt","log"].includes(ext);
+  const isPDF = (mime, ext) => (mime || "").includes("pdf") || (ext || "").toLowerCase() === "pdf";
+  const isTextLike = (mime, ext) => (mime || "").startsWith("text/") || ["csv","txt","log"].includes((ext||"").toLowerCase());
 
   const getMime = (file) => file?.mimeType || file?.mimetype || file?.mime || file?.contentType || "";
   const getPreviewUrl = (file) => file?.previewUrl || file?.url || null;
@@ -81,6 +86,54 @@ const DocumentosTab = ({
     if (typeof onDelete === "function") onDelete(it.id);
     else window.alert("Eliminar (mock): implementa onDelete si quieres persistir.");
     closeAll();
+  };
+
+  // === Resolver URL de previsualización al abrir ===
+  const resolvePreview = async (it) => {
+    // 1) Si ya hay url/previewUrl, listo.
+    const existing = getPreviewUrl(it);
+    if (existing) return { ...it, previewUrl: existing };
+
+    // 2) Google Drive por driveId
+    if (it?.driveId) {
+      return {
+        ...it,
+        previewUrl: `https://drive.google.com/uc?export=download&id=${encodeURIComponent(it.driveId)}`
+      };
+    }
+
+    // 3) Supabase privado: firmado si hay cliente global
+    if (it?.bucket && it?.path && window?.supabase?.storage?.from) {
+      try {
+        const { data, error } = await window.supabase
+          .storage.from(it.bucket)
+          .createSignedUrl(it.path, 3600); // 1 hora
+
+        if (error) {
+          console.warn("[Tictiva] Error createSignedUrl:", error);
+        }
+        if (data?.signedUrl) {
+          return { ...it, previewUrl: data.signedUrl };
+        }
+      } catch (e) {
+        console.warn("[Tictiva] Excepción firmando URL:", e);
+      }
+    }
+
+    // 4) Si tienes publicUrl o link genérico
+    if (it?.publicUrl) return { ...it, previewUrl: it.publicUrl };
+    if (it?.link) return { ...it, previewUrl: it.link };
+
+    // 5) Sin forma de resolver
+    console.warn("[Tictiva] Doc sin URL accesible para preview:", it);
+    return it;
+  };
+
+  const openDoc = async (it) => {
+    setLoadingPreview(true);
+    const withUrl = await resolvePreview(it);
+    setLoadingPreview(false);
+    setModal({ type: 'doc', data: withUrl });
   };
 
   return (
@@ -144,7 +197,7 @@ const DocumentosTab = ({
                       </>
                     ) : (
                       <>
-                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'doc', data:it}); setMenuItem(null); }}>Ver</button>
+                        <button className="mini-menu-item" onClick={()=>{ openDoc(it); setMenuItem(null); }}>Ver</button>
                         <button className="mini-menu-item" onClick={()=>{ humanDownload(it.nombre, getPreviewUrl(it)); setMenuItem(null); }}>Descargar</button>
                         <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
                         <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
@@ -198,7 +251,7 @@ const DocumentosTab = ({
                     <td>{child.mod || "—"}</td>
                     <td>{humanSize(child.tam) || "—"}</td>
                     <td style={{textAlign:'right'}}>
-                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
+                      <button className="ed-btn" onClick={()=>openDoc(child)}>Ver</button>
                       <button className="ed-btn" onClick={()=>humanDownload(child.nombre, getPreviewUrl(child))}>Descargar</button>
                       <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
                       <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
@@ -218,10 +271,9 @@ const DocumentosTab = ({
           {(() => {
             const file = modal.data || {};
             const mime = getMime(file);
-            const ext = extFromName(file.nombre || "");
+            const ext = getExt(file);
             const rawUrl = getPreviewUrl(file);
 
-            // URLs de visores (requieren URL accesible públicamente, incluso con token firmado)
             const gview = rawUrl ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}` : null;
             const office = rawUrl && isOffice(ext) ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}` : null;
 
@@ -236,8 +288,14 @@ const DocumentosTab = ({
                 </div>
 
                 <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
+                  {loadingPreview && (
+                    <div style={{height:120, display:'grid', placeItems:'center'}} className="muted">
+                      Cargando previsualización…
+                    </div>
+                  )}
+
                   {/* 1) Imágenes */}
-                  {isImage(mime) && rawUrl && (
+                  {!loadingPreview && isImage(mime) && rawUrl && (
                     <img
                       src={rawUrl}
                       alt={file.nombre}
@@ -247,7 +305,7 @@ const DocumentosTab = ({
                   )}
 
                   {/* 2) Office (usar Office Online primero) */}
-                  {isOffice(ext) && office && (
+                  {!loadingPreview && isOffice(ext) && office && (
                     <iframe
                       title="Office viewer"
                       src={office}
@@ -255,8 +313,8 @@ const DocumentosTab = ({
                     />
                   )}
 
-                  {/* 3) PDF (usar Google Viewer primero para esquivar headers problemáticos) */}
-                  {isPDF(mime, ext) && gview && (
+                  {/* 3) PDF (usar Google Viewer primero) */}
+                  {!loadingPreview && isPDF(mime, ext) && gview && (
                     <iframe
                       title="PDF (Google viewer)"
                       src={gview}
@@ -265,7 +323,7 @@ const DocumentosTab = ({
                   )}
 
                   {/* 4) Texto / CSV (directo) */}
-                  {isTextLike(mime, ext) && rawUrl && (
+                  {!loadingPreview && isTextLike(mime, ext) && rawUrl && (
                     <iframe
                       title="Texto"
                       src={rawUrl}
@@ -274,7 +332,7 @@ const DocumentosTab = ({
                   )}
 
                   {/* 5) Fallback genérico con Google Viewer */}
-                  {!isImage(mime) && !isOffice(ext) && !isPDF(mime, ext) && gview && (
+                  {!loadingPreview && !isImage(mime) && !isOffice(ext) && !isPDF(mime, ext) && gview && (
                     <iframe
                       title="Visor genérico"
                       src={gview}
@@ -283,7 +341,7 @@ const DocumentosTab = ({
                   )}
 
                   {/* 6) Sin URL accesible */}
-                  {!rawUrl && (
+                  {!loadingPreview && !rawUrl && (
                     <div style={{height:160, display:'grid', placeItems:'center'}} className="muted">
                       No hay previsualización disponible (falta URL accesible).
                     </div>
@@ -344,3 +402,5 @@ const DocumentosTab = ({
     </div>
   );
 };
+
+export default DocumentosTab;
