@@ -1,4 +1,4 @@
-/* ======================= Documentos (Tictiva – con Acciones + Preview) ====================== */
+/* ======================= Documentos (Tictiva – con Acciones + Preview robusto) ====================== */
 const DocumentosTab = ({
   empleado,
   onNuevaCarpeta,
@@ -16,38 +16,27 @@ const DocumentosTab = ({
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
   const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
 
-  // =================== Helpers para PREVIEW ===================
+  // ======== PREVIEW UTILS ========
   const humanSize = (bytes = 0) => {
     if (bytes == null || bytes === "—") return "—";
-    if (typeof bytes === "string" && /\d+\s?(B|KB|MB|GB)/i.test(bytes)) return bytes; // ya viene humano
+    if (typeof bytes === "string" && /\d+\s?(B|KB|MB|GB)/i.test(bytes)) return bytes;
     const n = Number(bytes);
     if (!isFinite(n) || n <= 0) return "—";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(n) / Math.log(k));
-    return `${(n / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+    const k = 1024, sizes = ["B","KB","MB","GB"];
+    const i = Math.floor(Math.log(n)/Math.log(k));
+    return `${(n/Math.pow(k,i)).toFixed(1)} ${sizes[i]}`;
   };
-
   const extFromName = (name = "") => {
     const ix = name.lastIndexOf(".");
     return ix !== -1 ? name.slice(ix + 1).toLowerCase() : "";
   };
-
-  const isOffice = (ext) => ["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext);
+  const isOffice = (ext) => ["doc","docx","xls","xlsx","ppt","pptx"].includes(ext);
   const isImage = (mime) => (mime || "").startsWith("image/");
   const isPDF = (mime, ext) => (mime || "").includes("pdf") || ext === "pdf";
-  const isTextLike = (mime, ext) =>
-    (mime || "").startsWith("text/") || ["csv", "txt", "log"].includes(ext);
+  const isTextLike = (mime, ext) => (mime || "").startsWith("text/") || ["csv","txt","log"].includes(ext);
 
-  // Obtén URL de visualización (preferimos previewUrl > url)
-  const getPreviewUrl = (file) => {
-    if (!file) return null;
-    if (file.previewUrl) return file.previewUrl;
-    if (file.url) return file.url;
-    // Si solo tienes un path, aquí podrías construir tu endpoint:
-    // return `/api/files/${encodeURIComponent(file.path)}`
-    return null;
-  };
+  const getMime = (file) => file?.mimeType || file?.mimetype || file?.mime || file?.contentType || "";
+  const getPreviewUrl = (file) => file?.previewUrl || file?.url || null;
 
   // Cerrar menú ⋯ al hacer click fuera
   React.useEffect(() => {
@@ -61,15 +50,7 @@ const DocumentosTab = ({
   const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); };
 
   const humanDownload = (name, url) => {
-    // Si tienes URL real, usa esa para descargar:
-    if (url) {
-      const a = document.createElement("a");
-      a.href = url; a.target = "_blank"; a.rel = "noreferrer";
-      a.download = name || "archivo";
-      a.click();
-      return;
-    }
-    // Placeholder si no hay URL:
+    if (url) { const a = document.createElement("a"); a.href = url; a.target="_blank"; a.rel="noreferrer"; a.download = name || "archivo"; a.click(); return; }
     const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
     const mockUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -82,13 +63,9 @@ const DocumentosTab = ({
     if (!name) return;
     try {
       if (typeof onNuevaCarpeta === "function") {
-        // si tu handler acepta 1 arg (nombre), lo uso; si no, lo llamo sin args
-        if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
-        else onNuevaCarpeta();
+        if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name); else onNuevaCarpeta();
       }
-    } finally {
-      closeAll();
-    }
+    } finally { closeAll(); }
   };
 
   const doRename = () => {
@@ -147,9 +124,7 @@ const DocumentosTab = ({
             <tr key={it.id}>
               <td style={{fontWeight:600}}>{isFolder(it) ? "📁" : "📄"} {it.nombre}</td>
               <td>{it.mod || "—"}</td>
-              <td>{isFolder(it) ? "—" : (humanSize(it.tam))}</td>
-
-              {/* Botón ⋯ + mini menú */}
+              <td>{isFolder(it) ? "—" : humanSize(it.tam)}</td>
               <td className="mini-actions-cell" style={{ textAlign:'right', position:'relative' }}>
                 <button
                   className="ed-btn"
@@ -170,12 +145,7 @@ const DocumentosTab = ({
                     ) : (
                       <>
                         <button className="mini-menu-item" onClick={()=>{ setModal({type:'doc', data:it}); setMenuItem(null); }}>Ver</button>
-                        <button
-                          className="mini-menu-item"
-                          onClick={()=>{ humanDownload(it.nombre, it.url || it.previewUrl); setMenuItem(null); }}
-                        >
-                          Descargar
-                        </button>
+                        <button className="mini-menu-item" onClick={()=>{ humanDownload(it.nombre, getPreviewUrl(it)); setMenuItem(null); }}>Descargar</button>
                         <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
                         <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
                       </>
@@ -202,15 +172,13 @@ const DocumentosTab = ({
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver carpeta (con hijos por parentId) ===== */}
+      {/* ===== PushPop: ver carpeta ===== */}
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
-
           <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
             <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>Subir aquí</button>
           </div>
-
           {childrenOf(modal.data?.id).length === 0 ? (
             <div className="muted">Esta carpeta está vacía.</div>
           ) : (
@@ -231,7 +199,7 @@ const DocumentosTab = ({
                     <td>{humanSize(child.tam) || "—"}</td>
                     <td style={{textAlign:'right'}}>
                       <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
-                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre, child.url || child.previewUrl)}>Descargar</button>
+                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre, getPreviewUrl(child))}>Descargar</button>
                       <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
                       <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
                     </td>
@@ -240,84 +208,82 @@ const DocumentosTab = ({
               </tbody>
             </table>
           )}
-
           <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver documento (CON PREVIEW REAL) ===== */}
+      {/* ===== PushPop: ver documento (PREVIEW ROBUSTO + DEBUG) ===== */}
       {modal?.type === "doc" && (
         <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           {(() => {
             const file = modal.data || {};
-            const mime = file.mimeType || file.mimetype || ""; // por si llega con otra key
+            const mime = getMime(file);
             const ext = extFromName(file.nombre || "");
             const rawUrl = getPreviewUrl(file);
-            const officeViewer = rawUrl && isOffice(ext)
-              ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`
-              : null;
-            const googleViewer = rawUrl
-              ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}`
-              : null;
+
+            // URLs de visores (requieren URL accesible públicamente, incluso con token firmado)
+            const gview = rawUrl ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}` : null;
+            const office = rawUrl && isOffice(ext) ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}` : null;
 
             return (
               <>
+                {/* DEBUG */}
                 <div className="muted" style={{marginBottom:8}}>
-                  Últ. mod: {file.mod || "—"} · Tamaño: {humanSize(file.tam)}
+                  Últ. mod: {file.mod || "—"} · Tamaño: {humanSize(file.tam)}<br/>
+                  <span style={{fontSize:11}}>
+                    <b>Debug:</b> ext=<code>{ext || "—"}</code> · mime=<code>{mime || "—"}</code> · url={(rawUrl ? <a href={rawUrl} target="_blank" rel="noreferrer">abrir</a> : "—")}
+                  </span>
                 </div>
 
                 <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
-                  {/* Imágenes */}
+                  {/* 1) Imágenes */}
                   {isImage(mime) && rawUrl && (
                     <img
                       src={rawUrl}
                       alt={file.nombre}
-                      style={{maxHeight: '60vh', width:'auto', display:'block', margin:'0 auto', borderRadius:10, objectFit:'contain'}}
+                      style={{maxHeight:'60vh', width:'auto', display:'block', margin:'0 auto', borderRadius:10, objectFit:'contain'}}
                       onError={(e)=>{ e.currentTarget.style.display='none'; }}
                     />
                   )}
 
-                  {/* PDF */}
-                  {isPDF(mime, ext) && rawUrl && (
+                  {/* 2) Office (usar Office Online primero) */}
+                  {isOffice(ext) && office && (
                     <iframe
-                      title="PDF"
-                      src={rawUrl}
+                      title="Office viewer"
+                      src={office}
                       style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
-                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
                     />
                   )}
 
-                  {/* Office */}
-                  {isOffice(ext) && officeViewer && (
+                  {/* 3) PDF (usar Google Viewer primero para esquivar headers problemáticos) */}
+                  {isPDF(mime, ext) && gview && (
                     <iframe
-                      title="Office"
-                      src={officeViewer}
+                      title="PDF (Google viewer)"
+                      src={gview}
                       style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
-                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
                     />
                   )}
 
-                  {/* Texto / CSV */}
+                  {/* 4) Texto / CSV (directo) */}
                   {isTextLike(mime, ext) && rawUrl && (
                     <iframe
                       title="Texto"
                       src={rawUrl}
                       style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10, background:'#fff'}}
-                      onError={(e)=>{ e.currentTarget.style.display='none'; }}
                     />
                   )}
 
-                  {/* Fallback genérico con Google Viewer (sirve también para PDF si el server bloquea embed) */}
-                  {!isImage(mime) && !isPDF(mime, ext) && !isOffice(ext) && !isTextLike(mime, ext) && googleViewer && (
+                  {/* 5) Fallback genérico con Google Viewer */}
+                  {!isImage(mime) && !isOffice(ext) && !isPDF(mime, ext) && gview && (
                     <iframe
                       title="Visor genérico"
-                      src={googleViewer}
+                      src={gview}
                       style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
                     />
                   )}
 
-                  {/* Mensaje si NO se pudo mostrar nada */}
-                  {(!rawUrl) && (
+                  {/* 6) Sin URL accesible */}
+                  {!rawUrl && (
                     <div style={{height:160, display:'grid', placeItems:'center'}} className="muted">
                       No hay previsualización disponible (falta URL accesible).
                     </div>
@@ -325,13 +291,13 @@ const DocumentosTab = ({
                 </div>
 
                 <div className="pushpop-actions">
-                  <button
-                    className="ed-btn"
-                    onClick={()=>{ humanDownload(file.nombre || "archivo", rawUrl); }}
-                  >
-                    Descargar
-                  </button>
+                  {rawUrl && (
+                    <button className="ed-btn" onClick={()=>humanDownload(file.nombre || "archivo", rawUrl)}>Descargar</button>
+                  )}
                   <div style={{flex:1}} />
+                  {rawUrl && (
+                    <a className="ed-btn" href={rawUrl} target="_blank" rel="noreferrer">Abrir en nueva pestaña</a>
+                  )}
                   <button className="ed-btn" onClick={closeAll}>Cerrar</button>
                 </div>
               </>
