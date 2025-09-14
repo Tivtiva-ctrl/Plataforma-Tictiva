@@ -1,6 +1,6 @@
-// DocumentosTab.jsx
 import React from "react";
 // Asegúrate de tener disponible el componente PushPop en tu proyecto.
+// Si tu bucket de Supabase es PRIVADO, expón el cliente en window.supabase (ver notas al final).
 
 const DocumentosTab = ({
   empleado,
@@ -88,11 +88,10 @@ const DocumentosTab = ({
     closeAll();
   };
 
-  // === Resolver URL de previsualización al abrir ===
+  // --- RESOLVER URL DE PREVIEW (Drive / Supabase privado / genérico)
   const resolvePreview = async (it) => {
-    // 1) Si ya hay url/previewUrl, listo.
-    const existing = getPreviewUrl(it);
-    if (existing) return { ...it, previewUrl: existing };
+    // 1) Si ya hay url/previewUrl, listo
+    if (it.previewUrl || it.url) return { ...it, previewUrl: it.previewUrl || it.url };
 
     // 2) Google Drive por driveId
     if (it?.driveId) {
@@ -102,29 +101,23 @@ const DocumentosTab = ({
       };
     }
 
-    // 3) Supabase privado: firmado si hay cliente global
+    // 3) Supabase privado → firmar si hay cliente disponible
     if (it?.bucket && it?.path && window?.supabase?.storage?.from) {
       try {
         const { data, error } = await window.supabase
           .storage.from(it.bucket)
           .createSignedUrl(it.path, 3600); // 1 hora
-
-        if (error) {
-          console.warn("[Tictiva] Error createSignedUrl:", error);
-        }
-        if (data?.signedUrl) {
-          return { ...it, previewUrl: data.signedUrl };
-        }
+        if (data?.signedUrl) return { ...it, previewUrl: data.signedUrl };
+        if (error) console.warn("[Tictiva] createSignedUrl error:", error);
       } catch (e) {
         console.warn("[Tictiva] Excepción firmando URL:", e);
       }
     }
 
-    // 4) Si tienes publicUrl o link genérico
+    // 4) Otras propiedades comunes
     if (it?.publicUrl) return { ...it, previewUrl: it.publicUrl };
-    if (it?.link) return { ...it, previewUrl: it.link };
+    if (it?.link)      return { ...it, previewUrl: it.link };
 
-    // 5) Sin forma de resolver
     console.warn("[Tictiva] Doc sin URL accesible para preview:", it);
     return it;
   };
@@ -158,6 +151,26 @@ const DocumentosTab = ({
           />
           <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>
             Subir Archivo
+          </button>
+
+          {/* Botón de prueba del visor (PDF público) */}
+          <button
+            className="ed-btn"
+            type="button"
+            onClick={()=>{
+              setModal({
+                type: 'doc',
+                data: {
+                  nombre: 'Demo.pdf',
+                  tam: 102400,
+                  mod: new Date().toISOString(),
+                  previewUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+                  mimeType: 'application/pdf'
+                }
+              });
+            }}
+          >
+            Probar visor
           </button>
         </div>
       </div>
@@ -404,3 +417,20 @@ const DocumentosTab = ({
 };
 
 export default DocumentosTab;
+
+/* ================= NOTAS =================
+1) Supabase PRIVADO: expón el cliente para crear signed URLs cuando abras el modal.
+
+// en tu bootstrap (p.ej., main.jsx)
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+window.supabase = supabase;
+
+2) Si el bucket es PÚBLICO, puedes construir la URL y guardarla en cada item como `url`:
+`${VITE_SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
+
+3) Google Drive: si un item trae `driveId`, el componente arma automáticamente
+   `https://drive.google.com/uc?export=download&id=...`
+
+4) Si nada de lo anterior aplica, asegúrate de que cada documento tenga `url` o `previewUrl` pública.
+*/
