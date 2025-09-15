@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate, useParams, useLocation } from 'react-router-dom'; // En tu app real, importa estos hooks
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import DocumentosTab from "@/components/rrhh/DocumentosTab_v4";
 
 // --- mocks date-fns (para este entorno)
@@ -444,292 +444,7 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
   );
 };
 
-/* ======================= Documentos (Tictiva – con Acciones) ====================== */
-const DocumentosTab = ({
-  empleado,
-  onNuevaCarpeta,
-  onSubirArchivo,   // (file?, parentId?)
-  onDelete,         // opcional
-  onRename,         // opcional
-}) => {
-  const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
-
-  const [menuItem, setMenuItem] = React.useState(null); // item activo para el menú ⋯
-  const [modal, setModal] = React.useState(null);       // {type: 'create'|'folder'|'doc'|'rename', data?:any}
-  const [inputVal, setInputVal] = React.useState("");
-  const topFileRef = React.useRef(null); // input oculto del header
-
-  const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
-  const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
-
-  // Cerrar menú al hacer click fuera o presionar Escape
-  React.useEffect(() => {
-    if (!menuItem) return;
-    const onDocClick = () => setMenuItem(null);
-    const onKey = (e) => { if (e.key === "Escape") setMenuItem(null); };
-    const t = setTimeout(() => {
-      window.addEventListener('click', onDocClick);
-      window.addEventListener('keydown', onKey);
-    }, 0);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('click', onDocClick);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [menuItem]);
-
-  const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); };
-
-  const humanDownload = (name) => {
-    const blob = new Blob([`Descarga simulada de ${name}\n(placeholder)`], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = name || "archivo.txt"; a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const doCreateFolder = () => {
-    const name = (inputVal || "").trim();
-    if (!name) return;
-    try {
-      if (typeof onNuevaCarpeta === "function") {
-        if (onNuevaCarpeta.length >= 1) onNuevaCarpeta(name);
-        else onNuevaCarpeta();
-      }
-    } finally { closeAll(); }
-  };
-
-  const doRename = () => {
-    const name = (inputVal || "").trim();
-    if (!name || !modal?.data) return;
-    if (typeof onRename === "function") onRename(modal.data.id, name);
-    else window.alert("Renombrar (mock): implementa onRename si quieres persistir.");
-    closeAll();
-  };
-
-  const doDelete = (it) => {
-    if (!it) return;
-    if (typeof onDelete === "function") onDelete(it.id);
-    else window.alert("Eliminar (mock): implementa onDelete si quieres persistir.");
-    closeAll();
-  };
-
-  return (
-    <div className="ed-card" style={{ overflow:'visible' }}>
-      {/* Header */}
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6}}>
-        <h3 className="ed-card-title" style={{margin:0}}>Documentos</h3>
-        <div style={{display:'flex', gap:8}}>
-          <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'create'}); setInputVal(""); }}>Nueva Carpeta</button>
-
-          {/* input oculto para el botón del header */}
-          <input
-            ref={topFileRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            style={{display:'none'}}
-            onChange={(e)=>{
-              const f = e.target.files?.[0];
-              if (f) onSubirArchivo?.(f, null);
-              e.target.value = "";
-            }}
-          />
-          <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>
-            Subir Archivo
-          </button>
-        </div>
-      </div>
-
-      {/* Tabla */}
-      <table className="asistencia-tabla">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Fecha de Modificación</th>
-            <th>Tamaño</th>
-            <th style={{width:120, textAlign:'right'}}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((it) => (
-            <tr key={it.id}>
-              <td style={{fontWeight:600}}>{it.nombre}</td>
-              <td>{it.mod || "—"}</td>
-              <td>{isFolder(it) ? "—" : (it.tam || "—")}</td>
-
-              {/* Botón ⋯ + mini menú */}
-              <td className="mini-actions-cell" style={{ textAlign:'right', position:'relative' }}>
-                <button
-                  className="ed-btn"
-                  type="button"
-                  aria-label="Acciones"
-                  onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuItem(it); }}
-                >⋯</button>
-
-                {menuItem?.id === it.id && (
-                  <div className="mini-menu" role="menu" onClick={(e)=>e.stopPropagation()}>
-                    {isFolder(it) ? (
-                      <>
-                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'folder', data:it}); setMenuItem(null); }}>Abrir carpeta</button>
-                        <button className="mini-menu-item" onClick={()=>{ onSubirArchivo?.(undefined, it.id); setMenuItem(null); }}>Subir aquí</button>
-                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
-                        <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
-                      </>
-                    ) : (
-                      <>
-                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'doc', data:it}); setMenuItem(null); }}>Ver</button>
-                        <button className="mini-menu-item" onClick={()=>{ humanDownload(it.nombre); setMenuItem(null); }}>Descargar</button>
-                        <button className="mini-menu-item" onClick={()=>{ setModal({type:'rename', data:it}); setInputVal(it.nombre || ""); setMenuItem(null); }}>Renombrar</button>
-                        <button className="mini-menu-item danger" onClick={()=>{ doDelete(it); }}>Eliminar</button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </td>
-            </tr>
-          ))}
-          {items.length === 0 && (
-            <tr><td colSpan={4} style={{color:'#6B7280'}}>Sin documentos por ahora.</td></tr>
-          )}
-        </tbody>
-      </table>
-
-      {/* ===== PushPop: crear carpeta ===== */}
-      {modal?.type === "create" && (
-        <PushPop title="Nueva carpeta" onClose={closeAll}>
-          <input className="pushpop-input" placeholder="Ej. Contratos 2025" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
-          <div className="pushpop-actions">
-            <button className="ed-btn" onClick={closeAll}>Cancelar</button>
-            <button className="ed-btn primary" onClick={doCreateFolder} disabled={!inputVal.trim()}>Crear</button>
-          </div>
-        </PushPop>
-      )}
-
-      {/* ===== PushPop: ver carpeta (con hijos por parentId) ===== */}
-      {modal?.type === "folder" && (
-        <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
-          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
-
-          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
-            <button className="ed-btn" onClick={()=>onSubirArchivo?.(undefined, modal.data?.id)}>Subir aquí</button>
-          </div>
-
-          {childrenOf(modal.data?.id).length === 0 ? (
-            <div className="muted">Esta carpeta está vacía.</div>
-          ) : (
-            <table className="asistencia-tabla">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Fecha de Modificación</th>
-                  <th>Tamaño</th>
-                  <th style={{width:120, textAlign:'right'}}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {childrenOf(modal.data?.id).map(child => (
-                  <tr key={child.id}>
-                    <td style={{fontWeight:600}}>{child.nombre}</td>
-                    <td>{child.mod || "—"}</td>
-                    <td>{child.tam || "—"}</td>
-                    <td style={{textAlign:'right'}}>
-                      <button className="ed-btn" onClick={()=>setModal({type:'doc', data:child})}>Ver</button>
-                      <button className="ed-btn" onClick={()=>humanDownload(child.nombre)}>Descargar</button>
-                      <button className="ed-btn" onClick={()=>{ setModal({type:'rename', data:child}); setInputVal(child.nombre || ""); }}>Renombrar</button>
-                      <button className="ed-btn" onClick={()=>doDelete(child)}>Eliminar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          <div className="pushpop-actions"><button className="ed-btn" onClick={closeAll}>Cerrar</button></div>
-        </PushPop>
-      )}
-
-      {/* ===== PushPop: ver documento ===== */}
-      {modal?.type === "doc" && (
-        <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
-          <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"} · Tamaño: {modal.data?.tam || "—"}</div>
-          <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
-            <div className="muted">Vista previa (mock)</div>
-            <div style={{height:160, display:'grid', placeItems:'center'}}>No hay previsualización disponible</div>
-          </div>
-          <div className="pushpop-actions">
-            <button className="ed-btn" onClick={()=>{ humanDownload(modal.data?.nombre || "archivo"); }}>Descargar</button>
-            <div style={{flex:1}} />
-            <button className="ed-btn" onClick={closeAll}>Cerrar</button>
-          </div>
-        </PushPop>
-      )}
-
-      {/* ===== PushPop: renombrar ===== */}
-      {modal?.type === "rename" && (
-        <PushPop title="Renombrar" onClose={closeAll}>
-          <input className="pushpop-input" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
-          <div className="pushpop-actions">
-            <button className="ed-btn" onClick={closeAll}>Cancelar</button>
-            <button className="ed-btn primary" onClick={doRename} disabled={!inputVal.trim()}>Guardar</button>
-          </div>
-        </PushPop>
-      )}
-
-      {/* Estilos locales */}
-      <style>{`
-        .muted{ color:#6B7280; font-size:12px }
-        .pushpop-input{
-          width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827;
-          border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
-        }
-        .pushpop-input:focus{ border-color:#93C5FD; box-shadow:0 0 0 3px rgba(59,130,246,.15) }
-        .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
-
-        /* Mini menú ⋯ */
-        .mini-actions-cell{ position:relative; overflow:visible; }
-        .mini-menu{
-          position:absolute; top: calc(100% + 6px); right:0;
-          width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px;
-          box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:9999;
-        }
-        .mini-menu-item{
-          width:100%; text-align:left; background:transparent; border:none;
-          padding:8px 10px; border-radius:8px; font-weight:600; color:#111827; cursor:pointer;
-        }
-        .mini-menu-item:hover{ background:#F9FAFB; }
-        .mini-menu-item.danger{ color:#B91C1C; }
-      `}</style>
-    </div>
-  );
-};
-
-/* ===== Mini PushPop (modal estilo Tictiva, autocontenido) ===== */
-function PushPop({ title, onClose, children }) {
-  React.useEffect(() => {
-    const onEsc = (e) => { if (e.key === "Escape") onClose?.(); };
-    window.addEventListener("keydown", onEsc);
-    return () => window.removeEventListener("keydown", onEsc);
-  }, [onClose]);
-
-  return (
-    <div role="dialog" aria-modal="true" className="pp-wrap" onMouseDown={onClose}>
-      <div className="pp-card" onMouseDown={(e)=>e.stopPropagation()}>
-        <div className="pp-head">
-          <div className="pp-title">{title || "Acciones"}</div>
-          <button className="ed-btn" type="button" onClick={onClose}>✕</button>
-        </div>
-        <div className="pp-body">{children}</div>
-      </div>
-      <style>{`
-        .pp-wrap{ position:fixed; inset:0; background:rgba(17,24,39,.45); display:grid; place-items:center; z-index:9999 }
-        .pp-card{ width:min(520px, 92vw); background:#fff; border:1px solid #E5E7EB; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.25); }
-        .pp-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 12px 0 16px }
-        .pp-title{ font-weight:800; color:#111827; font-size:16px }
-        .pp-body{ padding:12px 16px 16px; }
-      `}</style>
-    </div>
-  );
-}
+/* ===== Mini PushPop (ELIMINADO: lo usaba el componente de documentos viejo) ===== */
 
 /* ======================= Tab: Asistencia (NO editable) ====================== */
 function AsistenciaTab({ empleado }) {
@@ -897,13 +612,6 @@ function AsistenciaTab({ empleado }) {
             <button className="ed-btn" onClick={generarReporteSemanalPDF}>Generar Reporte Semanal (PDF)</button>
             <button className="ed-btn primary" onClick={exportResumenCSV}>⬇ Exportar Resumen</button>
           </div>
-        </div>
-
-        <div className="metricas-grid">
-          <div className="metric-card"><div className="metric-info"><p className="metric-label">Horas Trabajadas (Mes)</p><p className="metric-value">{metricas.horasTrabajadas}h</p></div><div className="metric-icon">🕑</div></div>
-          <div className="metric-card"><div className="metric-info"><p className="metric-label">Asistencia</p><p className="metric-value green">{metricas.porcentajeAsistencia}%</p></div><div className="metric-icon">📅</div></div>
-          <div className="metric-card"><div className="metric-info"><p className="metric-label">Atrasos (Mes)</p><p className="metric-value yellow">{metricas.atrasosMes}</p></div><div className="metric-icon">⚠️</div></div>
-          <div className="metric-card"><div className="metric-info"><p className="metric-label">Horas Extra</p><p className="metric-value blue">{metricas.horasExtra}h</p></div><div className="metric-icon">➕</div></div>
         </div>
 
         <table className="asistencia-tabla">
@@ -1273,7 +981,8 @@ export default function EmpleadoDetalle() {
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
-  const API = "http://127.0.0.1:3001";
+  // ✅ listo para Vercel: usa /api en prod y VITE_API_BASE en dev/preview si quieres
+  const API = (import.meta?.env?.VITE_API_BASE) || '/api';
   const RESOURCE = "empleados";
 
   const [empleado, setEmpleado] = useState(null);
@@ -1938,15 +1647,6 @@ export default function EmpleadoDetalle() {
         .asistencia-title{display:flex;gap:10px;align-items:flex-start}
         .icono-title{font-size:22px;margin-top:2px}
         .asistencia-buttons{display:flex;gap:8px;flex-wrap:wrap}
-        .metricas-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 12px}
-        @media (max-width: 900px){ .metricas-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
-        .metric-card{display:flex;align-items:center;justify-content:space-between;border:1px solid #E5E7EB;border-radius:12px;padding:10px 12px;background:#fff}
-        .metric-label{color:#6B7280;margin:0}
-        .metric-value{font-weight:800;margin:0}
-        .metric-value.green{color:#059669}
-        .metric-value.yellow{color:#D97706}
-        .metric-value.blue{color:#2563EB}
-        .metric-icon{font-size:18px}
         .asistencia-tabla{width:100%;border-collapse:collapse}
         .asistencia-tabla th,.asistencia-tabla td{border-bottom:1px solid #F3F4F6;padding:10px 8px;text-align:left}
         .estado-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #E5E7EB;color:#374151}
