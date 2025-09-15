@@ -1,33 +1,23 @@
 import React from "react";
-import PushPop from "./PushPop.jsx";
+import PushPop from "./PushPop";
 
-// Asegúrate de tener disponible el componente PushPop en tu proyecto.
-// Si tu bucket de Supabase es PRIVADO, expón el cliente en window.supabase (ver notas al final).
-
-const DocumentosTab = ({
-  empleado,
-  onNuevaCarpeta,
-  onSubirArchivo,   // recibe (file?, parentId?)
-  onDelete,         // opcional
-  onRename,         // opcional
-}) => {
+const DocumentosTab = ({ empleado, onNuevaCarpeta, onSubirArchivo, onDelete, onRename }) => {
   const items = Array.isArray(empleado?.documentos) ? empleado.documentos : [];
 
-  const [menuItem, setMenuItem] = React.useState(null); // item del que se abre el menú ⋯
-  const [modal, setModal] = React.useState(null);       // {type: 'create'|'folder'|'doc'|'rename', data?:any}
+  const [menuItem, setMenuItem] = React.useState(null);
+  const [modal, setModal] = React.useState(null); // {type:'create'|'folder'|'doc'|'rename', data}
   const [inputVal, setInputVal] = React.useState("");
-  const topFileRef = React.useRef(null); // input oculto del botón "Subir Archivo" del header
+  const topFileRef = React.useRef(null);
   const [loadingPreview, setLoadingPreview] = React.useState(false);
 
   const isFolder = (it) => (it?.tipo || "").toLowerCase() === "folder";
   const childrenOf = (folderId) => items.filter(x => (x.parentId || "") === folderId);
 
-  // ======== PREVIEW UTILS ========
+  // ===== Preview helpers
   const humanSize = (bytes = 0) => {
     if (bytes == null || bytes === "—") return "—";
     if (typeof bytes === "string" && /\d+\s?(B|KB|MB|GB)/i.test(bytes)) return bytes;
-    const n = Number(bytes);
-    if (!isFinite(n) || n <= 0) return "—";
+    const n = Number(bytes); if (!isFinite(n) || n <= 0) return "—";
     const k = 1024, sizes = ["B","KB","MB","GB"];
     const i = Math.floor(Math.log(n)/Math.log(k));
     return `${(n/Math.pow(k,i)).toFixed(1)} ${sizes[i]}`;
@@ -41,11 +31,13 @@ const DocumentosTab = ({
   const isImage = (mime) => (mime || "").startsWith("image/");
   const isPDF = (mime, ext) => (mime || "").includes("pdf") || (ext || "").toLowerCase() === "pdf";
   const isTextLike = (mime, ext) => (mime || "").startsWith("text/") || ["csv","txt","log"].includes((ext||"").toLowerCase());
+  const isBlobLike = (u) => (u || "").startsWith("blob:") || (u || "").startsWith("data:");
+  const isHttp = (u) => /^https?:\/\//i.test(u || "");
 
   const getMime = (file) => file?.mimeType || file?.mimetype || file?.mime || file?.contentType || "";
   const getPreviewUrl = (file) => file?.previewUrl || file?.url || null;
 
-  // Cerrar menú ⋯ al hacer click fuera
+  // cerrar menú al click fuera
   React.useEffect(() => {
     if (!menuItem) return;
     const onDocClick = () => setMenuItem(null);
@@ -53,7 +45,6 @@ const DocumentosTab = ({
     return () => { clearTimeout(t); window.removeEventListener('click', onDocClick); };
   }, [menuItem]);
 
-  // ===== helpers =====
   const closeAll = () => { setMenuItem(null); setModal(null); setInputVal(""); };
 
   const humanDownload = (name, url) => {
@@ -90,54 +81,42 @@ const DocumentosTab = ({
     closeAll();
   };
 
-  // Helpers de storage (bucket/path heurísticos + URL pública Supabase)
-const guessBucket = (it) => it?.bucket || it?.bucketName || it?.storageBucket || it?.bucket_id || null;
-const guessPath = (it) => it?.path || it?.filePath || it?.storagePath || it?.key || it?.objectKey || null;
-const getEnvSupabaseUrl = () => {
-  try { return import.meta.env?.VITE_SUPABASE_URL || ""; } catch { /* no-op en build servers sin import.meta */ }
-  return (typeof process !== "undefined" ? (process.env?.VITE_SUPABASE_URL || process.env?.REACT_APP_SUPABASE_URL) : "") || "";
-};
-const buildPublicSupabaseUrl = (bucket, path) => {
-  const base = (getEnvSupabaseUrl() || "").replace(/\/$/, "");
-  if (!base || !bucket || !path) return null;
-  return `${base}/storage/v1/object/public/${encodeURIComponent(bucket)}/${encodeURIComponent(path)}`;
-};
+  // ===== Resolver URL (Drive / Supabase / genérico)
+  const guessBucket = (it) => it?.bucket || it?.bucketName || it?.storageBucket || it?.bucket_id || null;
+  const guessPath   = (it) => it?.path   || it?.filePath   || it?.storagePath   || it?.key       || it?.objectKey || null;
+  const supabaseUrl = (() => {
+    try { return import.meta.env?.VITE_SUPABASE_URL || ""; } catch { return ""; }
+  })();
+  const buildPublicSupabaseUrl = (bucket, path) => {
+    const base = (supabaseUrl || "").replace(/\/$/, "");
+    if (!base || !bucket || !path) return null;
+    return `${base}/storage/v1/object/public/${encodeURIComponent(bucket)}/${encodeURIComponent(path)}`;
+  };
 
-// --- RESOLVER URL DE PREVIEW (Drive / Supabase privado / genérico)
   const resolvePreview = async (it) => {
-    // 1) Si ya hay url/previewUrl, listo
     if (it.previewUrl || it.url) return { ...it, previewUrl: it.previewUrl || it.url };
 
-    // 2) Google Drive por driveId
+    // Google Drive (PREVIEW embebible)
     if (it?.driveId) {
-      return {
-        ...it,
-        previewUrl: `https://drive.google.com/uc?export=download&id=${encodeURIComponent(it.driveId)}`
-      };
+      return { ...it, previewUrl: `https://drive.google.com/file/d/${encodeURIComponent(it.driveId)}/preview` };
     }
 
-    // 3) Supabase (privado o público)
+    // Supabase
     const bucket = guessBucket(it);
     const path = guessPath(it);
     if (bucket && path) {
-      // 3a) PRIVADO con cliente -> signed URL
+      // Si hay cliente, intento firmada
       if (window?.supabase?.storage?.from) {
         try {
-          const { data, error } = await window.supabase
-            .storage.from(bucket)
-            .createSignedUrl(path, 3600); // 1 hora
+          const { data } = await window.supabase.storage.from(bucket).createSignedUrl(path, 3600);
           if (data?.signedUrl) return { ...it, previewUrl: data.signedUrl };
-          if (error) console.warn("[Tictiva] createSignedUrl error:", error);
-        } catch (e) {
-          console.warn("[Tictiva] Excepción firmando URL:", e);
-        }
+        } catch {/* noop */}
       }
-      // 3b) PÚBLICO -> construir URL pública
+      // Bucket público
       const pub = buildPublicSupabaseUrl(bucket, path);
       if (pub) return { ...it, previewUrl: pub };
     }
 
-    // 4) Otras propiedades comunes
     if (it?.publicUrl) return { ...it, previewUrl: it.publicUrl };
     if (it?.link)      return { ...it, previewUrl: it.link };
 
@@ -160,7 +139,6 @@ const buildPublicSupabaseUrl = (bucket, path) => {
         <div style={{display:'flex', gap:8}}>
           <button className="ed-btn" type="button" onClick={()=>{ setModal({type:'create'}); setInputVal(""); }}>Nueva Carpeta</button>
 
-          {/* input oculto para el botón del header */}
           <input
             ref={topFileRef}
             type="file"
@@ -174,26 +152,6 @@ const buildPublicSupabaseUrl = (bucket, path) => {
           />
           <button className="ed-btn primary" type="button" onClick={()=>topFileRef.current?.click()}>
             Subir Archivo
-          </button>
-
-          {/* Botón de prueba del visor (PDF público) */}
-          <button
-            className="ed-btn"
-            type="button"
-            onClick={()=>{
-              setModal({
-                type: 'doc',
-                data: {
-                  nombre: 'Demo.pdf',
-                  tam: 102400,
-                  mod: new Date().toISOString(),
-                  previewUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-                  mimeType: 'application/pdf'
-                }
-              });
-            }}
-          >
-            Probar visor
           </button>
         </div>
       </div>
@@ -215,12 +173,8 @@ const buildPublicSupabaseUrl = (bucket, path) => {
               <td>{it.mod || "—"}</td>
               <td>{isFolder(it) ? "—" : humanSize(it.tam)}</td>
               <td className="mini-actions-cell" style={{ textAlign:'right', position:'relative' }}>
-                <button
-                  className="ed-btn"
-                  type="button"
-                  aria-label="Acciones"
-                  onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuItem(it); }}
-                >⋯</button>
+                <button className="ed-btn" type="button" aria-label="Acciones"
+                  onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setMenuItem(it); }}>⋯</button>
 
                 {menuItem?.id === it.id && (
                   <div className="mini-menu" role="menu" onClick={(e)=>e.stopPropagation()}>
@@ -250,7 +204,7 @@ const buildPublicSupabaseUrl = (bucket, path) => {
         </tbody>
       </table>
 
-      {/* ===== PushPop: crear carpeta ===== */}
+      {/* Crear carpeta */}
       {modal?.type === "create" && (
         <PushPop title="Nueva carpeta" onClose={closeAll}>
           <input className="pushpop-input" placeholder="Ej. Contratos 2025" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
@@ -261,7 +215,7 @@ const buildPublicSupabaseUrl = (bucket, path) => {
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver carpeta ===== */}
+      {/* Carpeta */}
       {modal?.type === "folder" && (
         <PushPop title={`Carpeta: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           <div className="muted" style={{marginBottom:8}}>Últ. mod: {modal.data?.mod || "—"}</div>
@@ -275,7 +229,7 @@ const buildPublicSupabaseUrl = (bucket, path) => {
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Fecha de Modificación</th>
+                  <th>Fecha</th>
                   <th>Tamaño</th>
                   <th style={{width:120, textAlign:'right'}}>Acciones</th>
                 </tr>
@@ -301,7 +255,7 @@ const buildPublicSupabaseUrl = (bucket, path) => {
         </PushPop>
       )}
 
-      {/* ===== PushPop: ver documento (PREVIEW ROBUSTO + DEBUG) ===== */}
+      {/* Visor de documento */}
       {modal?.type === "doc" && (
         <PushPop title={`Documento: ${modal.data?.nombre || ""}`} onClose={closeAll}>
           {(() => {
@@ -309,25 +263,30 @@ const buildPublicSupabaseUrl = (bucket, path) => {
             const mime = getMime(file);
             const ext = getExt(file);
             const rawUrl = getPreviewUrl(file);
+            const blobLike = isBlobLike(rawUrl);
+            const httpLike = isHttp(rawUrl);
 
-            const gview = rawUrl ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}` : null;
-            const office = rawUrl && isOffice(ext) ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}` : null;
+            // Visores
+            const officeUrl = httpLike && isOffice(ext)
+              ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`
+              : null;
+
+            const googleViewerUrl = httpLike
+              ? `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(rawUrl)}`
+              : null;
 
             return (
               <>
-                {/* DEBUG */}
                 <div className="muted" style={{marginBottom:8}}>
                   Últ. mod: {file.mod || "—"} · Tamaño: {humanSize(file.tam)}<br/>
                   <span style={{fontSize:11}}>
-                    <b>Debug:</b> ext=<code>{ext || "—"}</code> · mime=<code>{mime || "—"}</code> · url={(rawUrl ? <a href={rawUrl} target="_blank" rel="noreferrer">abrir</a> : "—")}
+                    <b>Debug:</b> ext=<code>{ext || "—"}</code> · mime=<code>{mime || "—"}</code> · url={rawUrl ? <a href={rawUrl} target="_blank" rel="noreferrer">abrir</a> : "—"}
                   </span>
                 </div>
 
                 <div style={{border:'1px solid #E5E7EB', borderRadius:12, padding:12, background:'#fff'}}>
                   {loadingPreview && (
-                    <div style={{height:120, display:'grid', placeItems:'center'}} className="muted">
-                      Cargando previsualización…
-                    </div>
+                    <div style={{height:120, display:'grid', placeItems:'center'}} className="muted">Cargando previsualización…</div>
                   )}
 
                   {/* 1) Imágenes */}
@@ -340,58 +299,50 @@ const buildPublicSupabaseUrl = (bucket, path) => {
                     />
                   )}
 
-                  {/* 2) Office (usar Office Online primero) */}
-                  {!loadingPreview && isOffice(ext) && office && (
-                    <iframe
-                      title="Office viewer"
-                      src={office}
-                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
-                    />
+                  {/* 2) Office: solo http(s) */}
+                  {!loadingPreview && officeUrl && (
+                    <iframe title="Office viewer" src={officeUrl}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}} />
                   )}
 
-                  {/* 3) PDF (usar Google Viewer primero) */}
-                  {!loadingPreview && isPDF(mime, ext) && gview && (
-                    <iframe
-                      title="PDF (Google viewer)"
-                      src={gview}
-                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
-                    />
+                  {/* 3) PDF: si es blob/data -> embeber directo */}
+                  {!loadingPreview && isPDF(mime, ext) && blobLike && rawUrl && (
+                    <iframe title="PDF" src={rawUrl}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}} />
                   )}
 
-                  {/* 4) Texto / CSV (directo) */}
+                  {/* 4) PDF http(s): intento directo primero */}
+                  {!loadingPreview && isPDF(mime, ext) && httpLike && rawUrl && (
+                    <iframe title="PDF directo" src={rawUrl}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}} />
+                  )}
+
+                  {/* 5) Fallback Google Viewer para http(s) */}
+                  {!loadingPreview && isPDF(mime, ext) && httpLike && googleViewerUrl && (
+                    <div style={{marginTop:8}}>
+                      <iframe title="PDF (Google viewer)" src={googleViewerUrl}
+                        style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}} />
+                    </div>
+                  )}
+
+                  {/* 6) Texto / CSV */}
                   {!loadingPreview && isTextLike(mime, ext) && rawUrl && (
-                    <iframe
-                      title="Texto"
-                      src={rawUrl}
-                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10, background:'#fff'}}
-                    />
+                    <iframe title="Texto" src={rawUrl}
+                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10, background:'#fff'}} />
                   )}
 
-                  {/* 5) Fallback genérico con Google Viewer */}
-                  {!loadingPreview && !isImage(mime) && !isOffice(ext) && !isPDF(mime, ext) && gview && (
-                    <iframe
-                      title="Visor genérico"
-                      src={gview}
-                      style={{width:'100%', height:'60vh', border:'1px solid #E5E7EB', borderRadius:10}}
-                    />
-                  )}
-
-                  {/* 6) Sin URL accesible */}
+                  {/* 7) Sin URL */}
                   {!loadingPreview && !rawUrl && (
                     <div style={{height:160, display:'grid', placeItems:'center'}} className="muted">
-                      No hay previsualización disponible (falta URL accesible).
+                      No hay previsualización disponible (este documento no tiene URL accesible).
                     </div>
                   )}
                 </div>
 
                 <div className="pushpop-actions">
-                  {rawUrl && (
-                    <button className="ed-btn" onClick={()=>humanDownload(file.nombre || "archivo", rawUrl)}>Descargar</button>
-                  )}
+                  {rawUrl && <button className="ed-btn" onClick={()=>humanDownload(file.nombre || "archivo", rawUrl)}>Descargar</button>}
                   <div style={{flex:1}} />
-                  {rawUrl && (
-                    <a className="ed-btn" href={rawUrl} target="_blank" rel="noreferrer">Abrir en nueva pestaña</a>
-                  )}
+                  {rawUrl && <a className="ed-btn" href={rawUrl} target="_blank" rel="noreferrer">Abrir en nueva pestaña</a>}
                   <button className="ed-btn" onClick={closeAll}>Cerrar</button>
                 </div>
               </>
@@ -400,7 +351,7 @@ const buildPublicSupabaseUrl = (bucket, path) => {
         </PushPop>
       )}
 
-      {/* ===== PushPop: renombrar ===== */}
+      {/* Renombrar */}
       {modal?.type === "rename" && (
         <PushPop title="Renombrar" onClose={closeAll}>
           <input className="pushpop-input" value={inputVal} onChange={(e)=>setInputVal(e.target.value)} />
@@ -414,24 +365,12 @@ const buildPublicSupabaseUrl = (bucket, path) => {
       {/* Estilos locales */}
       <style>{`
         .muted{ color:#6B7280; font-size:12px }
-        .pushpop-input{
-          width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827;
-          border-radius:10px; padding:10px 12px; outline:none; font-size:14px;
-        }
+        .pushpop-input{ width:100%; border:1px solid #E5E7EB; background:#fff; color:#111827; border-radius:10px; padding:10px 12px; outline:none; font-size:14px; }
         .pushpop-input:focus{ border-color:#93C5FD; box-shadow:0 0 0 3px rgba(59,130,246,.15) }
         .pushpop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
-
-        /* Mini menú ⋯ */
         .mini-actions-cell{ position:relative; overflow:visible; }
-        .mini-menu{
-          position:absolute; top: calc(100% + 6px); right:0;
-          width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px;
-          box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:9999;
-        }
-        .mini-menu-item{
-          width:100%; text-align:left; background:transparent; border:none;
-          padding:8px 10px; border-radius:8px; font-weight:600; color:#111827; cursor:pointer;
-        }
+        .mini-menu{ position:absolute; top: calc(100% + 6px); right:0; width:220px; background:#fff; border:1px solid #E5E7EB; border-radius:10px; box-shadow:0 10px 20px rgba(0,0,0,.08); padding:6px; z-index:9999; }
+        .mini-menu-item{ width:100%; text-align:left; background:transparent; border:none; padding:8px 10px; border-radius:8px; font-weight:600; color:#111827; cursor:pointer; }
         .mini-menu-item:hover{ background:#F9FAFB; }
         .mini-menu-item.danger{ color:#B91C1C; }
       `}</style>
@@ -440,20 +379,3 @@ const buildPublicSupabaseUrl = (bucket, path) => {
 };
 
 export default DocumentosTab;
-
-/* ================= NOTAS =================
-1) Supabase PRIVADO: expón el cliente para crear signed URLs cuando abras el modal.
-
-// en tu bootstrap (p.ej., main.jsx)
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
-window.supabase = supabase;
-
-2) Si el bucket es PÚBLICO, puedes construir la URL y guardarla en cada item como `url`:
-`${VITE_SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
-
-3) Google Drive: si un item trae `driveId`, el componente arma automáticamente
-   `https://drive.google.com/uc?export=download&id=...`
-
-4) Si nada de lo anterior aplica, asegúrate de que cada documento tenga `url` o `previewUrl` pública.
-*/
