@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import DocumentosTab from "@/components/rrhh/DocumentosTab_v4";
+import DocumentosTab from "../components/DocumentosTab.jsx";
+
 
 // --- mocks date-fns (para este entorno)
 const parseISO = (iso) => new Date(iso);
