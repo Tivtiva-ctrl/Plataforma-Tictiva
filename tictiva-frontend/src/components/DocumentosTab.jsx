@@ -1,5 +1,6 @@
 import React from "react";
-import PushPop from "./PushPop";
+import PushPop from "./PushPop.jsx";
+
 // Asegúrate de tener disponible el componente PushPop en tu proyecto.
 // Si tu bucket de Supabase es PRIVADO, expón el cliente en window.supabase (ver notas al final).
 
