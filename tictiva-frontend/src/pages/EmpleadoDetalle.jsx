@@ -710,7 +710,14 @@ function HistorialTab({ empleado }) {
 
 /* =================== Hoja de Vida (editable) ================== */
 function HojaDeVida({ empleado, modoEdicion, onChange }) {
-  const hv = empleado?.hojaVida || empleado || {};
+  const add = (path, blank) => setHv(path, [ ...(hv[path] || []), blank ]);
+const up  = (path, idx, key, val) => {
+  const list = [ ...(hv[path] || []) ];
+  list[idx] = { ...(list[idx] || {}), [key]: val };
+  setHv(path, list);
+};
+const del = (path, idx) => setHv(path, (hv[path] || []).filter((_, i) => i !== idx));
+
   const emergencia = Array.isArray(hv.emergencia) ? hv.emergencia : [];
   const md = hv.medico || {};
   const trayectoria = hv.trayectoria || [];
@@ -908,46 +915,118 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         </div>
       </div>
 
-      {/* Listados (solo lectura) */}
-      <div className="hv-card">
-        <h4 className="hv-title">Trayectoria en la Empresa</h4>
-        <ul className="hv-tl">
-          {(trayectoria.length?trayectoria:[{cargo:"N/D",desde:"",detalle:""}]).map((t,i)=>(
-            <li key={i} className="hv-tl-it">
-              <div className="hv-strong">{t.cargo}</div>
-              <div className="hv-muted">Desde el {t.desde||"—"}</div>
-              {t.detalle ? <div>{t.detalle}</div> : null}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Trayectoria en la Empresa */}
+<div className="hv-card">
+  <h4 className="hv-title">Trayectoria en la Empresa</h4>
+  {modoEdicion ? (
+    <>
+      {(hv.trayectoria || []).map((t, i) => (
+        <div key={i} className="hv-row" style={{gap:8}}>
+          <input placeholder="Cargo"
+            value={t.cargo || ""} onChange={e=>up("trayectoria", i, "cargo", e.target.value)}
+            style={{flex:2, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Desde (YYYY-MM-DD)"
+            value={t.desde || ""} onChange={e=>up("trayectoria", i, "desde", e.target.value)}
+            style={{flex:1, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Detalle"
+            value={t.detalle || ""} onChange={e=>up("trayectoria", i, "detalle", e.target.value)}
+            style={{flex:3, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <button className="ed-btn" onClick={()=>del("trayectoria", i)}>Eliminar</button>
+        </div>
+      ))}
+      <button className="ed-btn" onClick={()=>add("trayectoria", { cargo:"", desde:"", detalle:"" })}>+ Agregar hito</button>
+    </>
+  ) : (
+    <ul className="hv-tl">
+      {(hv.trayectoria || []).map((t,i)=>(
+        <li key={i} className="hv-tl-it">
+          <div className="hv-strong">{t.cargo}</div>
+          <div className="hv-muted">Desde el {t.desde || "—"}</div>
+          {t.detalle ? <div>{t.detalle}</div> : null}
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
 
-      <div className="hv-card">
-        <h4 className="hv-title">Educación y Formación</h4>
-        <ul className="hv-tl">
-          {(educacion.length?educacion:[{titulo:"N/D",institucion:"",desde:"",hasta:""}]).map((e,i)=>(
-            <li key={i} className="hv-tl-it">
-              <div className="hv-strong">{e.titulo}</div>
-              <div>{e.institucion||""}</div>
-              <div className="hv-muted">{e.desde||"—"} - {e.hasta||"—"}</div>
-            </li>
-          ))}
-        </ul>
-      </div>
+{/* Educación y Formación */}
+<div className="hv-card">
+  <h4 className="hv-title">Educación y Formación</h4>
+  {modoEdicion ? (
+    <>
+      {(hv.educacion || []).map((e,i)=>(
+        <div key={i} className="hv-row" style={{gap:8}}>
+          <input placeholder="Título"
+            value={e.titulo || ""} onChange={ev=>up("educacion", i, "titulo", ev.target.value)}
+            style={{flex:2, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Institución"
+            value={e.institucion || ""} onChange={ev=>up("educacion", i, "institucion", ev.target.value)}
+            style={{flex:2, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Desde"
+            value={e.desde || ""} onChange={ev=>up("educacion", i, "desde", ev.target.value)}
+            style={{flex:1, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Hasta"
+            value={e.hasta || ""} onChange={ev=>up("educacion", i, "hasta", ev.target.value)}
+            style={{flex:1, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <button className="ed-btn" onClick={()=>del("educacion", i)}>Eliminar</button>
+        </div>
+      ))}
+      <button className="ed-btn" onClick={()=>add("educacion", { titulo:"", institucion:"", desde:"", hasta:"" })}>+ Agregar título</button>
+    </>
+  ) : (
+    <ul className="hv-tl">
+      {(hv.educacion || []).map((e,i)=>(
+        <li key={i} className="hv-tl-it">
+          <div className="hv-strong">{e.titulo}</div>
+          <div>{e.institucion || ""}</div>
+          <div className="hv-muted">{e.desde || "—"} - {e.hasta || "—"}</div>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
 
-      <div className="hv-card">
-        <h4 className="hv-title">Experiencia Laboral Previa</h4>
-        <ul className="hv-tl">
-          {(experiencia.length?experiencia:[{cargo:"N/D",empresa:"",desde:"",hasta:"",descripcion:""}]).map((x,i)=>(
-            <li key={i} className="hv-tl-it">
-              <div className="hv-strong">{x.cargo}</div>
-              <div>{x.empresa||""}</div>
-              <div className="hv-muted">{x.desde||"—"} - {x.hasta||"—"}</div>
-              {x.descripcion ? <div>{x.descripcion}</div> : null}
-            </li>
-          ))}
-        </ul>
-      </div>
+{/* Experiencia Laboral Previa */}
+<div className="hv-card">
+  <h4 className="hv-title">Experiencia Laboral Previa</h4>
+  {modoEdicion ? (
+    <>
+      {(hv.experiencia || []).map((x,i)=>(
+        <div key={i} className="hv-row" style={{gap:8, alignItems:'stretch'}}>
+          <input placeholder="Cargo"
+            value={x.cargo || ""} onChange={ev=>up("experiencia", i, "cargo", ev.target.value)}
+            style={{flex:2, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Empresa"
+            value={x.empresa || ""} onChange={ev=>up("experiencia", i, "empresa", ev.target.value)}
+            style={{flex:2, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Desde"
+            value={x.desde || ""} onChange={ev=>up("experiencia", i, "desde", ev.target.value)}
+            style={{flex:1, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Hasta"
+            value={x.hasta || ""} onChange={ev=>up("experiencia", i, "hasta", ev.target.value)}
+            style={{flex:1, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <input placeholder="Descripción"
+            value={x.descripcion || ""} onChange={ev=>up("experiencia", i, "descripcion", ev.target.value)}
+            style={{flex:3, border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+          <button className="ed-btn" onClick={()=>del("experiencia", i)}>Eliminar</button>
+        </div>
+      ))}
+      <button className="ed-btn" onClick={()=>add("experiencia", { cargo:"", empresa:"", desde:"", hasta:"", descripcion:"" })}>+ Agregar experiencia</button>
+    </>
+  ) : (
+    <ul className="hv-tl">
+      {(hv.experiencia || []).map((x,i)=>(
+        <li key={i} className="hv-tl-it">
+          <div className="hv-strong">{x.cargo}</div>
+          <div>{x.empresa || ""}</div>
+          <div className="hv-muted">{x.desde || "—"} - {x.hasta || "—"}</div>
+          {x.descripcion ? <div>{x.descripcion}</div> : null}
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
 
       <style>{`
       .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
