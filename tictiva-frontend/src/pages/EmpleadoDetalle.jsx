@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import DocumentosTab from "../components/DocumentosTab.jsx";
-import HojaDeVida from "../components/HojaDeVida.jsx";
+
 
 
 // --- mocks date-fns (para este entorno)
