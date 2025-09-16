@@ -1536,38 +1536,39 @@ export default function EmpleadoDetalle() {
         {tabActiva !== "asistencia" && (
           <aside className={`ed-right ${tabActiva === "contractuales" ? "is-compact" : ""}`}>
             <div className="ed-card">
-              <h4 className="ed-card-title">Información Rápida</h4>
-              <ul className="ed-quick">
-                <li>
-                  <div>
-                    <div className="ed-quick-label">Próximo cumpleaños</div>
-                    <div className="ed-quick-val">{cumpleTxt}</div>
-                  </div>
-                </li>
-                <li>
-                  <div>
-                    <div className="ed-quick-label">Horario</div>
-                    <div className="ed-quick-val">{horario || "08:30 - 18:00"}</div>
-                  </div>
-                </li>
-                <li>
-                  <div>
-                    <div className="ed-quick-label">Oficina</div>
-                    <div className="ed-quick-val">{centro || "Santiago Centro"}</div>
-                  </div>
-                </li>
-              </ul>
+  <h4 className="ed-card-title">Información Rápida</h4>
+  <ul className="ed-quick">
+    <li>
+      <div>
+        <div className="ed-quick-label">🎈 Próximo cumpleaños</div>
+        <div className="ed-quick-val">{cumpleTxt}</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div className="ed-quick-label">⏰ Horario</div>
+        <div className="ed-quick-val">{horario || "08:30 - 18:00"}</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div className="ed-quick-label">📍 Oficina</div>
+        <div className="ed-quick-val">{centro || "Santiago Centro"}</div>
+      </div>
+    </li>
+  </ul>
 
-              <div className="ed-sep" />
+  <div className="ed-sep" />
 
-              <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
-              <div className="ed-vac">
-                <div className="ed-vac-row"><span>Saldo</span><b>{vac.saldo} días</b></div>
-                <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
-                {vac.progresivos > 0 && (<div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>)}
-                {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
-              </div>
-            </div>
+  <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
+  <div className="ed-vac">
+    <div className="ed-vac-row"><span>Saldo</span><b>{vac.saldo} días</b></div>
+    <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
+    {vac.progresivos > 0 && (<div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>)}
+    {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
+  </div>
+</div>
+
 
               <div className="ed-card">
                 <h4 className="ed-card-title">Rendimiento</h4>
