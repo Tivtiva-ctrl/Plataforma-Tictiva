@@ -4,41 +4,38 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
   const emergencia = Array.isArray(hv.emergencia) ? hv.emergencia : [];
   const md = hv.medico || {};
   const trayectoria = Array.isArray(hv.trayectoria) ? hv.trayectoria : [];
-  const educacion = Array.isArray(hv.educacion) ? hv.educacion : [];
+  const educacion  = Array.isArray(hv.educacion)  ? hv.educacion  : [];
   const experiencia = Array.isArray(hv.experiencia) ? hv.experiencia : [];
 
-  const setHv = (k, v) => onChange?.("hojaVida", { ...hv, [k]: v });
+  const setHv  = (k, v) => onChange?.("hojaVida", { ...hv, [k]: v });
   const setMed = (k, v) => setHv("medico", { ...(hv.medico || {}), [k]: v });
   const setEmerg = (idx, k, v) => {
-    const arr = [...(emergencia.length ? emergencia : [{}, {}])];
+    const arr = [...(emergencia.length ? emergencia : [{},{},])];
     arr[idx] = { ...(arr[idx] || {}), [k]: v };
     setHv("emergencia", arr);
   };
 
-  // Helpers editores de listas
-  const addTrayectoria = () =>
-    setHv("trayectoria", [...trayectoria, { cargo: "", desde: "", detalle: "" }]);
-  const editTrayectoria = (i, k, v) =>
-    setHv("trayectoria", trayectoria.map((t, ix) => (ix === i ? { ...t, [k]: v } : t)));
-  const delTrayectoria = (i) =>
-    setHv("trayectoria", trayectoria.filter((_, ix) => ix !== i));
+  // ——— helpers para listas editables ———
+  const updIn = (arr, idx, k, v) => {
+    const copy = [...arr];
+    copy[idx] = { ...(copy[idx] || {}), [k]: v };
+    return copy;
+  };
+  const rmAt = (arr, idx) => arr.filter((_, i) => i !== idx);
 
-  const addEducacion = () =>
-    setHv("educacion", [...educacion, { titulo: "", institucion: "", desde: "", hasta: "" }]);
-  const editEducacion = (i, k, v) =>
-    setHv("educacion", educacion.map((t, ix) => (ix === i ? { ...t, [k]: v } : t)));
-  const delEducacion = (i) =>
-    setHv("educacion", educacion.filter((_, ix) => ix !== i));
+  const addTraj = () => setHv("trayectoria", [...trayectoria, { cargo: "", desde: "", detalle: "" }]);
+  const chgTraj = (i, k, v) => setHv("trayectoria", updIn(trayectoria, i, k, v));
+  const delTraj = (i) => setHv("trayectoria", rmAt(trayectoria, i));
 
-  const addExperiencia = () =>
-    setHv("experiencia", [...experiencia, { cargo: "", empresa: "", desde: "", hasta: "", descripcion: "" }]);
-  const editExperiencia = (i, k, v) =>
-    setHv("experiencia", experiencia.map((t, ix) => (ix === i ? { ...t, [k]: v } : t)));
-  const delExperiencia = (i) =>
-    setHv("experiencia", experiencia.filter((_, ix) => ix !== i));
+  const addEdu = () => setHv("educacion", [...educacion, { titulo: "", institucion: "", desde: "", hasta: "" }]);
+  const chgEdu = (i, k, v) => setHv("educacion", updIn(educacion, i, k, v));
+  const delEdu = (i) => setHv("educacion", rmAt(educacion, i));
+
+  const addExp = () => setHv("experiencia", [...experiencia, { cargo: "", empresa: "", desde: "", hasta: "", descripcion: "" }]);
+  const chgExp = (i, k, v) => setHv("experiencia", updIn(experiencia, i, k, v));
+  const delExp = (i) => setHv("experiencia", rmAt(experiencia, i));
 
   const imprimir = () => {
-    const w = window.open("", "_blank");
     const html = `
       <html><head><meta charset="utf-8" />
       <title>Hoja de Vida - ${empleado?.nombre || ""}</title>
@@ -109,6 +106,7 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
 
         <script>window.onload = () => setTimeout(() => window.print(), 150);</script>
       </body></html>`;
+    const w = window.open("", "_blank");
     w.document.open(); w.document.write(html); w.document.close();
   };
 
@@ -139,7 +137,7 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         </div>
       )}
 
-      {/* Contactos de Emergencia */}
+      {/* Emergencia */}
       <div className="hv-card">
         <h4 className="hv-title">Contactos de Emergencia</h4>
         <div className="hv-grid2">
@@ -220,20 +218,41 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         </div>
       </div>
 
-      {/* Trayectoria */}
+      {/* Trayectoria — ahora editable */}
       <div className="hv-card">
         <h4 className="hv-title">Trayectoria en la Empresa</h4>
         {modoEdicion ? (
           <>
-            {trayectoria.map((t, i) => (
-              <div key={i} className="list-editor">
-                <input placeholder="Cargo" value={t.cargo||""} onChange={e=>editTrayectoria(i,"cargo",e.target.value)} />
-                <input type="date" placeholder="Desde" value={t.desde||""} onChange={e=>editTrayectoria(i,"desde",e.target.value)} />
-                <input placeholder="Detalle" value={t.detalle||""} onChange={e=>editTrayectoria(i,"detalle",e.target.value)} />
-                <button className="ed-btn" onClick={()=>delTrayectoria(i)}>Eliminar</button>
-              </div>
-            ))}
-            <button className="ed-btn" onClick={addTrayectoria}>+ Agregar</button>
+            <ul className="hv-tl">
+              {trayectoria.map((t,i)=>(
+                <li key={i} className="hv-tl-it">
+                  <div className="hv-grid2">
+                    <div className="hv-row">
+                      <span className="hv-label">Cargo:</span>
+                      <input className="hv-val" value={t.cargo||""} onChange={(e)=>chgTraj(i,"cargo",e.target.value)}
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                    </div>
+                    <div className="hv-row">
+                      <span className="hv-label">Desde:</span>
+                      <input className="hv-val" value={t.desde||""} onChange={(e)=>chgTraj(i,"desde",e.target.value)}
+                        placeholder="YYYY-MM-DD"
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                    </div>
+                  </div>
+                  <div className="hv-row">
+                    <span className="hv-label">Detalle:</span>
+                    <input className="hv-val" value={t.detalle||""} onChange={(e)=>chgTraj(i,"detalle",e.target.value)}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                  </div>
+                  <div className="hv-item-actions">
+                    <button className="ed-btn danger" onClick={()=>delTraj(i)}>Eliminar</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hv-actions">
+              <button className="ed-btn" onClick={addTraj}>+ Agregar cargo</button>
+            </div>
           </>
         ) : (
           <ul className="hv-tl">
@@ -248,21 +267,47 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         )}
       </div>
 
-      {/* Educación */}
+      {/* Educación — ahora editable */}
       <div className="hv-card">
         <h4 className="hv-title">Educación y Formación</h4>
         {modoEdicion ? (
           <>
-            {educacion.map((e, i) => (
-              <div key={i} className="list-editor">
-                <input placeholder="Título" value={e.titulo||""} onChange={ev=>editEducacion(i,"titulo",ev.target.value)} />
-                <input placeholder="Institución" value={e.institucion||""} onChange={ev=>editEducacion(i,"institucion",ev.target.value)} />
-                <input placeholder="Desde" value={e.desde||""} onChange={ev=>editEducacion(i,"desde",ev.target.value)} />
-                <input placeholder="Hasta" value={e.hasta||""} onChange={ev=>editEducacion(i,"hasta",ev.target.value)} />
-                <button className="ed-btn" onClick={()=>delEducacion(i)}>Eliminar</button>
-              </div>
-            ))}
-            <button className="ed-btn" onClick={addEducacion}>+ Agregar</button>
+            <ul className="hv-tl">
+              {educacion.map((e,i)=>(
+                <li key={i} className="hv-tl-it">
+                  <div className="hv-row">
+                    <span className="hv-label">Título:</span>
+                    <input className="hv-val" value={e.titulo||""} onChange={(ev)=>chgEdu(i,"titulo",ev.target.value)}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                  </div>
+                  <div className="hv-row">
+                    <span className="hv-label">Institución:</span>
+                    <input className="hv-val" value={e.institucion||""} onChange={(ev)=>chgEdu(i,"institucion",ev.target.value)}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                  </div>
+                  <div className="hv-grid2">
+                    <div className="hv-row">
+                      <span className="hv-label">Desde:</span>
+                      <input className="hv-val" value={e.desde||""} onChange={(ev)=>chgEdu(i,"desde",ev.target.value)}
+                        placeholder="YYYY"
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                    </div>
+                    <div className="hv-row">
+                      <span className="hv-label">Hasta:</span>
+                      <input className="hv-val" value={e.hasta||""} onChange={(ev)=>chgEdu(i,"hasta",ev.target.value)}
+                        placeholder="YYYY"
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                    </div>
+                  </div>
+                  <div className="hv-item-actions">
+                    <button className="ed-btn danger" onClick={()=>delEdu(i)}>Eliminar</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hv-actions">
+              <button className="ed-btn" onClick={addEdu}>+ Agregar estudio</button>
+            </div>
           </>
         ) : (
           <ul className="hv-tl">
@@ -277,22 +322,52 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         )}
       </div>
 
-      {/* Experiencia */}
+      {/* Experiencia — ahora editable */}
       <div className="hv-card">
         <h4 className="hv-title">Experiencia Laboral Previa</h4>
         {modoEdicion ? (
           <>
-            {experiencia.map((x, i) => (
-              <div key={i} className="list-editor">
-                <input placeholder="Cargo" value={x.cargo||""} onChange={ev=>editExperiencia(i,"cargo",ev.target.value)} />
-                <input placeholder="Empresa" value={x.empresa||""} onChange={ev=>editExperiencia(i,"empresa",ev.target.value)} />
-                <input placeholder="Desde" value={x.desde||""} onChange={ev=>editExperiencia(i,"desde",ev.target.value)} />
-                <input placeholder="Hasta" value={x.hasta||""} onChange={ev=>editExperiencia(i,"hasta",ev.target.value)} />
-                <input placeholder="Descripción" value={x.descripcion||""} onChange={ev=>editExperiencia(i,"descripcion",ev.target.value)} />
-                <button className="ed-btn" onClick={()=>delExperiencia(i)}>Eliminar</button>
-              </div>
-            ))}
-            <button className="ed-btn" onClick={addExperiencia}>+ Agregar</button>
+            <ul className="hv-tl">
+              {experiencia.map((x,i)=>(
+                <li key={i} className="hv-tl-it">
+                  <div className="hv-row">
+                    <span className="hv-label">Cargo:</span>
+                    <input className="hv-val" value={x.cargo||""} onChange={(ev)=>chgExp(i,"cargo",ev.target.value)}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                  </div>
+                  <div className="hv-row">
+                    <span className="hv-label">Empresa:</span>
+                    <input className="hv-val" value={x.empresa||""} onChange={(ev)=>chgExp(i,"empresa",ev.target.value)}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                  </div>
+                  <div className="hv-grid2">
+                    <div className="hv-row">
+                      <span className="hv-label">Desde:</span>
+                      <input className="hv-val" value={x.desde||""} onChange={(ev)=>chgExp(i,"desde",ev.target.value)}
+                        placeholder="YYYY"
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                    </div>
+                    <div className="hv-row">
+                      <span className="hv-label">Hasta:</span>
+                      <input className="hv-val" value={x.hasta||""} onChange={(ev)=>chgExp(i,"hasta",ev.target.value)}
+                        placeholder="YYYY"
+                        style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                    </div>
+                  </div>
+                  <div className="hv-row">
+                    <span className="hv-label">Descripción:</span>
+                    <input className="hv-val" value={x.descripcion||""} onChange={(ev)=>chgExp(i,"descripcion",ev.target.value)}
+                      style={{width:'100%', border:'1px solid #E5E7EB', borderRadius:8, padding:'6px 8px'}}/>
+                  </div>
+                  <div className="hv-item-actions">
+                    <button className="ed-btn danger" onClick={()=>delExp(i)}>Eliminar</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hv-actions">
+              <button className="ed-btn" onClick={addExp}>+ Agregar experiencia</button>
+            </div>
           </>
         ) : (
           <ul className="hv-tl">
@@ -309,27 +384,25 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
       </div>
 
       <style>{`
-      .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-      .hv-alert{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-bottom:12px}
-      .hv-card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px;background:#fff}
-      .hv-title{margin:0 0 8px;font-size:16px;font-weight:800;color:#111827}
-      .hv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-      @media (max-width: 860px){ .hv-grid2{grid-template-columns:1fr} }
-      .hv-contact{border:1px solid #F3F4F6;border-radius:10px;padding:10px}
-      .hv-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #F3F4F6}
-      .hv-row:first-child{border-top:none}
-      .hv-label{color:#6B7280}
-      .hv-val{font-weight:700}
-      .hv-strong{font-weight:800}
-      .hv-muted{color:#6B7280}
-      .hv-tl{list-style:none;margin:0;padding:0}
-      .hv-tl-it{border-left:2px solid #E5E7EB;margin-left:8px;padding:8px 12px}
-      .list-editor{display:grid;grid-template-columns:1fr 160px 1fr auto; gap:8px; margin:8px 0}
-      .list-editor input, .list-editor select{
-        width:100%; border:1px solid #E5E7EB; border-radius:8px; padding:6px 8px; font-size:14px;
-      }
-      @media (max-width: 860px){ .list-editor{grid-template-columns:1fr} }
-    `}</style>
+        .hv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .hv-alert{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;margin-bottom:12px}
+        .hv-card{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-top:12px;background:#fff}
+        .hv-title{margin:0 0 8px;font-size:16px;font-weight:800;color:#111827}
+        .hv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        @media (max-width: 860px){ .hv-grid2{grid-template-columns:1fr} }
+        .hv-contact{border:1px solid #F3F4F6;border-radius:10px;padding:10px}
+        .hv-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #F3F4F6}
+        .hv-row:first-child{border-top:none}
+        .hv-label{color:#6B7280}
+        .hv-val{font-weight:700}
+        .hv-strong{font-weight:800}
+        .hv-muted{color:#6B7280}
+        .hv-tl{list-style:none;margin:0;padding:0}
+        .hv-tl-it{border-left:2px solid #E5E7EB;margin-left:8px;padding:8px 12px}
+        .hv-actions{margin-top:10px; display:flex; justify-content:flex-end}
+        .hv-item-actions{margin-top:8px; display:flex; justify-content:flex-end}
+        .ed-btn.danger{border-color:#FCA5A5; color:#B91C1C}
+      `}</style>
     </div>
   );
 }
