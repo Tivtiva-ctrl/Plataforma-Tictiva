@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import DocumentosTab from "../components/DocumentosTab.jsx";
 
-
+/* ===== Helpers de fecha locales (evita UTC/ISO) ===== */
+const pad2 = (n) => String(n).padStart(2, "0");
+const ymdLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const hmLocal = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 
 // --- mocks date-fns (para este entorno)
 const parseISO = (iso) => new Date(iso);
@@ -444,7 +447,9 @@ const BancariosTab = ({ empleado, modoEdicion, onChange }) => {
       <style>{`.ed-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px}.ed-2col .ed-kv-row{border-top:none;padding:10px 2px}`}</style>
     </div>
   );
-};// -------------------- Hoja de Vida (editable) ---------------------
+};
+
+// -------------------- Hoja de Vida (editable) ---------------------
 function HojaDeVida({ empleado, modoEdicion, onChange }) {
   const hv = empleado?.hojaVida || {};
   const emergencia  = Array.isArray(hv.emergencia)  ? hv.emergencia  : [];
@@ -713,7 +718,6 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         </ul>
       </div>
 
-      {/* estilos mínimos para inputs de esta tarjeta */}
       <style>{`
         .hv-card input, .hv-card select{
           width:100%; border:1px solid #E5E7EB; border-radius:8px; padding:6px 8px; font-size:14px;
@@ -722,9 +726,6 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
     </div>
   );
 }
-
-
-/* ===== Mini PushPop (ELIMINADO: lo usaba el componente de documentos viejo) ===== */
 
 /* ======================= Tab: Asistencia (NO editable) ====================== */
 function AsistenciaTab({ empleado }) {
@@ -798,7 +799,7 @@ function AsistenciaTab({ empleado }) {
     const diffToMon = (day + 6) % 7;
     const lunes = new Date(d); lunes.setDate(d.getDate() - diffToMon);
     const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
-    const f = (x) => x.toISOString().slice(0,10);
+    const f = (x) => ymdLocal(x); // <- local YYYY-MM-DD
     return { lunes: f(lunes), domingo: f(domingo) };
   };
 
@@ -1176,10 +1177,11 @@ export default function EmpleadoDetalle() {
     actor = "Sistema",
   }) => {
     if (!empSnapshot) return;
+    const now = new Date();
     const item = {
       id: Date.now(),
-      fecha: new Date().toISOString().slice(0,10),
-      hora: new Date().toTimeString().slice(0,5),
+      fecha: ymdLocal(now),         // <- fecha local (YYYY-MM-DD)
+      hora: hmLocal(now),           // <- hora local HH:mm
       actor, accion, categoria, detalle,
     };
     const updated = {
@@ -1216,7 +1218,7 @@ export default function EmpleadoDetalle() {
     if (!empleado) return;
     const nombre = (nombreDesdeUI ?? window.prompt("Nombre de la nueva carpeta") ?? "").trim();
     if (!nombre) return;
-    const hoy = new Date().toISOString().slice(0,10);
+    const hoy = ymdLocal(new Date());
     const nueva = { id: `f_${Date.now()}`, tipo: "folder", nombre, mod: hoy, tam: "" };
     const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nueva] };
     await registrarMovimiento(empAfter, {
@@ -1243,7 +1245,7 @@ export default function EmpleadoDetalle() {
       if (!file) return;
     }
 
-    const hoy = new Date().toISOString().slice(0,10);
+    const hoy = ymdLocal(new Date());
     const url = URL.createObjectURL(file);           // 👈 URL para previsualizar
     const nuevo = {
       id: `d_${Date.now()}`,
@@ -1286,7 +1288,7 @@ export default function EmpleadoDetalle() {
 
   const onRenameDoc = async (id, nuevoNombre) => {
     if (!empleado) return;
-    const hoy = new Date().toISOString().slice(0,10);
+    const hoy = ymdLocal(new Date());
     const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
     const empAfter = {
       ...empleado,
@@ -1313,10 +1315,11 @@ export default function EmpleadoDetalle() {
         if (a !== b) diffs.push(k);
       });
 
+      const now = new Date();
       const nuevaEntrada = {
         id: Date.now(),
-        fecha: new Date().toISOString().slice(0,10),
-        hora: new Date().toTimeString().slice(0,5),
+        fecha: ymdLocal(now),      // <- local
+        hora: hmLocal(now),        // <- local
         actor: "Sistema",
         accion: "Actualización de ficha",
         categoria: "Ficha",
@@ -1554,51 +1557,50 @@ export default function EmpleadoDetalle() {
         {tabActiva !== "asistencia" && (
           <aside className={`ed-right ${tabActiva === "contractuales" ? "is-compact" : ""}`}>
             <div className="ed-card">
-  <h4 className="ed-card-title">Información Rápida</h4>
-  <ul className="ed-quick">
-    <li>
-      <div>
-        <div className="ed-quick-label">🎈 Próximo cumpleaños</div>
-        <div className="ed-quick-val">{cumpleTxt}</div>
-      </div>
-    </li>
-    <li>
-      <div>
-        <div className="ed-quick-label">⏰ Horario</div>
-        <div className="ed-quick-val">{horario || "08:30 - 18:00"}</div>
-      </div>
-    </li>
-    <li>
-      <div>
-        <div className="ed-quick-label">📍 Oficina</div>
-        <div className="ed-quick-val">{centro || "Santiago Centro"}</div>
-      </div>
-    </li>
-  </ul>
+              <h4 className="ed-card-title">Información Rápida</h4>
+              <ul className="ed-quick">
+                <li>
+                  <div>
+                    <div className="ed-quick-label">🎈 Próximo cumpleaños</div>
+                    <div className="ed-quick-val">{cumpleTxt}</div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <div className="ed-quick-label">⏰ Horario</div>
+                    <div className="ed-quick-val">{horario || "08:30 - 18:00"}</div>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <div className="ed-quick-label">📍 Oficina</div>
+                    <div className="ed-quick-val">{centro || "Santiago Centro"}</div>
+                  </div>
+                </li>
+              </ul>
 
-  <div className="ed-sep" />
+              <div className="ed-sep" />
 
-  <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
-  <div className="ed-vac">
-    <div className="ed-vac-row"><span>Saldo</span><b>{vac.saldo} días</b></div>
-    <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
-    {vac.progresivos > 0 && (<div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>)}
-    {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
-  </div>
-</div>
-
-
-              <div className="ed-card">
-                <h4 className="ed-card-title">Rendimiento</h4>
-                <div className="ed-metric"><div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div><div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div></div>
-                <div className="ed-metric"><div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div><div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div></div>
-                <div className="ed-metric"><div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div><div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div></div>
+              <h4 className="ed-card-title" style={{marginTop:8}}>Vacaciones</h4>
+              <div className="ed-vac">
+                <div className="ed-vac-row"><span>Saldo</span><b>{vac.saldo} días</b></div>
+                <div className="ed-vac-sub">Devengadas: {vac.devengadas} · Tomadas: {vac.tomadas}</div>
+                {vac.progresivos > 0 && (<div className="ed-vac-sub">Incluye {vac.progresivos} día(s) progresivo(s)</div>)}
+                {vac.jornada ? <div className="ed-vac-sub">Jornada: {vac.jornada}</div> : null}
               </div>
+            </div>
+
+            <div className="ed-card">
+              <h4 className="ed-card-title">Rendimiento</h4>
+              <div className="ed-metric"><div className="ed-metric-row"><span>Productividad</span><span className="ed-metric-num">92%</span></div><div className="ed-bar"><div className="ed-bar-fill blue" style={{ width: "92%" }} /></div></div>
+              <div className="ed-metric"><div className="ed-metric-row"><span>Puntualidad</span><span className="ed-metric-num">96%</span></div><div className="ed-bar"><div className="ed-bar-fill green" style={{ width: "96%" }} /></div></div>
+              <div className="ed-metric"><div className="ed-metric-row"><span>Colaboración</span><span className="ed-metric-num">88%</span></div><div className="ed-bar"><div className="ed-bar-fill purple" style={{ width: "88%" }} /></div></div>
+            </div>
           </aside>
         )}
       </div>
 
-      {/* Estilos base (sin cambios) */}
+      {/* Estilos base */}
       <style>{`
         .ed-wrap{padding:16px 16px 32px}
         .ed-card{background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:var(--pad-card, 16px);box-shadow:0 4px 10px rgba(0,0,0,.04)}
@@ -1694,5 +1696,4 @@ export default function EmpleadoDetalle() {
       `}</style>
     </div>
   );
-
 }
