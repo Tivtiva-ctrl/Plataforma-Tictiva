@@ -7,6 +7,7 @@
     "dev:api": "API_KEY=dev-secret-key node server.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "leaflet": "^1.9.4",

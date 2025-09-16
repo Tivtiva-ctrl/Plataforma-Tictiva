@@ -56,7 +56,41 @@
       },
       "evaluacion": {
         "comentarios": ""
-      }
+      },
+      "documentos": [
+        { "id": "f-contratos-1", "tipo": "folder", "nombre": "Contratos", "mod": "2025-08-15", "tam": "" },
+        {
+          "id": "d-reglamento-1",
+          "tipo": "file",
+          "nombre": "Reglamento Interno 2025.pdf",
+          "mod": "2025-01-10",
+          "tam": 1260000,
+          "mime": "application/pdf",
+          "bucket": "empleados",
+          "path": "1/Reglamento-Interno-2025.pdf"
+        },
+        {
+          "id": "d-contrato-2022-1",
+          "tipo": "file",
+          "nombre": "Contrato Trabajo 2022.pdf",
+          "mod": "2022-03-01",
+          "tam": 820000,
+          "mime": "application/pdf",
+          "bucket": "empleados",
+          "path": "1/contratos/Contrato-2022.pdf",
+          "parentId": "f-contratos-1"
+        },
+        {
+          "id": "d-credencial-1",
+          "tipo": "file",
+          "nombre": "Credencial.jpg",
+          "mod": "2025-06-22",
+          "tam": 150234,
+          "mime": "image/jpeg",
+          "bucket": "empleados",
+          "path": "1/credencial.jpg"
+        }
+      ]
     },
     {
       "id": 2,
@@ -98,7 +132,31 @@
       },
       "evaluacion": {
         "comentarios": ""
-      }
+      },
+      "documentos": [
+        { "id": "f-contratos-2", "tipo": "folder", "nombre": "Contratos", "mod": "2025-08-15", "tam": "" },
+        {
+          "id": "d-reglamento-2",
+          "tipo": "file",
+          "nombre": "Reglamento Interno 2025.pdf",
+          "mod": "2025-01-10",
+          "tam": 1260000,
+          "mime": "application/pdf",
+          "bucket": "empleados",
+          "path": "2/Reglamento-Interno-2025.pdf"
+        },
+        {
+          "id": "d-contrato-2021-2",
+          "tipo": "file",
+          "nombre": "Contrato Trabajo 2021.pdf",
+          "mod": "2021-01-15",
+          "tam": 790000,
+          "mime": "application/pdf",
+          "bucket": "empleados",
+          "path": "2/contratos/Contrato-2021.pdf",
+          "parentId": "f-contratos-2"
+        }
+      ]
     }
   ]
 }
