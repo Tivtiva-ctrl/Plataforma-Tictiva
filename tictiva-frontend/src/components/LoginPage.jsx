@@ -1,6 +1,6 @@
 // src/components/LoginPage.jsx
 import React, { useState } from "react";
-import "./loginpage.css";                      // usa tu hoja existente
+import "./LoginPage.css";                      // usa tu hoja existente
 import illustration from "../assets/login-illustration.png"; // ← pon aquí tu imagen de la maqueta
 
 export default function LoginPage({ onLoginSuccess }) {
