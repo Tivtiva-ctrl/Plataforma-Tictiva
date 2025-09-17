@@ -2,14 +2,44 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import DocumentosTab from "../components/DocumentosTab.jsx";
 
-/* ===== Helpers de fecha locales (evita UTC/ISO) ===== */
-const pad2 = (n) => String(n).padStart(2, "0");
-const ymdLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-const hmLocal = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-
-// --- mocks date-fns (para este entorno)
+/* --- mocks date-fns usados en Asistencia --- */
 const parseISO = (iso) => new Date(iso);
 const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
+
+/* =========================== Utils de fecha/texto (FIX TZ) =========================== */
+const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const pad2 = (n) => String(n).padStart(2, "0");
+
+/** Extrae Y-M-D de cualquier string ISO, sin crear Date (evita corrimiento por UTC) */
+const pickYMD = (val) => {
+  const s = String(val || "");
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? { y: +m[1], m: +m[2], d: +m[3] } : null;
+};
+
+/** Formato “DD de Mes de YYYY” sin depender de Date para YYYY-MM-DD */
+const fmtFechaLarga = (val) => {
+  if (!val) return "—";
+  const ymd = pickYMD(val);
+  if (ymd) return `${pad2(ymd.d)} de ${mesesEs[ymd.m - 1]} de ${ymd.y}`;
+  const d = new Date(val);
+  if (isNaN(d)) return "—";
+  return `${pad2(d.getDate())} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
+};
+
+/** Para inputs date: si ya viene YYYY-MM-DD, devuélvelo tal cual */
+const toDateInput = (val) => {
+  if (!val) return "";
+  const ymd = pickYMD(val);
+  if (ymd) return `${ymd.y}-${pad2(ymd.m)}-${pad2(ymd.d)}`;
+  const d = new Date(val);
+  return isNaN(d) ? "" : `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+};
+const fromDateInput = (val) => (val ? `${val}` : "");
+
+/* Helpers locales para registrar/mostrar sin UTC */
+const ymdLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const hmLocal  = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 
 /* =========================== Persistencia (localStorage) =========================== */
 const LS_KEY = "tictiva.empleados.v1";
@@ -151,22 +181,7 @@ const EmpleadosAPI = {
   }])
 };
 
-/* =========================== Utils de fecha/texto =========================== */
-const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-const fmtFechaLarga = (iso) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d)) return "—";
-  return `${String(d.getDate()).padStart(2, "0")} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
-};
-const toDateInput = (iso) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d)) return "";
-  return d.toISOString().slice(0,10);
-};
-const fromDateInput = (val) => (val ? `${val}` : "");
-
+/* =========================== Utils varias =========================== */
 const pickCI = (obj, keys = [], fallback = undefined) => {
   if (!obj) return fallback;
   const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
@@ -219,7 +234,7 @@ const computeVacaciones = (empleado) => {
   return { devengadas, tomadas: round1(tomadas), saldo: round1(devengadas - tomadas), jornada: jornada || "", months, progresivos };
 };
 
-/* ===== Chile: Regiones y Comunas (completo) ===== */
+/* ===== Chile: Regiones y Comunas ===== */
 const COMUNAS_POR_REGION = {
   "Arica y Parinacota": ["Arica","Camarones","Putre","General Lagos"],
   "Tarapacá": ["Iquique","Alto Hospicio","Pozo Almonte","Camiña","Colchane","Huara","Pica"],
@@ -799,7 +814,7 @@ function AsistenciaTab({ empleado }) {
     const diffToMon = (day + 6) % 7;
     const lunes = new Date(d); lunes.setDate(d.getDate() - diffToMon);
     const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
-    const f = (x) => ymdLocal(x); // <- local YYYY-MM-DD
+    const f = (x) => ymdLocal(x);
     return { lunes: f(lunes), domingo: f(domingo) };
   };
 
@@ -932,11 +947,17 @@ function HistorialTab({ empleado }) {
   if (!base.length && empleado?.fechaIngreso) {
     base.push({ id: "seed-ingreso", fecha: empleado.fechaIngreso, hora: "09:00", actor: "Sistema", accion: "Ingreso a la empresa", detalle: `Fecha de ingreso registrada (${fmtFechaLarga(empleado.fechaIngreso)})`, categoria: "Contrato" });
   }
-  const items = [...base].sort((a, b) => {
-    const ta = new Date(`${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`).getTime();
-    const tb = new Date(`${b.fecha || b.timestamp || b.fechaHora || ""}T${b.hora || "00:00"}`).getTime();
-    return tb - ta;
-  });
+
+  // Evita UTC para ordenar: parsea YYYY-MM-DD y arma timestamp local
+  const localTs = (fecha, hora = "00:00") => {
+    const ymd = pickYMD(fecha);
+    const [hh, mm] = String(hora || "00:00").split(":");
+    if (ymd) return new Date(ymd.y, ymd.m - 1, ymd.d, +hh || 0, +mm || 0).getTime();
+    const d = new Date(`${fecha}T${hora}`);
+    return d.getTime() || 0;
+  };
+
+  const items = [...base].sort((a, b) => localTs(b.fecha || b.timestamp || b.fechaHora, b.hora || "00:00") - localTs(a.fecha || a.timestamp || a.fechaHora, a.hora || "00:00"));
 
   const exportCSV = () => {
     const headers = ["fecha","hora","actor","accion","categoria","detalle"];
@@ -979,7 +1000,6 @@ function HistorialTab({ empleado }) {
                 </div>
                 <div className="htl-det">{it.detalle || "—"}</div>
                 <div className="htl-foot">Por <b>{it.actor || "Sistema"}</b></div>
-
               </div>
             </li>
           ))}
@@ -998,6 +1018,7 @@ export default function EmpleadoDetalle() {
   const hasParam = rawParam.trim().length > 0;
 
   const isNumericId = /^\d+$/.test(rawParam);
+  the:
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
   const idParam = hasParam && isNumericId ? rawParam : undefined;
 
@@ -1180,8 +1201,8 @@ export default function EmpleadoDetalle() {
     const now = new Date();
     const item = {
       id: Date.now(),
-      fecha: ymdLocal(now),         // <- fecha local (YYYY-MM-DD)
-      hora: hmLocal(now),           // <- hora local HH:mm
+      fecha: ymdLocal(now),         // fecha local YYYY-MM-DD
+      hora: hmLocal(now),           // hora local HH:mm
       actor, accion, categoria, detalle,
     };
     const updated = {
@@ -1246,7 +1267,7 @@ export default function EmpleadoDetalle() {
     }
 
     const hoy = ymdLocal(new Date());
-    const url = URL.createObjectURL(file);           // 👈 URL para previsualizar
+    const url = URL.createObjectURL(file);           // URL para previsualizar
     const nuevo = {
       id: `d_${Date.now()}`,
       tipo: "file",
@@ -1254,8 +1275,8 @@ export default function EmpleadoDetalle() {
       mod: hoy,
       tam: humanSize(file.size),
       parentId: parentId || "",
-      mime: file.type || "",                          // 👈 MIME
-      url,                                            // 👈 Object URL
+      mime: file.type || "",
+      url,                                            // Object URL
     };
 
     const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
@@ -1270,7 +1291,7 @@ export default function EmpleadoDetalle() {
     alert("Archivo agregado (mock).");
   };
 
-  // IMPORTANTE: handlers de rename/delete al nivel del componente (NO dentro de guardarEmpleado)
+  // Rename/Delete
   const onDeleteDoc = async (id) => {
     if (!empleado) return;
     const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
@@ -1318,8 +1339,8 @@ export default function EmpleadoDetalle() {
       const now = new Date();
       const nuevaEntrada = {
         id: Date.now(),
-        fecha: ymdLocal(now),      // <- local
-        hora: hmLocal(now),        // <- local
+        fecha: ymdLocal(now),
+        hora: hmLocal(now),
         actor: "Sistema",
         accion: "Actualización de ficha",
         categoria: "Ficha",
