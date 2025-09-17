@@ -1,17 +1,19 @@
 :root{
-  --brand-600:#2563EB;   /* azul corporativo */
+  /* Brand */
+  --brand-600:#2563EB;
   --brand-500:#1F8BFF;
   --teal-400:#22D3EE;
-  --mint-500:#14B8A6;
 
+  /* Ink */
   --ink-900:#0F172A;
   --ink-700:#1F2937;
   --ink-500:#374151;
   --ink-400:#6B7280;
 
-  --bg:#F7FAFC;          /* base clara */
+  /* Surfaces */
+  --bg:#F7FAFC;
   --card:#FFFFFF;
-  --ring:#E5E7EB;        /* bordes inputs */
+  --ring:#E5E7EB;
   --shadow:0 10px 30px rgba(2,8,23,.08);
 }
 
@@ -24,12 +26,12 @@ body{
   background: linear-gradient(180deg, #E6F4FA 0%, #F8FAFC 60%, #F8FAFC 100%);
 }
 
-/* ====== LAYOUT PRINCIPAL (un pelín más ancho) ====== */
+/* ====== LAYOUT PRINCIPAL ====== */
 .login{
   min-height: 100dvh;
   display:grid;
   grid-template-columns: 1.05fr 0.95fr;
-  max-width: 1240px;             /* antes sin tope; ahora más ancho */
+  max-width: 1240px;
   margin: 32px auto;
   background: var(--card);
   border-radius: 28px;
@@ -37,31 +39,45 @@ body{
   overflow:hidden;
 }
 
-/* ====== COLUMNA IZQUIERDA ====== */
+/* ====== COLUMNA IZQUIERDA (FORM) ====== */
 .login__form{
   display:flex;
   flex-direction:column;
   gap:16px;
   padding:48px clamp(24px, 5vw, 72px);
   background:var(--card);
+  min-height:100%;
 }
 
+/* Marca / Logo */
 .login__brand{
-  display:flex; align-items:center; gap:10px;
-  font-weight:700; font-size:22px;
+  display:flex; align-items:center; gap:12px;
 }
-.login__logoMark{
-  width:28px; height:28px; display:inline-grid; place-items:center;
-  border-radius:6px; background:var(--brand-600); color:#fff;
+.login__brandImg{
+  height:36px; width:auto; display:block;
+}
+
+/* Títulos */
+.login__title{
+  margin:10px 0 0;
+  font-size:42px;
+  line-height:1.08;
   font-weight:800;
+  color:#0B1A38;
+  letter-spacing:-0.02em;
 }
-.login__logoText{ color:#0B1A38; }
+.login__subtitle{
+  margin:0 0 12px;
+  font-size:24px;
+  color:var(--ink-500);
+}
+.login__slogan{
+  margin:8px 0 6px;
+  color:var(--ink-500);
+  font-size:16px;
+}
 
-/* ▲ Un poco más grandes para igualar el mock */
-.login__title{ margin:8px 0 0; font-size:42px; line-height:1.08; font-weight:800; color:#0B1A38; letter-spacing:-0.02em; }
-.login__subtitle{ margin:0 0 12px; font-size:24px; color:var(--ink-500); }
-.login__slogan{ margin:8px 0 6px; color:var(--ink-500); font-size:16px; }
-
+/* Card del formulario */
 .login__card{
   margin-top:8px;
   background:var(--card);
@@ -70,15 +86,17 @@ body{
   padding:22px;
   box-shadow: var(--shadow);
   display:flex; flex-direction:column; gap:10px;
-  max-width: 520px;               /* mantenemos el ancho del card */
+  max-width:520px;
 }
-
 .login__label{ font-size:13px; color:var(--ink-500); }
 .login__input{
   height:44px; border:1px solid var(--ring); border-radius:10px;
   padding:0 14px; font-size:15px; outline:none; background:#fff;
 }
-.login__input:focus{ border-color:var(--brand-600); box-shadow:0 0 0 3px rgba(37,99,235,.16); }
+.login__input:focus{
+  border-color:var(--brand-600);
+  box-shadow:0 0 0 3px rgba(37,99,235,.16);
+}
 
 .login__row{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -99,28 +117,38 @@ body{
 .login__link{ color:var(--brand-600); text-decoration:none; font-weight:600; }
 .login__link:hover{ text-decoration:underline; }
 
-.login__footerRow{ display:flex; gap:8px; justify-content:center; margin-top:8px; color:var(--ink-500); }
-
-.login__dtBanner{
-  margin-top:16px;
-  display:flex; align-items:center; gap:12px;
-  background:#ffffffcc; border:1px solid #E8EEF6; backdrop-filter: blur(6px);
-  border-radius:14px; padding:12px 14px; max-width:520px;
-  box-shadow: var(--shadow);
+.login__footerRow{
+  display:flex; gap:8px; justify-content:center; margin-top:8px; color:var(--ink-500);
 }
-.login__dtIcon{ font-size:20px }
-.login__dtText{ display:flex; gap:6px; flex-wrap:wrap; color:var(--ink-500); }
-.login__dtAction{ margin-left:auto; color:var(--brand-600); font-weight:700; text-decoration:none; }
 
-/* ====== COLUMNA DERECHA (ilustración más grande) ====== */
+/* ====== Banner DT (uniforme y al fondo) ====== */
+.login__dtBanner{
+  margin-top:auto;                    /* pega el banner al fondo de la columna */
+  display:flex; align-items:center; gap:12px;
+  background:#fff;
+  border:1px solid #E8EEF6;
+  border-radius:16px;
+  padding:14px 16px;
+  box-shadow: var(--shadow);
+  max-width:520px;
+}
+.login__dtIcon{ font-size:20px; }
+.login__dtText{ color:var(--ink-500); line-height:1.35; }
+.login__dtText strong{ color:#0B1A38; }
+.login__dtAction{
+  margin-left:auto;
+  color:var(--brand-600);
+  font-weight:700;
+  text-decoration:none;
+}
+
+/* ====== COLUMNA DERECHA (ARTE) ====== */
 .login__art{
   position:relative; overflow:hidden;
-  padding:40px clamp(20px, 4vw, 56px);  /* un poco menos de padding lateral */
+  padding:40px clamp(20px, 4vw, 56px);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   background:#F2F7FF;
 }
-
-/* ▲ Más grande (cap a 820px y ocupa 98% del espacio disponible) */
 .login__svg{
   width:min(98%, 820px);
   height:auto;
@@ -128,8 +156,6 @@ body{
   box-shadow: var(--shadow);
   background:#fff3;
 }
-
-/* ▲ Subimos tamaño del caption para que “pese” un poco más */
 .login__artCaption{
   margin-top:22px;
   text-align:center;
@@ -138,7 +164,7 @@ body{
   font-size:24px;
 }
 
-/* ====== Responsive ====== */
+/* ====== RESPONSIVE ====== */
 @media (max-width: 980px){
   .login{ grid-template-columns: 1fr; max-width: 680px; }
   .login__art{ order:-1; padding-bottom:0; }
