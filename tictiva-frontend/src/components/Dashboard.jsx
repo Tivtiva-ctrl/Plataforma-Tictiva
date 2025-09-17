@@ -4,36 +4,67 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import { ROUTES } from "../routes";
 
-/* ===== Iconografía (sin emojis) ===== */
-const Icon = ({ name }) => {
-  const size = 22;
-  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
+/* ===== Iconos SVG (sin emojis) ===== */
+const Icon = ({ name, size = 28 }) => {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": true,
+  };
   switch (name) {
-    case "users": return (
-      <svg {...common}><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    );
-    case "clock": return (
-      <svg {...common}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-    );
-    case "chat": return (
-      <svg {...common}><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
-    );
-    case "chart": return (
-      <svg {...common}><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5"/><rect x="12" y="9" width="3" height="9"/><rect x="17" y="5" width="3" height="13"/></svg>
-    );
-    case "heart": return (
-      <svg {...common}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-.94-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.35 20.84 12.5a5.5 5.5 0 0 0 0-7.89z"/></svg>
-    );
-    default: return null;
+    case "users":
+      return (
+        <svg {...common}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case "clock":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+      );
+    case "chat":
+      return (
+        <svg {...common}>
+          <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg {...common}>
+          <path d="M3 3v18h18" />
+          <rect x="7" y="13" width="3" height="5" rx="1" />
+          <rect x="12" y="9" width="3" height="9" rx="1" />
+          <rect x="17" y="5" width="3" height="13" rx="1" />
+        </svg>
+      );
+    case "heart":
+      return (
+        <svg {...common}>
+          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z" />
+        </svg>
+      );
+    default:
+      return null;
   }
 };
 
 /* Navegación segura */
 function safeGo(navigate, to) {
-  if (typeof to === "string" && to.length > 0) navigate(to);
+  if (typeof to === "string" && to.length) navigate(to);
   else {
     alert("Este submódulo estará disponible pronto.");
-    // eslint-disable-next-line no-console
     console.warn("[Dashboard] Ruta no disponible:", to);
   }
 }
@@ -46,7 +77,7 @@ export default function Dashboard() {
     () => [
       {
         id: "rrhh",
-        color: "#2E6CF6",
+        color: "#336DFF",
         title: "Recursos Humanos",
         icon: "users",
         description: "Gestiona fichas, contratos y documentación legal.",
@@ -91,7 +122,7 @@ export default function Dashboard() {
         color: "#7C3AED",
         title: "Comunicaciones",
         icon: "chat",
-        description: "Mensajería, encuestas y comunicados para tu equipo.",
+        description: "Mensajería, plantillas y encuestas.",
         quick: [
           { label: "Enviar mensaje", to: null },
           { label: "Plantillas", to: null },
@@ -106,9 +137,9 @@ export default function Dashboard() {
       {
         id: "reporteria",
         color: "#EC4899",
-        title: "Reportes",
+        title: "Reportería",
         icon: "chart",
-        description: "Informes gerenciales y análisis de datos.",
+        description: "Dashboards y descargas.",
         quick: [
           { label: "Informes Gerenciales", to: null },
           { label: "Dashboards", to: null },
@@ -125,7 +156,7 @@ export default function Dashboard() {
         color: "#F97316",
         title: "Tictiva Cuida",
         icon: "heart",
-        description: "Bienestar psicoemocional y salud organizacional.",
+        description: "Bienestar y VictorIA.",
         quick: [
           { label: "Test Psicológicos", to: null },
           { label: "Dashboard de Bienestar", to: null },
@@ -143,52 +174,50 @@ export default function Dashboard() {
 
   return (
     <div className="dash">
-      <div className="dash__header">
-        <div className="dash__brand">
-          <span className="dash__logo" aria-hidden="true" />
-          <span className="dash__brandText">Tictiva</span>
+      {/* Hero superior como la maqueta */}
+      <section className="hero">
+        <div className="hero__brand">
+          <span className="hero__logo" aria-hidden />
+          <span className="hero__brandText">Tictiva</span>
         </div>
-        <h1 className="dash__title">Buenas tardes, Verónica Mateo</h1>
-        <p className="dash__subtitle">"Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve."</p>
 
-        <div className="dash__tip">
-          <span className="dash__tipIcon">💡</span>
-          <span className="dash__tipText">
-            <strong>Tip de VictorIA:</strong> Revisa{" "}
-            <button className="dash__linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>Permisos</button>{" "}
-            y{" "}
-            <button className="dash__linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}>Validación DT</button>{" "}
-            en RR.HH.
-          </span>
+        <h1 className="hero__title">Buenas tardes, Verónica Mateo</h1>
+        <p className="hero__subtitle">Elige un módulo para comenzar</p>
+
+        <div className="hero__stats">
+          <span><strong>Hoy:</strong> 154 marcas</span>
+          <span><strong>Mensajes:</strong> 3 nuevos</span>
+          <span><strong>Encuestas:</strong> 2 activas</span>
         </div>
-      </div>
+      </section>
 
-      <div className="dash__grid">
-        {MODULES.map((mod) => (
-          <article key={mod.id} className="mod">
-            <div className="mod__topBar" style={{ background: mod.color }} />
-            <header className="mod__header" onClick={() => setOpenModule(mod.id)} role="button" tabIndex={0}>
-              <div className="mod__badge" style={{ color: mod.color }}>
-                <Icon name={mod.icon} />
+      {/* Grid de módulos */}
+      <div className="grid">
+        {MODULES.map((m) => (
+          <article key={m.id} className="card">
+            <header className="card__head" onClick={() => setOpenModule(m.id)} role="button" tabIndex={0}>
+              <div className="card__icon" style={{ color: m.color }}>
+                <Icon name={m.icon} />
               </div>
               <div>
-                <h3 className="mod__title">{mod.title}</h3>
-                <p className="mod__desc">{mod.description}</p>
+                <h3 className="card__title">{m.title}</h3>
+                <p className="card__desc">{m.description}</p>
               </div>
             </header>
 
-            <ul className="mod__quick">
-              {mod.quick.map((q, i) => (
+            <ul className="card__list">
+              {m.quick.map((q, i) => (
                 <li key={i}>
-                  <button className="mod__quickBtn" onClick={() => safeGo(navigate, q.to)}>
-                    <span className="mod__dot" /> {q.label}
+                  <button className="card__pill" onClick={() => safeGo(navigate, q.to)}>
+                    <span className="card__bullet" />
+                    {q.label}
                   </button>
                 </li>
               ))}
             </ul>
 
-            <footer className="mod__footer">
-              <button className="mod__enter" onClick={() => setOpenModule(mod.id)}>
+            <footer className="card__foot">
+              <button className="card__open" onClick={() => setOpenModule(m.id)}>
                 Abrir módulo →
               </button>
             </footer>
@@ -198,7 +227,7 @@ export default function Dashboard() {
 
       {openModule && (
         <Drawer
-          module={MODULES.find((m) => m.id === openModule)}
+          module={MODULES.find((x) => x.id === openModule)}
           onClose={() => setOpenModule(null)}
           onGo={(to) => safeGo(navigate, to)}
         />
@@ -207,6 +236,7 @@ export default function Dashboard() {
   );
 }
 
+/* ===== Drawer lateral ===== */
 function Drawer({ module, onClose, onGo }) {
   if (!module) return null;
   return (
@@ -214,10 +244,10 @@ function Drawer({ module, onClose, onGo }) {
       <div className="drawer__backdrop" onClick={onClose} />
       <aside className="drawer">
         <div className="drawer__head" style={{ borderTopColor: module.color }}>
-          <div className="drawer__badge" style={{ color: module.color }}>
-            <Icon name={module.icon} />
+          <div className="drawer__icon" style={{ color: module.color }}>
+            <Icon name={module.icon} size={24} />
           </div>
-          <div>
+          <div className="drawer__titwrap">
             <div className="drawer__label">Módulo</div>
             <h3 className="drawer__title">{module.title}</h3>
             <p className="drawer__desc">{module.description}</p>
