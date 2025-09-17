@@ -17,30 +17,19 @@
 
 *{ box-sizing:border-box }
 
-/* ✅ Fondo neutro (sin gradiente fuerte) para que no aparezca el hero viejo detrás */
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial;
   color:var(--ink-700);
-  background: var(--bg);
+  background: linear-gradient(180deg, #E6F4FA 0%, #F8FAFC 60%, #F8FAFC 100%);
 }
 
-/* ✅ Kill-switch del título/hero antiguo SOLO en el login */
-.login-shell .hero,
-.login-shell .hero *,
-.login-shell .logoBar,
-.login-shell .logo-bar,
-.login-shell .landing-hero,
-.login-shell header[role="banner"]{
-  display:none !important;
-}
-
-/* ===== Layout general ===== */
+/* ====== LAYOUT PRINCIPAL (un pelín más ancho) ====== */
 .login{
   min-height: 100dvh;
   display:grid;
-  grid-template-columns: 1.05fr 0.95fr; /* proporción del mock */
-  max-width: 1120px;
+  grid-template-columns: 1.05fr 0.95fr;
+  max-width: 1240px;             /* antes sin tope; ahora más ancho */
   margin: 32px auto;
   background: var(--card);
   border-radius: 28px;
@@ -48,13 +37,13 @@ body{
   overflow:hidden;
 }
 
-/* ===== Columna izquierda (form) ===== */
+/* ====== COLUMNA IZQUIERDA ====== */
 .login__form{
   display:flex;
   flex-direction:column;
   gap:16px;
   padding:48px clamp(24px, 5vw, 72px);
-  background: var(--card); /* blanco como en el mock */
+  background:var(--card);
 }
 
 .login__brand{
@@ -68,9 +57,10 @@ body{
 }
 .login__logoText{ color:#0B1A38; }
 
-.login__title{ margin:8px 0 0; font-size:36px; line-height:1.1; font-weight:800; color:#0B1A38; }
-.login__subtitle{ margin:0 0 12px; font-size:22px; color:var(--ink-500); }
-.login__slogan{ margin:8px 0 6px; color:var(--ink-500); }
+/* ▲ Un poco más grandes para igualar el mock */
+.login__title{ margin:8px 0 0; font-size:42px; line-height:1.08; font-weight:800; color:#0B1A38; letter-spacing:-0.02em; }
+.login__subtitle{ margin:0 0 12px; font-size:24px; color:var(--ink-500); }
+.login__slogan{ margin:8px 0 6px; color:var(--ink-500); font-size:16px; }
 
 .login__card{
   margin-top:8px;
@@ -80,7 +70,7 @@ body{
   padding:22px;
   box-shadow: var(--shadow);
   display:flex; flex-direction:column; gap:10px;
-  max-width: 520px;
+  max-width: 520px;               /* mantenemos el ancho del card */
 }
 
 .login__label{ font-size:13px; color:var(--ink-500); }
@@ -122,24 +112,38 @@ body{
 .login__dtText{ display:flex; gap:6px; flex-wrap:wrap; color:var(--ink-500); }
 .login__dtAction{ margin-left:auto; color:var(--brand-600); font-weight:700; text-decoration:none; }
 
-/* ===== Columna derecha (ilustración maqueta) ===== */
+/* ====== COLUMNA DERECHA (ilustración más grande) ====== */
 .login__art{
   position:relative; overflow:hidden;
-  padding:48px clamp(24px, 5vw, 72px);
+  padding:40px clamp(20px, 4vw, 56px);  /* un poco menos de padding lateral */
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  background: #F2F7FF; /* panel suave como en el mock */
-}
-.login__svg{
-  width:min(92%, 720px); height:auto;
-  border-radius:24px; box-shadow: var(--shadow); background:#fff3;
-}
-.login__artCaption{
-  margin-top:18px; text-align:center; color:#0B1A38; font-weight:700; font-size:22px;
+  background:#F2F7FF;
 }
 
-/* ===== Responsive ===== */
+/* ▲ Más grande (cap a 820px y ocupa 98% del espacio disponible) */
+.login__svg{
+  width:min(98%, 820px);
+  height:auto;
+  border-radius:24px;
+  box-shadow: var(--shadow);
+  background:#fff3;
+}
+
+/* ▲ Subimos tamaño del caption para que “pese” un poco más */
+.login__artCaption{
+  margin-top:22px;
+  text-align:center;
+  color:#0B1A38;
+  font-weight:700;
+  font-size:24px;
+}
+
+/* ====== Responsive ====== */
 @media (max-width: 980px){
-  .login{ grid-template-columns: 1fr; }
+  .login{ grid-template-columns: 1fr; max-width: 680px; }
   .login__art{ order:-1; padding-bottom:0; }
-  .login__svg{ width:100%; }
+  .login__svg{ width:100%; max-width: 720px; }
+  .login__title{ font-size:34px; }
+  .login__subtitle{ font-size:20px; }
+  .login__artCaption{ font-size:20px; }
 }
