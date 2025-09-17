@@ -10,11 +10,10 @@ import {
 import "./App.css";
 import { ROUTES } from "./routes";
 
-// Shell
-import Navbar from "./components/Navbar";
+// Login / Shell
 import LoginPage from "./components/LoginPage";
 
-// 👇 IMPORTA EL DASHBOARD (clave para evitar el ReferenceError)
+// 👇 Dashboard (le pasamos onLogout para cerrar sesión desde el avatar)
 import Dashboard from "./components/Dashboard";
 
 // RRHH
@@ -48,36 +47,22 @@ const BODEGA = {
   operaciones: "/rrhh/bodega/operaciones",
 };
 
-function NavbarWithLogout({ userName, onLogout }) {
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    onLogout();
-    navigate(ROUTES?.home || "/");
-  };
-  return <Navbar userName={userName} onLogout={handleLogout} />;
-}
-
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   const navigate = useNavigate();
 
-  // ✅ Al iniciar sesión, navegar automáticamente al home
   useEffect(() => {
-    if (isLoggedIn) {
-      navigate(ROUTES?.home || "/", { replace: true });
-    }
+    if (isLoggedIn) navigate(ROUTES?.home || "/", { replace: true });
   }, [isLoggedIn, navigate]);
 
   return (
     <div className={isLoggedIn ? "dashboard-bg" : "login-shell"}>
-      {isLoggedIn ? <NavbarWithLogout userName="Verónica" onLogout={handleLogout} /> : null}
-
       {!isLoggedIn ? (
         <LoginPage onLoginSuccess={handleLoginSuccess} />
       ) : (
         <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
           <Routes>
             {/* Home */}
-            <Route path={ROUTES?.home || "/"} element={<Dashboard />} />
+            <Route path={ROUTES?.home || "/"} element={<Dashboard onLogout={handleLogout} />} />
 
             {/* RRHH */}
             <Route path={ROUTES.listadoFichas} element={<ListadoFichas />} />
