@@ -1,8 +1,4 @@
 // src/App.jsx
-// ==========================================
-// App principal con login + rutas protegidas
-// Corregido: usar LoginPage (no LoginForm)
-// ==========================================
 import React, { useState, Suspense } from "react";
 import {
   BrowserRouter as Router,
@@ -12,19 +8,12 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-
 import { ROUTES } from "./routes";
 
 // Shell
 import LogoBar from "./components/LogoBar";
 import Navbar from "./components/Navbar";
-
-// 👇 CORRECCIÓN CLAVE: tu archivo es ./components/LoginPage
-//    por lo tanto debe importarse como LoginPage. Si exporta por defecto,
-//    este import es correcto. Si exporta con nombre, ajústalo aquí.
 import LoginPage from "./components/LoginPage";
-
-import Dashboard from "./components/Dashboard";
 
 // RRHH
 import ListadoFichas from "./pages/ListadoFichas";
@@ -33,8 +22,7 @@ import PermisosJustificaciones from "./pages/PermisosJustificaciones";
 import ValidacionDT from "./pages/ValidacionDT";
 import RepoDocs from "./pages/RepoDocs.jsx";
 
-// ===== Bodega & EPP (nuevo submódulo con tabs) =====
-// OJO: los archivos están en src/bodega/, no en bodega/pages
+// Bodega
 import BodegaLayout from "./bodega/BodegaLayout";
 import BodegaDashboard from "./bodega/BodegaDashboard";
 import BodegaInventario from "./bodega/BodegaInventario";
@@ -50,7 +38,6 @@ import GestionTurnos from "./pages/GestionTurnos";
 
 import { EmpresaProvider } from "./context/EmpresaContext";
 
-// Rutas locales para Bodega (independientes de ROUTES por si no lo tienes aún)
 const BODEGA = {
   root: "/rrhh/bodega",
   dashboard: "/rrhh/bodega/dashboard",
@@ -59,57 +46,24 @@ const BODEGA = {
   operaciones: "/rrhh/bodega/operaciones",
 };
 
-// =========================
-// Navbar con botón "Salir"
-// =========================
 function NavbarWithLogout({ userName, onLogout }) {
   const navigate = useNavigate();
   const handleLogout = () => {
     onLogout();
-    // Fallback: si ROUTES.home no existe, vuelve a "/"
     navigate(ROUTES?.home || "/");
   };
   return <Navbar userName={userName} onLogout={handleLogout} />;
 }
 
-// =====================================================
-// MainApp: Vista de login vs. dashboard según sesión
-// =====================================================
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   return (
-    <div className={isLoggedIn ? "dashboard-bg" : "login-page-container"}>
-      {isLoggedIn ? (
-        <NavbarWithLogout userName="Verónica" onLogout={handleLogout} />
-      ) : (
-        <LogoBar />
-      )}
+    <div className={isLoggedIn ? "dashboard-bg" : "login-shell"}>
+      {isLoggedIn ? <NavbarWithLogout userName="Verónica" onLogout={handleLogout} /> : <LogoBar />}
 
       {!isLoggedIn ? (
-        // ======================
-        // PANTALLA DE LOGIN
-        // ======================
-        <div className="login-form-wrapper">
-          {/* CORRECCIÓN: usar <LoginPage /> en lugar de <LoginForm /> */}
-          <LoginPage onLoginSuccess={handleLoginSuccess} />
-
-          {/* Tarjeta de acceso DT */}
-          <div className="dt-card">
-            <div className="dt-card-content">
-              <span className="dt-card-icon">🛡️</span>
-              <div className="dt-card-text">
-                <span className="dt-card-title">Acceso para Fiscalización DT</span>
-                <span className="dt-card-desc">
-                  Acceso temporal para fiscalizadores de la DT según normativa legal
-                </span>
-              </div>
-            </div>
-            <span className="dt-card-arrow">&gt;</span>
-          </div>
-        </div>
+        // === NUEVO: el LoginPage ya trae su layout completo (dos columnas)
+        <LoginPage onLoginSuccess={handleLoginSuccess} />
       ) : (
-        // ======================
-        // RUTAS AUTENTICADAS
-        // ======================
         <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
           <Routes>
             {/* Home */}
@@ -121,36 +75,29 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             <Route path={`${ROUTES.rrhhValidacionDT}/*`} element={<ValidacionDT />} />
             <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
 
-            {/* Bodega & EPP (submódulo con pestañas anidadas) */}
+            {/* Bodega */}
             <Route path={`${BODEGA.root}/*`} element={<BodegaLayout />}>
-              {/* /rrhh/bodega → /rrhh/bodega/dashboard */}
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<BodegaDashboard />} />
               <Route path="inventario" element={<BodegaInventario />} />
               <Route path="colaboradores" element={<BodegaColaboradores />} />
-              <Route path="operaciones" element={<BodegaOperaciones />} />
+              <Route path="operaciones" element={<BODEGA.Operaciones />} />
             </Route>
 
-            {/* Empleado (variantes) */}
+            {/* Empleado */}
             <Route path="/rrhh/empleado/:id" element={<EmpleadoDetalle />} />
             <Route path="/rrhh/empleado/rut/:rut" element={<EmpleadoDetalle />} />
-            <Route
-              path="/rrhh/empleado"
-              element={<Navigate to={ROUTES.listadoFichas} replace />}
-            />
+            <Route path="/rrhh/empleado" element={<Navigate to={ROUTES.listadoFichas} replace />} />
 
             {/* Asistencia */}
-            <Route
-              path="/asistencia"
-              element={<Navigate to={ROUTES.asistenciaSupervision} replace />}
-            />
+            <Route path="/asistencia" element={<Navigate to={ROUTES.asistenciaSupervision} replace />} />
             <Route path={ROUTES.asistenciaSupervision} element={<SupervisionIntegral />} />
             <Route path={ROUTES.asistenciaMarcas} element={<MarcasRegistradas />} />
             <Route path={ROUTES.asistenciaMapa} element={<MapaCobertura />} />
             <Route path={ROUTES.asistenciaDispositivos} element={<GestionDispositivos />} />
             <Route path={ROUTES.asistenciaTurnos} element={<GestionTurnos />} />
 
-            {/* Fallback: cualquier ruta desconocida vuelve a home */}
+            {/* Fallback */}
             <Route path="*" element={<Navigate to={ROUTES?.home || "/"} replace />} />
           </Routes>
         </Suspense>
@@ -159,12 +106,8 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   );
 }
 
-// =======================
-// App raíz con Provider
-// =======================
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const handleLoginSuccess = () => setIsLoggedIn(true);
   const handleLogout = () => setIsLoggedIn(false);
 
