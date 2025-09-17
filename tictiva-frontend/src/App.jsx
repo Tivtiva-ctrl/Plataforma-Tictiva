@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -11,9 +11,11 @@ import "./App.css";
 import { ROUTES } from "./routes";
 
 // Shell
-// ❌ Quitamos LogoBar del login para evitar el hero viejo
 import Navbar from "./components/Navbar";
 import LoginPage from "./components/LoginPage";
+
+// 👇 IMPORTA EL DASHBOARD (clave para evitar el ReferenceError)
+import Dashboard from "./components/Dashboard";
 
 // RRHH
 import ListadoFichas from "./pages/ListadoFichas";
@@ -56,9 +58,17 @@ function NavbarWithLogout({ userName, onLogout }) {
 }
 
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
+  const navigate = useNavigate();
+
+  // ✅ Al iniciar sesión, navegar automáticamente al home
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(ROUTES?.home || "/", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+
   return (
     <div className={isLoggedIn ? "dashboard-bg" : "login-shell"}>
-      {/* ✅ En login NO renderizamos LogoBar para que no aparezca el hero viejo */}
       {isLoggedIn ? <NavbarWithLogout userName="Verónica" onLogout={handleLogout} /> : null}
 
       {!isLoggedIn ? (
