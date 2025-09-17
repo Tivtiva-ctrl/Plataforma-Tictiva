@@ -1,6 +1,10 @@
 // src/components/LoginPage.jsx
 import React, { useState } from "react";
-import "./LoginPage.css"; // ojo con mayúsculas
+import "./LoginPage.css";
+
+// ✅ Importa las imágenes desde src/assets
+import logo from "../assets/logo-tictiva.png";
+import illustration from "../assets/login-illustration.png";
 
 export default function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
@@ -9,6 +13,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // TODO: auth real
     onLoginSuccess?.();
   };
 
@@ -16,13 +21,9 @@ export default function LoginPage({ onLoginSuccess }) {
     <main className="login">
       {/* Columna izquierda (formulario) */}
       <section className="login__form">
-        {/* ✅ Logo real */}
+        {/* Logo real */}
         <div className="login__brand">
-          <img
-            className="login__brandImg"
-            src="/branding/logo-tictiva.png"
-            alt="Tictiva"
-          />
+          <img className="login__brandImg" src={logo} alt="Tictiva" />
         </div>
 
         <h1 className="login__title">Bienvenido de nuevo</h1>
@@ -72,7 +73,7 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
         </form>
 
-        {/* ✅ Banner DT fijo al fondo y uniforme */}
+        {/* Banner DT al fondo */}
         <div className="login__dtBanner">
           <div className="login__dtIcon">🛡️</div>
           <div className="login__dtText">
@@ -82,13 +83,9 @@ export default function LoginPage({ onLoginSuccess }) {
         </div>
       </section>
 
-      {/* Columna derecha (ilustración) */}
+      {/* Columna derecha (ilustración maqueta) */}
       <section className="login__art">
-        <img
-          className="login__svg"
-          src="/illustrations/login-illustration.png"
-          alt="Ilustración Tictiva"
-        />
+        <img className="login__svg" src={illustration} alt="Ilustración Tictiva" />
         <div className="login__artCaption">
           Humanizamos la gestión, <br /> digitalizamos tu tranquilidad
         </div>
