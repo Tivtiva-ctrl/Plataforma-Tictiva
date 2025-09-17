@@ -1,23 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import DocumentosTab from "../components/DocumentosTab.jsx";
-
-/* --- mocks date-fns usados en Asistencia --- */
-const parseISO = (iso) => new Date(iso);
-const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
 /* =========================== Utils de fecha/texto (FIX TZ) =========================== */
 const mesesEs = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const pad2 = (n) => String(n).padStart(2, "0");
 
-/** Extrae Y-M-D de cualquier string ISO, sin crear Date (evita corrimiento por UTC) */
+/** Extrae Y-M-D de cualquier string ISO (evita corrimiento por UTC) */
 const pickYMD = (val) => {
   const s = String(val || "");
   const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
   return m ? { y: +m[1], m: +m[2], d: +m[3] } : null;
 };
 
-/** Formato “DD de Mes de YYYY” sin depender de Date para YYYY-MM-DD */
+/** Formato “DD de Mes de YYYY” */
 const fmtFechaLarga = (val) => {
   if (!val) return "—";
   const ymd = pickYMD(val);
@@ -27,26 +23,27 @@ const fmtFechaLarga = (val) => {
   return `${pad2(d.getDate())} de ${mesesEs[d.getMonth()]} de ${d.getFullYear()}`;
 };
 
-/** Para inputs date: si ya viene YYYY-MM-DD, devuélvelo tal cual */
+/** Para <input type="date">: si viene YYYY-MM-DD, devolver tal cual */
 const toDateInput = (val) => {
   if (!val) return "";
   const ymd = pickYMD(val);
   if (ymd) return `${ymd.y}-${pad2(ymd.m)}-${pad2(ymd.d)}`;
   const d = new Date(val);
-  return isNaN(d) ? "" : `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  return isNaN(d) ? "" : `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 };
 const fromDateInput = (val) => (val ? `${val}` : "");
 
-/* Helpers locales para registrar/mostrar sin UTC */
-const ymdLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+/** Fechas locales para registrar en historial (evita UTC) */
+const ymdLocal = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const hmLocal  = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+/** Mocks ligeros de date-fns usados en AsistenciaTab */
+const parseISO = (iso) => new Date(iso);
+const differenceInMinutes = (a, b) => (a.getTime() - b.getTime()) / 60000;
 
 /* =========================== Persistencia (localStorage) =========================== */
 const LS_KEY = "tictiva.empleados.v1";
-
-const normalizeRut = (r) =>
-  (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
-
+const normalizeRut = (r) => (r || "").toString().replace(/\./g, "").replace(/-/g, "").toUpperCase();
 const empKeyFrom = (ref) => {
   if (!ref) return "";
   if (typeof ref === "string") return ref;
@@ -54,18 +51,9 @@ const empKeyFrom = (ref) => {
   if (ref.rut) return `rut:${normalizeRut(ref.rut)}`;
   return "";
 };
-
-const lsRead = () => {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
-  catch { return {}; }
-};
-const lsWrite = (map) => {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(map)); }
-  catch {}
-};
+const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch { return {}; } };
+const lsWrite = (map) => { try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch {} };
 const lsGetByKey = (key) => (key ? lsRead()[key] : undefined);
-
-// Guarda por ambas claves (id y rut) para que siempre se encuentre
 const lsSaveEmp = (emp) => {
   if (!emp) return;
   const map = lsRead();
@@ -78,110 +66,112 @@ const lsSaveEmp = (emp) => {
 
 /* =========================== Mock API =========================== */
 const EmpleadosAPI = {
-  list: async () => ([{
-    id: 1,
-    rut: "12.345.678-9",
-    nombre: "Juan Díaz Morales",
-    cargo: "Gerente de Operaciones",
-    estado: "Activo",
-    fechaIngreso: "2021-03-02T00:00:00.000Z",
-    fechaNacimiento: "1985-04-15T00:00:00.000Z",
-    correo: "juan.diaz@empresa.com",
-    telefono: "+56 9 8765 4321",
-    direccion: "Av. Providencia 1234, Santiago",
-    estadoCivil: "Casado(a)",
-    horario: "08:30 - 18:00",
-    centro: "Casa Matriz",
-    datosContractuales: {
-      cargoActual: "Gerente de Operaciones",
-      tipoContrato: "Indefinido",
-      jornada: "Jornada Completa",
-      lugarTrabajo: "Casa Matriz",
-      responsable: "Claudia R.",
-      fechaIngreso: "2021-03-02",
-      centroCosto: "Operaciones",
-      sueldoBase: 1800000,
+  list: async () => ([
+    {
+      id: 1,
+      rut: "12.345.678-9",
+      nombre: "Juan Díaz Morales",
+      cargo: "Gerente de Operaciones",
+      estado: "Activo",
+      fechaIngreso: "2021-03-02T00:00:00.000Z",
+      fechaNacimiento: "1985-04-15T00:00:00.000Z",
+      correo: "juan.diaz@empresa.com",
+      telefono: "+56 9 8765 4321",
+      direccion: "Av. Providencia 1234, Santiago",
+      estadoCivil: "Casado(a)",
       horario: "08:30 - 18:00",
-      pinMarcacion: "8421",
-      ultimaActualizacion: "2024-12-20",
-      anexosFirmados: "Pacto HE 2023; Teletrabajo 2024",
-      licencias: "Ninguna",
-      contratoFirmado: "Contrato 2021-03-01",
-      finiquitoFirmado: ""
-    },
-    credencialesApp: { pin: "8421" },
-    prevision: {
-      afp: "Habitat",
-      sistemaSalud: "Isapre",
-      isapre: "Colmena",
-      cajaCompensacion: "Los Andes",
-      mutual: "ACHS",
-      afc: "Sí",
-      tramo: "B",
-      cargas: "2",
-      pensionAlimentos: "",
-      resolucionPension: "",
-      apvInstitucion: "",
-      apvCuenta: "",
-      tasaAccidente: "0.95%"
-    },
-    bancarios: {
-      banco: "BancoEstado",
-      tipoCuenta: "CuentaRUT",
-      numeroCuenta: "12345678",
-      titular: "Juan Díaz Morales",
-      rutTitular: "12.345.678-9"
-    },
-    marcas: [
-      { fecha: "2025-09-01", hora: "08:58:00", tipo: "Entrada", estado: "Válida", metodo: "App", ip: "192.168.1.10" },
-      { fecha: "2025-09-01", hora: "18:02:00", tipo: "Salida",  estado: "Válida", metodo: "App", ip: "192.168.1.10" },
-      { fecha: "2025-09-02", hora: "09:12:00", tipo: "Entrada", estado: "Atraso", metodo: "Web", ip: "192.168.1.11" },
-      { fecha: "2025-09-02", hora: "18:05:00", tipo: "Salida",  estado: "Válida", metodo: "Web", ip: "192.168.1.11" },
-    ],
-    historial: [
-      { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
-      { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." },
-    ],
-    documentos: [
-      { id: "f1", tipo: "folder", nombre: "Certificados", mod: "2025-07-30", tam: "" },
-      { id: "f2", tipo: "folder", nombre: "Contratos", mod: "2025-08-15", tam: "" },
-      { id: "f3", tipo: "folder", nombre: "Liquidaciones de Sueldo", mod: "2025-09-01", tam: "" },
-      { id: "d1", tipo: "file",   nombre: "Política de Teletrabajo.docx", mod: "2025-06-22", tam: "256 KB" },
-      { id: "d2", tipo: "file",   nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" },
-    ],
-    hojaVida: {
-      alertaMedica: "Alergia a la Penicilina",
-      emergencia: [
-        { nombre: "María Morales", relacion: "Madre", telefono: "+56 9 1234 5678" },
-        { nombre: "Pedro Díaz", relacion: "Padre", telefono: "+56 9 8765 4321" },
-      ],
-      medico: {
-        grupoSanguineo: "O+",
-        aceptaTransfusion: true,
-        alergias: ["Penicilina", "Maní"],
-        condicionesCronicas: ["Asma Leve"],
-        medicamentos: "Salbutamol (Inhalador) solo en caso de crisis.",
-        observaciones: "Ninguna observación adicional."
+      centro: "Casa Matriz",
+      datosContractuales: {
+        cargoActual: "Gerente de Operaciones",
+        tipoContrato: "Indefinido",
+        jornada: "Jornada Completa",
+        lugarTrabajo: "Casa Matriz",
+        responsable: "Claudia R.",
+        fechaIngreso: "2021-03-02",
+        centroCosto: "Operaciones",
+        sueldoBase: 1800000,
+        horario: "08:30 - 18:00",
+        pinMarcacion: "8421",
+        ultimaActualizacion: "2024-12-20",
+        anexosFirmados: "Pacto HE 2023; Teletrabajo 2024",
+        licencias: "Ninguna",
+        contratoFirmado: "Contrato 2021-03-01",
+        finiquitoFirmado: ""
       },
-      trayectoria: [
-        { cargo: "Gerente de Operaciones", desde: "2025-07-31", detalle: "Promoción a rol gerencial." },
-        { cargo: "Jefe de Operaciones", desde: "2024-01-14", detalle: "Asume liderazgo de nuevo equipo." },
-        { cargo: "Analista de Operaciones Semi-Senior", desde: "2022-08-31", detalle: "Promoción por desempeño." },
-        { cargo: "Analista de Operaciones Jr.", desde: "2021-02-28", detalle: "Ingreso a la compañía." },
+      credencialesApp: { pin: "8421" },
+      prevision: {
+        afp: "Habitat",
+        sistemaSalud: "Isapre",
+        isapre: "Colmena",
+        cajaCompensacion: "Los Andes",
+        mutual: "ACHS",
+        afc: "Sí",
+        tramo: "B",
+        cargas: "2",
+        pensionAlimentos: "",
+        resolucionPension: "",
+        apvInstitucion: "",
+        apvCuenta: "",
+        tasaAccidente: "0.95%"
+      },
+      bancarios: {
+        banco: "BancoEstado",
+        tipoCuenta: "CuentaRUT",
+        numeroCuenta: "12345678",
+        titular: "Juan Díaz Morales",
+        rutTitular: "12.345.678-9"
+      },
+      marcas: [
+        { fecha: "2025-09-01", hora: "08:58:00", tipo: "Entrada", estado: "Válida", metodo: "App", ip: "192.168.1.10" },
+        { fecha: "2025-09-01", hora: "18:02:00", tipo: "Salida",  estado: "Válida", metodo: "App", ip: "192.168.1.10" },
+        { fecha: "2025-09-02", hora: "09:12:00", tipo: "Entrada", estado: "Atraso", metodo: "Web", ip: "192.168.1.11" },
+        { fecha: "2025-09-02", hora: "18:05:00", tipo: "Salida",  estado: "Válida", metodo: "Web", ip: "192.168.1.11" },
       ],
-      educacion: [
-        { titulo: "Ingeniería Civil Industrial", institucion: "Universidad de Chile", desde: "2008", hasta: "2013" },
-        { titulo: "Enseñanza Media", institucion: "Liceo Nacional", desde: "2004", hasta: "2007" },
+      historial: [
+        { id: 1, fecha: "2024-08-15", hora: "10:00", actor: "V. Mateo", accion: "Anexo de Contrato", categoria: "Contrato", detalle: "Se firma anexo por cambio de cargo a Gerente." },
+        { id: 2, fecha: "2023-05-20", hora: "11:30", actor: "Sistema", accion: "Solicitud de Vacaciones", categoria: "Permisos", detalle: "Se aprueban 5 días de vacaciones." },
       ],
-      experiencia: [
-        { cargo: "Jefe de Proyectos", empresa: "Empresa B", desde: "2015", hasta: "2021", descripcion: "Gestión de proyectos de implementación de software." },
-        { cargo: "Analista de Procesos", empresa: "Empresa C", desde: "2013", hasta: "2015", descripcion: "" },
-      ]
+      documentos: [
+        { id: "f1", tipo: "folder", nombre: "Certificados", mod: "2025-07-30", tam: "" },
+        { id: "f2", tipo: "folder", nombre: "Contratos", mod: "2025-08-15", tam: "" },
+        { id: "f3", tipo: "folder", nombre: "Liquidaciones de Sueldo", mod: "2025-09-01", tam: "" },
+        { id: "d1", tipo: "file",   nombre: "Política de Teletrabajo.docx", mod: "2025-06-22", tam: "256 KB" },
+        { id: "d2", tipo: "file",   nombre: "Reglamento Interno 2025.pdf", mod: "2025-01-10", tam: "1.2 MB" },
+      ],
+      hojaVida: {
+        alertaMedica: "Alergia a la Penicilina",
+        emergencia: [
+          { nombre: "María Morales", relacion: "Madre", telefono: "+56 9 1234 5678" },
+          { nombre: "Pedro Díaz", relacion: "Padre", telefono: "+56 9 8765 4321" },
+        ],
+        medico: {
+          grupoSanguineo: "O+",
+          aceptaTransfusion: true,
+          alergias: ["Penicilina", "Maní"],
+          condicionesCronicas: ["Asma Leve"],
+          medicamentos: "Salbutamol (Inhalador) solo en caso de crisis.",
+          observaciones: "Ninguna observación adicional."
+        },
+        trayectoria: [
+          { cargo: "Gerente de Operaciones", desde: "2025-07-31", detalle: "Promoción a rol gerencial." },
+          { cargo: "Jefe de Operaciones", desde: "2024-01-14", detalle: "Asume liderazgo de nuevo equipo." },
+          { cargo: "Analista de Operaciones Semi-Senior", desde: "2022-08-31", detalle: "Promoción por desempeño." },
+          { cargo: "Analista de Operaciones Jr.", desde: "2021-02-28", detalle: "Ingreso a la compañía." },
+        ],
+        educacion: [
+          { titulo: "Ingeniería Civil Industrial", institucion: "Universidad de Chile", desde: "2008", hasta: "2013" },
+          { titulo: "Enseñanza Media", institucion: "Liceo Nacional", desde: "2004", hasta: "2007" },
+        ],
+        experiencia: [
+          { cargo: "Jefe de Proyectos", empresa: "Empresa B", desde: "2015", hasta: "2021", descripcion: "Gestión de proyectos de implementación de software." },
+          { cargo: "Analista de Procesos", empresa: "Empresa C", desde: "2013", hasta: "2015", descripcion: "" },
+        ]
+      }
     }
-  }])
+  ]),
 };
 
-/* =========================== Utils varias =========================== */
+/* =========================== Utils de negocio =========================== */
 const pickCI = (obj, keys = [], fallback = undefined) => {
   if (!obj) return fallback;
   const map = Object.fromEntries(Object.entries(obj).map(([k, v]) => [String(k).toLowerCase(), v]));
@@ -283,16 +273,16 @@ const VolverAtras = () => {
     <button
       onClick={() => navigate(-1)}
       style={{
-        textDecoration: 'none',
-        color: '#3b82f6',
-        fontWeight: '600',
-        marginBottom: '16px',
-        display: 'inline-block',
-        background: 'none',
-        border: 'none',
-        padding: '0',
-        cursor: 'pointer',
-        fontSize: '1em',
+        textDecoration: "none",
+        color: "#3b82f6",
+        fontWeight: "600",
+        marginBottom: "16px",
+        display: "inline-block",
+        background: "none",
+        border: "none",
+        padding: "0",
+        cursor: "pointer",
+        fontSize: "1em",
       }}
     >
       &larr; Volver
@@ -301,11 +291,10 @@ const VolverAtras = () => {
 };
 
 /* =================== TABS ===================== */
-
 // -------------------- Contractuales (editable) -----------------
 const ContractualesTab = ({ datos = {}, modoEdicion, onChange, empleado }) => {
   const pick = (v, ...fb) => (v !== undefined && v !== null && String(v) !== "" ? v : fb.find(x => x !== undefined && x !== null && String(x) !== "") || "");
-  const safe = (v, dash="—") => (v || v === 0 ? String(v) : dash);
+  const safe = (v, dash = "—") => (v || v === 0 ? String(v) : dash);
   const view = {
     cargoActual:         pick(datos.cargoActual, empleado?.cargo),
     tipoContrato:        pick(datos.tipoContrato, "Indefinido"),
@@ -636,7 +625,7 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span>
           {modoEdicion
             ? <input className="hv-val" value={md.medicamentos||""} onChange={(e)=>setMed("medicamentos", e.target.value)} />
-            : <span className="hv-val">{md.medicamentos||"N/D"}</span>}
+            : <span className="hv-val">md.medicamentos||"N/D")</span>}
         </div>
         <div className="hv-row"><span className="hv-label">Observaciones:</span>
           {modoEdicion
@@ -745,9 +734,6 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
 /* ======================= Tab: Asistencia (NO editable) ====================== */
 function AsistenciaTab({ empleado }) {
   const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
-  const [showModal, setShowModal] = useState(false);
-  const [filtros, setFiltros] = useState({ desde: "", hasta: "", tipo: "", estado: "", metodo: "" });
-
   const marcas = Array.isArray(empleado?.marcas) ? empleado.marcas : [];
 
   useEffect(() => {
@@ -777,15 +763,13 @@ function AsistenciaTab({ empleado }) {
     });
   }, [empleado]); // suficiente para mock
 
-  const filtrar = (arr) => {
-    return arr.filter(m => {
-      if (filtros.tipo && (m.tipo || "").toLowerCase() !== filtros.tipo.toLowerCase()) return false;
-      if (filtros.estado && (m.estado || "").toLowerCase() !== filtros.estado.toLowerCase()) return false;
-      if (filtros.metodo && (m.metodo || "").toLowerCase() !== filtros.metodo.toLowerCase()) return false;
-      if (filtros.desde && m.fecha < filtros.desde) return false;
-      if (filtros.hasta && m.fecha > filtros.hasta) return false;
-      return true;
-    });
+  const getWeekRange = (d = new Date()) => {
+    const day = d.getDay();
+    const diffToMon = (day + 6) % 7;
+    const lunes = new Date(d); lunes.setDate(d.getDate() - diffToMon);
+    const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+    const f = (x) => ymdLocal(x);
+    return { lunes: f(lunes), domingo: f(domingo) };
   };
 
   const exportResumenCSV = () => {
@@ -809,59 +793,8 @@ function AsistenciaTab({ empleado }) {
     URL.revokeObjectURL(url);
   };
 
-  const getWeekRange = (d = new Date()) => {
-    const day = d.getDay();
-    const diffToMon = (day + 6) % 7;
-    const lunes = new Date(d); lunes.setDate(d.getDate() - diffToMon);
-    const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
-    const f = (x) => ymdLocal(x);
-    return { lunes: f(lunes), domingo: f(domingo) };
-  };
-
-  const generarReporteSemanalPDF = () => {
-    const { lunes, domingo } = getWeekRange(new Date());
-    const data = filtrar(marcas.filter(m => m.fecha >= lunes && m.fecha <= domingo));
-    const html = `
-      <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Reporte Semanal de Asistencia</title>
-        <style>
-          body { font-family: Inter, system-ui, -apple-system, Segoe UI, Arial; margin: 24px; color:#111827; }
-          h1 { font-size: 20px; margin: 0 0 6px; }
-          .sub { color:#6B7280; margin-bottom: 14px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-          th, td { border: 1px solid #E5E7EB; padding: 6px 8px; font-size: 12px; text-align:left; }
-          th { background: #F9FAFB; }
-          .foot { margin-top: 18px; font-size: 12px; color:#6B7280; }
-          .firma { margin-top: 36px; display:flex; gap:32px; }
-          .firma div { width: 240px; border-top:1px solid #9CA3AF; text-align:center; padding-top:6px; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <h1>Reporte Semanal de Asistencia</h1>
-        <div class="sub">
-          Empleado: <b>${empleado?.nombre || "—"}</b> · RUT: <b>${empleado?.rut || "—"}</b><br/>
-          Semana: ${lunes} a ${domingo}
-        </div>
-        <table>
-          <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th></tr></thead>
-          <tbody>
-            ${data.map(m => `<tr><td>${m.fecha}</td><td>${m.hora}</td><td>${m.tipo}</td><td>${m.estado}</td><td>${m.metodo}</td><td>${m.ip || ""}</td></tr>`).join("")}
-          </tbody>
-        </table>
-        <div class="foot">Generado el ${new Date().toLocaleString()}</div>
-        <div class="firma">
-          <div>Firma Colaborador</div>
-          <div>Firma Supervisor</div>
-        </div>
-        <script>window.onload = () => setTimeout(() => window.print(), 150);</script>
-      </body>
-      </html>
-    `;
-    const w = window.open("", "_blank");
-    w.document.open(); w.document.write(html); w.document.close();
-  };
+  const { lunes, domingo } = getWeekRange(new Date());
+  const dataSemana = marcas.filter(m => m.fecha >= lunes && m.fecha <= domingo);
 
   const descargarComprobante = (m) => {
     const html = `
@@ -891,49 +824,46 @@ function AsistenciaTab({ empleado }) {
   };
 
   return (
-    <>
-      <div className="ed-card">
-        <div className="asistencia-header">
-          <div className="asistencia-title">
-            <div className="icono-title" aria-hidden>🕒</div>
-            <div>
-              <h3 className="ed-card-title" style={{ margin: 0 }}>Resumen de Últimas Marcaciones</h3>
-              <p className="ed-sub light" style={{ margin: 0 }}>
-                Últimas 10 marcas registradas. Para un historial completo y filtros, usa el botón “Ver Historial Detallado”.
-              </p>
-            </div>
-          </div>
-          <div className="asistencia-buttons">
-            <button className="ed-btn" onClick={()=>window.alert("Abrir historial en otra vista (mock)")}>Ver Historial Detallado</button>
-            <button className="ed-btn" onClick={generarReporteSemanalPDF}>Generar Reporte Semanal (PDF)</button>
-            <button className="ed-btn primary" onClick={exportResumenCSV}>⬇ Exportar Resumen</button>
+    <div className="ed-card">
+      <div className="asistencia-header">
+        <div className="asistencia-title">
+          <div className="icono-title" aria-hidden>🕒</div>
+          <div>
+            <h3 className="ed-card-title" style={{ margin: 0 }}>Resumen de Últimas Marcaciones</h3>
+            <p className="ed-sub light" style={{ margin: 0 }}>
+              Últimas 10 marcas registradas. Para un historial completo y filtros, usa el botón “Ver Historial Detallado”.
+            </p>
           </div>
         </div>
-
-        <table className="asistencia-tabla">
-          <thead>
-            <tr>
-              <th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Foto</th><th>Comprobante</th>
-            </tr>
-          </thead>
-          <tbody>
-            {marcas.slice(0, 10).map((m, i) => (
-              <tr key={i}>
-                <td>{m.fecha}</td>
-                <td>{m.hora}</td>
-                <td className={`tipo ${(m.tipo || "").toLowerCase()}`}>{m.tipo}</td>
-                <td><span className={`estado-badge ${(m.estado || "").toLowerCase()}`}>{m.estado}</span></td>
-                <td>{m.metodo}</td>
-                <td>{m.ip}</td>
-                <td>📷</td>
-                <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="asistencia-paginacion">Mostrando 10 de {marcas.length} registros</p>
+        <div className="asistencia-buttons">
+          <button className="ed-btn" onClick={()=>window.alert("Abrir historial en otra vista (mock)")}>Ver Historial Detallado</button>
+          <button className="ed-btn" onClick={exportResumenCSV}>⬇ Exportar Resumen</button>
+        </div>
       </div>
-    </>
+
+      <table className="asistencia-tabla">
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Hora</th><th>Tipo</th><th>Estado</th><th>Método</th><th>IP</th><th>Foto</th><th>Comprobante</th>
+          </tr>
+        </thead>
+        <tbody>
+          {marcas.slice(0, 10).map((m, i) => (
+            <tr key={i}>
+              <td>{m.fecha}</td>
+              <td>{m.hora}</td>
+              <td className={`tipo ${(m.tipo || "").toLowerCase()}`}>{m.tipo}</td>
+              <td><span className={`estado-badge ${(m.estado || "").toLowerCase()}`}>{m.estado}</span></td>
+              <td>{m.metodo}</td>
+              <td>{m.ip}</td>
+              <td>📷</td>
+              <td><button className="ed-btn" onClick={()=>descargarComprobante(m)}>⬇</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="asistencia-paginacion">Mostrando 10 de {marcas.length} registros</p>
+    </div>
   );
 }
 
@@ -947,17 +877,11 @@ function HistorialTab({ empleado }) {
   if (!base.length && empleado?.fechaIngreso) {
     base.push({ id: "seed-ingreso", fecha: empleado.fechaIngreso, hora: "09:00", actor: "Sistema", accion: "Ingreso a la empresa", detalle: `Fecha de ingreso registrada (${fmtFechaLarga(empleado.fechaIngreso)})`, categoria: "Contrato" });
   }
-
-  // Evita UTC para ordenar: parsea YYYY-MM-DD y arma timestamp local
-  const localTs = (fecha, hora = "00:00") => {
-    const ymd = pickYMD(fecha);
-    const [hh, mm] = String(hora || "00:00").split(":");
-    if (ymd) return new Date(ymd.y, ymd.m - 1, ymd.d, +hh || 0, +mm || 0).getTime();
-    const d = new Date(`${fecha}T${hora}`);
-    return d.getTime() || 0;
-  };
-
-  const items = [...base].sort((a, b) => localTs(b.fecha || b.timestamp || b.fechaHora, b.hora || "00:00") - localTs(a.fecha || a.timestamp || a.fechaHora, a.hora || "00:00"));
+  const items = [...base].sort((a, b) => {
+    const ta = new Date(`${a.fecha || a.timestamp || a.fechaHora || ""}T${a.hora || "00:00"}`).getTime();
+    const tb = new Date(`${b.fecha || b.timestamp || b.fechaHora || ""}T${b.hora || "00:00"}`).getTime();
+    return tb - ta;
+  });
 
   const exportCSV = () => {
     const headers = ["fecha","hora","actor","accion","categoria","detalle"];
@@ -1016,14 +940,12 @@ export default function EmpleadoDetalle() {
 
   const rawParam = decodeURIComponent(String(params.rut ?? params.id ?? params.param ?? ""));
   const hasParam = rawParam.trim().length > 0;
-
   const isNumericId = /^\d+$/.test(rawParam);
-  the:
   const rutParam = hasParam && !isNumericId ? rawParam : undefined;
-  const idParam = hasParam && isNumericId ? rawParam : undefined;
+  const idParam  = hasParam &&  isNumericId ? rawParam : undefined;
 
   // ✅ listo para Vercel: usa /api en prod y VITE_API_BASE en dev/preview si quieres
-  const API = (import.meta?.env?.VITE_API_BASE) || '/api';
+  const API = (import.meta?.env?.VITE_API_BASE) || "/api";
   const RESOURCE = "empleados";
 
   const [empleado, setEmpleado] = useState(null);
@@ -1201,8 +1123,8 @@ export default function EmpleadoDetalle() {
     const now = new Date();
     const item = {
       id: Date.now(),
-      fecha: ymdLocal(now),         // fecha local YYYY-MM-DD
-      hora: hmLocal(now),           // hora local HH:mm
+      fecha: ymdLocal(now),
+      hora: hmLocal(now),
       actor, accion, categoria, detalle,
     };
     const updated = {
@@ -1211,8 +1133,8 @@ export default function EmpleadoDetalle() {
     };
 
     lsSaveEmp(updated);
-
     setEmpleado(updated);
+
     try {
       const id = updated.id ?? encodeURIComponent(updated.rut);
       await fetch(`${API}/${RESOURCE}/${id}`, {
@@ -1258,16 +1180,14 @@ export default function EmpleadoDetalle() {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = ".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg";
-      const p = new Promise((resolve) => {
-        input.onchange = (e) => resolve(e.target.files?.[0] || null);
-      });
+      const p = new Promise((resolve) => { input.onchange = (e) => resolve(e.target.files?.[0] || null); });
       input.click();
       file = await p;
       if (!file) return;
     }
 
     const hoy = ymdLocal(new Date());
-    const url = URL.createObjectURL(file);           // URL para previsualizar
+    const url = URL.createObjectURL(file); // para previsualizar
     const nuevo = {
       id: `d_${Date.now()}`,
       tipo: "file",
@@ -1276,7 +1196,7 @@ export default function EmpleadoDetalle() {
       tam: humanSize(file.size),
       parentId: parentId || "",
       mime: file.type || "",
-      url,                                            // Object URL
+      url,
     };
 
     const empAfter = { ...empleado, documentos: [...(empleado.documentos || []), nuevo] };
@@ -1291,7 +1211,6 @@ export default function EmpleadoDetalle() {
     alert("Archivo agregado (mock).");
   };
 
-  // Rename/Delete
   const onDeleteDoc = async (id) => {
     if (!empleado) return;
     const lista = Array.isArray(empleado.documentos) ? empleado.documentos : [];
@@ -1460,7 +1379,6 @@ export default function EmpleadoDetalle() {
       {/* Grid: en Asistencia una sola columna */}
       <div className={`ed-grid ${tabActiva === "asistencia" ? "is-single" : ""}`}>
         <div className="ed-left">
-          {/* Personales (editable) */}
           {tabActiva === "personales" && (
             <div className="ed-card">
               <h3 className="ed-card-title">Información Personal</h3>
@@ -1537,7 +1455,6 @@ export default function EmpleadoDetalle() {
             </div>
           )}
 
-          {/* Contractuales */}
           {tabActiva === "contractuales" && (
             <ContractualesTab
               datos={empleado.datosContractuales || {}}
@@ -1547,7 +1464,6 @@ export default function EmpleadoDetalle() {
             />
           )}
 
-          {/* Documentos */}
           {tabActiva === "documentos" && (
             <DocumentosTab
               empleado={empleado}
@@ -1558,23 +1474,17 @@ export default function EmpleadoDetalle() {
             />
           )}
 
-          {/* Previsión */}
           {tabActiva === "prevision" && <PrevisionTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
 
-          {/* Bancarios */}
           {tabActiva === "bancarios" && <BancariosTab empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
 
-          {/* Asistencia (no editable) */}
           {tabActiva === "asistencia" && <AsistenciaTab empleado={empleado} />}
 
-          {/* Hoja de Vida (editable básico) */}
           {tabActiva === "hojaVida" && <HojaDeVida empleado={empleado} modoEdicion={modoEdicion} onChange={handleChange} />}
 
-          {/* Historial (no editable) */}
           {tabActiva === "historial" && <HistorialTab empleado={empleado} />}
         </div>
 
-        {/* Aside: oculto en Asistencia */}
         {tabActiva !== "asistencia" && (
           <aside className={`ed-right ${tabActiva === "contractuales" ? "is-compact" : ""}`}>
             <div className="ed-card">
