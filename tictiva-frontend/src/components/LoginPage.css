@@ -8,7 +8,6 @@
   --ink-900:#0F172A;
   --ink-700:#1F2937;
   --ink-500:#374151;
-  --ink-400:#6B7280;
 
   /* Surfaces */
   --bg:#F7FAFC;
@@ -49,17 +48,33 @@ body{
   min-height:100%;
 }
 
-/* Marca / Logo — tamaño compacto */
+/* Marca como en el mock (cuadrado + texto) */
 .login__brand{
   display:flex;
   align-items:center;
   gap:12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.login__brandImg{
-  width:160px;           /* tamaño recomendado desktop */
-  height:auto;
-  display:block;
+.login__logoMark{
+  width:24px;
+  height:24px;
+  border-radius:8px;
+  background: linear-gradient(135deg, #2e6cf6 0%, #44b0ff 100%);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, .25);
+  position: relative;
+}
+.login__logoMark::after{
+  content:"";
+  position:absolute;
+  inset:5px;
+  border-radius:5px;
+  border:2px solid #fff;           /* simula el cuadrado interior del mock */
+}
+.login__logoText{
+  font-size:20px;
+  font-weight:800;
+  color:#0B1A38;
+  letter-spacing:.2px;
 }
 
 /* Títulos */
@@ -180,5 +195,4 @@ body{
   .login__title{ font-size:34px; }
   .login__subtitle{ font-size:20px; }
   .login__artCaption{ font-size:20px; }
-  .login__brandImg{ width:140px; }   /* logo más chico en mobile */
 }

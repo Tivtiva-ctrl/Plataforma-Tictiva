@@ -1,9 +1,8 @@
 // src/components/LoginPage.jsx
 import React, { useState } from "react";
 import "./LoginPage.css";
-
-// Imágenes desde src/assets
-import logo from "../assets/logo-tictiva.png";
+// (si luego quieres volver a un PNG, podemos reactivar el import y el <img>)
+// import logo from "../assets/logo-tictiva.png";
 import illustration from "../assets/login-illustration.png";
 
 export default function LoginPage({ onLoginSuccess }) {
@@ -20,8 +19,10 @@ export default function LoginPage({ onLoginSuccess }) {
     <main className="login">
       {/* Columna izquierda (formulario) */}
       <section className="login__form">
+        {/* ✅ Marca como en el mock (cuadrado + texto), sin PNG grande */}
         <div className="login__brand">
-          <img className="login__brandImg" src={logo} alt="Tictiva" />
+          <span className="login__logoMark" aria-hidden="true" />
+          <span className="login__logoText">Tictiva</span>
         </div>
 
         <h1 className="login__title">Bienvenido de nuevo</h1>
@@ -71,7 +72,7 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
         </form>
 
-        {/* Banner DT al fondo */}
+        {/* Banner DT al fondo, uniforme */}
         <div className="login__dtBanner">
           <div className="login__dtIcon">🛡️</div>
           <div className="login__dtText">
