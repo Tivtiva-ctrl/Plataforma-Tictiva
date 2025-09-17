@@ -4,56 +4,59 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import { ROUTES } from "../routes";
 
-/* ===== Iconos SVG (sin emojis) ===== */
+/* ===== Iconos SVG (outline, sin emojis) ===== */
 const Icon = ({ name, size = 28 }) => {
-  const common = {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "2",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    "aria-hidden": true,
+  const p = {
+    width: size, height: size, viewBox: "0 0 24 24",
+    fill: "none", stroke: "currentColor", strokeWidth: "2",
+    strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true
   };
   switch (name) {
     case "users":
       return (
-        <svg {...common}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        <svg {...p}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
       );
     case "clock":
       return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 6v6l4 2" />
+        <svg {...p}>
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
         </svg>
       );
     case "chat":
       return (
-        <svg {...common}>
-          <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+        <svg {...p}>
+          <rect x="3" y="5" width="18" height="14" rx="3" ry="3"/>
+          <path d="M7 19v2l3-2"/>
         </svg>
       );
     case "chart":
       return (
-        <svg {...common}>
-          <path d="M3 3v18h18" />
-          <rect x="7" y="13" width="3" height="5" rx="1" />
-          <rect x="12" y="9" width="3" height="9" rx="1" />
-          <rect x="17" y="5" width="3" height="13" rx="1" />
+        <svg {...p}>
+          <path d="M3 3v18h18"/>
+          <rect x="7" y="13" width="3" height="5" rx="1"/>
+          <rect x="12" y="9" width="3" height="9" rx="1"/>
+          <rect x="17" y="5" width="3" height="13" rx="1"/>
         </svg>
       );
     case "heart":
       return (
-        <svg {...common}>
-          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z" />
+        <svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>
+      );
+    case "building":
+      return (
+        <svg {...p}>
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 7h.01M9 11h.01M9 15h.01M15 7h.01M15 11h.01M15 15h.01M12 21v-4"/>
         </svg>
+      );
+    case "search":
+      return (
+        <svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       );
     default:
       return null;
@@ -65,6 +68,7 @@ function safeGo(navigate, to) {
   if (typeof to === "string" && to.length) navigate(to);
   else {
     alert("Este submódulo estará disponible pronto.");
+    // eslint-disable-next-line no-console
     console.warn("[Dashboard] Ruta no disponible:", to);
   }
 }
@@ -78,15 +82,12 @@ export default function Dashboard() {
       {
         id: "rrhh",
         color: "#336DFF",
-        title: "Recursos Humanos",
+        title: "RRHH",
         icon: "users",
-        description: "Gestiona fichas, contratos y documentación legal.",
+        description: "Fichas, turnos y validación DT",
         quick: [
-          { label: "Listado y Fichas", to: ROUTES.listadoFichas },
-          { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos },
-          { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
-          { label: "Repositorio Documental", to: ROUTES.rrhhDocumentos },
-          { label: "Bodega y EPP", to: "/rrhh/bodega/dashboard" },
+          { label: "Fichas", to: ROUTES.listadoFichas },
+          { label: "Permisos • Instalaciones", to: ROUTES.rrhhPermisos },
         ],
         all: [
           { label: "Listado y Fichas", to: ROUTES.listadoFichas },
@@ -101,13 +102,10 @@ export default function Dashboard() {
         color: "#16A34A",
         title: "Asistencia",
         icon: "clock",
-        description: "Control de horarios, marcas y gestión de turnos.",
+        description: "Marcas, mapas y dispositivos",
         quick: [
-          { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
-          { label: "Marcas Registradas", to: ROUTES.asistenciaMarcas },
-          { label: "Mapa de Cobertura", to: ROUTES.asistenciaMapa },
-          { label: "Gestión de Dispositivos", to: ROUTES.asistenciaDispositivos },
-          { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos },
+          { label: "Supervisión", to: ROUTES.asistenciaSupervision },
+          { label: "Mapa de cobertura • Dispositivos", to: ROUTES.asistenciaMapa },
         ],
         all: [
           { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
@@ -122,11 +120,10 @@ export default function Dashboard() {
         color: "#7C3AED",
         title: "Comunicaciones",
         icon: "chat",
-        description: "Mensajería, plantillas y encuestas.",
+        description: "Mensajes, plantillas y encuestas",
         quick: [
-          { label: "Enviar mensaje", to: null },
+          { label: "Mensajes", to: null },
           { label: "Plantillas", to: null },
-          { label: "Encuestas", to: null },
         ],
         all: [
           { label: "Enviar mensaje", to: null },
@@ -139,11 +136,9 @@ export default function Dashboard() {
         color: "#EC4899",
         title: "Reportería",
         icon: "chart",
-        description: "Dashboards y descargas.",
+        description: "Dashboards y descargas",
         quick: [
-          { label: "Informes Gerenciales", to: null },
-          { label: "Dashboards", to: null },
-          { label: "Documentos", to: ROUTES.rrhhDocumentos },
+          { label: "Dashboards y descargas", to: null },
         ],
         all: [
           { label: "Informes Gerenciales", to: null },
@@ -153,19 +148,31 @@ export default function Dashboard() {
       },
       {
         id: "cuida",
-        color: "#F97316",
+        color: "#0284C7",
         title: "Tictiva Cuida",
         icon: "heart",
-        description: "Bienestar y VictorIA.",
+        description: "Bienestar y VictorIA",
         quick: [
-          { label: "Test Psicológicos", to: null },
-          { label: "Dashboard de Bienestar", to: null },
-          { label: "VictorIA", to: null },
+          { label: "Bienestar y VictorIA", to: null },
         ],
         all: [
           { label: "Test Psicológicos", to: null },
           { label: "Dashboard de Bienestar", to: null },
           { label: "VictorIA", to: null },
+        ],
+      },
+      {
+        id: "instalaciones",
+        color: "#3B82F6",
+        title: "Instalaciones",
+        icon: "building",
+        description: "Centros y ubicaciones",
+        quick: [
+          { label: "Centros y ubicaciones", to: null },
+        ],
+        all: [
+          { label: "Centros", to: null },
+          { label: "Ubicaciones", to: null },
         ],
       },
     ],
@@ -174,29 +181,46 @@ export default function Dashboard() {
 
   return (
     <div className="dash">
-      {/* Hero superior como la maqueta */}
+      {/* HERO como en el mock */}
       <section className="hero">
-        <div className="hero__brand">
-          <span className="hero__logo" aria-hidden />
-          <span className="hero__brandText">Tictiva</span>
+        <div className="hero__top">
+          <div className="hero__brand">
+            <span className="hero__logo" aria-hidden />
+            <span className="hero__brandText">Tictiva</span>
+          </div>
+
+          <div className="hero__tools">
+            <div className="hero__search">
+              <Icon name="search" size={18}/>
+              <input placeholder="Buscar en Tictiva…" />
+            </div>
+            <button className="hero__avatar" aria-label="Perfil">V</button>
+          </div>
         </div>
 
-        <h1 className="hero__title">Buenas tardes, Verónica Mateo</h1>
-        <p className="hero__subtitle">Elige un módulo para comenzar</p>
+        <div className="hero__greet">
+          <h1>Hola, Verónica</h1>
+          <p>Elige un módulo para comenzar</p>
+        </div>
 
         <div className="hero__stats">
           <span><strong>Hoy:</strong> 154 marcas</span>
           <span><strong>Mensajes:</strong> 3 nuevos</span>
           <span><strong>Encuestas:</strong> 2 activas</span>
         </div>
+
+        <aside className="hero__panel">
+          <button className="hero__panelBtn">Configuración</button>
+          <button className="hero__panelBtn hero__panelBtn--subtle">Cerrar sesión</button>
+        </aside>
       </section>
 
-      {/* Grid de módulos */}
+      {/* GRID de tarjetas (2 filas de 3) */}
       <div className="grid">
         {MODULES.map((m) => (
           <article key={m.id} className="card">
             <header className="card__head" onClick={() => setOpenModule(m.id)} role="button" tabIndex={0}>
-              <div className="card__icon" style={{ color: m.color }}>
+              <div className="card__icon" style={{ borderColor: m.color, color: m.color }}>
                 <Icon name={m.icon} />
               </div>
               <div>
@@ -209,17 +233,14 @@ export default function Dashboard() {
               {m.quick.map((q, i) => (
                 <li key={i}>
                   <button className="card__pill" onClick={() => safeGo(navigate, q.to)}>
-                    <span className="card__bullet" />
-                    {q.label}
+                    <span className="card__bullet" /> {q.label}
                   </button>
                 </li>
               ))}
             </ul>
 
             <footer className="card__foot">
-              <button className="card__open" onClick={() => setOpenModule(m.id)}>
-                Abrir módulo →
-              </button>
+              <button className="card__open" onClick={() => setOpenModule(m.id)}>Abrir módulo →</button>
             </footer>
           </article>
         ))}
@@ -236,7 +257,7 @@ export default function Dashboard() {
   );
 }
 
-/* ===== Drawer lateral ===== */
+/* ===== Panel lateral ===== */
 function Drawer({ module, onClose, onGo }) {
   if (!module) return null;
   return (
@@ -244,8 +265,8 @@ function Drawer({ module, onClose, onGo }) {
       <div className="drawer__backdrop" onClick={onClose} />
       <aside className="drawer">
         <div className="drawer__head" style={{ borderTopColor: module.color }}>
-          <div className="drawer__icon" style={{ color: module.color }}>
-            <Icon name={module.icon} size={24} />
+          <div className="drawer__icon" style={{ color: module.color, borderColor: module.color }}>
+            <Icon name={module.icon} size={22} />
           </div>
           <div className="drawer__titwrap">
             <div className="drawer__label">Módulo</div>
