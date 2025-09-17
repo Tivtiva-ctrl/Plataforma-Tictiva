@@ -17,25 +17,44 @@
 
 *{ box-sizing:border-box }
 
+/* ✅ Fondo neutro (sin gradiente fuerte) para que no aparezca el hero viejo detrás */
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial;
   color:var(--ink-700);
-  background: linear-gradient(180deg, #E6F4FA 0%, #F8FAFC 60%, #F8FAFC 100%);
+  background: var(--bg);
 }
 
+/* ✅ Kill-switch del título/hero antiguo SOLO en el login */
+.login-shell .hero,
+.login-shell .hero *,
+.login-shell .logoBar,
+.login-shell .logo-bar,
+.login-shell .landing-hero,
+.login-shell header[role="banner"]{
+  display:none !important;
+}
+
+/* ===== Layout general ===== */
 .login{
   min-height: 100dvh;
   display:grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.05fr 0.95fr; /* proporción del mock */
+  max-width: 1120px;
+  margin: 32px auto;
+  background: var(--card);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  overflow:hidden;
 }
 
+/* ===== Columna izquierda (form) ===== */
 .login__form{
   display:flex;
   flex-direction:column;
   gap:16px;
   padding:48px clamp(24px, 5vw, 72px);
-  background:var(--bg);
+  background: var(--card); /* blanco como en el mock */
 }
 
 .login__brand{
@@ -103,17 +122,22 @@ body{
 .login__dtText{ display:flex; gap:6px; flex-wrap:wrap; color:var(--ink-500); }
 .login__dtAction{ margin-left:auto; color:var(--brand-600); font-weight:700; text-decoration:none; }
 
+/* ===== Columna derecha (ilustración maqueta) ===== */
 .login__art{
   position:relative; overflow:hidden;
   padding:48px clamp(24px, 5vw, 72px);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background: #F2F7FF; /* panel suave como en el mock */
 }
-.login__svg{ width:min(92%, 720px); height:auto; border-radius:24px; box-shadow: var(--shadow); background:#fff3; }
+.login__svg{
+  width:min(92%, 720px); height:auto;
+  border-radius:24px; box-shadow: var(--shadow); background:#fff3;
+}
 .login__artCaption{
   margin-top:18px; text-align:center; color:#0B1A38; font-weight:700; font-size:22px;
 }
 
-/* Responsive */
+/* ===== Responsive ===== */
 @media (max-width: 980px){
   .login{ grid-template-columns: 1fr; }
   .login__art{ order:-1; padding-bottom:0; }

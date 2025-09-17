@@ -11,7 +11,7 @@ import "./App.css";
 import { ROUTES } from "./routes";
 
 // Shell
-import LogoBar from "./components/LogoBar";
+// ❌ Quitamos LogoBar del login para evitar el hero viejo
 import Navbar from "./components/Navbar";
 import LoginPage from "./components/LoginPage";
 
@@ -58,10 +58,10 @@ function NavbarWithLogout({ userName, onLogout }) {
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   return (
     <div className={isLoggedIn ? "dashboard-bg" : "login-shell"}>
-      {isLoggedIn ? <NavbarWithLogout userName="Verónica" onLogout={handleLogout} /> : <LogoBar />}
+      {/* ✅ En login NO renderizamos LogoBar para que no aparezca el hero viejo */}
+      {isLoggedIn ? <NavbarWithLogout userName="Verónica" onLogout={handleLogout} /> : null}
 
       {!isLoggedIn ? (
-        // === NUEVO: el LoginPage ya trae su layout completo (dos columnas)
         <LoginPage onLoginSuccess={handleLoginSuccess} />
       ) : (
         <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
@@ -81,7 +81,7 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
               <Route path="dashboard" element={<BodegaDashboard />} />
               <Route path="inventario" element={<BodegaInventario />} />
               <Route path="colaboradores" element={<BodegaColaboradores />} />
-              <Route path="operaciones" element={<BODEGA.Operaciones />} />
+              <Route path="operaciones" element={<BodegaOperaciones />} />
             </Route>
 
             {/* Empleado */}
