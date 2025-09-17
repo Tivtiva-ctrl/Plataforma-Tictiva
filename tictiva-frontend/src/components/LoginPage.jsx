@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "./LoginPage.css";
 
-// ✅ Importa las imágenes desde src/assets
+// Imágenes desde src/assets
 import logo from "../assets/logo-tictiva.png";
 import illustration from "../assets/login-illustration.png";
 
@@ -13,7 +13,6 @@ export default function LoginPage({ onLoginSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: auth real
     onLoginSuccess?.();
   };
 
@@ -21,7 +20,6 @@ export default function LoginPage({ onLoginSuccess }) {
     <main className="login">
       {/* Columna izquierda (formulario) */}
       <section className="login__form">
-        {/* Logo real */}
         <div className="login__brand">
           <img className="login__brandImg" src={logo} alt="Tictiva" />
         </div>
@@ -83,7 +81,7 @@ export default function LoginPage({ onLoginSuccess }) {
         </div>
       </section>
 
-      {/* Columna derecha (ilustración maqueta) */}
+      {/* Columna derecha (ilustración) */}
       <section className="login__art">
         <img className="login__svg" src={illustration} alt="Ilustración Tictiva" />
         <div className="login__artCaption">
