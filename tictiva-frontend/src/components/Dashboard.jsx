@@ -1,218 +1,236 @@
 // src/components/Dashboard.jsx
-import React from "react";
-import { Link } from "react-router-dom";
-import { ROUTES } from "../routes";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Dashboard.css";
+import { ROUTES } from "../routes"; // desde /components sube 1 nivel
 
-// ====== Iconos (svg) ======
-const IconWrap = ({ fg = "#1f2937", bg = "#eef2ff", children }) => (
-  <div className="new-ico" style={{ background: bg, color: fg }}>
-    {children}
-  </div>
-);
-const IUsers = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-  </svg>
-);
-const IClock = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-  </svg>
-);
-const IMessage = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-const IChart = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-  </svg>
-);
-const IBrain = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7h0A2.5 2.5 0 0 1 7 4.5v0A2.5 2.5 0 0 1 9.5 2m0 15A2.5 2.5 0 0 1 12 19.5v0a2.5 2.5 0 0 1-2.5 2.5h0A2.5 2.5 0 0 1 7 19.5v0a2.5 2.5 0 0 1 2.5-2.5m5 0A2.5 2.5 0 0 1 17 19.5v0a2.5 2.5 0 0 1-2.5 2.5h0A2.5 2.5 0 0 1 12 19.5v0a2.5 2.5 0 0 1 2.5-2.5m0-15A2.5 2.5 0 0 1 17 4.5v0A2.5 2.5 0 0 1 14.5 7h0A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 14.5 2z" />
-    <path d="M12 7v10" />
-  </svg>
-);
-const ICalendar = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
-const IClipboard = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-  </svg>
-);
-const IBox = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-    <line x1="12" y1="22.08" x2="12" y2="12" />
-  </svg>
-);
-const ISearch = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
-);
-const ICheck = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-);
-const IPin = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
-  </svg>
-);
-const IDevice = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" />
-  </svg>
-);
-const ITurns = ICalendar;
+// Pequeño helper seguro: navega si hay ruta, si no, avisa.
+function safeGo(navigate, to) {
+  if (typeof to === "string" && to.length > 0) {
+    navigate(to);
+  } else {
+    // No rompemos la app si ese submódulo aún no existe en las rutas.
+    alert("Este submódulo estará disponible pronto.");
+    console.warn("[Dashboard] Ruta no disponible para este submódulo:", to);
+  }
+}
 
-// ====== Dashboard (diseño nuevo con svg, sin BrowserRouter anidado) ======
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [openModule, setOpenModule] = useState(null); // id del módulo abierto en el panel
+
+  // Define aquí los módulos y submódulos que verás en tarjetas y en el panel
+  const MODULES = useMemo(
+    () => [
+      {
+        id: "rrhh",
+        color: "#2E6CF6",
+        title: "Recursos Humanos",
+        icon: "👥",
+        description: "Gestiona fichas, contratos y documentación legal.",
+        quick: [
+          { label: "Listado y Fichas", to: ROUTES.listadoFichas },
+          { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos },
+          { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
+          { label: "Repositorio Documental", to: ROUTES.rrhhDocumentos },
+          { label: "Bodega y EPP", to: "/rrhh/bodega/dashboard" }, // existe vía BODEGA en App.jsx
+        ],
+        all: [
+          { label: "Listado y Fichas", to: ROUTES.listadoFichas, icon: "🗂️" },
+          { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos, icon: "📝" },
+          { label: "Validación DT", to: ROUTES.rrhhValidacionDT, icon: "✅" },
+          { label: "Repositorio Documental", to: ROUTES.rrhhDocumentos, icon: "📁" },
+          { label: "Bodega y EPP", to: "/rrhh/bodega/dashboard", icon: "📦" },
+        ],
+      },
+      {
+        id: "asistencia",
+        color: "#16A34A",
+        title: "Asistencia",
+        icon: "🕒",
+        description: "Control de horarios, marcas y gestión de turnos.",
+        quick: [
+          { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
+          { label: "Marcas Registradas", to: ROUTES.asistenciaMarcas },
+          { label: "Mapa de Cobertura", to: ROUTES.asistenciaMapa },
+          { label: "Gestión de Dispositivos", to: ROUTES.asistenciaDispositivos },
+          { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos },
+        ],
+        all: [
+          { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision, icon: "📊" },
+          { label: "Marcas Registradas", to: ROUTES.asistenciaMarcas, icon: "✅" },
+          { label: "Mapa de Cobertura", to: ROUTES.asistenciaMapa, icon: "🗺️" },
+          { label: "Gestión de Dispositivos", to: ROUTES.asistenciaDispositivos, icon: "📱" },
+          { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos, icon: "📅" },
+        ],
+      },
+      {
+        id: "comunicaciones",
+        color: "#7C3AED",
+        title: "Comunicaciones",
+        icon: "💬",
+        description: "Mensajería, encuestas y comunicados para tu equipo.",
+        quick: [
+          { label: "Enviar mensaje", to: null },
+          { label: "Plantillas", to: null },
+          { label: "Encuestas", to: null },
+        ],
+        all: [
+          { label: "Enviar mensaje", to: null, icon: "✉️" },
+          { label: "Plantillas", to: null, icon: "📑" },
+          { label: "Encuestas", to: null, icon: "📝" },
+        ],
+      },
+      {
+        id: "reporteria",
+        color: "#EC4899",
+        title: "Reportes",
+        icon: "📈",
+        description: "Informes gerenciales y análisis de datos.",
+        quick: [
+          { label: "Informes Gerenciales", to: null },
+          { label: "Dashboards", to: null },
+          { label: "Documentos", to: ROUTES.rrhhDocumentos },
+        ],
+        all: [
+          { label: "Informes Gerenciales", to: null, icon: "📊" },
+          { label: "Dashboards", to: null, icon: "📉" },
+          { label: "Documentos", to: ROUTES.rrhhDocumentos, icon: "📁" },
+        ],
+      },
+      {
+        id: "cuida",
+        color: "#F97316",
+        title: "Tictiva Cuida",
+        icon: "🧠",
+        description: "Bienestar psicoemocional y salud organizacional.",
+        quick: [
+          { label: "Test Psicológicos", to: null },
+          { label: "Dashboard de Bienestar", to: null },
+          { label: "VictorIA", to: null },
+        ],
+        all: [
+          { label: "Test Psicológicos", to: null, icon: "🧩" },
+          { label: "Dashboard de Bienestar", to: null, icon: "❤️" },
+          { label: "VictorIA", to: null, icon: "🤖" },
+        ],
+      },
+    ],
+    []
+  );
+
   return (
-    <div className="new-dashboard-container">
-      {/* Saludo */}
-      <header className="new-header">
-        <h1 className="new-title">
-          Buenas tardes, Verónica Mateo <span>👋</span>
-        </h1>
-        <p className="new-quote">
+    <div className="dash">
+      {/* Encabezado */}
+      <div className="dash__header">
+        <div className="dash__brand">
+          <span className="dash__logo" aria-hidden="true" />
+          <span className="dash__brandText">Tictiva</span>
+        </div>
+        <h1 className="dash__title">Buenas tardes, Verónica Mateo 👋</h1>
+        <p className="dash__subtitle">
           "Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve."
         </p>
-      </header>
 
-      {/* Tip de VictorIA */}
-      <section className="new-tip-card">
-        <div className="new-tip-bulb">💡</div>
-        <div>
-          <div className="new-tip-title">Tip de VictorIA</div>
-          <div className="new-tip-text">
-            ¡Es fin de mes! Revisa <b>Permisos</b> y <b>Validación DT</b> en RR.HH.
-          </div>
+        <div className="dash__tip">
+          <span className="dash__tipIcon">💡</span>
+          <span className="dash__tipText">
+            <strong>Tip de VictorIA:</strong> ¡Es fin de mes! Revisa <button
+              className="dash__linkBtn"
+              onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}
+            >Permisos</button> y <button
+              className="dash__linkBtn"
+              onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}
+            >Validación DT</button> en RR.HH.
+          </span>
         </div>
-      </section>
-
-      {/* Grid de módulos */}
-      <div className="new-grid">
-        {/* RRHH */}
-        <section className="new-card">
-          <div className="new-card-top new-bar-blue" />
-          <div className="new-card-head">
-            <IconWrap fg="#1e40af" bg="#e0e7ff"><IUsers /></IconWrap>
-            <h3 className="new-card-title">Recursos Humanos</h3>
-          </div>
-          <p className="new-card-desc">Gestiona fichas, contratos y documentación legal.</p>
-          <div className="new-links-grid">
-            <Link to={ROUTES.listadoFichas} className="new-link-item"><ICalendar /><span>Listado y Fichas</span></Link>
-            <Link to={ROUTES.rrhhPermisos} className="new-link-item"><IClipboard /><span>Permisos y Justificaciones</span></Link>
-            <Link to={ROUTES.rrhhValidacionDT} className="new-link-item"><ICheck /><span>Validación DT</span></Link>
-            <Link to={ROUTES.rrhhDocumentos} className="new-link-item"><IClipboard /><span>Repositorio Documental</span></Link>
-            {/* A la raíz de Bodega (tu router ya redirige a su dashboard/pestañas) */}
-            <Link to={"/rrhh/bodega"} className="new-link-item"><IBox /><span>Bodega y EPP</span></Link>
-          </div>
-        </section>
-
-        {/* Asistencia */}
-        <section className="new-card">
-          <div className="new-card-top new-bar-green" />
-          <div className="new-card-head">
-            <IconWrap fg="#065f46" bg="#d1fae5"><IClock /></IconWrap>
-            <h3 className="new-card-title">Asistencia</h3>
-          </div>
-          <p className="new-card-desc">Control de horarios, marcas y gestión de turnos.</p>
-          <div className="new-links-grid">
-            <Link to={ROUTES.asistenciaSupervision} className="new-link-item"><ISearch /><span>Supervisión Integral</span></Link>
-            <Link to={ROUTES.asistenciaMarcas} className="new-link-item"><ICheck /><span>Marcas Registradas</span></Link>
-            <Link to={ROUTES.asistenciaMapa} className="new-link-item"><IPin /><span>Mapa de Cobertura</span></Link>
-            <Link to={ROUTES.asistenciaGestionDispositivos || ROUTES.asistenciaDispositivos} className="new-link-item"><IDevice /><span>Gestión de Dispositivos</span></Link>
-            <Link to={ROUTES.asistenciaGestionTurnos || ROUTES.asistenciaTurnos} className="new-link-item"><ITurns /><span>Gestión de Turnos y Jornadas</span></Link>
-          </div>
-        </section>
-
-        {/* Comunicaciones */}
-        <section className="new-card">
-          <div className="new-card-top new-bar-violet" />
-          <div className="new-card-head">
-            <IconWrap fg="#5b21b6" bg="#ede9fe"><IMessage /></IconWrap>
-            <h3 className="new-card-title">Comunicaciones</h3>
-          </div>
-          <p className="new-card-desc">Mensajería, encuestas y comunicados para tu equipo.</p>
-          <div className="new-links-grid">
-            <span className="new-link-item new-disabled"><IMessage /><span>Enviar mensaje</span></span>
-            <span className="new-link-item new-disabled"><IClipboard /><span>Plantillas</span></span>
-            <span className="new-link-item new-disabled"><ICheck /><span>Encuestas</span></span>
-          </div>
-        </section>
-
-        {/* Reportes */}
-        <section className="new-card">
-          <div className="new-card-top new-bar-pink" />
-          <div className="new-card-head">
-            <IconWrap fg="#9d174d" bg="#fce7f3"><IChart /></IconWrap>
-            <h3 className="new-card-title">Reportes</h3>
-          </div>
-          <p className="new-card-desc">Informes gerenciales y análisis de datos.</p>
-          <div className="new-links-grid">
-            <span className="new-link-item new-disabled"><IChart /><span>Informes Gerenciales</span></span>
-            <span className="new-link-item new-disabled"><IChart /><span>Dashboards</span></span>
-            <span className="new-link-item new-disabled"><IClipboard /><span>Documentos</span></span>
-          </div>
-        </section>
-
-        {/* Tictiva Cuida */}
-        <section className="new-card">
-          <div className="new-card-top new-bar-orange" />
-          <div className="new-card-head">
-            <IconWrap fg="#9a3412" bg="#ffedd5"><IBrain /></IconWrap>
-            <h3 className="new-card-title">Tictiva Cuida</h3>
-          </div>
-          <p className="new-card-desc">Bienestar psicoemocional y salud organizacional.</p>
-          <div className="new-links-grid">
-            <span className="new-link-item new-disabled"><IBrain /><span>Test Psicológicos</span></span>
-            <span className="new-link-item new-disabled"><IChart /><span>Dashboard de Bienestar</span></span>
-            <span className="new-link-item new-disabled"><IMessage /><span>VictorIA</span></span>
-          </div>
-        </section>
       </div>
 
-      {/* Estilos locales */}
-      <style>{`
-        .new-dashboard-container{max-width:1200px;margin:0 auto;padding:32px;font-family:'Inter',system-ui,Arial}
-        .new-header{margin-bottom:24px}
-        .new-title{font-size:2.25rem;font-weight:800;color:#111827;margin:0}
-        .new-quote{color:#6b7280;font-size:1rem;margin-top:4px}
-        .new-tip-card{display:flex;gap:16px;align-items:center;background:#eff6ff;border:1px solid #dbeafe;border-radius:1rem;padding:16px;margin-bottom:32px}
-        .new-tip-bulb{font-size:1.5rem;background:#fef08a;border-radius:9999px;padding:8px;display:grid;place-items:center;flex-shrink:0}
-        .new-tip-title{font-weight:700;color:#1e3a8a}
-        .new-tip-text{color:#1e40af}
-        .new-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
-        .new-card{position:relative;background:#fff;border:1px solid #e5e7eb;border-radius:1.25rem;padding:24px;box-shadow:0 4px 6px -1px rgba(0,0,0,.05);transition:transform .2s,box-shadow .2s}
-        .new-card:hover{transform:translateY(-4px);box-shadow:0 10px 15px -3px rgba(0,0,0,.08)}
-        .new-card-top{position:absolute;top:0;left:0;right:0;height:8px;border-top-left-radius:1.25rem;border-top-right-radius:1.25rem}
-        .new-bar-blue{background:#3b82f6}.new-bar-green{background:#22c55e}.new-bar-violet{background:#8b5cf6}.new-bar-pink{background:#ec4899}.new-bar-orange{background:#f97316}
-        .new-card-head{display:flex;align-items:center;gap:12px;margin-top:8px}
-        .new-ico{width:48px;height:48px;border-radius:.75rem;display:grid;place-items:center}
-        .new-card-title{font-size:1.5rem;font-weight:700;color:#1f2937}
-        .new-card-desc{margin-top:8px;margin-bottom:16px;color:#4b5563}
-        .new-links-grid{display:grid;grid-template-columns:1fr;gap:8px}
-        .new-link-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:.5rem;color:#374151;text-decoration:none;font-weight:500;transition:background-color .2s}
-        .new-link-item:hover{background:#f3f4f6;color:#111827}
-        .new-link-item svg{color:#6b7280}
-        .new-disabled{opacity:.6;cursor:not-allowed}
-        .new-disabled:hover{background:transparent}
-      `}</style>
+      {/* Grid de módulos */}
+      <div className="dash__grid">
+        {MODULES.map((mod) => (
+          <article key={mod.id} className="modCard">
+            <div
+              className="modCard__header"
+              onClick={() => setOpenModule(mod.id)}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="modCard__bar" style={{ background: mod.color }} />
+              <div className="modCard__icon">{mod.icon}</div>
+              <h3 className="modCard__title">{mod.title}</h3>
+            </div>
+
+            <p className="modCard__desc">{mod.description}</p>
+
+            <ul className="modCard__quick">
+              {mod.quick.map((q, i) => (
+                <li key={i}>
+                  <button
+                    className="modCard__quickBtn"
+                    onClick={() => safeGo(navigate, q.to)}
+                    title={q.label}
+                  >
+                    {q.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="modCard__footer">
+              <button
+                className="modCard__enter"
+                onClick={() => setOpenModule(mod.id)}
+              >
+                Ingresar al módulo →
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {/* Panel lateral con submódulos */}
+      {openModule && (
+        <ModuleDrawer
+          module={MODULES.find((m) => m.id === openModule)}
+          onClose={() => setOpenModule(null)}
+          onGo={(to) => safeGo(navigate, to)}
+        />
+      )}
     </div>
+  );
+}
+
+function ModuleDrawer({ module, onClose, onGo }) {
+  if (!module) return null;
+  return (
+    <>
+      <div className="drawer__backdrop" onClick={onClose} />
+      <aside className="drawer">
+        <header className="drawer__header" style={{ borderTopColor: module.color }}>
+          <div className="drawer__icon" aria-hidden>{module.icon}</div>
+          <div>
+            <div className="drawer__label">Módulo</div>
+            <h3 className="drawer__title">{module.title}</h3>
+          </div>
+          <button className="drawer__close" onClick={onClose} aria-label="Cerrar">✕</button>
+        </header>
+
+        <div className="drawer__content">
+          <p className="drawer__desc">{module.description}</p>
+          <ul className="drawer__list">
+            {module.all.map((it, idx) => (
+              <li key={idx}>
+                <button className="drawer__item" onClick={() => onGo(it.to)}>
+                  <span className="drawer__itemIcon">{it.icon}</span>
+                  <span className="drawer__itemText">{it.label}</span>
+                  <span className="drawer__chev">›</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+    </>
   );
 }
