@@ -6,58 +6,69 @@
   --card:#FFFFFF;
   --shadow:0 12px 30px rgba(2,8,23,.08);
   --hero-radius:22px;
+  --page-bg:#F6F8FB;
 }
 
 /* ===== Layout base ===== */
 .dash{
   padding: 16px clamp(12px, 3.6vw, 28px) 28px;
-  background:#F6F8FB;
+  background:var(--page-bg);
   color:var(--ink-700);
 }
 
 /* ===== HERO (fondo con hojas, sin ondas) ===== */
 .hero{
   position:relative;
-  z-index:1;                           /* el hero queda por DEBAJO de las cards */
+  z-index:1;                                   /* el hero queda por DEBAJO de las cards */
   border:1px solid var(--border);
   border-radius:var(--hero-radius);
-  box-shadow: var(--shadow);
   overflow:hidden;
+
+  /* degradado base del hero */
   background: linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
-  padding: 8px 18px 132px;             /* alto del hero */
+
+  /* altura suficiente para que “abrace” las cards */
+  padding: 8px 18px 260px;
+
+  /* 👇 fade real abajo: mezcla de inset shadow + máscara (fallback + moderno) */
+  box-shadow:
+    var(--shadow),
+    inset 0 -220px 160px -80px var(--page-bg);        /* fallback visible en todos */
+  -webkit-mask-image: linear-gradient(#000, #000 65%, rgba(0,0,0,0));
+          mask-image: linear-gradient(#000, #000 65%, rgba(0,0,0,0));
+
+  /* hojas (usa tus PNG en /public) */
+}
+.hero::before,
+.hero::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  opacity:.25;                                   /* suavidad como la maqueta */
+  filter: blur(0.2px);
+  background-repeat:no-repeat;
+  background-size:contain;
+}
+.hero::before{                                   /* hoja izquierda-inferior */
+  left:-80px; bottom:-70px;
+  width:720px; height:520px;
+  background-image:url("/leaves-left.png");
+}
+.hero::after{                                    /* hoja derecha-superior */
+  right:-80px; top:-50px;
+  width:760px; height:540px;
+  background-image:url("/leaves-right.png");
 }
 
 /* centro el contenido interno */
 .hero > .hero__rail,
 .hero > .hero__content{ max-width:1120px; margin:0 auto; }
 
-/* Hojas verdaderas (usa tus archivos en /public) */
-.hero::before,
-.hero::after{
-  content:"";
-  position:absolute;
-  pointer-events:none;
-  opacity:.25;                         /* suavidad */
-  filter: blur(0.2px);
-  background-repeat:no-repeat;
-  background-size:contain;
-}
-.hero::before{                         /* hoja izquierda-inferior */
-  left:-80px; bottom:-60px;
-  width:680px; height:480px;
-  background-image:url("/leaves-left.png");
-}
-.hero::after{                          /* hoja derecha-superior */
-  right:-80px; top:-40px;
-  width:720px; height:500px;
-  background-image:url("/leaves-right.png");
-}
-
-/* Barra superior del hero */
+/* Barra superior dentro del hero */
 .hero__rail{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:12px 4px;
-  border-bottom:1px solid #E3ECFA;     /* línea divisoria marcada */
+  border-bottom:1px solid #E3ECFA;               /* línea divisoria, como en mock */
   background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0));
   border-top-left-radius: calc(var(--hero-radius) - 1px);
   border-top-right-radius: calc(var(--hero-radius) - 1px);
@@ -83,7 +94,7 @@
 .hero__menu{
   position:absolute; right:0; top:46px; width:200px;
   background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow: var(--shadow);
-  display:flex; flex-direction:column; overflow:hidden;
+  display:flex; flex-direction:column; overflow:hidden; z-index:1000;
 }
 .hero__menuItem{ padding:10px 12px; background:#fff; border:none; text-align:left; cursor:pointer; color:#0B1A38; }
 .hero__menuItem:hover{ background:#F6FAFF; }
@@ -108,11 +119,11 @@
 .tip__text{ font-size:14px; }
 .linkBtn{ border:none; background:none; color:#2563EB; font-weight:700; cursor:pointer; }
 
-/* ===== GRID de módulos (más chico y encima del hero) ===== */
+/* ===== GRID de módulos (compacto y por ENCIMA del hero) ===== */
 .grid{
   position:relative;
-  z-index:10;                         /* ⬅️ cards por ENCIMA del hero */
-  margin-top:-108px;                  /* se “meten” dentro del hero */
+  z-index:10;                                 /* las cards pasan por ENCIMA del hero */
+  margin-top:-200px;                          /* se “meten” bien dentro del hero */
 
   max-width:1120px; margin-left:auto; margin-right:auto;
 
@@ -120,27 +131,26 @@
   grid-template-columns: repeat(3, minmax(0,1fr));
   gap:14px;
 }
-@media (max-width:1100px){ .grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media (max-width:760px){ .grid{ grid-template-columns:1fr; margin-top:-90px; } }
+@media (max-width:1100px){ .grid{ grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:-170px; } }
+@media (max-width:760px){ .grid{ grid-template-columns:1fr; margin-top:-140px; } }
 
-/* ===== Card de módulo (compacta) ===== */
+/* ===== Card de módulo ===== */
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:16px;
   box-shadow: var(--shadow);
-  padding:10px 10px 8px;               /* ⬅️ más compacta */
+  padding:10px 10px 8px;                     /* compacto como maqueta */
   display:flex; flex-direction:column; gap:8px;
 }
 .card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; }
 .card__icon{
-  width:36px; height:36px; border-radius:10px;   /* ⬅️ icono más chico */
+  width:36px; height:36px; border-radius:10px;
   background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent;
 }
-.card__title{ margin:0; font-size:15px; font-weight:800; color:#0B1A38; }   /* ⬅️ título más chico */
+.card__title{ margin:0; font-size:15px; font-weight:800; color:#0B1A38; }
 .card__desc{ margin:2px 0 0; color:var(--ink-500); font-size:12px; }
 
-/* lista de accesos rápidos */
 .card__list{ list-style:none; margin:6px 0 0; padding:0; display:grid; gap:6px; }
 .card__pill{
   width:100%; text-align:left; padding:7px 9px; border-radius:10px;
@@ -152,12 +162,18 @@
 .card__foot{ display:flex; justify-content:flex-end; }
 .card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:12px; }
 
-/* ===== Drawer lateral ===== */
-.drawer__backdrop{ position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter: blur(2px); }
+/* ===== Drawer lateral (submódulos) ===== */
+.drawer__backdrop{
+  position:fixed; inset:0;
+  background:rgba(2,8,23,.28);
+  backdrop-filter: blur(2px);
+  z-index: 2000;                              /* por encima de todo */
+}
 .drawer{
   position:fixed; top:0; right:0; height:100%; width:min(420px, 92vw);
   background:#fff; border-left:1px solid var(--border); box-shadow:-20px 0 50px rgba(2,8,23,.25);
   display:flex; flex-direction:column; animation:slideIn .22s ease-out;
+  z-index: 2001;
 }
 @keyframes slideIn{ from{ transform:translateX(16px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
 
