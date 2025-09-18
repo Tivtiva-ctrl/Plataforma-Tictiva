@@ -152,9 +152,9 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <div className="dash">
-      {/* HERO con fondo de hojas e input de búsqueda */}
+      {/* HERO grande con barra superior y línea divisoria */}
       <section className="hero">
-        <div className="hero__top">
+        <div className="hero__rail">
           <div className="hero__brand">
             <span className="hero__logo" aria-hidden />
             <span className="hero__brandText">Tictiva</span>
@@ -165,28 +165,25 @@ export default function Dashboard({ onLogout }) {
               <Icon name="search" size={18} />
               <input placeholder="Buscar en Tictiva…" />
             </div>
-            <button className="hero__avatar" onClick={() => setOpenMenu((v) => !v)} aria-label="Perfil">V</button>
-
+            <button className="hero__avatar" onClick={() => setOpenMenu(v => !v)} aria-label="Perfil">V</button>
             {openMenu && (
               <div className="hero__menu">
                 <button className="hero__menuItem">Configuración</button>
-                <button className="hero__menuItem hero__menuItem--danger" onClick={onLogout}>
-                  Cerrar sesión
-                </button>
+                <button className="hero__menuItem hero__menuItem--danger" onClick={onLogout}>Cerrar sesión</button>
               </div>
             )}
           </div>
         </div>
 
-        <div className="hero__greet">
-          <h1>Hola, Verónica</h1>
-          <p>Elige un módulo para comenzar</p>
-        </div>
+        <div className="hero__content">
+          <h1 className="hero__title">Hola, Verónica</h1>
+          <p className="hero__subtitle">Elige un módulo para comenzar</p>
 
-        <div className="hero__stats">
-          <span><strong>Hoy:</strong> 154 marcas</span>
-          <span><strong>Mensajes:</strong> 3 nuevos</span>
-          <span><strong>Encuestas:</strong> 2 activas</span>
+          <div className="hero__stats">
+            <span><strong>Hoy:</strong> 154 marcas</span>
+            <span><strong>Mensajes:</strong> 3 nuevos</span>
+            <span><strong>Encuestas:</strong> 2 activas</span>
+          </div>
         </div>
       </section>
 
@@ -202,7 +199,7 @@ export default function Dashboard({ onLogout }) {
         </div>
       </div>
 
-      {/* Grid de tarjetas (compactas) */}
+      {/* Grid de tarjetas — compactas como el mock */}
       <div className="grid">
         {MODULES.map((m) => (
           <article key={m.id} className="card">
@@ -227,9 +224,7 @@ export default function Dashboard({ onLogout }) {
             </ul>
 
             <footer className="card__foot">
-              <button className="card__open" onClick={() => setOpenModule(m.id)}>
-                Abrir módulo →
-              </button>
+              <button className="card__open" onClick={() => setOpenModule(m.id)}>Abrir módulo →</button>
             </footer>
           </article>
         ))}
@@ -237,7 +232,7 @@ export default function Dashboard({ onLogout }) {
 
       {openModule && (
         <Drawer
-          module={MODULES.find((x) => x.id === openModule)}
+          module={MODULES.find(m => m.id === openModule)}
           onClose={() => setOpenModule(null)}
           onGo={(to) => safeGo(navigate, to)}
         />

@@ -5,57 +5,74 @@
   --border:#E6EDF5;
   --card:#FFFFFF;
   --shadow:0 12px 30px rgba(2,8,23,.08);
-  --ring:rgba(51,109,255,.18);
 }
 
-/* Contenedor */
+/* Layout base */
 .dash{
   padding: 16px clamp(16px, 4vw, 28px) 28px;
   background:#F6F8FB;
   color:var(--ink-700);
 }
 
-/* ===== HERO con fondo de hojas (no es una card aparte) ===== */
+/* ===== HERO: card grande con hojas, barra arriba y línea divisoria ===== */
 .hero{
   position:relative;
   border:1px solid var(--border);
   border-radius:18px;
   box-shadow: var(--shadow);
+  background: linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
   overflow:hidden;
-  padding: 14px 16px 18px;
-  background:
-    linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
-}
-/* Capa de hojas sutil en SVG embebido */
-.hero::after{
-  content:"";
-  position:absolute; inset:0;
-  background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400' opacity='0.18'>\
-<g fill='none' stroke='%2399D5C9' stroke-width='1.2'>\
-<path d='M90,320c60-80,120-60,180-10'/>\
-<path d='M640,80c-60,80-120,60-180,10'/>\
-<path d='M720,260c-80,40-140,10-190-30'/>\
-<path d='M140,120c70-40,120-10,170,30'/>\
-</g></svg>");
-  background-repeat:no-repeat;
-  background-size: cover;
-  background-position:center;
-  pointer-events:none;
 }
 
-.hero__top{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+/* Hojas (dos capas SVG embebidas, muy sutiles) */
+.hero::before,
+.hero::after{
+  content:"";
+  position:absolute;
+  width:520px; height:320px;
+  pointer-events:none;
+  opacity:.28;
+  filter: blur(.2px);
+}
+.hero::before{
+  left:-60px; bottom:-30px;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'>\
+<g fill='none' stroke='%2393C5AA' stroke-width='1.2'>\
+<path d='M40,260 C120,160 200,190 260,240'/>\
+<path d='M90,220 C150,170 210,180 270,220'/>\
+</g></svg>");
+  background-repeat:no-repeat; background-size:contain;
+}
+.hero::after{
+  right:-70px; top:-40px;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'>\
+<g fill='none' stroke='%A3C9F9' stroke-width='1.2'>\
+<path d='M360,40 C300,120 240,100 190,60'/>\
+<path d='M320,100 C260,150 210,140 160,110'/>\
+</g></svg>");
+  background-repeat:no-repeat; background-size:contain;
+}
+
+/* Barra superior dentro del hero */
+.hero__rail{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding: 12px 16px;
+  border-bottom:1px solid #E8F0FB;
+}
 .hero__brand{ display:flex; align-items:center; gap:10px; }
 .hero__logo{ width:18px; height:18px; border-radius:5px; background:linear-gradient(135deg,#2e6cf6,#44b0ff); position:relative; }
 .hero__logo::after{ content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
 .hero__brandText{ font-weight:800; color:#0B1A38; }
 
-/* Búsqueda + avatar */
+/* Buscador + avatar con dropdown */
 .hero__tools{ position:relative; display:flex; align-items:center; gap:10px; }
 .hero__search{
   display:flex; align-items:center; gap:8px;
   background:#fff; border:1px solid var(--border); border-radius:999px;
-  padding:6px 10px; min-width:240px; box-shadow:0 6px 16px rgba(2,8,23,.06);
+  padding:6px 10px; min-width:240px;
+  box-shadow:0 6px 16px rgba(2,8,23,.06);
 }
 .hero__search input{
   border:none; outline:none; background:transparent; color:var(--ink-700);
@@ -65,7 +82,6 @@
   width:34px; height:34px; border-radius:999px; background:#E3F0FF; color:#0B1A38; font-weight:800;
   border:1px solid #CFE3FF; cursor:pointer;
 }
-/* Dropdown del avatar */
 .hero__menu{
   position:absolute; right:0; top:44px; width:200px;
   background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow: var(--shadow);
@@ -77,12 +93,14 @@
 .hero__menuItem:hover{ background:#F6FAFF; }
 .hero__menuItem--danger{ color:#b91c1c; }
 
-.hero__greet h1{ margin:8px 0 0; font-size:28px; font-weight:800; color:#0B1A38; }
-.hero__greet p{ margin:2px 0 10px; color:var(--ink-500); }
+/* Contenido del hero */
+.hero__content{ padding: 10px 16px 16px; }
+.hero__title{ margin:8px 0 0; font-size:28px; font-weight:800; color:#0B1A38; }
+.hero__subtitle{ margin:2px 0 10px; color:var(--ink-500); }
 .hero__stats{ display:flex; gap:18px; flex-wrap:wrap; font-size:14px; color:#0B1A38; }
 .hero__stats strong{ font-weight:800; }
 
-/* Tip VictorIA */
+/* Tip VictorIA (se queda, pero no está en la maqueta) */
 .tip{
   margin: 12px 0 16px;
   display:flex; align-items:flex-start; gap:10px;
@@ -93,21 +111,23 @@
 .tip__text{ font-size:14px; }
 .linkBtn{ border:none; background:none; color:#2563EB; font-weight:700; cursor:pointer; }
 
-/* ===== GRID de tarjetas (compactas) ===== */
+/* ===== Grid de módulos — compacto ===== */
 .grid{
   display:grid;
   grid-template-columns: repeat(3, minmax(0,1fr));
   gap: 14px;
+  margin-top: 2px;
 }
 @media (max-width:1100px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
 @media (max-width:760px){ .grid{ grid-template-columns: 1fr; } }
 
+/* Card de módulo (más chica que antes) */
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:16px;
   box-shadow: var(--shadow);
-  padding:12px 12px 10px;
+  padding:12px 12px 8px;
   display:flex; flex-direction:column; gap:8px;
 }
 .card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; }
@@ -124,10 +144,7 @@
   border:1px dashed #E2E8F0; background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:13px;
 }
 .card__pill:hover{ background:#fff; border-style:solid; }
-.card__bullet{
-  width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px;
-  background:#94A3B8; vertical-align:middle;
-}
+.card__bullet{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; background:#94A3B8; vertical-align:middle; }
 
 .card__foot{ display:flex; justify-content:flex-end; }
 .card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; }
