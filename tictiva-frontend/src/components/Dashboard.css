@@ -8,65 +8,56 @@
   --hero-radius:22px;
 }
 
-/* Layout base */
+/* ===== Layout base ===== */
 .dash{
   padding: 16px clamp(12px, 3.6vw, 28px) 28px;
   background:#F6F8FB;
   color:var(--ink-700);
 }
 
-/* ===== HERO: card grande con hojas, barra arriba y línea divisoria ===== */
+/* ===== HERO (fondo con hojas, sin ondas) ===== */
 .hero{
   position:relative;
+  z-index:1;                           /* el hero queda por DEBAJO de las cards */
   border:1px solid var(--border);
   border-radius:var(--hero-radius);
   box-shadow: var(--shadow);
   overflow:hidden;
-
-  /* Altura y “espacio” para que parezca que las cards entran */
-  padding: 8px 18px 160px;
-
-  /* 🌿 Hojas en el fondo (dos SVG en capas) + degradado */
-  background-image:
-    url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 520'>\
-<g fill='none' stroke='%2398C3B1' stroke-width='2' opacity='.35'>\
- <path d='M10,470 C180,320 350,360 520,440'/>\
- <path d='M30,420 C210,300 360,310 540,400'/>\
- <path d='M60,380 C220,270 370,280 560,360'/>\
-</g></svg>"),
-    url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 540'>\
-<g fill='none' stroke='%23A9C9F7' stroke-width='2' opacity='.32'>\
- <path d='M740,60 C600,210 430,180 300,100'/>\
- <path d='M710,120 C570,230 420,210 290,140'/>\
- <path d='M690,170 C560,260 410,240 270,170'/>\
-</g></svg>"),
-    linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  /* posiciones similares a la maqueta */
-  background-position:
-    left -80px bottom -90px,  /* hojas izquierdas */
-    right -100px top -60px,   /* hojas derechas  */
-    0 0;                      /* degradado      */
-  background-size:
-    720px auto,
-    760px auto,
-    cover;
+  background: linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
+  padding: 8px 18px 132px;             /* alto del hero */
 }
 
-/* Contenido centrado */
+/* centro el contenido interno */
 .hero > .hero__rail,
-.hero > .hero__content{
-  max-width: 1120px;
-  margin: 0 auto;
+.hero > .hero__content{ max-width:1120px; margin:0 auto; }
+
+/* Hojas verdaderas (usa tus archivos en /public) */
+.hero::before,
+.hero::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  opacity:.25;                         /* suavidad */
+  filter: blur(0.2px);
+  background-repeat:no-repeat;
+  background-size:contain;
+}
+.hero::before{                         /* hoja izquierda-inferior */
+  left:-80px; bottom:-60px;
+  width:680px; height:480px;
+  background-image:url("/leaves-left.png");
+}
+.hero::after{                          /* hoja derecha-superior */
+  right:-80px; top:-40px;
+  width:720px; height:500px;
+  background-image:url("/leaves-right.png");
 }
 
-/* Barra superior dentro del hero */
+/* Barra superior del hero */
 .hero__rail{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding: 12px 4px;
-  border-bottom:1px solid #E3ECFA; /* línea divisoria */
+  padding:12px 4px;
+  border-bottom:1px solid #E3ECFA;     /* línea divisoria marcada */
   background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0));
   border-top-left-radius: calc(var(--hero-radius) - 1px);
   border-top-right-radius: calc(var(--hero-radius) - 1px);
@@ -76,7 +67,7 @@
 .hero__logo::after{ content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
 .hero__brandText{ font-weight:800; color:#0B1A38; letter-spacing:.2px; }
 
-/* Buscador + avatar con dropdown */
+/* Buscador + avatar */
 .hero__tools{ position:relative; display:flex; align-items:center; gap:10px; }
 .hero__search{
   display:flex; align-items:center; gap:8px;
@@ -84,10 +75,7 @@
   padding:8px 12px; min-width:260px;
   box-shadow:0 6px 16px rgba(2,8,23,.06);
 }
-.hero__search input{
-  border:none; outline:none; background:transparent; color:var(--ink-700);
-  font-size:14px; width:210px;
-}
+.hero__search input{ border:none; outline:none; background:transparent; color:var(--ink-700); font-size:14px; width:210px; }
 .hero__avatar{
   width:34px; height:34px; border-radius:999px; background:#E3F0FF; color:#0B1A38; font-weight:800;
   border:1px solid #CFE3FF; cursor:pointer;
@@ -97,23 +85,21 @@
   background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow: var(--shadow);
   display:flex; flex-direction:column; overflow:hidden;
 }
-.hero__menuItem{
-  padding:10px 12px; background:#fff; border:none; text-align:left; cursor:pointer; color:#0B1A38;
-}
+.hero__menuItem{ padding:10px 12px; background:#fff; border:none; text-align:left; cursor:pointer; color:#0B1A38; }
 .hero__menuItem:hover{ background:#F6FAFF; }
 .hero__menuItem--danger{ color:#b91c1c; }
 
-/* Contenido del hero */
-.hero__content{ padding: 10px 4px 0; }
+/* Texto hero */
+.hero__content{ padding:10px 4px 0; }
 .hero__title{ margin:14px 0 0; font-size:32px; font-weight:800; color:#0B1A38; letter-spacing:-.2px; }
 .hero__subtitle{ margin:4px 0 14px; color:var(--ink-500); font-size:15px; }
 .hero__stats{ display:flex; gap:22px; flex-wrap:wrap; font-size:14px; color:#0B1A38; }
 .hero__stats strong{ font-weight:800; }
 
-/* Tip VictorIA */
+/* ===== Tip VictorIA ===== */
 .tip{
   max-width:1120px;
-  margin: 12px auto 16px;
+  margin:12px auto 16px;
   display:flex; align-items:flex-start; gap:10px;
   background:#F1F6FF; border:1px solid #E0EAFF;
   padding:12px 14px; border-radius:14px; box-shadow: var(--shadow); color:#0B1A38;
@@ -122,48 +108,49 @@
 .tip__text{ font-size:14px; }
 .linkBtn{ border:none; background:none; color:#2563EB; font-weight:700; cursor:pointer; }
 
-/* ===== Grid de tarjetas — se “mete” dentro del hero ===== */
+/* ===== GRID de módulos (más chico y encima del hero) ===== */
 .grid{
-  /* subimos las cards */
-  margin-top: -110px;
+  position:relative;
+  z-index:10;                         /* ⬅️ cards por ENCIMA del hero */
+  margin-top:-108px;                  /* se “meten” dentro del hero */
+
+  max-width:1120px; margin-left:auto; margin-right:auto;
 
   display:grid;
   grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 14px;
-
-  max-width:1120px;
-  margin-left:auto; margin-right:auto;
+  gap:14px;
 }
-@media (max-width:1100px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
-@media (max-width:760px){ .grid{ grid-template-columns: 1fr; margin-top:-80px; } }
+@media (max-width:1100px){ .grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px){ .grid{ grid-template-columns:1fr; margin-top:-90px; } }
 
-/* Card de módulo (compacta) */
+/* ===== Card de módulo (compacta) ===== */
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:16px;
   box-shadow: var(--shadow);
-  padding:12px 12px 8px;
+  padding:10px 10px 8px;               /* ⬅️ más compacta */
   display:flex; flex-direction:column; gap:8px;
 }
 .card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; }
 .card__icon{
-  width:40px; height:40px; border-radius:12px;
+  width:36px; height:36px; border-radius:10px;   /* ⬅️ icono más chico */
   background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent;
 }
-.card__title{ margin:0; font-size:16px; font-weight:800; color:#0B1A38; }
-.card__desc{ margin:1px 0 0; color:var(--ink-500); font-size:13px; }
+.card__title{ margin:0; font-size:15px; font-weight:800; color:#0B1A38; }   /* ⬅️ título más chico */
+.card__desc{ margin:2px 0 0; color:var(--ink-500); font-size:12px; }
 
-.card__list{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:6px; }
+/* lista de accesos rápidos */
+.card__list{ list-style:none; margin:6px 0 0; padding:0; display:grid; gap:6px; }
 .card__pill{
-  width:100%; text-align:left; padding:8px 10px; border-radius:12px;
-  border:1px dashed #E2E8F0; background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:13px;
+  width:100%; text-align:left; padding:7px 9px; border-radius:10px;
+  border:1px dashed #E2E8F0; background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:12px;
 }
 .card__pill:hover{ background:#fff; border-style:solid; }
 .card__bullet{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; background:#94A3B8; vertical-align:middle; }
 
 .card__foot{ display:flex; justify-content:flex-end; }
-.card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; }
+.card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:12px; }
 
 /* ===== Drawer lateral ===== */
 .drawer__backdrop{ position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter: blur(2px); }
