@@ -198,3 +198,35 @@
 .drawer__dot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
 .drawer__text{ color:#0B1A38; font-weight:600; }
 .drawer__chev{ color:#64748B; font-size:18px; }
+
+/* ===== Ajuste de tamaño: cards más rectangulares/“alargadas” ===== */
+/* (no cambia layout ni lógica, solo proporción visual) */
+
+:root{
+  /* altura mínima más baja para que se vean más anchas que altas */
+  --card-min-h: 128px;        /* prueba 120–140 según te guste */
+}
+
+/* un pelín más de aire horizontal y menos vertical */
+.card{
+  min-height: var(--card-min-h);
+  padding: 12px 18px 10px;    /* +x, -y para dar rectángulo */
+  border-radius: 14px;
+}
+
+/* compactamos cabecera y lista para bajar la altura total */
+.card__head{ margin-bottom: 4px; }
+.card__icon{ width: 34px; height: 34px; border-radius: 10px; }
+.card__title{ font-size: 15px; }
+.card__desc{ font-size: 12.5px; }
+
+.card__list{ gap: 6px; margin-top: 4px; }
+.card__pill{
+  padding: 7px 10px;          /* menos alto en cada item */
+  border-radius: 10px;
+  font-size: 12.5px;
+}
+
+/* botón de pie más discreto (menos alto) */
+.card__open{ font-size: 12.5px; padding: 0 2px; }
+
