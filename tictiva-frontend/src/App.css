@@ -63,7 +63,12 @@ html, body, #root {
   padding: 0 10px 40px 10px;
 }
 
-.login-form-outer { display: flex; flex-direction: column; align-items: center; margin-top: 32px; }
+.login-form-outer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 32px;
+}
 
 .tictiva-logo-bar {
   display: flex; align-items: center; justify-content: center; gap: 18px;
@@ -128,7 +133,7 @@ html, body, #root {
 .dt-card:hover .dt-card-arrow { color: #16c7b0; font-weight: bold; }
 
 /* =========================
-   Dashboard
+   Dashboard (base)
    ========================= */
 .dashboard-bg {
   background: var(--color-bg) !important;
@@ -137,171 +142,6 @@ html, body, #root {
   padding: 0 0 40px 0;
   position: relative; z-index: 1;
 }
-
-.dashboard-header-content { padding-left: 62px; padding-top: 32px; padding-bottom: 10px; max-width: 1400px; }
-@media (max-width: 800px) {
-  .dashboard-header-content { padding-left: 18px; padding-top: 18px; }
-}
-
-.dashboard-greeting { font-size: 2.15rem; font-weight: 800; color: #222; margin: 0 0 5px; }
-.dashboard-motivation { color: #555; font-size: 1.13rem; margin-bottom: 34px; font-weight: 500; }
-
-.dashboard-tip-card {
-  display: flex; align-items: center;
-  background: linear-gradient(90deg, #cfe8fd 0%, #d6edff 100%);
-  border-radius: 24px; padding: 20px 28px;
-  margin: 0 auto 36px; max-width: 1100px; min-width: 310px;
-  box-shadow: var(--shadow-sm);
-  justify-content: flex-start;
-}
-.dashboard-tip-icon { font-size: 2.1rem; margin-right: 18px; margin-top: 2px; }
-.dashboard-tip-title { font-weight: 700; font-size: 1.12rem; color: #297dc1; display: block; margin-bottom: 3px; }
-.dashboard-tip-text { color: #50597b; font-size: 1.02rem; line-height: 1.4; }
-
-.dashboard-modules-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 28px; margin: 0 auto 36px; max-width: 1100px; width: 100%;
-}
-@media (max-width: 1100px) {
-  .dashboard-modules-grid { grid-template-columns: 1fr 1fr; max-width: 700px; gap: 20px; }
-}
-@media (max-width: 700px) {
-  .dashboard-modules-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 20px; max-width: 98vw; padding: 0 4px; }
-}
-
-.dashboard-module-card {
-  background: #fff; border-radius: 20px; box-shadow: 0 2px 16px 0 rgba(52,128,202,0.10);
-  padding: 22px 16px 14px; display: flex; flex-direction: column;
-  transition: box-shadow .23s, transform .17s; cursor: pointer;
-  min-width: 170px; max-width: 320px;
-}
-.dashboard-module-card:hover { box-shadow: 0 8px 36px 0 rgba(52,128,202,0.12); transform: translateY(-3px) scale(1.02); }
-
-.dashboard-module-header {
-  display: flex; align-items: center; font-size: 1.30rem; font-weight: 700; margin-bottom: 6px; gap: 12px;
-}
-
-/* ✅ Gradiente SOLO en el emoji; el título queda negro */
-.dashboard-module-header .dashboard-module-emoji {
-  font-size: 2rem; margin-right: 5px; color: #fff; padding: 3px 9px; border-radius: 10px;
-}
-.dashboard-module-header .dashboard-module-title {
-  font-weight: 800; font-size: 1.14rem; color: #232323 !important;
-}
-
-.dashboard-module-premium {
-  background: #ffe2c6; color: #d97706; font-size: .85rem; font-weight: 700;
-  padding: 3px 13px; border-radius: 14px; margin-left: 12px; letter-spacing: .5px;
-}
-
-.dashboard-module-desc { color: #6b7280; font-size: .97rem; margin-bottom: 13px; font-weight: 500; min-height: 30px; }
-.dashboard-module-links { display: flex; flex-direction: column; gap: 8px; }
-
-/* 🔧 Enlaces de submódulos siempre en negro (también :visited) */
-.dashboard-module-links a,
-.dashboard-module-links a:visited {
-  color: #232323 !important;
-  font-size: 1.01rem;
-  text-decoration: none !important;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  transition: color .2s, background .2s;
-  padding: 7px 0;
-  border-radius: 7px;
-  gap: 8px;
-  line-height: 1.25;
-}
-.dashboard-module-links a:hover { color: #1bb4e8; background: #f4fbfd; }
-.dashboard-module-links a:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* “Deshabilitados” también en negro para consistencia visual */
-.mod-link-disabled {
-  color: #232323 !important;
-  font-weight: 700;
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 0;
-  cursor: default;
-}
-
-/* 🎨 Mapeo de gradientes al emoji según módulo */
-.hr-gradient { background: transparent !important; }
-.hr-gradient .dashboard-module-emoji {
-  background: linear-gradient(90deg, #1bb4e8 0%, #16c7b0 100%);
-}
-
-.asistencia-gradient { background: transparent !important; }
-.asistencia-gradient .dashboard-module-emoji {
-  background: linear-gradient(90deg, #00bfa6 0%, #4dd0e1 100%);
-}
-
-.comunicaciones-gradient { background: transparent !important; }
-.comunicaciones-gradient .dashboard-module-emoji {
-  background: linear-gradient(90deg, #b39ddb 0%, #9575cd 100%);
-}
-
-.tictiva-cuida-gradient { background: transparent !important; }
-.tictiva-cuida-gradient .dashboard-module-emoji {
-  background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
-}
-
-.reportes-gradient { background: transparent !important; }
-.reportes-gradient .dashboard-module-emoji {
-  background: linear-gradient(90deg, #f06292 0%, #ec407a 100%);
-}
-
-/* =========================
-   NAVBAR
-   ========================= */
-.navbar-tictiva {
-  width: 100%; background: #fff; padding: 0 24px; min-height: 64px;
-  display: flex; align-items: center; justify-content: space-between;
-  box-shadow: 0 2px 12px 0 rgba(30,40,90,0.06);
-}
-
-.navbar-left { display: flex; align-items: center; gap: 9px; }
-.tictiva-navbar-logo, .navbar-logo { height: 38px; width: auto; }
-.navbar-title { font-weight: 900; font-size: 1.23rem; color: var(--color-primary); margin-left: 4px; letter-spacing: -1px; }
-
-.navbar-right { display: flex; align-items: center; gap: 18px; }
-.navbar-bell { font-size: 1.4rem; cursor: pointer; }
-
-.navbar-user {
-  display: flex; align-items: center; background: #f1f7fe;
-  border-radius: 22px; padding: 3px 12px 3px 7px; cursor: pointer; position: relative; gap: 6px; font-size: 1.01rem;
-}
-.navbar-avatar {
-  background: var(--color-primary); color: #fff; border-radius: 50%;
-  width: 29px; height: 29px; display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 1.04rem; margin-right: 3px;
-}
-.navbar-chevron { font-size: 1.01rem; margin-left: 1px; }
-
-.navbar-menu {
-  position: absolute; top: 37px; right: 0; background: #fff;
-  border-radius: 11px; box-shadow: 0 8px 28px 0 rgba(50,80,100,0.13);
-  padding: 7px 0; min-width: 130px; z-index: 100;
-}
-.navbar-menu-item { padding: 7px 18px; cursor: pointer; color: #232323; font-size: .98rem; transition: background .13s; }
-.navbar-menu-item:hover { background: #f4f6fa; }
-
-/* Dropdown empresa */
-.navbar-empresa-dropdown { position: relative; display: inline-block; margin-right: 18px; }
-.navbar-empresa-btn {
-  background: #eef3fb; border: none; border-radius: 18px; padding: 6px 18px;
-  font-size: 1.04rem; font-weight: 700; cursor: pointer; color: #2c374b; transition: background .15s;
-}
-.navbar-empresa-btn:hover { background: #dde8f6; }
-.navbar-empresa-menu {
-  position: absolute; top: 38px; left: 0; background: #fff; border-radius: 11px;
-  box-shadow: 0 8px 28px 0 rgba(50,80,100,0.13); padding: 9px 0; min-width: 140px; z-index: 200;
-}
-.navbar-empresa-item { padding: 9px 22px; cursor: pointer; color: #2c374b; font-size: 1.04rem; transition: background .13s; }
-.navbar-empresa-item.selected { font-weight: 900; background: #eef3fb; }
-.navbar-empresa-item:hover { background: #e2eefc; }
 
 /* =========================
    Form inputs base
@@ -319,22 +159,11 @@ input::placeholder, textarea::placeholder { color: #8c8c8c !important; }
 .categoria-card { color: #1a1a1a !important; font-weight: 500; }
 .categoria-card:hover { background: #f5f5f5; }
 
-/* Navbar (otra variante sticky básica si la usas) */
-.navbar {
-  position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; gap: 12px;
-  height: 56px; padding: 0 20px;
-  background: #fff; border-bottom: 1px solid #e5e7eb;
-}
-.navbar-brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none !important; color: #0f172a; font-weight: 800; font-size: 19px; }
-.navbar-brand:hover { opacity: .9; }
-.navbar-logo { height: 20px; width: 20px; }
-.navbar-brand-text { letter-spacing: .2px; }
-.navbar-env { border: 1px solid #e5e7eb; background: #f3f4f6; padding: 6px 12px; border-radius: 999px; font-weight: 600; color: #374151; cursor: pointer; }
-.navbar-env:hover { background: #eef2f7; }
-.navbar-spacer { flex: 1; }
-.navbar-right { display: inline-flex; align-items: center; gap: 10px; }
-.navbar-user { color: #374151; }
-.navbar-btn-logout { border: 1px solid #e5e7eb; background: #fff; color: #111827; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-.navbar-btn-logout:hover { background: #f9fafb; }
-.ed-card, .asistencia-tabla { overflow: visible !important; }
+/* =========================
+   Limpieza de estilos antiguos
+   ========================= */
+/* Eliminado: navbar viejo (.navbar-tictiva, .navbar-empresa-*, .navbar-right, .navbar-user, etc.)
+   Eliminado: variante .navbar* sticky
+   Eliminado: dashboard antiguo (.dashboard-header-content, .dashboard-greeting, .dashboard-modules-grid,
+              .dashboard-module-card, .dashboard-module-emoji, gradientes por módulo, etc.)
+   El layout actual del dashboard vive en src/components/Dashboard.css */
