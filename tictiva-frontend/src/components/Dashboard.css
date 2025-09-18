@@ -206,4 +206,55 @@
 /* Si no, como hoy es la última, la ocultamos así (quitar cuando haya clase propia): */
 .grid > .card:last-child{
   display:none !important;
+}/* === PARCHE RÁPIDO: 3 columnas reales y cards más bajas === */
+
+/* 1) Ajustes de proporción/altura de la card */
+:root{
+  /* más ancho que alto → baja la altura */
+  --card-ratio: 1.65;     /* prueba 1.55–1.8 si las quieres aún más bajas */
+  --card-min-h: 150px;    /* 140–160 recomendado */
 }
+
+.card{
+  aspect-ratio: var(--card-ratio);
+  min-height: var(--card-min-h);
+  padding: 12px 18px 10px;
+}
+
+/* 2) Fuerza 3 columnas en desktop (aplico a .grid y a la clase vieja por si acaso) */
+.grid,
+.dashboard-modules-grid{
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(280px, 1fr)) !important;
+  gap: 16px !important;
+  /* si ya tenías el lift del hero, lo conservamos */
+}
+
+/* tablet */
+@media (max-width: 1100px){
+  .grid,
+  .dashboard-modules-grid{
+    grid-template-columns: repeat(2, minmax(260px, 1fr)) !important;
+  }
+}
+
+/* móvil */
+@media (max-width: 760px){
+  .grid,
+  .dashboard-modules-grid{
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* 3) Compactar un poco el contenido interno para que “entre” con la nueva altura */
+.card__head{ margin-bottom: 2px; }
+.card__icon{ width: 32px; height: 32px; }
+.card__title{ font-size: 15px; }
+.card__desc{ font-size: 12.5px; }
+.card__list{ gap: 6px; margin-top: 2px; }
+.card__pill{ padding: 6px 10px; font-size: 12.5px; }
+.card__open{ font-size: 12.5px; padding: 0 2px; }
+
