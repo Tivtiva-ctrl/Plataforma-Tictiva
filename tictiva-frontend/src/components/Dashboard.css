@@ -7,6 +7,10 @@
   --shadow:0 12px 30px rgba(2,8,23,.08);
   --hero-radius:22px;
   --page-bg:#F6F8FB;
+
+  /* Proporción y altura para cards más “cuadradas” */
+  --card-ratio: 1.08;     /* 1 = cuadrado exacto; 1.05–1.12 queda bien */
+  --card-min-h: 180px;     /* ajusta 170–190 según te guste */
 }
 
 /* ===== Layout base ===== */
@@ -16,59 +20,54 @@
   color:var(--ink-700);
 }
 
-/* ===== HERO (fondo con hojas, sin ondas) ===== */
+/* ===== HERO (sin ondas; hojas suaves + fade) ===== */
 .hero{
   position:relative;
-  z-index:1;                                   /* el hero queda por DEBAJO de las cards */
+  z-index:1;                                   /* hero debajo de las cards */
   border:1px solid var(--border);
   border-radius:var(--hero-radius);
   overflow:hidden;
-
-  /* degradado base del hero */
   background: linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
+  padding: 8px 18px 260px;                     /* que abrace la primera fila */
 
-  /* altura suficiente para que “abrace” las cards */
-  padding: 8px 18px 260px;
-
-  /* 👇 fade real abajo: mezcla de inset shadow + máscara (fallback + moderno) */
+  /* fade inferior */
   box-shadow:
     var(--shadow),
-    inset 0 -220px 160px -80px var(--page-bg);        /* fallback visible en todos */
+    inset 0 -220px 160px -80px var(--page-bg);
   -webkit-mask-image: linear-gradient(#000, #000 65%, rgba(0,0,0,0));
           mask-image: linear-gradient(#000, #000 65%, rgba(0,0,0,0));
-
-  /* hojas (usa tus PNG en /public) */
 }
+
+/* Hojas (coloca tus PNG en /public/leaves-left.png y /public/leaves-right.png) */
 .hero::before,
 .hero::after{
   content:"";
   position:absolute;
   pointer-events:none;
-  opacity:.25;                                   /* suavidad como la maqueta */
+  opacity:.25;
   filter: blur(0.2px);
   background-repeat:no-repeat;
   background-size:contain;
 }
-.hero::before{                                   /* hoja izquierda-inferior */
+.hero::before{
   left:-80px; bottom:-70px;
   width:720px; height:520px;
   background-image:url("/leaves-left.png");
 }
-.hero::after{                                    /* hoja derecha-superior */
+.hero::after{
   right:-80px; top:-50px;
   width:760px; height:540px;
   background-image:url("/leaves-right.png");
 }
 
-/* centro el contenido interno */
+/* Contenido del hero */
 .hero > .hero__rail,
 .hero > .hero__content{ max-width:1120px; margin:0 auto; }
 
-/* Barra superior dentro del hero */
 .hero__rail{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:12px 4px;
-  border-bottom:1px solid #E3ECFA;               /* línea divisoria, como en mock */
+  border-bottom:1px solid #E3ECFA;
   background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0));
   border-top-left-radius: calc(var(--hero-radius) - 1px);
   border-top-right-radius: calc(var(--hero-radius) - 1px);
@@ -78,7 +77,6 @@
 .hero__logo::after{ content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
 .hero__brandText{ font-weight:800; color:#0B1A38; letter-spacing:.2px; }
 
-/* Buscador + avatar */
 .hero__tools{ position:relative; display:flex; align-items:center; gap:10px; }
 .hero__search{
   display:flex; align-items:center; gap:8px;
@@ -100,7 +98,6 @@
 .hero__menuItem:hover{ background:#F6FAFF; }
 .hero__menuItem--danger{ color:#b91c1c; }
 
-/* Texto hero */
 .hero__content{ padding:10px 4px 0; }
 .hero__title{ margin:14px 0 0; font-size:32px; font-weight:800; color:#0B1A38; letter-spacing:-.2px; }
 .hero__subtitle{ margin:4px 0 14px; color:var(--ink-500); font-size:15px; }
@@ -109,8 +106,7 @@
 
 /* ===== Tip VictorIA ===== */
 .tip{
-  max-width:1120px;
-  margin:12px auto 16px;
+  max-width:1120px; margin:12px auto 16px;
   display:flex; align-items:flex-start; gap:10px;
   background:#F1F6FF; border:1px solid #E0EAFF;
   padding:12px 14px; border-radius:14px; box-shadow: var(--shadow); color:#0B1A38;
@@ -119,55 +115,57 @@
 .tip__text{ font-size:14px; }
 .linkBtn{ border:none; background:none; color:#2563EB; font-weight:700; cursor:pointer; }
 
-/* ===== GRID de módulos (compacto y por ENCIMA del hero) ===== */
+/* ===== GRID de módulos (3 arriba / 2 abajo) ===== */
 .grid{
   position:relative;
-  z-index:10;                                 /* las cards pasan por ENCIMA del hero */
-  margin-top:-200px;                          /* se “meten” bien dentro del hero */
-
+  z-index:10;                                  /* cards por encima del hero */
+  margin-top:-200px;                           /* se “meten” dentro del hero */
   max-width:1120px; margin-left:auto; margin-right:auto;
 
   display:grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-  gap:14px;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  gap:16px;
 }
 @media (max-width:1100px){ .grid{ grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:-170px; } }
 @media (max-width:760px){ .grid{ grid-template-columns:1fr; margin-top:-140px; } }
 
-/* ===== Card de módulo ===== */
+/* ===== Card de módulo (cuadradas/compactas) ===== */
 .card{
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:16px;
+  border-radius:14px;
   box-shadow: var(--shadow);
-  padding:10px 10px 8px;                     /* compacto como maqueta */
-  display:flex; flex-direction:column; gap:8px;
-}
-.card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; }
-.card__icon{
-  width:36px; height:36px; border-radius:10px;
-  background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent;
-}
-.card__title{ margin:0; font-size:15px; font-weight:800; color:#0B1A38; }
-.card__desc{ margin:2px 0 0; color:var(--ink-500); font-size:12px; }
 
-.card__list{ list-style:none; margin:6px 0 0; padding:0; display:grid; gap:6px; }
+  display:grid;
+  grid-template-rows:auto 1fr auto;   /* header / contenido / footer */
+  aspect-ratio: var(--card-ratio);    /* forma “cuadrada” */
+  min-height: var(--card-min-h);
+  padding:14px 20px 12px;
+  gap:8px;
+}
+.card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; margin-bottom:4px; }
+.card__icon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
+.card__title{ margin:0; font-size:15px; font-weight:800; color:#0B1A38; }
+.card__desc{ margin:2px 0 0; color:var(--ink-500); font-size:12.5px; }
+
+.card__list{ list-style:none; margin:4px 0 0; padding:0; display:grid; gap:6px; }
 .card__pill{
-  width:100%; text-align:left; padding:7px 9px; border-radius:10px;
-  border:1px dashed #E2E8F0; background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:12px;
+  width:100%; text-align:left; padding:7px 10px;
+  border-radius:10px; border:1px dashed #E2E8F0;
+  background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:12.5px;
 }
 .card__pill:hover{ background:#fff; border-style:solid; }
 .card__bullet{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; background:#94A3B8; vertical-align:middle; }
 
 .card__foot{ display:flex; justify-content:flex-end; }
-.card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:12px; }
+.card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:12.5px; padding:0 2px; }
 
 /* ===== Drawer lateral (submódulos) ===== */
 .drawer__backdrop{
   position:fixed; inset:0;
   background:rgba(2,8,23,.28);
   backdrop-filter: blur(2px);
-  z-index: 2000;                              /* por encima de todo */
+  z-index: 2000;
 }
 .drawer{
   position:fixed; top:0; right:0; height:100%; width:min(420px, 92vw);
@@ -199,34 +197,13 @@
 .drawer__text{ color:#0B1A38; font-weight:600; }
 .drawer__chev{ color:#64748B; font-size:18px; }
 
-/* ===== Ajuste de tamaño: cards más rectangulares/“alargadas” ===== */
-/* (no cambia layout ni lógica, solo proporción visual) */
-
-:root{
-  /* altura mínima más baja para que se vean más anchas que altas */
-  --card-min-h: 128px;        /* prueba 120–140 según te guste */
+/* ===== Ocultar “Instalaciones” (mientras tanto) ===== */
+/* Si esa card ya tiene clase o data-attr, usa uno de estos: */
+.card--instalaciones,
+[data-card="instalaciones"]{
+  display:none !important;
 }
-
-/* un pelín más de aire horizontal y menos vertical */
-.card{
-  min-height: var(--card-min-h);
-  padding: 12px 18px 10px;    /* +x, -y para dar rectángulo */
-  border-radius: 14px;
+/* Si no, como hoy es la última, la ocultamos así (quitar cuando haya clase propia): */
+.grid > .card:last-child{
+  display:none !important;
 }
-
-/* compactamos cabecera y lista para bajar la altura total */
-.card__head{ margin-bottom: 4px; }
-.card__icon{ width: 34px; height: 34px; border-radius: 10px; }
-.card__title{ font-size: 15px; }
-.card__desc{ font-size: 12.5px; }
-
-.card__list{ gap: 6px; margin-top: 4px; }
-.card__pill{
-  padding: 7px 10px;          /* menos alto en cada item */
-  border-radius: 10px;
-  font-size: 12.5px;
-}
-
-/* botón de pie más discreto (menos alto) */
-.card__open{ font-size: 12.5px; padding: 0 2px; }
-
