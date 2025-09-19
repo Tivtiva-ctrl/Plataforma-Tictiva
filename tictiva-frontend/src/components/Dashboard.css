@@ -26,13 +26,11 @@
           mask-image: linear-gradient(#000,#000 65%,transparent);
 }
 
-/* SIN imagen por defecto (evita 404). 
-   Si luego agregas /public/hero-ornament.png, 
-   añade la clase .use-ornament al <section class="hero"> */
+/* Sin imagen por defecto (evita 404).
+   Si luego agregas /public/hero-ornament.png, añade .use-ornament al <section class="hero"> */
 .hero::before{ content:""; display:none; }
 .hero.use-ornament::before{
-  display:block;
-  position:absolute; inset:0; pointer-events:none; opacity:.21;
+  display:block; position:absolute; inset:0; pointer-events:none; opacity:.21;
   background-image:url("/hero-ornament.png");
   background-repeat:no-repeat;
   background-position: right -100px top -20px, left -120px bottom -60px;
@@ -93,7 +91,7 @@
 }
 .tip__cta:hover{ background:#F8FBFF; }
 
-/* ===== GRID (3 arriba / 2 abajo fijo en desktop) ===== */
+/* ===== GRID (3 arriba / 2 abajo) ===== */
 .grid{
   position:relative; z-index:10;
   margin-top:-200px;
@@ -102,46 +100,74 @@
   grid-template-columns: repeat(3, minmax(320px,1fr)) !important; /* fuerza 3 cols */
   gap:16px;
 }
-
-/* 2 cols en pantallas medianas, 1 col en móviles */
 @media (max-width:980px){ .grid{ grid-template-columns:repeat(2, minmax(280px,1fr)) !important; margin-top:-170px; } }
 @media (max-width:680px){ .grid{ grid-template-columns:1fr !important; margin-top:-140px; } }
 
-/* ===== CARD más cuadrada y tipografía mayor ===== */
+/* ===== CARD (tamaños ya como la maqueta) ===== */
 .card{
   position:relative; background:var(--card); border:1px solid var(--border);
   border-radius:14px; box-shadow:var(--shadow);
   display:grid; grid-template-rows:auto 1fr auto;
-
-  /* Más “cuadrada” como la maqueta */
-  aspect-ratio: 1 / 1.05;
+  aspect-ratio: 1 / 1.05;            /* más “cuadrada” */
   min-height: 230px;
-
   padding:14px 16px 12px; gap:8px;
 }
 .card::before{
   content:""; position:absolute; left:12px; right:12px; top:0; height:6px;
   border-radius:8px; background:var(--accent, #2563EB);
 }
-.card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; margin-top:8px; }
+.card__head{
+  display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center;
+  cursor:pointer; margin-top:8px;
+}
 .card__icon{ width:34px; height:34px; border-radius:8px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
-
-/* ↑ títulos más grandes como la maqueta */
 .card__title{ margin:0; font-size:17px; font-weight:800; color:#0B1A38; line-height:1.15; }
 .card__desc{
   margin:4px 0 0; color:var(--ink-500); font-size:14px;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 
-.card__list{ list-style:none; margin:4px 0 0; padding:0; display:grid; gap:8px; }
-.card__pill{
-  width:100%; text-align:left; padding:8px 12px;
-  border-radius:10px; border:1px dashed #E2E8F0; background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:14px;
+/* ====== INTERIOR DE LAS CARDS (como la maqueta) ====== */
+/* 1) La lista va en DOS columnas en desktop */
+.card__list{
+  list-style:none; margin:8px 0 0; padding:0;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px 22px;                 /* fila x columna */
+  align-content:start;
 }
-.card__pill:hover{ background:#fff; border-style:solid; }
-.card__bullet{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; background:#94A3B8; vertical-align:middle; }
-.card__foot{ display:flex; justify-content:flex-end; margin-top:6px; }
-.card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:14px; padding:0; }
+@media (max-width:980px){
+  .card__list{ grid-template-columns: 1fr; } /* 1 col en pantallas medianas/móviles */
+}
+
+/* 2) Cada ítem es un link de texto (sin “píldora”) */
+.card__pill{
+  all: unset;                    /* resetea el <button> */
+  cursor: pointer;
+  font-size:14px;
+  color:#0B1A38;
+  line-height:1.25;
+  display:flex; align-items:center;
+  gap:10px;
+  padding:2px 0;                 /* sin fondo ni borde */
+}
+.card__pill:hover{ color:#2563EB; }
+
+/* 3) Bullet discreto (círculo con aro suave) */
+.card__bullet{
+  width:10px; height:10px; border-radius:999px; flex:0 0 10px;
+  background:#8FB6FF;                 /* punto */
+  box-shadow: 0 0 0 4px #EAF2FF;      /* aro */
+}
+
+/* 4) “Abrir módulo →” a la IZQUIERDA */
+.card__foot{
+  display:flex; justify-content:flex-start; align-items:center;
+  margin-top:12px;
+}
+.card__open{
+  border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:14px; padding:0;
+}
 
 /* ===== Drawer lateral ===== */
 .drawer__backdrop{ position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter:blur(2px); z-index:2000; }
