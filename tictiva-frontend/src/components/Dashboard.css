@@ -154,3 +154,79 @@
 .drawer__dot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
 .drawer__text{ color:#0B1A38; font-weight:600; }
 .drawer__chev{ color:#64748B; font-size:18px; }
+
+/* === Ajuste de tamaño y densidad de CARDS (match maqueta) === */
+
+/* 3 cols, separación un poco menor */
+.grid{
+  grid-template-columns: repeat(3, minmax(280px,1fr));
+  gap: 14px;
+}
+
+/* Cards más compactas: altura controlada y padding menor */
+.card{
+  /* Altura fija pero responsiva: ajusta el primer/último valor si quieres
+     aún más baja o más alta */
+  height: clamp(210px, 25vw, 252px);
+  padding: 12px 16px 10px;
+  border-radius: 14px;
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* header / contenido / footer */
+}
+
+/* Header más ceñido */
+.card__head{
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.card__icon{
+  width: 30px; height: 30px; border-radius: 8px;
+}
+.card__title{
+  font-size: 15px; line-height: 1.1;
+}
+.card__desc{
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: #64748B;
+
+  /* Evita que el texto alargue la card */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Lista compacta */
+.card__list{
+  margin-top: 2px;
+  gap: 6px;
+}
+.card__pill{
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+/* Footer pegado al borde inferior */
+.card__foot{
+  margin-top: 4px;
+}
+.card__open{
+  font-size: 12.5px;
+  padding: 0;
+}
+
+/* Línea de color superior (si la estás usando) que no “engorde” la card */
+.card::before{
+  content:"";
+  position:absolute;
+  left:0; right:0; top:-2px;
+  height:3px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+/* (Opcional) Si alguna card aún se estira por contenido, limita a 3 items visibles */
+.card__list li:nth-child(n+4){ display:none; }
+
