@@ -417,3 +417,58 @@ body {
 .drawer__dot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
 .drawer__text{ color:#0B1A38; font-weight:600; }
 .drawer__chev{ color:#64748B; font-size:18px; }
+
+/* === PATCH — interior de las cards como la maqueta (no toca layout/colores) === */
+.card{ overflow: hidden; }
+
+/* 2 columnas firmes dentro de cada card */
+.card__list{
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  column-gap: 22px;
+  row-gap: 10px;
+  align-content: start;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* En pantallas medianas/pequeñas, 1 columna */
+@media (max-width: 1024px){
+  .card__list{ grid-template-columns: 1fr; }
+}
+
+/* Ítem de lista sin “pill”: icono + texto, sin desbordes */
+.card__list li{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;               /* permite truncar */
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+/* Normaliza tamaño de iconos/SVG dentro de la lista */
+.card__list li svg,
+.card__list li .icon{
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  stroke: #334155;
+  opacity: .95;
+}
+
+/* El texto ocupa el resto y no se sale */
+.card__list li > span,
+.card__list li > a,
+.card__list li > div{
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* “Abrir módulo →” alineado a la izquierda como en la maqueta */
+.card__foot{
+  justify-content: flex-start;
+  margin-top: 12px;
+}
