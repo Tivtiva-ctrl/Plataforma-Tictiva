@@ -247,33 +247,38 @@ body {
 }
 
 
-/* ===== GRID DE MÓDULOS ===== */
+/* ===== GRID DE MÓDULOS (ESTRATEGIA FLEXBOX) ===== */
 .grid {
   max-width: 1400px;
   margin: 0 auto 2rem auto;
   padding: 0 2rem;
-  display: grid;
-  /* --- CAMBIO CLAVE: Forzamos 3 columnas de igual tamaño --- */
-  grid-template-columns: repeat(3, 1fr);
+  /* --- CAMBIO DE ESTRATEGIA: De Grid a Flexbox --- */
+  display: flex;
+  flex-wrap: wrap; /* Permite que los elementos pasen a la siguiente línea */
   gap: 1.5rem;
+  /* Opcional: si quieres que las 2 de abajo se centren */
+  justify-content: flex-start; /* Alinea las tarjetas a la izquierda por defecto */
 }
 
-/* --- Media Queries para responsividad (asegúrate de que estén así) --- */
+/* --- CAMBIO CLAVE: Damos un tamaño específico a cada tarjeta --- */
+/* Le decimos a cada tarjeta que ocupe un tercio del espacio, menos el espacio del 'gap' */
+.grid > .card {
+  width: calc(33.333% - 1rem); /* Fórmula: (100% / 3) - (gap * 2/3) */
+  flex-grow: 1; /* Permite que las tarjetas crezcan un poco para ocupar espacio sobrante */
+}
+
+/* --- Media Queries para responsividad con Flexbox --- */
+/* En pantallas medianas, queremos 2 columnas */
 @media (max-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
+  .grid > .card {
+    width: calc(50% - 0.75rem); /* Fórmula: (100% / 2) - (gap / 2) */
   }
 }
-@media (max-width: 680px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-  
 
+/* En pantallas pequeñas, queremos 1 columna */
 @media (max-width: 680px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .grid > .card {
+    width: 100%; /* Ocupa todo el ancho */
   }
 }
 
