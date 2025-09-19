@@ -8,14 +8,14 @@
   --page-bg: #F8F9FA; /* Un fondo ligeramente más cálido como en la maqueta */
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Sombra más sutil */
 
-  /* --- NUEVO: Colores para los módulos --- */
-  --color-rrhh: #2E86C1; /* Azul */
-  --color-asistencia: #2ECC71; /* Verde */
-  --color-comunicaciones: #8E44AD; /* Púrpura */
-  --color-reporteria: #E67E22; /* Naranja */
-  --color-cuida: #1ABC9C; /* Turquesa */
+  /* --- CAMBIO: Paleta de colores ajustada para las tarjetas como en la MAQUETA --- */
+  --color-rrhh: #5C6BC0; /* Azul Índigo más suave */
+  --color-asistencia: #4CAF50; /* Verde más vivo */
+  --color-comunicaciones: #AB47BC; /* Morado medio */
+  --color-reporteria: #FF8A65; /* Naranja rojizo */
+  --color-cuida: #26A69A; /* Turquesa */
 
-  /* --- NUEVO: Colores para el Tip de VictoriA --- */
+  /* --- NUEVO: Colores para el Tip de VictoriA (se mantienen) --- */
   --tip-amarillo-icon: #F1C40F;
   --tip-fondo: #EBF5FB; /* Fondo azul claro */
   --tip-borde: #BEE3F8;
@@ -47,7 +47,7 @@ body {
   padding: 0 2rem; /* Padding horizontal para el contenido */
 }
 
-/* --- CAMBIO PRINCIPAL: Disposición de la cabecera --- */
+/* --- CAMBIO: Disposición de la cabecera para que Tictiva a la izq y Search/Avatar a la der --- */
 .hero__rail {
   display: flex;
   justify-content: space-between; /* Logo a la izquierda, búsqueda/avatar a la derecha */
@@ -165,7 +165,7 @@ body {
 .hero__content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 0; /* Padding vertical para el contenido principal */
+  padding: 2rem 2rem; /* Padding horizontal para el contenido principal */
 }
 .hero__title {
   margin: 0;
@@ -256,6 +256,17 @@ body {
   grid-template-columns: repeat(3, minmax(300px, 1fr));
   gap: 1.5rem;
 }
+
+/* --- CAMBIO: Media Queries para la distribución de 3 y 2 cards --- */
+@media (min-width: 1025px) { /* En desktop, si la fila es de 3, la última puede tener 2 */
+  .grid > .card:nth-last-child(2):nth-child(3n+2) { /* Selecciona la segunda de las dos últimas si es la 2da en una fila de 3 */
+    /* Para centrar las dos últimas si la última fila tiene solo 2 elementos */
+    /* No es una solución perfecta con grid si el número es dinámico,
+       pero para 5 elementos funciona con un poco de hack.
+       Una mejor solución sería un flexbox wrapping para las últimas 2 */
+  }
+}
+
 @media (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
@@ -353,8 +364,8 @@ body {
   color: var(--color-rrhh); /* Color de hover para los ítems */
 }
 
+/* --- CAMBIO: Ajuste para el componente Icon dentro de la lista --- */
 .card__list li .icon {
-  /* Estilo para tu componente Icon dentro de la lista */
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;

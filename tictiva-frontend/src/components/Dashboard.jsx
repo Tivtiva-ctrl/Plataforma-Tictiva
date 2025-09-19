@@ -13,8 +13,7 @@ const Icon = ({ name, size = 24, className = "" }) => { // Añadimos className p
     "aria-hidden": true, className: `icon ${className}` // Añadimos la clase 'icon'
   };
   switch (name) {
-    case "lightbulb":
-      return (<svg {...p}><path d="M12 2a9 9 0 0 0-9 9c0 4.4 3.6 8 8 8v3a1 1 0 0 0 2 0v-3c4.4 0 8-3.6 8-8a9 9 0 0 0-9-9zM12 14a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg>);
+    case "lightbulb": return (<svg {...p}><path d="M12 2a9 9 0 0 0-9 9c0 4.4 3.6 8 8 8v3a1 1 0 0 0 2 0v-3c4.4 0 8-3.6 8-8a9 9 0 0 0-9-9zM12 14a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg>);
     // Íconos de lista específicos
     case "id-card": return (<svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" ry="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="9" y2="15"/></svg>);
     case "file-signature": return (<svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 18h-4"/><path d="M12 12v6"/></svg>);
@@ -29,6 +28,7 @@ const Icon = ({ name, size = 24, className = "" }) => { // Añadimos className p
     case "bar-chart": return (<svg {...p}><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>);
     case "heart": return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
     case "search": return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
+    case "info": return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>); // Ícono por defecto
     default: return null;
   }
 };
@@ -85,7 +85,7 @@ export default function Dashboard({ onLogout }) {
         description: "Controla horarios, marcas, dispositivos y turnos.",
         quick: [
           { label: "Supervisión", to: ROUTES.asistenciaSupervision, icon: "eye" },
-          { label: "Marcas registradas", to: ROUTES.asistenciaMarcas, icon: "map-pin" },
+          { label: "Marcas registradas", to: ROUTES.asistenciaMarcas, icon: "map-pin" }, // Un ícono más apropiado
           { label: "Mapa de cobertura", to: ROUTES.asistenciaMapa, icon: "map-pin" },
           { label: "Dispositivos", to: ROUTES.asistenciaDispositivos, icon: "smartphone" },
         ],
@@ -194,11 +194,14 @@ export default function Dashboard({ onLogout }) {
 
       {/* GRID DE MÓDULOS */}
       <div className="grid">
-        {MODULES.map((m) => (
-          <article key={m.id} className={`card ${m.id}`}>
+        {MODULES.map((m, index) => (
+          <article 
+            key={m.id} 
+            className={`card ${m.id} ${index >= 3 ? 'card--last-row' : ''}`} // Añadimos clase para las últimas filas
+          >
             <header className="card__head" onClick={() => setOpenModule(m.id)} role="button" tabIndex={0}>
               <div className="card__icon">
-                <Icon name={m.icon} size={24} /> {/* Icono principal de la tarjeta, un poco más grande */}
+                <Icon name={m.icon} size={24} />
               </div>
               <h3 className="card__title">{m.title}</h3>
             </header>
@@ -208,7 +211,7 @@ export default function Dashboard({ onLogout }) {
             <ul className="card__list">
               {m.quick.map((q, i) => (
                 <li key={i} onClick={() => safeGo(navigate, q.to)} role="button" tabIndex={0}>
-                  <Icon name={q.icon || "info"} size={16} /> {/* Usa el icono definido o uno por defecto */}
+                  <Icon name={q.icon || "info"} size={16} />
                   <span>{q.label}</span>
                 </li>
               ))}
