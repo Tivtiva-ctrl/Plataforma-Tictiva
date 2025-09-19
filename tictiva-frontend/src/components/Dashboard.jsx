@@ -5,35 +5,31 @@ import "./Dashboard.css";
 import { ROUTES } from "../routes";
 
 /* ===== Iconos SVG (outline, sin emojis) ===== */
-const Icon = ({ name, size = 24 }) => {
+const Icon = ({ name, size = 24, className = "" }) => { // Añadimos className para poder estilarlo
   const p = {
     width: size, height: size, viewBox: "0 0 24 24",
     fill: "none", stroke: "currentColor", strokeWidth: "2",
-    strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true
+    strokeLinecap: "round", strokeLinejoin: "round",
+    "aria-hidden": true, className: `icon ${className}` // Añadimos la clase 'icon'
   };
   switch (name) {
-    // --- NUEVO: Íconos para el Tip y la lista interna de las tarjetas ---
     case "lightbulb":
       return (<svg {...p}><path d="M12 2a9 9 0 0 0-9 9c0 4.4 3.6 8 8 8v3a1 1 0 0 0 2 0v-3c4.4 0 8-3.6 8-8a9 9 0 0 0-9-9zM12 14a3 3 0 0 1-3-3h6a3 3 0 0 1-3 3z"/></svg>);
-    case "id-card":
-      return (<svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" ry="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="9" y2="15"/></svg>);
-    case "file-signature":
-      return (<svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 18h-4"/><path d="M12 12v6"/></svg>);
-    // Tus íconos existentes...
-    case "users":
-      return (<svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
-    case "clock":
-      return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>);
-    case "chat":
-      return (<svg {...p}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 19v2l3-2"/></svg>);
-    case "chart":
-      return (<svg {...p}><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5" rx="1"/><rect x="12" y="9" width="3" height="9" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>);
-    case "heart":
-      return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
-    case "search":
-      return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
-    default:
-      return null;
+    // Íconos de lista específicos
+    case "id-card": return (<svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" ry="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="9" y2="15"/></svg>);
+    case "file-signature": return (<svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 18h-4"/><path d="M12 12v6"/></svg>);
+    case "users": return (<svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
+    case "clock": return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>);
+    case "eye": return (<svg {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>);
+    case "map-pin": return (<svg {...p}><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>);
+    case "smartphone": return (<svg {...p}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>);
+    case "mail": return (<svg {...p}><rect x="2" y="5" width="20" height="14" rx="2" ry="2"/><path d="M22 7L12 13 2 7"/></svg>);
+    case "file-text": return (<svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>);
+    case "pie-chart": return (<svg {...p}><path d="M12 20v-8h8"/><path d="M12 20a8 8 0 1 0-8-8c0 .7.1 1.4.2 2"/><path d="M12 20c-4.4 0-8-3.6-8-8a8 8 0 0 1 8-8"/></svg>);
+    case "bar-chart": return (<svg {...p}><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>);
+    case "heart": return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
+    case "search": return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
+    default: return null;
   }
 };
 
@@ -60,17 +56,15 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  /* ====== Data: 5 módulos como la maqueta ====== */
+  /* ====== Data: 5 módulos como la maqueta (3 arriba, 2 abajo) ====== */
   const MODULES = useMemo(
     () => [
       {
         id: "rrhh",
-        // color ya no se usa para estilos, se maneja por la clase `id`
         title: "RRHH",
         icon: "users",
         description: "Gestiona fichas, contratos, permisos y documentación legal.",
         quick: [
-          // --- NUEVO: propiedad 'icon' para la lista ---
           { label: "Fichas", to: ROUTES.listadoFichas, icon: "id-card" },
           { label: "Permisos", to: ROUTES.rrhhPermisos, icon: "file-signature" },
           { label: "Turnos", to: ROUTES.asistenciaTurnos, icon: "clock" },
@@ -84,20 +78,24 @@ export default function Dashboard({ onLogout }) {
           { label: "Bodega y EPP", to: "/rrhh/bodega/dashboard" },
         ],
       },
-      // (Se omitió el resto de módulos por brevedad, pero la estructura es la misma)
-      // ... aplica la propiedad 'icon' al resto de tus módulos en la lista 'quick'
       {
         id: "asistencia",
         title: "Asistencia",
         icon: "clock",
         description: "Controla horarios, marcas, dispositivos y turnos.",
         quick: [
-          { label: "Supervisión", to: ROUTES.asistenciaSupervision, icon: "users" },
-          { label: "Marcas registradas", to: ROUTES.asistenciaMarcas, icon: "users" },
-          { label: "Mapa de cobertura", to: ROUTES.asistenciaMapa, icon: "users" },
-          { label: "Dispositivos", to: ROUTES.asistenciaDispositivos, icon: "users" },
+          { label: "Supervisión", to: ROUTES.asistenciaSupervision, icon: "eye" },
+          { label: "Marcas registradas", to: ROUTES.asistenciaMarcas, icon: "map-pin" },
+          { label: "Mapa de cobertura", to: ROUTES.asistenciaMapa, icon: "map-pin" },
+          { label: "Dispositivos", to: ROUTES.asistenciaDispositivos, icon: "smartphone" },
         ],
-        all: [ /* ... */ ],
+        all: [
+          { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
+          { label: "Marcas Registradas", to: ROUTES.asistenciaMarcas },
+          { label: "Mapa de Cobertura", to: ROUTES.asistenciaMapa },
+          { label: "Gestión de Dispositivos", to: ROUTES.asistenciaDispositivos },
+          { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos },
+        ],
       },
       {
         id: "comunicaciones",
@@ -105,19 +103,27 @@ export default function Dashboard({ onLogout }) {
         icon: "chat",
         description: "Envía mensajes, encuestas y comunicados a tu equipo.",
         quick: [
-          { label: "Mensajes", to: null, icon: "chat" },
-          { label: "Plantillas", to: null, icon: "chat" },
-          { label: "Encuestas de clima", to: null, icon: "chat" },
+          { label: "Mensajes", to: null, icon: "mail" },
+          { label: "Plantillas", to: null, icon: "file-text" },
+          { label: "Encuestas de clima", to: null, icon: "pie-chart" },
         ],
-        all: [ /* ... */ ],
+        all: [
+          { label: "Enviar mensaje", to: null },
+          { label: "Plantillas", to: null },
+          { label: "Encuestas", to: null },
+        ],
       },
       {
         id: "reporteria",
         title: "Reportería",
         icon: "chart",
         description: "Genera informes, dashboards y comparte resultados.",
-        quick: [{ label: "Dashboards y descargas", to: null, icon: "chart" }],
-        all: [ /* ... */ ],
+        quick: [{ label: "Dashboards y descargas", to: null, icon: "bar-chart" }],
+        all: [
+          { label: "Informes Gerenciales", to: null },
+          { label: "Dashboards", to: null },
+          { label: "Documentos", to: ROUTES.rrhhDocumentos },
+        ],
       },
       {
         id: "cuida",
@@ -125,7 +131,11 @@ export default function Dashboard({ onLogout }) {
         icon: "heart",
         description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
         quick: [{ label: "Bienestar y VictorIA", to: null, icon: "heart" }],
-        all: [ /* ... */ ],
+        all: [
+          { label: "Test Psicológicos", to: null },
+          { label: "Dashboard de Bienestar", to: null },
+          { label: "VictorIA", to: null },
+        ],
       },
     ],
     []
@@ -133,7 +143,7 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <div className="dash">
-      {/* HERO (No necesita cambios estructurales, el CSS se encarga) */}
+      {/* HERO / CABECERA */}
       <section className="hero">
         <div className="hero__rail">
           <div className="hero__brand">
@@ -157,10 +167,9 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         <div className="hero__content">
-          <h1 className="hero__title">Hola, Verónica 👋</h1> {/* Eliminé el span para la ola, ya que el CSS no lo necesita */}
+          <h1 className="hero__title">Hola, Verónica 👋</h1>
           <p className="hero__subtitle">Elige un módulo para comenzar</p>
 
-          {/* --- CAMBIO: Tarjeta TIP actualizada --- */}
           <div className="tip">
             <div className="tip__icon">
               <Icon name="lightbulb" size={18} />
@@ -183,37 +192,28 @@ export default function Dashboard({ onLogout }) {
         </div>
       </section>
 
-      {/* GRID */}
+      {/* GRID DE MÓDULOS */}
       <div className="grid">
         {MODULES.map((m) => (
-          // --- CAMBIO: Se usa el ID del módulo como clase para el color y se elimina el style en línea ---
           <article key={m.id} className={`card ${m.id}`}>
-            {/* Header */}
-            {/* --- CAMBIO: El 'div' del título y descripción ahora está dentro del header --- */}
             <header className="card__head" onClick={() => setOpenModule(m.id)} role="button" tabIndex={0}>
-               {/* --- CAMBIO: Se elimina el style en línea, el color lo da la clase padre --- */}
               <div className="card__icon">
-                <Icon name={m.icon} size={20} />
+                <Icon name={m.icon} size={24} /> {/* Icono principal de la tarjeta, un poco más grande */}
               </div>
               <h3 className="card__title">{m.title}</h3>
             </header>
             
-            {/* Descripción debajo del header */}
             <p className="card__desc">{m.description}</p>
 
-            {/* --- CAMBIO: Lista actualizada para coincidir con el nuevo CSS --- */}
             <ul className="card__list">
               {m.quick.map((q, i) => (
-                // --- CAMBIO: Estructura del item de la lista ---
                 <li key={i} onClick={() => safeGo(navigate, q.to)} role="button" tabIndex={0}>
-                  <i className="fa-solid fa-users"></i> {/* Reemplaza esto con tu componente Icon si lo prefieres */}
-                  <Icon name={q.icon || "users"} size={16} /> {/* Usamos el nuevo ícono del objeto */}
+                  <Icon name={q.icon || "info"} size={16} /> {/* Usa el icono definido o uno por defecto */}
                   <span>{q.label}</span>
                 </li>
               ))}
             </ul>
 
-            {/* Footer */}
             <footer className="card__foot">
               <button className="card__open" onClick={() => setOpenModule(m.id)}>Abrir módulo →</button>
             </footer>
