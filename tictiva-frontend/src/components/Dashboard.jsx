@@ -5,7 +5,7 @@ import "./Dashboard.css";
 import { ROUTES } from "../routes";
 
 /* ===== Iconos SVG (outline, sin emojis) ===== */
-const Icon = ({ name, size = 22 }) => {
+const Icon = ({ name, size = 24 }) => {
   const p = {
     width: size, height: size, viewBox: "0 0 24 24",
     fill: "none", stroke: "currentColor", strokeWidth: "2",
@@ -24,8 +24,6 @@ const Icon = ({ name, size = 22 }) => {
       return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
     case "search":
       return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
-    case "bolt": // lamparita / tip
-      return (<svg {...p}><path d="M13 2L3 14h7l-1 8 11-13h-7l0-7z"/></svg>);
     default:
       return null;
   }
@@ -54,20 +52,21 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // === 5 módulos exactamente (3 arriba / 2 abajo) ===
+  /* ====== Data: 5 módulos como la maqueta ====== */
   const MODULES = useMemo(
     () => [
       {
         id: "rrhh",
-        color: "#2F7BFA", // azul
+        color: "#336DFF",
         title: "RRHH",
         icon: "users",
         description: "Gestiona fichas, contratos, permisos y documentación legal.",
+        /* Dos columnas: 4 ítems */
         quick: [
           { label: "Fichas", to: ROUTES.listadoFichas },
           { label: "Permisos", to: ROUTES.rrhhPermisos },
+          { label: "Turnos", to: ROUTES.asistenciaTurnos },          // atajo útil
           { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
-          { label: "Turnos", to: ROUTES.asistenciaTurnos }, // si no aplica, cambia ruta o quítalo
         ],
         all: [
           { label: "Listado y Fichas", to: ROUTES.listadoFichas },
@@ -79,13 +78,13 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "asistencia",
-        color: "#11B3A3", // teal
+        color: "#16A34A",
         title: "Asistencia",
         icon: "clock",
         description: "Controla horarios, marcas, dispositivos y turnos.",
         quick: [
           { label: "Supervisión", to: ROUTES.asistenciaSupervision },
-          { label: "Marcos registradas", to: ROUTES.asistenciaMarcas },
+          { label: "Marcas registradas", to: ROUTES.asistenciaMarcas },
           { label: "Mapa de cobertura", to: ROUTES.asistenciaMapa },
           { label: "Dispositivos", to: ROUTES.asistenciaDispositivos },
         ],
@@ -99,7 +98,7 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "comunicaciones",
-        color: "#6F6DFD", // violeta/azul
+        color: "#7C3AED",
         title: "Comunicaciones",
         icon: "chat",
         description: "Envía mensajes, encuestas y comunicados a tu equipo.",
@@ -116,13 +115,11 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "reporteria",
-        color: "#F45B98", // rosa
+        color: "#EC4899",
         title: "Reportería",
         icon: "chart",
         description: "Genera informes, dashboards y comparte resultados.",
-        quick: [
-          { label: "Dashboards y descargas", to: null },
-        ],
+        quick: [{ label: "Dashboards y descargas", to: null }],
         all: [
           { label: "Informes Gerenciales", to: null },
           { label: "Dashboards", to: null },
@@ -131,13 +128,11 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "cuida",
-        color: "#2AA1EC", // celeste
+        color: "#0284C7",
         title: "Tictiva Cuida",
         icon: "heart",
         description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
-        quick: [
-          { label: "Bienestar y VictorIA", to: null },
-        ],
+        quick: [{ label: "Bienestar y VictorIA", to: null }],
         all: [
           { label: "Test Psicológicos", to: null },
           { label: "Dashboard de Bienestar", to: null },
@@ -150,7 +145,7 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <div className="dash">
-      {/* HERO grande */}
+      {/* HERO */}
       <section className="hero">
         <div className="hero__rail">
           <div className="hero__brand">
@@ -163,19 +158,11 @@ export default function Dashboard({ onLogout }) {
               <Icon name="search" size={18} />
               <input placeholder="Buscar en Tictiva…" />
             </div>
-            <button
-              className="hero__avatar"
-              onClick={() => setOpenMenu(v => !v)}
-              aria-label="Perfil"
-            >
-              V
-            </button>
+            <button className="hero__avatar" onClick={() => setOpenMenu(v => !v)} aria-label="Perfil">V</button>
             {openMenu && (
               <div className="hero__menu">
                 <button className="hero__menuItem">Configuración</button>
-                <button className="hero__menuItem hero__menuItem--danger" onClick={onLogout}>
-                  Cerrar sesión
-                </button>
+                <button className="hero__menuItem hero__menuItem--danger" onClick={onLogout}>Cerrar sesión</button>
               </div>
             )}
           </div>
@@ -185,17 +172,8 @@ export default function Dashboard({ onLogout }) {
           <h1 className="hero__title">Hola, Verónica <span className="wave">👋</span></h1>
           <p className="hero__subtitle">Elige un módulo para comenzar</p>
 
-          {/* Tip de VictorIA */}
           <div className="tip">
-            <div className="tip__icon tip__icon--yellow">
-              {/* bombilla amarilla */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18h6"/>
-                <path d="M10 22h4"/>
-                <path d="M2 12a10 10 0 0 1 20 0c0 3.22-1.77 5.86-4 7-1 1-1 1-1 2H7c0-1 0-1-1-2-2.23-1.14-4-3.78-4-7z"/>
-              </svg>
-            </div>
+            <div className="tip__icon">💡</div>
             <div className="tip__text">
               <strong>Tip de VictorIA:</strong> ¡Es fin de mes! Revisa{" "}
               <button className="linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>Permisos</button>{" "}
@@ -203,9 +181,7 @@ export default function Dashboard({ onLogout }) {
               <button className="linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}>Validación DT</button>{" "}
               en RR.HH.
             </div>
-            <button className="tip__cta" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>
-              Ir ahora →
-            </button>
+            <button className="tip__cta" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>Ir ahora →</button>
           </div>
 
           <div className="hero__stats">
@@ -216,23 +192,14 @@ export default function Dashboard({ onLogout }) {
         </div>
       </section>
 
-      {/* Grid de tarjetas — 3 arriba / 2 abajo */}
+      {/* GRID */}
       <div className="grid">
         {MODULES.map((m) => (
-          <article
-            key={m.id}
-            className="card"
-            style={{ "--accent": m.color }}
-            data-card={m.id}
-          >
-            <header
-              className="card__head"
-              onClick={() => setOpenModule(m.id)}
-              role="button"
-              tabIndex={0}
-            >
+          <article key={m.id} className="card" style={{ "--accent": m.color }}>
+            {/* Header */}
+            <header className="card__head" onClick={() => setOpenModule(m.id)} role="button" tabIndex={0}>
               <div className="card__icon" style={{ borderColor: m.color, color: m.color }}>
-                <Icon name={m.icon} />
+                <Icon name={m.icon} size={18} />
               </div>
               <div>
                 <h3 className="card__title">{m.title}</h3>
@@ -240,20 +207,21 @@ export default function Dashboard({ onLogout }) {
               </div>
             </header>
 
-            <ul className="card__list">
+            {/* Lista en 2 columnas */}
+            <ul className="card__grid">
               {m.quick.map((q, i) => (
                 <li key={i}>
-                  <button className="card__pill" onClick={() => safeGo(navigate, q.to)}>
-                    <span className="card__bullet" /> {q.label}
+                  <button className="card__row" onClick={() => safeGo(navigate, q.to)}>
+                    <span className="card__dot" />
+                    <span>{q.label}</span>
                   </button>
                 </li>
               ))}
             </ul>
 
+            {/* Footer (izquierda) */}
             <footer className="card__foot">
-              <button className="card__open" onClick={() => setOpenModule(m.id)}>
-                Abrir módulo →
-              </button>
+              <button className="card__open" onClick={() => setOpenModule(m.id)}>Abrir módulo →</button>
             </footer>
           </article>
         ))}
