@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import { ROUTES } from "../routes";
 
-/* ===== Iconos SVG (outline, sin emojis) ===== */
+/* ===== Iconos SVG (outline) ===== */
 const Icon = ({ name, size = 24 }) => {
   const p = {
     width: size, height: size, viewBox: "0 0 24 24",
@@ -13,19 +13,54 @@ const Icon = ({ name, size = 24 }) => {
   };
   switch (name) {
     case "users":
-      return (<svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
+      return (
+        <svg {...p}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      );
     case "clock":
-      return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>);
+      return (
+        <svg {...p}>
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+      );
     case "chat":
-      return (<svg {...p}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 19v2l3-2"/></svg>);
+      return (
+        <svg {...p}>
+          <rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 19v2l3-2"/>
+        </svg>
+      );
     case "chart":
-      return (<svg {...p}><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5" rx="1"/><rect x="12" y="9" width="3" height="9" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>);
+      return (
+        <svg {...p}>
+          <path d="M3 3v18h18"/>
+          <rect x="7" y="13" width="3" height="5" rx="1"/>
+          <rect x="12" y="9" width="3" height="9" rx="1"/>
+          <rect x="17" y="5" width="3" height="13" rx="1"/>
+        </svg>
+      );
     case "heart":
-      return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
+      return (
+        <svg {...p}>
+          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/>
+        </svg>
+      );
     case "building":
-      return (<svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 7h.01M9 11h.01M9 15h.01M15 7h.01M15 11h.01M15 15h.01M12 21v-4"/></svg>);
+      return (
+        <svg {...p}>
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 7h.01M9 11h.01M9 15h.01M15 7h.01M15 11h.01M15 15h.01M12 21v-4"/>
+        </svg>
+      );
     case "search":
-      return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
+      return (
+        <svg {...p}>
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+      );
     default:
       return null;
   }
@@ -135,7 +170,7 @@ export default function Dashboard({ onLogout }) {
         ],
       },
       {
-        id: "instalaciones",
+        id: "instalaciones", // se definirá pero NO se renderiza (3+2)
         color: "#3B82F6",
         title: "Instalaciones",
         icon: "building",
@@ -148,6 +183,12 @@ export default function Dashboard({ onLogout }) {
       },
     ],
     []
+  );
+
+  // Renderizamos 3 arriba + 2 abajo (sin “instalaciones”):
+  const RENDER_MODULES = useMemo(
+    () => MODULES.filter((m) => m.id !== "instalaciones"),
+    [MODULES]
   );
 
   return (
@@ -165,11 +206,22 @@ export default function Dashboard({ onLogout }) {
               <Icon name="search" size={18} />
               <input placeholder="Buscar en Tictiva…" />
             </div>
-            <button className="hero__avatar" onClick={() => setOpenMenu(v => !v)} aria-label="Perfil">V</button>
+            <button
+              className="hero__avatar"
+              onClick={() => setOpenMenu((v) => !v)}
+              aria-label="Perfil"
+            >
+              V
+            </button>
             {openMenu && (
               <div className="hero__menu">
                 <button className="hero__menuItem">Configuración</button>
-                <button className="hero__menuItem hero__menuItem--danger" onClick={onLogout}>Cerrar sesión</button>
+                <button
+                  className="hero__menuItem hero__menuItem--danger"
+                  onClick={onLogout}
+                >
+                  Cerrar sesión
+                </button>
               </div>
             )}
           </div>
@@ -180,9 +232,15 @@ export default function Dashboard({ onLogout }) {
           <p className="hero__subtitle">Elige un módulo para comenzar</p>
 
           <div className="hero__stats">
-            <span><strong>Hoy:</strong> 154 marcas</span>
-            <span><strong>Mensajes:</strong> 3 nuevos</span>
-            <span><strong>Encuestas:</strong> 2 activas</span>
+            <span>
+              <strong>Hoy:</strong> 154 marcas
+            </span>
+            <span>
+              <strong>Mensajes:</strong> 3 nuevos
+            </span>
+            <span>
+              <strong>Encuestas:</strong> 2 activas
+            </span>
           </div>
         </div>
       </section>
@@ -192,19 +250,40 @@ export default function Dashboard({ onLogout }) {
         <div className="tip__icon">💡</div>
         <div className="tip__text">
           <strong>Tip de VictorIA:</strong> ¡Es fin de mes! Revisa{" "}
-          <button className="linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>Permisos</button>{" "}
+          <button
+            className="linkBtn"
+            onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}
+          >
+            Permisos
+          </button>{" "}
           y{" "}
-          <button className="linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}>Validación DT</button>{" "}
+          <button
+            className="linkBtn"
+            onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}
+          >
+            Validación DT
+          </button>{" "}
           en RR.HH.
         </div>
       </div>
 
       {/* Grid de tarjetas — compactas como el mock */}
       <div className="grid">
-        {MODULES.map((m) => (
-          <article key={m.id} className="card">
-            <header className="card__head" onClick={() => setOpenModule(m.id)} role="button" tabIndex={0}>
-              <div className="card__icon" style={{ borderColor: m.color, color: m.color }}>
+        {RENDER_MODULES.map((m) => (
+          <article key={m.id} className="card" data-card={m.id}>
+            <header
+              className="card__head"
+              onClick={() => setOpenModule(m.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setOpenModule(m.id);
+              }}
+            >
+              <div
+                className="card__icon"
+                style={{ borderColor: m.color, color: m.color }}
+              >
                 <Icon name={m.icon} />
               </div>
               <div>
@@ -216,7 +295,10 @@ export default function Dashboard({ onLogout }) {
             <ul className="card__list">
               {m.quick.map((q, i) => (
                 <li key={i}>
-                  <button className="card__pill" onClick={() => safeGo(navigate, q.to)}>
+                  <button
+                    className="card__pill"
+                    onClick={() => safeGo(navigate, q.to)}
+                  >
                     <span className="card__bullet" /> {q.label}
                   </button>
                 </li>
@@ -224,7 +306,12 @@ export default function Dashboard({ onLogout }) {
             </ul>
 
             <footer className="card__foot">
-              <button className="card__open" onClick={() => setOpenModule(m.id)}>Abrir módulo →</button>
+              <button
+                className="card__open"
+                onClick={() => setOpenModule(m.id)}
+              >
+                Abrir módulo →
+              </button>
             </footer>
           </article>
         ))}
@@ -232,7 +319,7 @@ export default function Dashboard({ onLogout }) {
 
       {openModule && (
         <Drawer
-          module={MODULES.find(m => m.id === openModule)}
+          module={MODULES.find((m) => m.id === openModule)}
           onClose={() => setOpenModule(null)}
           onGo={(to) => safeGo(navigate, to)}
         />
@@ -241,15 +328,21 @@ export default function Dashboard({ onLogout }) {
   );
 }
 
-/* ===== Panel lateral ===== */
+/* ===== Drawer lateral ===== */
 function Drawer({ module, onClose, onGo }) {
   if (!module) return null;
   return (
     <>
       <div className="drawer__backdrop" onClick={onClose} />
       <aside className="drawer">
-        <div className="drawer__head" style={{ borderTopColor: module.color }}>
-          <div className="drawer__icon" style={{ color: module.color, borderColor: module.color }}>
+        <div
+          className="drawer__head"
+          style={{ borderTopColor: module.color }}
+        >
+          <div
+            className="drawer__icon"
+            style={{ color: module.color, borderColor: module.color }}
+          >
             <Icon name={module.icon} size={22} />
           </div>
           <div className="drawer__titwrap">
@@ -257,7 +350,9 @@ function Drawer({ module, onClose, onGo }) {
             <h3 className="drawer__title">{module.title}</h3>
             <p className="drawer__desc">{module.description}</p>
           </div>
-          <button className="drawer__close" onClick={onClose} aria-label="Cerrar">✕</button>
+          <button className="drawer__close" onClick={onClose} aria-label="Cerrar">
+            ✕
+          </button>
         </div>
 
         <ul className="drawer__list">
