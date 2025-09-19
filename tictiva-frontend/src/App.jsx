@@ -47,6 +47,8 @@ const BODEGA = {
   operaciones: "/rrhh/bodega/operaciones",
 };
 
+// CÓDIGO CORREGIDO PARA MainApp
+
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   const navigate = useNavigate();
 
@@ -54,8 +56,9 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
     if (isLoggedIn) navigate(ROUTES?.home || "/", { replace: true });
   }, [isLoggedIn, navigate]);
 
+  // 👇 HEMOS REEMPLAZADO EL DIV POR UN FRAGMENTO <>
   return (
-    <div className={isLoggedIn ? "dashboard-bg" : "login-shell"}>
+    <>
       {!isLoggedIn ? (
         <LoginPage onLoginSuccess={handleLoginSuccess} />
       ) : (
@@ -97,7 +100,7 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
           </Routes>
         </Suspense>
       )}
-    </div>
+    </>
   );
 }
 
