@@ -250,28 +250,27 @@ body {
 /* ===== GRID DE MÓDULOS ===== */
 .grid {
   max-width: 1400px;
-  margin: 0 auto 2rem auto; /* Centrar y añadir margen inferior */
-  padding: 0 2rem; /* Padding horizontal para el grid */
+  margin: 0 auto 2rem auto;
+  padding: 0 2rem;
   display: grid;
-  grid-template-columns: repeat(3, minmax(300px, 1fr));
+  /* --- CAMBIO CLAVE: Forzamos 3 columnas de igual tamaño --- */
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
-/* --- CAMBIO: Media Queries para la distribución de 3 y 2 cards --- */
-@media (min-width: 1025px) { /* En desktop, si la fila es de 3, la última puede tener 2 */
-  .grid > .card:nth-last-child(2):nth-child(3n+2) { /* Selecciona la segunda de las dos últimas si es la 2da en una fila de 3 */
-    /* Para centrar las dos últimas si la última fila tiene solo 2 elementos */
-    /* No es una solución perfecta con grid si el número es dinámico,
-       pero para 5 elementos funciona con un poco de hack.
-       Una mejor solución sería un flexbox wrapping para las últimas 2 */
-  }
-}
-
+/* --- Media Queries para responsividad (asegúrate de que estén así) --- */
 @media (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+@media (max-width: 680px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+  
+
 @media (max-width: 680px) {
   .grid {
     grid-template-columns: 1fr;
