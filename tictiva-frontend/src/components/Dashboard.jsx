@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import { ROUTES } from "../routes";
 
-/* ===== Iconos SVG (outline) ===== */
-const Icon = ({ name, size = 24 }) => {
+/* ===== Iconos SVG (outline, sin emojis) ===== */
+const Icon = ({ name, size = 22 }) => {
   const p = {
     width: size, height: size, viewBox: "0 0 24 24",
     fill: "none", stroke: "currentColor", strokeWidth: "2",
@@ -13,54 +13,19 @@ const Icon = ({ name, size = 24 }) => {
   };
   switch (name) {
     case "users":
-      return (
-        <svg {...p}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      );
+      return (<svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
     case "clock":
-      return (
-        <svg {...p}>
-          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-        </svg>
-      );
+      return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>);
     case "chat":
-      return (
-        <svg {...p}>
-          <rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 19v2l3-2"/>
-        </svg>
-      );
+      return (<svg {...p}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 19v2l3-2"/></svg>);
     case "chart":
-      return (
-        <svg {...p}>
-          <path d="M3 3v18h18"/>
-          <rect x="7" y="13" width="3" height="5" rx="1"/>
-          <rect x="12" y="9" width="3" height="9" rx="1"/>
-          <rect x="17" y="5" width="3" height="13" rx="1"/>
-        </svg>
-      );
+      return (<svg {...p}><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5" rx="1"/><rect x="12" y="9" width="3" height="9" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>);
     case "heart":
-      return (
-        <svg {...p}>
-          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/>
-        </svg>
-      );
-    case "building":
-      return (
-        <svg {...p}>
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 7h.01M9 11h.01M9 15h.01M15 7h.01M15 11h.01M15 15h.01M12 21v-4"/>
-        </svg>
-      );
+      return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
     case "search":
-      return (
-        <svg {...p}>
-          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
-        </svg>
-      );
+      return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
+    case "bolt": // lamparita / tip
+      return (<svg {...p}><path d="M13 2L3 14h7l-1 8 11-13h-7l0-7z"/></svg>);
     default:
       return null;
   }
@@ -89,17 +54,20 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
+  // === 5 módulos exactamente (3 arriba / 2 abajo) ===
   const MODULES = useMemo(
     () => [
       {
         id: "rrhh",
-        color: "#336DFF",
+        color: "#2F7BFA", // azul
         title: "RRHH",
         icon: "users",
-        description: "Fichas, turnos y validación DT",
+        description: "Gestiona fichas, contratos, permisos y documentación legal.",
         quick: [
           { label: "Fichas", to: ROUTES.listadoFichas },
-          { label: "Permisos • Instalaciones", to: ROUTES.rrhhPermisos },
+          { label: "Permisos", to: ROUTES.rrhhPermisos },
+          { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
+          { label: "Turnos", to: ROUTES.asistenciaTurnos }, // si no aplica, cambia ruta o quítalo
         ],
         all: [
           { label: "Listado y Fichas", to: ROUTES.listadoFichas },
@@ -111,13 +79,15 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "asistencia",
-        color: "#16A34A",
+        color: "#11B3A3", // teal
         title: "Asistencia",
         icon: "clock",
-        description: "Marcas, mapas y dispositivos",
+        description: "Controla horarios, marcas, dispositivos y turnos.",
         quick: [
           { label: "Supervisión", to: ROUTES.asistenciaSupervision },
-          { label: "Mapa de cobertura • Dispositivos", to: ROUTES.asistenciaMapa },
+          { label: "Marcos registradas", to: ROUTES.asistenciaMarcas },
+          { label: "Mapa de cobertura", to: ROUTES.asistenciaMapa },
+          { label: "Dispositivos", to: ROUTES.asistenciaDispositivos },
         ],
         all: [
           { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
@@ -129,13 +99,14 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "comunicaciones",
-        color: "#7C3AED",
+        color: "#6F6DFD", // violeta/azul
         title: "Comunicaciones",
         icon: "chat",
-        description: "Mensajes, plantillas y encuestas",
+        description: "Envía mensajes, encuestas y comunicados a tu equipo.",
         quick: [
           { label: "Mensajes", to: null },
           { label: "Plantillas", to: null },
+          { label: "Encuestas de clima", to: null },
         ],
         all: [
           { label: "Enviar mensaje", to: null },
@@ -145,11 +116,13 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "reporteria",
-        color: "#EC4899",
+        color: "#F45B98", // rosa
         title: "Reportería",
         icon: "chart",
-        description: "Dashboards y descargas",
-        quick: [{ label: "Dashboards y descargas", to: null }],
+        description: "Genera informes, dashboards y comparte resultados.",
+        quick: [
+          { label: "Dashboards y descargas", to: null },
+        ],
         all: [
           { label: "Informes Gerenciales", to: null },
           { label: "Dashboards", to: null },
@@ -158,42 +131,26 @@ export default function Dashboard({ onLogout }) {
       },
       {
         id: "cuida",
-        color: "#0284C7",
+        color: "#2AA1EC", // celeste
         title: "Tictiva Cuida",
         icon: "heart",
-        description: "Bienestar y VictorIA",
-        quick: [{ label: "Bienestar y VictorIA", to: null }],
+        description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
+        quick: [
+          { label: "Bienestar y VictorIA", to: null },
+        ],
         all: [
           { label: "Test Psicológicos", to: null },
           { label: "Dashboard de Bienestar", to: null },
           { label: "VictorIA", to: null },
         ],
       },
-      {
-        id: "instalaciones", // se definirá pero NO se renderiza (3+2)
-        color: "#3B82F6",
-        title: "Instalaciones",
-        icon: "building",
-        description: "Centros y ubicaciones",
-        quick: [{ label: "Centros y ubicaciones", to: null }],
-        all: [
-          { label: "Centros", to: null },
-          { label: "Ubicaciones", to: null },
-        ],
-      },
     ],
     []
   );
 
-  // Renderizamos 3 arriba + 2 abajo (sin “instalaciones”):
-  const RENDER_MODULES = useMemo(
-    () => MODULES.filter((m) => m.id !== "instalaciones"),
-    [MODULES]
-  );
-
   return (
     <div className="dash">
-      {/* HERO grande con barra superior y línea divisoria */}
+      {/* HERO grande */}
       <section className="hero">
         <div className="hero__rail">
           <div className="hero__brand">
@@ -208,7 +165,7 @@ export default function Dashboard({ onLogout }) {
             </div>
             <button
               className="hero__avatar"
-              onClick={() => setOpenMenu((v) => !v)}
+              onClick={() => setOpenMenu(v => !v)}
               aria-label="Perfil"
             >
               V
@@ -216,10 +173,7 @@ export default function Dashboard({ onLogout }) {
             {openMenu && (
               <div className="hero__menu">
                 <button className="hero__menuItem">Configuración</button>
-                <button
-                  className="hero__menuItem hero__menuItem--danger"
-                  onClick={onLogout}
-                >
+                <button className="hero__menuItem hero__menuItem--danger" onClick={onLogout}>
                   Cerrar sesión
                 </button>
               </div>
@@ -228,62 +182,56 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         <div className="hero__content">
-          <h1 className="hero__title">Hola, Verónica</h1>
+          <h1 className="hero__title">Hola, Verónica <span className="wave">👋</span></h1>
           <p className="hero__subtitle">Elige un módulo para comenzar</p>
 
+          {/* Tip de VictorIA */}
+          <div className="tip">
+            <div className="tip__icon tip__icon--yellow">
+              {/* bombilla amarilla */}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18h6"/>
+                <path d="M10 22h4"/>
+                <path d="M2 12a10 10 0 0 1 20 0c0 3.22-1.77 5.86-4 7-1 1-1 1-1 2H7c0-1 0-1-1-2-2.23-1.14-4-3.78-4-7z"/>
+              </svg>
+            </div>
+            <div className="tip__text">
+              <strong>Tip de VictorIA:</strong> ¡Es fin de mes! Revisa{" "}
+              <button className="linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>Permisos</button>{" "}
+              y{" "}
+              <button className="linkBtn" onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}>Validación DT</button>{" "}
+              en RR.HH.
+            </div>
+            <button className="tip__cta" onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}>
+              Ir ahora →
+            </button>
+          </div>
+
           <div className="hero__stats">
-            <span>
-              <strong>Hoy:</strong> 154 marcas
-            </span>
-            <span>
-              <strong>Mensajes:</strong> 3 nuevos
-            </span>
-            <span>
-              <strong>Encuestas:</strong> 2 activas
-            </span>
+            <span><strong>Hoy:</strong> 154 marcas</span>
+            <span><strong>Mensajes:</strong> 3 nuevos</span>
+            <span><strong>Encuestas:</strong> 2 activas</span>
           </div>
         </div>
       </section>
 
-      {/* Tip de VictorIA */}
-      <div className="tip">
-        <div className="tip__icon">💡</div>
-        <div className="tip__text">
-          <strong>Tip de VictorIA:</strong> ¡Es fin de mes! Revisa{" "}
-          <button
-            className="linkBtn"
-            onClick={() => safeGo(navigate, ROUTES.rrhhPermisos)}
-          >
-            Permisos
-          </button>{" "}
-          y{" "}
-          <button
-            className="linkBtn"
-            onClick={() => safeGo(navigate, ROUTES.rrhhValidacionDT)}
-          >
-            Validación DT
-          </button>{" "}
-          en RR.HH.
-        </div>
-      </div>
-
-      {/* Grid de tarjetas — compactas como el mock */}
+      {/* Grid de tarjetas — 3 arriba / 2 abajo */}
       <div className="grid">
-        {RENDER_MODULES.map((m) => (
-          <article key={m.id} className="card" data-card={m.id}>
+        {MODULES.map((m) => (
+          <article
+            key={m.id}
+            className="card"
+            style={{ "--accent": m.color }}
+            data-card={m.id}
+          >
             <header
               className="card__head"
               onClick={() => setOpenModule(m.id)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setOpenModule(m.id);
-              }}
             >
-              <div
-                className="card__icon"
-                style={{ borderColor: m.color, color: m.color }}
-              >
+              <div className="card__icon" style={{ borderColor: m.color, color: m.color }}>
                 <Icon name={m.icon} />
               </div>
               <div>
@@ -295,10 +243,7 @@ export default function Dashboard({ onLogout }) {
             <ul className="card__list">
               {m.quick.map((q, i) => (
                 <li key={i}>
-                  <button
-                    className="card__pill"
-                    onClick={() => safeGo(navigate, q.to)}
-                  >
+                  <button className="card__pill" onClick={() => safeGo(navigate, q.to)}>
                     <span className="card__bullet" /> {q.label}
                   </button>
                 </li>
@@ -306,10 +251,7 @@ export default function Dashboard({ onLogout }) {
             </ul>
 
             <footer className="card__foot">
-              <button
-                className="card__open"
-                onClick={() => setOpenModule(m.id)}
-              >
+              <button className="card__open" onClick={() => setOpenModule(m.id)}>
                 Abrir módulo →
               </button>
             </footer>
@@ -319,7 +261,7 @@ export default function Dashboard({ onLogout }) {
 
       {openModule && (
         <Drawer
-          module={MODULES.find((m) => m.id === openModule)}
+          module={MODULES.find(m => m.id === openModule)}
           onClose={() => setOpenModule(null)}
           onGo={(to) => safeGo(navigate, to)}
         />
@@ -328,21 +270,15 @@ export default function Dashboard({ onLogout }) {
   );
 }
 
-/* ===== Drawer lateral ===== */
+/* ===== Panel lateral ===== */
 function Drawer({ module, onClose, onGo }) {
   if (!module) return null;
   return (
     <>
       <div className="drawer__backdrop" onClick={onClose} />
       <aside className="drawer">
-        <div
-          className="drawer__head"
-          style={{ borderTopColor: module.color }}
-        >
-          <div
-            className="drawer__icon"
-            style={{ color: module.color, borderColor: module.color }}
-          >
+        <div className="drawer__head" style={{ borderTopColor: module.color }}>
+          <div className="drawer__icon" style={{ color: module.color, borderColor: module.color }}>
             <Icon name={module.icon} size={22} />
           </div>
           <div className="drawer__titwrap">
@@ -350,9 +286,7 @@ function Drawer({ module, onClose, onGo }) {
             <h3 className="drawer__title">{module.title}</h3>
             <p className="drawer__desc">{module.description}</p>
           </div>
-          <button className="drawer__close" onClick={onClose} aria-label="Cerrar">
-            ✕
-          </button>
+          <button className="drawer__close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
 
         <ul className="drawer__list">

@@ -1,224 +1,156 @@
-/* =========================================================================
-   Dashboard (aislado) – pega este archivo como src/components/Dashboard.css
-   IMPORTANTE:
-   - Coloca tu imagen en /public/hero-ornament.png
-   - Envuelve el Dashboard con <div class="tictiva-dash">…</div>
-   - Usa las clases: dash-hero, dash-tip, dash-grid, dash-card, etc.
-   ======================================================================== */
+:root{
+  --ink-900:#0F172A; --ink-700:#1F2937; --ink-500:#64748B;
+  --border:#E6EDF5; --card:#FFFFFF; --page-bg:#F6F8FB;
+  --shadow:0 12px 30px rgba(2,8,23,.08);
+  --hero-radius:22px;
 
-/* --------------------- Variables del tema --------------------- */
-.tictiva-dash {
-  --ink-900: #0F172A;
-  --ink-700: #1F2937;
-  --ink-600: #334155;
-  --ink-500: #64748B;
-  --ink-400: #94A3B8;
-
-  --border: #E6EDF5;
-  --card: #FFFFFF;
-  --page-bg: #F6F8FB;
-
-  --shadow-sm: 0 6px 16px rgba(2,8,23,.06);
-  --shadow: 0 12px 30px rgba(2,8,23,.08);
-
-  --brand-600:#2563EB;
-
-  /* Proporción/altura de cards (más “cuadradas/compactas”) */
-  --card-ratio: 1.08;   /* 1 = cuadrado exacto */
-  --card-min-h: 180px;
-
-  --hero-radius: 22px;
+  /* tarjetas más compactas (cuasi cuadradas) */
+  --card-ratio:1.08;  /* 1 = cuadrado */
+  --card-min-h:190px;
 }
 
-/* --------------------- Lienzo de la página --------------------- */
-.tictiva-dash .dash {
-  padding: 16px clamp(12px, 3.6vw, 28px) 28px;
-  background: var(--page-bg);
-  color: var(--ink-700);
-}
+/* ===== Layout base ===== */
+.dash{ padding:16px clamp(12px,3.6vw,28px) 28px; background:var(--page-bg); color:var(--ink-700); }
 
-/* --------------------- HERO --------------------- */
-.tictiva-dash .dash-hero {
-  position: relative;
-  z-index: 1;                                /* hero por debajo de las cards */
-  border: 1px solid var(--border);
-  border-radius: var(--hero-radius);
-  overflow: hidden;
-  background: linear-gradient(180deg, #EAF4FF 0%, #F7FBFF 100%);
-  padding: 8px 18px 260px;                   /* abraza la primera fila */
-
-  /* Fade inferior para que “se fume” al final */
+/* ===== HERO ===== */
+.hero{
+  position:relative; z-index:1;
+  border:1px solid var(--border); border-radius:var(--hero-radius);
+  background:linear-gradient(180deg,#EAF4FF 0%,#F7FBFF 100%);
+  padding:8px 18px 260px;
+  overflow:hidden;
+  /* fade inferior (para que “se fume”) */
   box-shadow: var(--shadow), inset 0 -220px 160px -80px var(--page-bg);
-  -webkit-mask-image: linear-gradient(#000, #000 65%, rgba(0,0,0,0));
-          mask-image: linear-gradient(#000, #000 65%, rgba(0,0,0,0));
+  -webkit-mask-image: linear-gradient(#000,#000 65%,transparent);
+          mask-image: linear-gradient(#000,#000 65%,transparent);
 }
 
-/* Ornamento (tu imagen) – ponla en /public/hero-ornament.png */
-.tictiva-dash .dash-hero::before,
-.tictiva-dash .dash-hero::after{
-  content:"";
-  position:absolute;
-  pointer-events:none;
+/* Si quieres el ornamento, deja el PNG en /public/hero-ornament.png */
+.hero::before{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.21;
   background-image:url("/hero-ornament.png");
-  background-repeat:no-repeat;
-  background-size: 560px 560px;        /* ajusta 480–680 */
-  width:560px; height:560px;
-  opacity:.22;                         /* sutil como en la maqueta */
-  filter: saturate(.75) blur(.15px);
-}
-.tictiva-dash .dash-hero::before{
-  left:-40px; bottom:-40px; transform: rotate(0deg);
-}
-.tictiva-dash .dash-hero::after{
-  right:-40px; top:-30px; transform: scaleX(-1) rotate(6deg);
+  background-repeat:no-repeat; background-position: right -100px top -20px, left -120px bottom -60px;
+  background-size: 680px, 620px;
 }
 
-/* Rail superior (logo + buscador + avatar) */
-.tictiva-dash .dash-rail,
-.tictiva-dash .dash-heroContent { max-width: 1120px; margin: 0 auto; }
-
-.tictiva-dash .dash-rail{
+/* Rail superior */
+.hero__rail{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:12px 4px;
-  border-bottom:1px solid #E3ECFA;
-  background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0));
-  border-top-left-radius: calc(var(--hero-radius) - 1px);
-  border-top-right-radius: calc(var(--hero-radius) - 1px);
+  padding:12px 4px; border-bottom:1px solid #E3ECFA;
+  background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,0));
+  border-top-left-radius:calc(var(--hero-radius) - 1px);
+  border-top-right-radius:calc(var(--hero-radius) - 1px);
 }
-.tictiva-dash .dash-brand{ display:flex; align-items:center; gap:10px; }
-.tictiva-dash .dash-logo{
-  width:18px; height:18px; border-radius:5px;
-  background: linear-gradient(135deg, #2e6cf6, #44b0ff);
-  position:relative; box-shadow:0 2px 8px rgba(68,176,255,.25);
-}
-.tictiva-dash .dash-logo::after{ content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
-.tictiva-dash .dash-brandText{ font-weight:800; color:#0B1A38; letter-spacing:.2px; }
+.hero__brand{ display:flex; align-items:center; gap:10px; }
+.hero__logo{ width:18px; height:18px; border-radius:5px; background:linear-gradient(135deg,#2e6cf6,#44b0ff); position:relative; box-shadow:0 2px 8px rgba(68,176,255,.25); }
+.hero__logo::after{ content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
+.hero__brandText{ font-weight:800; color:#0B1A38; letter-spacing:.2px; }
 
-.tictiva-dash .dash-tools{ position:relative; display:flex; align-items:center; gap:10px; }
-.tictiva-dash .dash-search{
-  display:flex; align-items:center; gap:8px;
-  background:#fff; border:1px solid var(--border); border-radius:999px;
-  padding:8px 12px; min-width:260px; box-shadow: var(--shadow-sm);
+.hero__tools{ position:relative; display:flex; align-items:center; gap:10px; }
+.hero__search{
+  display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--border);
+  border-radius:999px; padding:8px 12px; min-width:280px; box-shadow:0 6px 16px rgba(2,8,23,.06);
 }
-.tictiva-dash .dash-search input{
-  border:none; outline:none; background:transparent; color:var(--ink-700);
-  font-size:14px; width:210px;
-}
-.tictiva-dash .dash-avatar{
+.hero__search input{ border:none; outline:none; background:transparent; color:var(--ink-700); font-size:14px; width:100%; }
+.hero__avatar{
   width:34px; height:34px; border-radius:999px; background:#E3F0FF; color:#0B1A38; font-weight:800;
   border:1px solid #CFE3FF; cursor:pointer;
 }
-.tictiva-dash .dash-menu{
-  position:absolute; right:0; top:46px; width:200px; z-index:1000;
-  background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
-  display:flex; flex-direction:column; overflow:hidden;
+.hero__menu{
+  position:absolute; right:0; top:46px; width:200px; background:#fff; border:1px solid var(--border);
+  border-radius:12px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden; z-index:1000;
 }
-.tictiva-dash .dash-menuItem{ padding:10px 12px; background:#fff; border:none; text-align:left; cursor:pointer; color:#0B1A38; }
-.tictiva-dash .dash-menuItem:hover{ background:#F6FAFF; }
-.tictiva-dash .dash-menuItem--danger{ color:#b91c1c; }
+.hero__menuItem{ padding:10px 12px; background:#fff; border:none; text-align:left; cursor:pointer; color:#0B1A38; }
+.hero__menuItem:hover{ background:#F6FAFF; }
+.hero__menuItem--danger{ color:#b91c1c; }
 
-/* Títulos/estadísticas del hero */
-.tictiva-dash .dash-heroContent{ padding:10px 4px 0; }
-.tictiva-dash .dash-title{ margin:14px 0 0; font-size:32px; font-weight:800; color:#0B1A38; letter-spacing:-.2px; }
-.tictiva-dash .dash-subtitle{ margin:4px 0 14px; color:var(--ink-500); font-size:15px; }
-.tictiva-dash .dash-stats{ display:flex; gap:22px; flex-wrap:wrap; font-size:14px; color:#0B1A38; }
-.tictiva-dash .dash-stats strong{ font-weight:800; }
+.hero__content{ padding:10px 4px 0; max-width:1120px; margin:0 auto; }
+.hero__title{ margin:14px 0 0; font-size:32px; font-weight:800; color:#0B1A38; letter-spacing:-.2px; }
+.hero__subtitle{ margin:4px 0 14px; color:var(--ink-500); font-size:15px; }
+.wave{ font-size:28px; }
 
-/* --------------------- Tip VictorIA --------------------- */
-.tictiva-dash .dash-tip{
-  max-width:1120px; margin:12px auto 16px;
-  display:flex; align-items:flex-start; gap:10px;
-  background:#F1F6FF; border:1px solid #E0EAFF;
-  padding:12px 14px; border-radius:14px; box-shadow:var(--shadow); color:#0B1A38;
+/* Tip VictorIA */
+.tip{
+  display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px;
+  background:#EEF5FF; border:1px solid #DFEBFF; box-shadow:var(--shadow);
+  margin:12px 0 10px; color:#0B1A38;
 }
-.tictiva-dash .dash-tipIcon{ font-size:18px; }
-.tictiva-dash .dash-tipText{ font-size:14px; }
-.tictiva-dash .linkBtn{ border:none; background:none; color:var(--brand-600); font-weight:700; cursor:pointer; }
+.tip__icon{
+  width:28px; height:28px; border-radius:999px; display:grid; place-items:center;
+  background:#E8F0FF; color:#2563EB; border:1px solid #DCE8FF;
+}
+.tip__icon--yellow{ background:#FEF3C7; color:#F59E0B; border-color:#FDE68A; }
+.tip__text{ font-size:14px; flex:1; }
+.linkBtn{ border:none; background:none; color:#2563EB; font-weight:700; cursor:pointer; }
+.tip__cta{
+  border:none; background:#fff; color:#2563EB; font-weight:800; border-radius:10px;
+  padding:8px 10px; border:1px solid #E5EEFF;
+}
+.tip__cta:hover{ background:#F8FBFF; }
 
-/* --------------------- GRID de módulos --------------------- */
-.tictiva-dash .dash-grid{
-  position:relative; z-index:10;          /* por encima del hero */
-  margin-top:-200px;                      /* se mete dentro del hero */
+.hero__stats{ display:flex; gap:22px; flex-wrap:wrap; font-size:14px; color:#0B1A38; }
+
+/* ===== GRID ===== */
+.grid{
+  position:relative; z-index:10;   /* por encima del hero */
+  margin-top:-200px;               /* se “meten” dentro del hero */
   max-width:1120px; margin-left:auto; margin-right:auto;
-
-  display:grid;
-  grid-template-columns: repeat(3, minmax(280px, 1fr)); /* 3 arriba */
-  gap:16px;
+  display:grid; grid-template-columns:repeat(3, minmax(280px, 1fr)); gap:16px;
 }
-@media (max-width:1100px){
-  .tictiva-dash .dash-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); margin-top:-170px; }
+@media (max-width:1100px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); margin-top:-170px; } }
+@media (max-width:760px){ .grid{ grid-template-columns: 1fr; margin-top:-140px; } }
+
+/* ===== Tarjeta ===== */
+.card{
+  position:relative; background:var(--card); border:1px solid var(--border);
+  border-radius:14px; box-shadow:var(--shadow);
+  display:grid; grid-template-rows:auto 1fr auto; aspect-ratio:var(--card-ratio);
+  min-height:var(--card-min-h); padding:14px 20px 12px; gap:8px;
 }
-@media (max-width:760px){
-  .tictiva-dash .dash-grid{ grid-template-columns:1fr; margin-top:-140px; }
+/* Borde superior de color (acento) */
+.card::before{
+  content:""; position:absolute; left:12px; right:12px; top:0; height:6px;
+  border-radius:8px; background:var(--accent, #2563EB);
 }
 
-/* --------------------- Card de módulo --------------------- */
-.tictiva-dash .dash-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  box-shadow:var(--shadow);
+.card__head{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; margin-top:8px; }
+.card__icon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
+.card__title{ margin:0; font-size:16px; font-weight:800; color:#0B1A38; }
+.card__desc{ margin:2px 0 0; color:var(--ink-500); font-size:13px; }
 
-  display:grid;
-  grid-template-rows:auto 1fr auto;      /* header / contenido / footer */
-  aspect-ratio: var(--card-ratio);
-  min-height: var(--card-min-h);
-  padding:14px 20px 12px;
-  gap:8px;
+.card__list{ list-style:none; margin:4px 0 0; padding:0; display:grid; gap:6px; }
+.card__pill{
+  width:100%; text-align:left; padding:7px 10px; border-radius:10px; border:1px dashed #E2E8F0;
+  background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:13px;
 }
-.tictiva-dash .dash-cardHead{ display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; cursor:pointer; margin-bottom:4px; }
-.tictiva-dash .dash-cardIcon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
-.tictiva-dash .dash-cardTitle{ margin:0; font-size:15px; font-weight:800; color:#0B1A38; }
-.tictiva-dash .dash-cardDesc{ margin:2px 0 0; color:var(--ink-500); font-size:12.5px; }
+.card__pill:hover{ background:#fff; border-style:solid; }
+.card__bullet{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; background:#94A3B8; vertical-align:middle; }
 
-.tictiva-dash .dash-cardList{ list-style:none; margin:4px 0 0; padding:0; display:grid; gap:6px; }
-.tictiva-dash .dash-pill{
-  width:100%; text-align:left; padding:7px 10px;
-  border-radius:10px; border:1px dashed #E2E8F0;
-  background:#F8FAFC; color:#0B1A38; cursor:pointer; font-size:12.5px;
+.card__foot{ display:flex; justify-content:flex-end; }
+.card__open{ border:none; background:none; color:#2563EB; font-weight:800; cursor:pointer; font-size:13px; padding:0 2px; }
+
+/* ===== Drawer lateral ===== */
+.drawer__backdrop{ position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter:blur(2px); z-index:2000; }
+.drawer{
+  position:fixed; top:0; right:0; height:100%; width:min(420px, 92vw); background:#fff; border-left:1px solid var(--border);
+  box-shadow:-20px 0 50px rgba(2,8,23,.25); display:flex; flex-direction:column; animation:slideIn .22s ease-out; z-index:2001;
 }
-.tictiva-dash .dash-pill:hover{ background:#fff; border-style:solid; }
-.tictiva-dash .dash-bullet{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:8px; background:#94A3B8; vertical-align:middle; }
-
-.tictiva-dash .dash-cardFoot{ display:flex; justify-content:flex-end; }
-.tictiva-dash .dash-openBtn{ border:none; background:none; color:var(--brand-600); font-weight:800; cursor:pointer; font-size:12.5px; padding:0 2px; }
-
-/* --------------------- Drawer lateral (submódulos) --------------------- */
-.tictiva-dash .drawerBackdrop{
-  position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter: blur(2px); z-index:2000;
-}
-.tictiva-dash .drawer{
-  position:fixed; top:0; right:0; height:100%; width:min(420px,92vw);
-  background:#fff; border-left:1px solid var(--border); box-shadow:-20px 0 50px rgba(2,8,23,.25);
-  display:flex; flex-direction:column; animation:dashSlideIn .22s ease-out; z-index:2001;
-}
-@keyframes dashSlideIn { from{ transform:translateX(16px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
-
-.tictiva-dash .drawerHead{
+@keyframes slideIn{ from{ transform:translateX(16px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
+.drawer__head{
   display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
   padding:14px; border-bottom:1px solid #EEF2F7; border-top:4px solid transparent;
 }
-.tictiva-dash .drawerIcon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
-.tictiva-dash .drawerLabel{ font-size:12px; color:#64748B; }
-.tictiva-dash .drawerTitle{ margin:0; font-size:18px; font-weight:800; color:#0B1A38; }
-.tictiva-dash .drawerDesc{ margin:4px 0 0; color:#64748B; }
-.tictiva-dash .drawerClose{ background:none; border:none; font-size:20px; cursor:pointer; color:#334155; }
-
-.tictiva-dash .drawerList{ list-style:none; margin:0; padding:12px 14px 18px; display:grid; gap:8px; overflow:auto; }
-.tictiva-dash .drawerItem{
+.drawer__icon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
+.drawer__label{ font-size:12px; color:#64748B; }
+.drawer__title{ margin:0; font-size:18px; font-weight:800; color:#0B1A38; }
+.drawer__desc{ margin:4px 0 0; color:#64748B; }
+.drawer__close{ background:none; border:none; font-size:20px; cursor:pointer; color:#334155; }
+.drawer__list{ list-style:none; margin:0; padding:12px 14px 18px; display:grid; gap:8px; overflow:auto; }
+.drawer__item{
   width:100%; display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
   padding:10px; border:1px solid #E5E7EB; border-radius:12px; background:#F8FAFC; cursor:pointer;
 }
-.tictiva-dash .drawerItem:hover{ background:#fff; }
-.tictiva-dash .drawerDot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
-.tictiva-dash .drawerText{ color:#0B1A38; font-weight:600; }
-.tictiva-dash .drawerChev{ color:#64748B; font-size:18px; }
-
-/* --------------------- Ocultar “Instalaciones” temporalmente --------------------- */
-/* Si esa card tiene clase/atributo propio, usa uno de estos: */
-.tictiva-dash .dash-card--instalaciones,
-.tictiva-dash [data-card="instalaciones"] { display:none !important; }
-
-/* Si no, como hoy suele ser la última de la grilla, la ocultamos así.
-   Quitar esta regla cuando tengas la clase/atributo propio. */
-.tictiva-dash .dash-grid > .dash-card:last-child { display:none !important; }
+.drawer__item:hover{ background:#fff; }
+.drawer__dot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
+.drawer__text{ color:#0B1A38; font-weight:600; }
+.drawer__chev{ color:#64748B; font-size:18px; }
