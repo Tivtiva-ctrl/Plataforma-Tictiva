@@ -154,15 +154,15 @@ const Icon = ({ name, size = 24, className = "" }) => {
   }
 };
 
-/* ===== Drawer: NAVEGA PRIMERO, CIERRA DESPUÉS ===== */
+/* ===== Drawer: <a href> visible + navigate() y cierre en el próximo tick ===== */
 function Drawer({ module, onClose }) {
   const navigate = useNavigate();
   if (!module) return null;
 
-  const handleClick = (to) => {
-    // 1) Navegamos ya
+  const handleClick = (e, to) => {
+    // asegura navegación con JS y cierre sin carreras
+    e.preventDefault();
     navigate(to);
-    // 2) Cerramos el drawer en el próximo tick
     setTimeout(onClose, 0);
   };
 
@@ -188,15 +188,15 @@ function Drawer({ module, onClose }) {
             return (
               <li key={idx}>
                 {clickable ? (
-                  <button
-                    type="button"
+                  <a
+                    href={it.to}
                     className="drawer__item"
-                    onClick={() => handleClick(it.to)}
+                    onClick={(e) => handleClick(e, it.to)}
                   >
                     <span className="drawer__dot" />
                     <span className="drawer__text">{it.label}</span>
                     <span className="drawer__chev">›</span>
-                  </button>
+                  </a>
                 ) : (
                   <div className="drawer__item drawer__item--disabled" aria-disabled="true">
                     <span className="drawer__dot" />
@@ -223,15 +223,13 @@ export default function Dashboard({ onLogout }) {
 
   useEffect(() => {
     const onDoc = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpenMenu(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(false);
     };
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // Por si cambia la URL desde otro lugar, cerramos el drawer
+  // Si cambia la URL por cualquier motivo, cerramos el drawer
   useEffect(() => {
     if (openModule) setOpenModule(null);
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -384,15 +382,9 @@ export default function Dashboard({ onLogout }) {
           </div>
 
           <div className="hero__stats">
-            <span>
-              <strong>Hoy:</strong> 154 marcas
-            </span>
-            <span>
-              <strong>Mensajes:</strong> 3 nuevos
-            </span>
-            <span>
-              <strong>Encuestas:</strong> 2 activas
-            </span>
+            <span><strong>Hoy:</strong> 154 marcas</span>
+            <span><strong>Mensajes:</strong> 3 nuevos</span>
+            <span><strong>Encuestas:</strong> 2 activas</span>
           </div>
         </div>
       </section>
@@ -412,12 +404,7 @@ export default function Dashboard({ onLogout }) {
             {/* Chips ESTÁTICOS (no clickeables) */}
             <ul className="card__list">
               {m.quick.map((q, i) => (
-                <li
-                  key={i}
-                  aria-disabled="true"
-                  tabIndex={-1}
-                  style={{ cursor: "default", pointerEvents: "none" }}
-                >
+                <li key={i} aria-disabled="true" tabIndex={-1} style={{ cursor: "default", pointerEvents: "none" }}>
                   <Icon name={q.icon || "info"} size={16} />
                   <span>{q.label}</span>
                 </li>
