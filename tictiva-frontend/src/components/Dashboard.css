@@ -185,4 +185,60 @@ body {
 .card.cuida{
   --accent:#3898FF;   /* azul suave */
   --icon-bg:#EEF6FF;  --icon-bd:#DCEAFF;
+}/* ====== PATCH MAQUETA: barra superior + paleta por módulo + icono unificado ====== */
+
+/* 1) Barra superior interna (en vez de border-top) */
+.card{ position: relative; border-top: 0 !important; }
+.card::before{
+  content:""; position:absolute; left:12px; right:12px; top:0; height:6px;
+  border-radius:8px; background: var(--accent, #2E6CF6);
 }
+
+/* 2) Paleta exacta (azules distintos + asistencia en teal) */
+.card.rrhh{
+  --accent:  #2E6CF6;   /* azul base Tictiva */
+  --icon-bg: #EDF3FF;
+  --icon-bd: #D9E5FF;
+}
+.card.asistencia{
+  --accent:  #10B981;   /* teal */
+  --icon-bg: #EAFBF5;
+  --icon-bd: #CEF3E5;
+}
+.card.comunicaciones{
+  --accent:  #3F7AFE;   /* azul vivo (no morado) */
+  --icon-bg: #E9F1FF;
+  --icon-bd: #D6E4FF;
+}
+.card.reporteria{
+  --accent:  #0EA5E9;   /* azul cielo */
+  --icon-bg: #E8F7FF;
+  --icon-bd: #D3ECFF;
+}
+.card.cuida{
+  --accent:  #3898FF;   /* azul suave */
+  --icon-bg: #EEF6FF;
+  --icon-bd: #DCEAFF;
+}
+
+/* 3) Pastillón del icono (misma lógica para todos) */
+.card__icon{
+  width:40px; height:40px; border-radius:10px;
+  display:grid; place-items:center; flex-shrink:0;
+  color: var(--accent);
+  background: var(--icon-bg);
+  border:2px solid var(--icon-bd);
+}
+.card__icon svg{
+  width:22px; height:22px; display:block;
+  stroke: currentColor; stroke-width: 2; fill: none;
+}
+/* Si quedó algún emoji/imagen, lo ocultamos: solo SVG de línea */
+.card__icon > :not(svg){ display:none !important; }
+
+/* Hovers a juego (links y lista) */
+.card .card__open{ color: var(--accent); }
+.card .card__open:hover{ text-decoration: underline; }
+.card .card__list li:hover{ color: var(--accent); }
+.card .card__list li:hover .icon{ color: var(--accent); }
+
