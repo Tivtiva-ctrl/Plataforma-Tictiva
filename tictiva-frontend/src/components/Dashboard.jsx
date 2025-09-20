@@ -102,8 +102,14 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
+  // Dentro de tu componente Dashboard en src/components/Dashboard.jsx
+
   const MODULES = useMemo(() => [
-    { id: "rrhh", title: "RRHH", icon: "users", description: "Gestiona fichas, contratos, permisos y documentación legal.",
+    {
+      id: "rrhh",
+      title: "RRHH",
+      icon: "users",
+      description: "Gestiona fichas, contratos, permisos y documentación legal.",
       quick: [
         { label: "Fichas", to: ROUTES.listadoFichas, icon: "id-card" },
         { label: "Permisos", to: ROUTES.rrhhPermisos, icon: "file-signature" },
@@ -118,7 +124,11 @@ export default function Dashboard({ onLogout }) {
         { label: "Bodega y EPP", to: null },
       ],
     },
-    { id: "asistencia", title: "Asistencia", icon: "clock", description: "Controla horarios, marcas, dispositivos y turnos.",
+    {
+      id: "asistencia",
+      title: "Asistencia",
+      icon: "clock",
+      description: "Controla horarios, marcas, dispositivos y turnos.",
       quick: [
         { label: "Supervisión", to: ROUTES.asistenciaSupervision, icon: "eye" },
         { label: "Marcas registradas", to: ROUTES.asistenciaMarcas, icon: "map-pin" },
@@ -133,8 +143,13 @@ export default function Dashboard({ onLogout }) {
         { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos },
       ],
     },
-    { id: "comunicaciones", title: "Comunicaciones", icon: "chat", description: "Envía mensajes, encuestas y comunicados a tu equipo.",
+    {
+      id: "comunicaciones",
+      title: "Comunicaciones",
+      icon: "chat",
+      description: "Envía mensajes, encuestas y comunicados a tu equipo.",
       quick: [
+        // --- MIRA AQUÍ: Se añaden los íconos que faltaban ---
         { label: "Mensajes", to: null, icon: "mail" },
         { label: "Plantillas", to: null, icon: "file-text" },
         { label: "Encuestas de clima", to: null, icon: "pie-chart" },
@@ -145,15 +160,26 @@ export default function Dashboard({ onLogout }) {
         { label: "Encuestas", to: null },
       ],
     },
-    { id: "reporteria", title: "Reportería", icon: "chart", description: "Genera informes, dashboards y comparte resultados.",
-      quick: [{ label: "Dashboards y descargas", to: null, icon: "bar-chart" }],
+    {
+      id: "reporteria",
+      title: "Reportería",
+      icon: "chart",
+      description: "Genera informes, dashboards y comparte resultados.",
+      quick: [
+        // --- Y AQUÍ ---
+        { label: "Dashboards y descargas", to: null, icon: "bar-chart" }
+      ],
       all: [
         { label: "Informes Gerenciales", to: null },
         { label: "Dashboards", to: null },
         { label: "Documentos", to: ROUTES.rrhhDocumentos },
       ],
     },
-    { id: "cuida", title: "Tictiva Cuida", icon: "heart", description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
+    {
+      id: "cuida",
+      title: "Tictiva Cuida",
+      icon: "heart",
+      description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
       quick: [{ label: "Bienestar y VictorIA", to: null, icon: "heart" }],
       all: [
         { label: "Test Psicológicos", to: null },
