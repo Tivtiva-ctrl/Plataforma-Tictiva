@@ -221,4 +221,83 @@ body {
   --accent: #3898FF;
   --icon-bg: #EEF6FF;
   --icon-bd: #DCEAFF;
+}/* === HOTFIX: interior de cards + colores por módulo + iconos unificados === */
+
+/* Interior de la lista (sin viñetas y en 2 columnas) */
+.card__list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
 }
+@media (max-width: 420px){
+  .card__list{ grid-template-columns: 1fr; }
+}
+.card__list li{
+  font-size: 0.95rem;
+  color: var(--ink-700);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+.card .card__list li:hover{ color: var(--accent, #2E6CF6); }
+
+/* Botón “Abrir módulo” como link, sin borde */
+.card__open{
+  border: none !important;
+  background: none !important;
+  color: var(--accent, #2E6CF6) !important;
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+}
+.card__open:hover{ text-decoration: underline; }
+
+/* Icono de cabecera de card: siempre SVG de línea (sin emojis) */
+.card__icon{
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center;
+  color: var(--accent, #2E6CF6);
+  background: var(--icon-bg, #F7FAFF);
+  border: 2px solid var(--icon-bd, rgba(0,0,0,.06));
+}
+.card__icon svg{
+  width: 22px; height: 22px; display: block;
+  stroke: currentColor; stroke-width: 2; fill: none;
+}
+.card__icon > :not(svg){ display: none; } /* oculta cualquier emoji accidental */
+
+/* ===== Paleta final por módulo (como la maqueta: azules + asistencia en teal) ===== */
+.card.rrhh{
+  --accent: #2E6CF6;   /* azul base Tictiva */
+  --icon-bg: #EDF3FF;
+  --icon-bd: #D9E5FF;
+}
+.card.asistencia{
+  --accent: #10B981;   /* teal */
+  --icon-bg: #EAFBF5;
+  --icon-bd: #CEF3E5;
+}
+.card.comunicaciones{
+  --accent: #3F7AFE;   /* azul vivo (no morado) */
+  --icon-bg: #E9F1FF;
+  --icon-bd: #D6E4FF;
+}
+.card.reporteria{
+  --accent: #0EA5E9;   /* azul cielo */
+  --icon-bg: #E8F7FF;
+  --icon-bd: #D3ECFF;
+}
+.card.cuida{
+  --accent: #3898FF;   /* azul suave */
+  --icon-bg: #EEF6FF;
+  --icon-bd: #DCEAFF;
+}
+
+/* Asegura barra superior de color en todas las cards */
+.card{ border-top: 5px solid var(--accent, #2E6CF6); }
+
