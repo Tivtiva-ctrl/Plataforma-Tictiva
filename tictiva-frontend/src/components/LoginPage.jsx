@@ -2,7 +2,9 @@
 import React, { useState } from "react";
 import "./LoginPage.css";
 // (si luego quieres volver a un PNG, podemos reactivar el import y el <img>)
-import illustration from "../../assets/login-illustration.png";
+
+// --- CORRECCIÓN: Se elimina la importación de la imagen ---
+// import illustration from "../../assets/login-illustration.png";
 
 export default function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
@@ -83,7 +85,8 @@ export default function LoginPage({ onLoginSuccess }) {
 
       {/* Columna derecha (ilustración) */}
       <section className="login__art">
-        <img className="login__svg" src={illustration} alt="Ilustración Tictiva" />
+        {/* --- CORRECCIÓN: Se cambia el 'src' a una ruta de texto directa --- */}
+        <img className="login__svg" src="/assets/login-illustration.png" alt="Ilustración Tictiva" />
         <div className="login__artCaption">
           Humanizamos la gestión, <br /> digitalizamos tu tranquilidad
         </div>
