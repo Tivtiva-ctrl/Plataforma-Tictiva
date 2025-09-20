@@ -1,7 +1,7 @@
 // src/components/Dashboard.jsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../router/routes";
 import "./Dashboard.css";
 
@@ -154,18 +154,9 @@ const Icon = ({ name, size = 24, className = "" }) => {
   }
 };
 
-/* ===== Drawer ===== */
-function Drawer({ module, onClose, onNavigate }) {
+/* ===== Drawer (usa <Link> para navegar y cierra) ===== */
+function Drawer({ module, onClose }) {
   if (!module) return null;
-
-  const go = (to) => {
-    if (typeof to === "string" && to.length) {
-      onNavigate(to);
-      onClose();
-    } else {
-      alert("Este submódulo estará disponible pronto.");
-    }
-  };
 
   return (
     <>
@@ -182,21 +173,25 @@ function Drawer({ module, onClose, onNavigate }) {
           </div>
           <button className="drawer__close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
+
         <ul className="drawer__list">
           {(module.all ?? []).map((it, idx) => {
             const clickable = !!it.to;
             return (
               <li key={idx}>
-                <button
-                  className={`drawer__item ${clickable ? "" : "drawer__item--disabled"}`}
-                  onClick={() => clickable && go(it.to)}
-                  disabled={!clickable}
-                  aria-disabled={!clickable}
-                >
-                  <span className="drawer__dot" />
-                  <span className="drawer__text">{it.label}</span>
-                  <span className="drawer__chev">{clickable ? "›" : "•"}</span>
-                </button>
+                {clickable ? (
+                  <Link to={it.to} className="drawer__item" onClick={onClose}>
+                    <span className="drawer__dot" />
+                    <span className="drawer__text">{it.label}</span>
+                    <span className="drawer__chev">›</span>
+                  </Link>
+                ) : (
+                  <div className="drawer__item drawer__item--disabled" aria-disabled="true">
+                    <span className="drawer__dot" />
+                    <span className="drawer__text">{it.label}</span>
+                    <span className="drawer__chev">•</span>
+                  </div>
+                )}
               </li>
             );
           })}
@@ -241,7 +236,7 @@ export default function Dashboard({ onLogout }) {
           { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos },
           { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
           { label: "Repositorio Documental", to: ROUTES.rrhhDocumentos },
-          { label: "Bodega y EPP", to: ROUTES.rrhhBodegaDashboard }, // habilitado
+          { label: "Bodega y EPP", to: ROUTES.rrhhBodegaDashboard },
         ],
       },
       {
@@ -424,7 +419,6 @@ export default function Dashboard({ onLogout }) {
         <Drawer
           module={openModule}
           onClose={() => setOpenModule(null)}
-          onNavigate={navigate}
         />
       )}
     </div>
