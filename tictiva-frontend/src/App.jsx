@@ -13,7 +13,7 @@ import { ROUTES } from "./router/routes.js";
 import { EmpresaProvider } from "./context/EmpresaContext";
 
 // --- Tus Componentes de Página ---
-import LoginPage from "./pages/LoginPage.jsx"; // Asumo que LoginPage está en pages
+import LoginPage from "./components/LoginPage.jsx"; // Asumo que LoginPage está en pages
 import Dashboard from "./components/Dashboard.jsx";
 import ListadoFichas from "./pages/ListadoFichas.jsx";
 import EmpleadoDetalle from "./pages/EmpleadoDetalle.jsx";
