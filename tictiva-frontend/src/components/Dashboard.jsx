@@ -1,5 +1,6 @@
-// ⬆️ Agrega esta línea en la cabecera de src/components/Dashboard.jsx (junto a tus otros imports)
+// imports (colócalos junto a tus otros imports arriba del archivo)
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../router/routes"; // ✅ faltaba este import
 
 /* ===== Drawer: submódulos ACTIVOS (clic navega y cierra) ===== */
 function Drawer({ module, onClose }) {

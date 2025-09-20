@@ -8,34 +8,34 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-import { ROUTES } from "./routes";
+import { ROUTES } from "./router/routes"; // ✅ ruta real de tus rutas
 
 // Login / Shell
 import LoginPage from "./components/LoginPage.jsx";
 
-// Dashboard (pasa onLogout para cerrar sesión desde el avatar)
+// Dashboard
 import Dashboard from "./components/Dashboard.jsx";
 
-// RRHH
-import ListadoFichas from "./pages/ListadoFichas.jsx";
-import EmpleadoDetalle from "./pages/EmpleadoDetalle.jsx";
-import PermisosJustificaciones from "./pages/PermisosJustificaciones.jsx";
-import ValidacionDT from "./pages/ValidacionDT.jsx";
-import RepoDocs from "./pages/RepoDocs.jsx";
+// RRHH (están en src/components)
+import ListadoFichas from "./components/ListadoFichas.jsx";
+import EmpleadoDetalle from "./components/EmpleadoDetalle.jsx";
+import PermisosJustificaciones from "./components/PermisosJustificaciones.jsx";
+import ValidacionDT from "./components/ValidacionDT.jsx";
+import RepoDocs from "./components/RepoDocs.jsx";
 
-// Bodega (usa ROUTES)
+// Bodega (están en src/bodega)
 import BodegaLayout from "./bodega/BodegaLayout.jsx";
 import BodegaDashboard from "./bodega/BodegaDashboard.jsx";
 import BodegaInventario from "./bodega/BodegaInventario.jsx";
 import BodegaColaboradores from "./bodega/BodegaColaboradores.jsx";
 import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
 
-// Asistencia
-import SupervisionIntegral from "./pages/SupervisionIntegral.jsx";
-import MarcasRegistradas from "./pages/MarcasRegistradas.jsx";
-import MapaCobertura from "./pages/MapaCobertura.jsx";
-import GestionDispositivos from "./pages/GestionDispositivos.jsx";
-import GestionTurnos from "./pages/GestionTurnos.jsx";
+// Asistencia (también en src/components)
+import SupervisionIntegral from "./components/SupervisionIntegral.jsx";
+import MarcasRegistradas from "./components/MarcasRegistradas.jsx";
+import MapaCobertura from "./components/MapaCobertura.jsx";
+import GestionDispositivos from "./components/GestionDispositivos.jsx";
+import GestionTurnos from "./components/GestionTurnos.jsx";
 
 import { EmpresaProvider } from "./context/EmpresaContext";
 
