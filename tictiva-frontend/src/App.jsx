@@ -21,9 +21,9 @@ import ListadoFichas from "./pages/ListadoFichas";
 import EmpleadoDetalle from "./pages/EmpleadoDetalle";
 import PermisosJustificaciones from "./pages/PermisosJustificaciones";
 import ValidacionDT from "./pages/ValidacionDT";
-import RepoDocs from "./pages/RepoDocs.jsx";
+import RepoDocs from "./pages/RepoDocs";
 
-// Bodega
+// Bodega (usa ROUTES)
 import BodegaLayout from "./bodega/BodegaLayout";
 import BodegaDashboard from "./bodega/BodegaDashboard";
 import BodegaInventario from "./bodega/BodegaInventario";
@@ -39,24 +39,14 @@ import GestionTurnos from "./pages/GestionTurnos";
 
 import { EmpresaProvider } from "./context/EmpresaContext";
 
-const BODEGA = {
-  root: "/rrhh/bodega",
-  dashboard: "/rrhh/bodega/dashboard",
-  inventario: "/rrhh/bodega/inventario",
-  colaboradores: "/rrhh/bodega/colaboradores",
-  operaciones: "/rrhh/bodega/operaciones",
-};
-
-// CÓDIGO CORREGIDO PARA MainApp
-
+// ============ MainApp ============
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isLoggedIn) navigate(ROUTES?.home || "/", { replace: true });
+    if (isLoggedIn) navigate(ROUTES.home || "/", { replace: true });
   }, [isLoggedIn, navigate]);
 
-  // 👇 HEMOS REEMPLAZADO EL DIV POR UN FRAGMENTO <>
   return (
     <>
       {!isLoggedIn ? (
@@ -65,7 +55,10 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
         <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
           <Routes>
             {/* Home */}
-            <Route path={ROUTES?.home || "/"} element={<Dashboard onLogout={handleLogout} />} />
+            <Route
+              path={ROUTES.home}
+              element={<Dashboard onLogout={handleLogout} />}
+            />
 
             {/* RRHH */}
             <Route path={ROUTES.listadoFichas} element={<ListadoFichas />} />
@@ -73,24 +66,28 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             <Route path={`${ROUTES.rrhhValidacionDT}/*`} element={<ValidacionDT />} />
             <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
 
-            {/* Bodega */}
-           <Route path={`${ROUTES.rrhhBodegaRoot}/*`} element={<BodegaLayout />}>
-           <Route index element={<Navigate to="dashboard" replace />} />
-           <Route path="dashboard" element={<BodegaDashboard />} />
-           <Route path="inventario" element={<BodegaInventario />} />
-           <Route path="colaboradores" element={<BodegaColaboradores />} />
-           <Route path="operaciones" element={<BodegaOperaciones />} />
-         </Route>
-
+            {/* Bodega (anidado con ROUTES) */}
+            <Route path={`${ROUTES.rrhhBodegaRoot}/*`} element={<BodegaLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<BodegaDashboard />} />
+              <Route path="inventario" element={<BodegaInventario />} />
+              <Route path="colaboradores" element={<BodegaColaboradores />} />
+              <Route path="operaciones" element={<BodegaOperaciones />} />
+            </Route>
 
             {/* Empleado */}
-           <Route path={ROUTES.empleadoDetalleById} element={<EmpleadoDetalle />} />
-           <Route path={ROUTES.empleadoDetalleByRut} element={<EmpleadoDetalle />} />
-           <Route path={ROUTES.empleadoBase} element={<Navigate to={ROUTES.listadoFichas} replace />} />
-
+            <Route path={ROUTES.empleadoDetalleById} element={<EmpleadoDetalle />} />
+            <Route path={ROUTES.empleadoDetalleByRut} element={<EmpleadoDetalle />} />
+            <Route
+              path={ROUTES.empleadoBase}
+              element={<Navigate to={ROUTES.listadoFichas} replace />}
+            />
 
             {/* Asistencia */}
-            <Route path="/asistencia" element={<Navigate to={ROUTES.asistenciaSupervision} replace />} />
+            <Route
+              path="/asistencia"
+              element={<Navigate to={ROUTES.asistenciaSupervision} replace />}
+            />
             <Route path={ROUTES.asistenciaSupervision} element={<SupervisionIntegral />} />
             <Route path={ROUTES.asistenciaMarcas} element={<MarcasRegistradas />} />
             <Route path={ROUTES.asistenciaMapa} element={<MapaCobertura />} />
@@ -98,7 +95,7 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             <Route path={ROUTES.asistenciaTurnos} element={<GestionTurnos />} />
 
             {/* Fallback */}
-            <Route path="*" element={<Navigate to={ROUTES?.home || "/"} replace />} />
+            <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
           </Routes>
         </Suspense>
       )}
@@ -106,6 +103,7 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   );
 }
 
+// ============ App (root) ============
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const handleLoginSuccess = () => setIsLoggedIn(true);
