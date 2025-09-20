@@ -11,35 +11,34 @@ import "./App.css";
 import { ROUTES } from "./routes";
 
 // Login / Shell
-import LoginPage from "./components/LoginPage";
+import LoginPage from "./components/LoginPage.jsx";
 
-// 👇 Dashboard (le pasamos onLogout para cerrar sesión desde el avatar)
+// Dashboard (pasa onLogout para cerrar sesión desde el avatar)
 import Dashboard from "./components/Dashboard.jsx";
 
 // RRHH
-import ListadoFichas from "./pages/ListadoFichas";
-import EmpleadoDetalle from "./pages/EmpleadoDetalle";
-import PermisosJustificaciones from "./pages/PermisosJustificaciones";
-import ValidacionDT from "./pages/ValidacionDT";
-import RepoDocs from "./pages/RepoDocs";
+import ListadoFichas from "./pages/ListadoFichas.jsx";
+import EmpleadoDetalle from "./pages/EmpleadoDetalle.jsx";
+import PermisosJustificaciones from "./pages/PermisosJustificaciones.jsx";
+import ValidacionDT from "./pages/ValidacionDT.jsx";
+import RepoDocs from "./pages/RepoDocs.jsx";
 
 // Bodega (usa ROUTES)
-import BodegaLayout from "./bodega/BodegaLayout";
-import BodegaDashboard from "./bodega/BodegaDashboard";
-import BodegaInventario from "./bodega/BodegaInventario";
-import BodegaColaboradores from "./bodega/BodegaColaboradores";
-import BodegaOperaciones from "./bodega/BodegaOperaciones";
+import BodegaLayout from "./bodega/BodegaLayout.jsx";
+import BodegaDashboard from "./bodega/BodegaDashboard.jsx";
+import BodegaInventario from "./bodega/BodegaInventario.jsx";
+import BodegaColaboradores from "./bodega/BodegaColaboradores.jsx";
+import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
 
 // Asistencia
-import SupervisionIntegral from "./pages/SupervisionIntegral";
-import MarcasRegistradas from "./pages/MarcasRegistradas";
-import MapaCobertura from "./pages/MapaCobertura";
-import GestionDispositivos from "./pages/GestionDispositivos";
-import GestionTurnos from "./pages/GestionTurnos";
+import SupervisionIntegral from "./pages/SupervisionIntegral.jsx";
+import MarcasRegistradas from "./pages/MarcasRegistradas.jsx";
+import MapaCobertura from "./pages/MapaCobertura.jsx";
+import GestionDispositivos from "./pages/GestionDispositivos.jsx";
+import GestionTurnos from "./pages/GestionTurnos.jsx";
 
 import { EmpresaProvider } from "./context/EmpresaContext";
 
-// ============ MainApp ============
 function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   const navigate = useNavigate();
 
@@ -103,7 +102,6 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   );
 }
 
-// ============ App (root) ============
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const handleLoginSuccess = () => setIsLoggedIn(true);
