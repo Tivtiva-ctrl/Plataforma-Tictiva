@@ -183,6 +183,7 @@ export default function Dashboard({ onLogout }) {
         icon: "users",
         color: "#2E6CF6",
         description: "Gestiona fichas, contratos, permisos y documentación legal.",
+        entry: ROUTES.listadoFichas, // << Ruta principal al abrir módulo
         quick: [
           { label: "Fichas", icon: "id-card" },
           { label: "Permisos", icon: "file-signature" },
@@ -190,11 +191,11 @@ export default function Dashboard({ onLogout }) {
           { label: "Validación DT", icon: "users" },
         ],
         all: [
-          { label: "Listado y Fichas", to: ROUTES.listadoFichas },
-          { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos },
-          { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
-          { label: "Repositorio Documental", to: ROUTES.rrhhDocumentos },
-          { label: "Bodega y EPP", to: "/rrhh/bodega/dashboard" },
+          { label: "Listado y Fichas" }, // estático
+          { label: "Permisos y Justificaciones" }, // estático
+          { label: "Validación DT" }, // estático
+          { label: "Repositorio Documental" }, // estático
+          { label: "Bodega y EPP" }, // estático (dashboard está en RRHH → Bodega)
         ],
       },
       {
@@ -203,6 +204,7 @@ export default function Dashboard({ onLogout }) {
         icon: "clock",
         color: "#10B981",
         description: "Controla horarios, marcas, dispositivos y turnos.",
+        entry: ROUTES.asistenciaSupervision, // << Ruta principal al abrir módulo
         quick: [
           { label: "Supervisión", icon: "eye" },
           { label: "Marcas registradas", icon: "map-pin" },
@@ -210,11 +212,11 @@ export default function Dashboard({ onLogout }) {
           { label: "Dispositivos", icon: "smartphone" },
         ],
         all: [
-          { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
-          { label: "Marcas Registradas", to: ROUTES.asistenciaMarcas },
-          { label: "Mapa de Cobertura", to: ROUTES.asistenciaMapa },
-          { label: "Gestión de Dispositivos", to: ROUTES.asistenciaDispositivos },
-          { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos },
+          { label: "Supervisión Integral" }, // estático
+          { label: "Marcas Registradas" }, // estático
+          { label: "Mapa de Cobertura" }, // estático
+          { label: "Gestión de Dispositivos" }, // estático
+          { label: "Gestión de Turnos y Jornadas" }, // estático
         ],
       },
       {
@@ -223,15 +225,16 @@ export default function Dashboard({ onLogout }) {
         icon: "chat",
         color: "#3F7AFE",
         description: "Envía mensajes, encuestas y comunicados a tu equipo.",
+        entry: null, // no hay ruta en ROUTES (queda estático)
         quick: [
           { label: "Mensajes", icon: "mail" },
           { label: "Plantillas", icon: "file-text" },
           { label: "Encuestas de clima", icon: "pie-chart" },
         ],
         all: [
-          { label: "Enviar mensaje", to: ROUTES.comunicacionesMensajes },
-          { label: "Plantillas", to: ROUTES.comunicacionesPlantillas },
-          { label: "Encuestas", to: ROUTES.comunicacionesEncuestas },
+          { label: "Enviar mensaje" },
+          { label: "Plantillas" },
+          { label: "Encuestas" },
         ],
       },
       {
@@ -240,11 +243,12 @@ export default function Dashboard({ onLogout }) {
         icon: "chart",
         color: "#0EA5E9",
         description: "Genera informes, dashboards y comparte resultados.",
+        entry: null, // no hay ruta en ROUTES (queda estático)
         quick: [{ label: "Dashboards y descargas", icon: "bar-chart" }],
         all: [
-          { label: "Informes Gerenciales", to: ROUTES.reporteriaDashboards },
-          { label: "Dashboards", to: ROUTES.reporteriaDashboards },
-          { label: "Documentos", to: ROUTES.rrhhDocumentos },
+          { label: "Informes Gerenciales" },
+          { label: "Dashboards" },
+          { label: "Documentos" },
         ],
       },
       {
@@ -253,11 +257,32 @@ export default function Dashboard({ onLogout }) {
         icon: "heart",
         color: "#3898FF",
         description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
+        entry: null, // no hay ruta en ROUTES (queda estático)
         quick: [{ label: "Bienestar y VictorIA", icon: "heart" }],
         all: [
-          { label: "Test Psicológicos", to: ROUTES.cuidaTests },
-          { label: "Dashboard de Bienestar", to: ROUTES.cuidaBienestar },
-          { label: "VictorIA", to: ROUTES.cuidaVictoria },
+          { label: "Test Psicológicos" },
+          { label: "Dashboard de Bienestar" },
+          { label: "VictorIA" },
+        ],
+      },
+      // Si quieres exponer Bodega & EPP como módulo directo:
+      {
+        id: "bodega",
+        title: "RRHH → Bodega & EPP",
+        icon: "file-text",
+        color: "#6D28D9",
+        description: "Inventario, colaboradores y operaciones de EPP.",
+        entry: ROUTES.rrhhBodegaDashboard, // << Ruta principal al abrir módulo
+        quick: [
+          { label: "Dashboard", icon: "bar-chart" },
+          { label: "Inventario", icon: "file-text" },
+          { label: "Colaboradores", icon: "users" },
+        ],
+        all: [
+          { label: "Dashboard" },
+          { label: "Inventario" },
+          { label: "Colaboradores" },
+          { label: "Operaciones" },
         ],
       },
     ],
@@ -354,7 +379,7 @@ export default function Dashboard({ onLogout }) {
             key={m.id}
             className={`card ${m.id} ${index >= 3 ? "card--last-row" : ""}`}
           >
-            {/* Abre el drawer */}
+            {/* Abre el drawer (solo para mostrar submódulos estáticos) */}
             <header
               className="card__head"
               onClick={() => setOpenModule(m.id)}
@@ -382,7 +407,7 @@ export default function Dashboard({ onLogout }) {
             <footer className="card__foot">
               <button
                 className="card__open"
-                onClick={() => setOpenModule(m.id)}
+                onClick={() => safeGo(navigate, m.entry)}
               >
                 Abrir módulo →
               </button>
@@ -401,9 +426,8 @@ export default function Dashboard({ onLogout }) {
   );
 }
 
-/* ===== Drawer: submódulos ACTIVOS ===== */
+/* ===== Drawer: submódulos ESTÁTICOS (sin navegación) ===== */
 function Drawer({ module, onClose }) {
-  const navigate = useNavigate();
   if (!module) return null;
 
   return (
@@ -430,14 +454,12 @@ function Drawer({ module, onClose }) {
         <ul className="drawer__list">
           {module.all.map((it, idx) => (
             <li key={idx}>
-              <button
-                className="drawer__item"
-                onClick={() => safeGo(navigate, it.to)}
-              >
+              {/* Ítems estáticos, sin onClick */}
+              <div className="drawer__item" aria-disabled="true">
                 <span className="drawer__dot" />
                 <span className="drawer__text">{it.label}</span>
-                <span className="drawer__chev">›</span>
-              </button>
+                <span className="drawer__chev">•</span>
+              </div>
             </li>
           ))}
         </ul>
