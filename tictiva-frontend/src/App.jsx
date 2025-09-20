@@ -14,7 +14,7 @@ import { ROUTES } from "./routes";
 import LoginPage from "./components/LoginPage";
 
 // 👇 Dashboard (le pasamos onLogout para cerrar sesión desde el avatar)
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard.jsx";
 
 // RRHH
 import ListadoFichas from "./pages/ListadoFichas";
