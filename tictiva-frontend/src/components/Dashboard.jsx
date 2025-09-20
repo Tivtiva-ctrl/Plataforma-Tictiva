@@ -1,6 +1,6 @@
 // imports (colócalos junto a tus otros imports arriba del archivo)
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../router/routes"; // ✅ faltaba este import
+import { ROUTES } from "../router/routes.js"; // ✅ faltaba este import
 
 /* ===== Drawer: submódulos ACTIVOS (clic navega y cierra) ===== */
 function Drawer({ module, onClose }) {
