@@ -1,224 +1,169 @@
-/* --- VARIABLES Y ESTILOS GENERALES --- */
-:root {
+/* =========================
+   TICTIVA — HOME (SCOPED)
+   No cambia layout. Solo estilo visual.
+   Aplica solo dentro de .home
+   ========================= */
+
+/* Paleta y tokens */
+.home {
   --ink-900: #0F172A;
-  --ink-700: #1F2937;
+  --ink-800: #1E293B;
+  --ink-600: #475569;
   --ink-500: #64748B;
-  --border: #E6EDF5;
+
+  --page-bg: #F5F7FB;
   --card: #FFFFFF;
-  --page-bg: #F8F9FA;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --border: #E6EDF5;
+  --shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 
-  /* Colores tip/hero */
-  --tip-amarillo-icon: #F1C40F;
-  --tip-fondo: #EBF5FB;
-  --tip-borde: #BEE3F8;
+  /* Acentos por módulo (maqueta) */
+  --acc-rrhh: #4BA3FF;        /* borde superior azul */
+  --acc-asistencia: #16B1A9;  /* turquesa */
+  --acc-comunic: #7C83FF;     /* lila/índigo */
+  --acc-reporteria: #35B0FF;  /* celeste */
+  --acc-cuida: #00C6AE;       /* teal */
 
-  --font-family: 'Inter', sans-serif;
+  /* Tip VictorIA */
+  --tip-bg: #E9F3FF;
+  --tip-icon: #4BA3FF;
 }
 
-body {
-  font-family: var(--font-family);
-  background-color: var(--page-bg);
-  color: var(--ink-700);
-  margin: 0;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Fondo de la página */
+.home {
+  background: radial-gradient(1200px 600px at 20% -20%, rgba(99, 102, 241, 0.06), transparent 60%) ,
+              radial-gradient(900px 450px at 90% -10%, rgba(45, 212, 191, 0.07), transparent 55%),
+              var(--page-bg);
+  padding-bottom: 28px;
 }
 
-/* ===== LAYOUT PRINCIPAL ===== */
-.dash {
-  padding: 0;
-  background: var(--page-bg);
-  color: var(--ink-700);
+/* Header (Hola, Verónica + buscador si existe) */
+.home .page-header {
+  display: grid;
+  gap: 12px;
+  padding: 20px 12px 0;
+}
+.home .page-title {
+  font-size: clamp(22px, 2.3vw, 32px);
+  line-height: 1.1;
+  color: var(--ink-900);
+  font-weight: 800;
+}
+.home .page-subtitle {
+  color: var(--ink-600);
+  font-weight: 500;
 }
 
-/* ===== CABECERA ===== */
-.hero {
-  background-color: var(--card);
-  border-bottom: 1px solid var(--border);
-  padding: 0 2rem;
-}
-
-.hero__rail {
+/* Tip de VictorIA */
+.home .tip-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem 0;
+  gap: 12px;
+  background: var(--tip-bg);
+  border: 1px solid #D9E9FF;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+.home .tip-card .tip-icon {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #D9E9FF;
+  color: var(--tip-icon);
+  font-weight: 700;
+}
+.home .tip-card .tip-text {
+  color: var(--ink-800);
+  font-weight: 600;
+}
+.home .tip-card a {
+  margin-left: auto;
+  color: var(--tip-icon);
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.hero__brand { display: flex; align-items: center; gap: 10px; }
-.hero__logo {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: linear-gradient(135deg, #2e6cf6, #44b0ff);
-  position: relative; box-shadow: 0 2px 8px rgba(68,176,255,.25);
-}
-.hero__logo::after { content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
-.hero__brandText { font-weight:800; color:var(--ink-900); font-size:1.25rem; }
-
-.hero__tools { position:relative; display:flex; align-items:center; gap:1rem; }
-.hero__search{
-  display:flex; align-items:center; gap:8px;
-  background:var(--page-bg); border:1px solid var(--border);
-  border-radius:999px; padding:.75rem 1.25rem; min-width:300px;
-}
-.hero__search input{ border:none; outline:none; background:transparent; color:var(--ink-700); font-size:1rem; width:100%; }
-.hero__search input::placeholder{ color:var(--ink-500); }
-
-.hero__avatar{
-  width:40px; height:40px; border-radius:50%;
-  background:#2E6CF6; color:#fff; font-weight:800; font-size:1.2rem;
-  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
-}
-.hero__menu{
-  position:absolute; right:0; top:50px; width:200px;
-  background:var(--card); border:1px solid var(--border);
-  border-radius:12px; box-shadow:var(--shadow);
-  display:flex; flex-direction:column; overflow:hidden; z-index:1000;
-}
-.hero__menuItem{ padding:10px 12px; background:var(--card); border:none; text-align:left; cursor:pointer; color:var(--ink-700); }
-.hero__menuItem:hover{ background:var(--page-bg); }
-.hero__menuItem--danger{ color:#ef4444; }
-
-.hero__content { max-width:1400px; margin:0 auto; padding:2rem 2rem; }
-.hero__title { margin:0; font-size:2.25rem; font-weight:800; color:var(--ink-900); }
-.hero__subtitle { margin:.5rem 0 1.5rem 0; color:var(--ink-500); font-size:1.1rem; }
-
-/* ===== Tip VictorIA ===== */
-.tip{
-  display:flex; align-items:center; gap:1rem;
-  padding:1rem 1.5rem; border-radius:14px;
-  background:var(--tip-fondo); border:1px solid var(--tip-borde);
-  box-shadow:var(--shadow); margin:1.5rem 0;
-}
-.tip__icon{
-  width:40px; height:40px; border-radius:50%; display:grid; place-items:center;
-  background:var(--tip-amarillo-icon); color:#fff; font-size:1.25rem; flex-shrink:0;
-}
-.tip__text{ font-size:1rem; flex:1; color:var(--ink-700); }
-.tip__text strong{ color:var(--ink-900); }
-.linkBtn, .tip__cta{ border:none; background:none; color:#2E6CF6; font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
-
-/* Stats bajo el tip (si las usas) */
-.hero__stats { margin-top:2rem; color:var(--ink-500); font-size:.95rem; display:flex; gap:2rem; }
-.hero__stats strong { color:var(--ink-700); }
-
-/* ===== GRID DE MÓDULOS: 3 arriba / 2 abajo (desktop) ===== */
-.grid{
-  max-width:1400px; margin:0 auto 2rem auto; padding:0 2rem;
-  display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:24px; align-items:start;
-}
-@media (max-width:1200px){ .grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
-@media (max-width:680px){ .grid{ grid-template-columns:1fr; } }
-
-/* ===== CARD (estructura general) ===== */
-.card{
-  background:var(--card); border:1px solid var(--border); border-radius:14px;
-  box-shadow:var(--shadow); display:flex; flex-direction:column; padding:1.5rem;
-  /* barra superior del color del módulo */
-  border-top:5px solid var(--accent, #2E6CF6);
+/* Métricas (Hoy: Marcas, Mensajes, etc.) */
+.home .stats-row {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  padding: 10px 12px 0;
+  color: var(--ink-600);
+  font-weight: 600;
 }
 
-.card__head{ display:flex; align-items:center; gap:1rem; margin-bottom:.5rem; }
-.card__title{ margin:0; font-size:1.3rem; font-weight:800; color:var(--ink-900); }
-.card__desc{ margin:0 0 1rem 0; color:var(--ink-500); font-size:.95rem; line-height:1.5; flex-grow:1; }
-
-/* Lista interna en dos columnas (se apila en móviles pequeños) */
-.card__list{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:.75rem 1.5rem; }
-@media (max-width:420px){ .card__list{ grid-template-columns:1fr; } }
-.card__list li{ font-size:.95rem; color:var(--ink-700); display:flex; align-items:center; gap:.75rem; cursor:pointer; }
-
-.card__foot{ display:flex; justify-content:flex-end; align-items:center; margin-top:1.5rem; }
-.card__open{ border:none; background:none; color:var(--accent, #2E6CF6); font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
-.card__open:hover{ text-decoration:underline; }
-
-/* ===== ICONO DE LA CARD (unificado, sin emojis realistas) ===== */
-.card__icon{
-  width:40px; height:40px; border-radius:10px; display:grid; place-items:center; flex-shrink:0;
-  color:var(--accent, #2E6CF6);
-  background:var(--icon-bg, #F7FAFF);
-  border:2px solid var(--icon-bd, rgba(0,0,0,.06));
-}
-.card__icon svg{
-  width:22px; height:22px; display:block;
-  stroke:currentColor; stroke-width:2; fill:none;
-}
-/* Por si quedó algún emoji/imagen puesta en el JSX */
-.card__icon > :not(svg){ display:none; }
-
-/* Hovers coherentes con el módulo */
-.card .card__list li:hover{ color:var(--accent, #2E6CF6); }
-.card .card__list li:hover .icon{ color:var(--accent, #2E6CF6); }
-
-/* ===== DRAWER (panel lateral) ===== */
-.drawer__backdrop{
-  position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter:blur(2px); z-index:2000;
-}
-.drawer{
-  position:fixed; top:0; right:0; height:100vh; width:min(420px,92vw);
-  background:#fff; border-left:1px solid var(--border);
-  box-shadow:-20px 0 50px rgba(2,8,23,.25);
-  display:flex; flex-direction:column; z-index:2001; animation:dashDrawerIn .22s ease-out;
-}
-@keyframes dashDrawerIn{ from{ transform:translateX(16px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
-.drawer__head{
-  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
-  padding:14px; border-bottom:1px solid #EEF2F7; border-top:4px solid transparent;
-}
-.drawer__icon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
-.drawer__label{ font-size:12px; color:#64748B; }
-.drawer__title{ margin:0; font-size:18px; font-weight:800; color:#0B1A38; }
-.drawer__desc{ margin:4px 0 0; color:#64748B; }
-.drawer__close{ background:none; border:none; font-size:20px; cursor:pointer; color:#334155; }
-.drawer__list{ list-style:none; margin:0; padding:12px 14px 18px; display:grid; gap:8px; overflow:auto; }
-.drawer__item{
-  width:100%; display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
-  padding:10px; border:1px solid #E5E7EB; border-radius:12px; background:#F8FAFC; cursor:pointer;
-}
-.drawer__item:hover{ background:#fff; }
-.drawer__dot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
-.drawer__text{ color:#0B1A38; font-weight:600; }
-.drawer__chev{ color:#64748B; font-size:18px; }
-
-/* ======================================================
-   PALETA FINAL POR MÓDULO — COMO LA MAQUETA (AZULES + TEAL)
-   RRHH / Comunicaciones / Reportería / Cuida: azules distintos
-   Asistencia: verde-azulado
-   ====================================================== */
-
-/* RRHH — azul base Tictiva */
-.card.rrhh{
-  --accent: #2E6CF6;
-  --icon-bg: #EDF3FF;
-  --icon-bd: #D9E5FF;
+/* Grid de módulos */
+.home .modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  padding: 16px 12px 0;
 }
 
-/* Asistencia — teal */
-.card.asistencia{
-  --accent: #10B981;
-  --icon-bg: #EAFBF5;
-  --icon-bd: #CEF3E5;
+/* Tarjeta base de módulo */
+.home .module-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 16px 16px 12px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.home .module-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(15,23,42,0.09);
 }
 
-/* Comunicaciones — azul vivo (sin morado) */
-.card.comunicaciones{
-  --accent: #3F7AFE;
-  --icon-bg: #E9F1FF;
-  --icon-bd: #D6E4FF;
+/* Borde superior/acento (usa la clase del módulo) */
+.home .module-card::before {
+  content: "";
+  display: block;
+  height: 6px;
+  border-radius: 12px 12px 0 0;
+  margin: -16px -16px 12px;
+  background: var(--acc-rrhh); /* fallback */
+}
+.home .module-card.rrhh::before        { background: var(--acc-rrhh); }
+.home .module-card.asistencia::before   { background: var(--acc-asistencia); }
+.home .module-card.comunic::before      { background: var(--acc-comunic); }
+.home .module-card.reporteria::before   { background: var(--acc-reporteria); }
+.home .module-card.cuida::before        { background: var(--acc-cuida); }
+
+/* Títulos y descripciones */
+.home .module-card .module-title {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 800; color: var(--ink-900);
+  font-size: 18px; margin-bottom: 6px;
+}
+.home .module-card .module-desc {
+  color: var(--ink-600);
+  margin-bottom: 10px;
 }
 
-/* Reportería — azul cielo */
-.card.reporteria{
-  --accent: #0EA5E9;
-  --icon-bg: #E8F7FF;
-  --icon-bd: #D3ECFF;
+/* Lista de features */
+.home .module-card .module-features {
+  display: grid; gap: 4px;
+  color: var(--ink-600);
+  font-weight: 600;
 }
 
-/* Tictiva Cuida — azul suave */
-.card.cuida{
-  --accent: #3898FF;
-  --icon-bg: #EEF6FF;
-  --icon-bd: #DCEAFF;
+/* CTA abrir módulo */
+.home .module-card .module-cta {
+  margin-top: 10px;
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+.home .module-card .module-cta::after {
+  content: "→";
+  display: inline-block;
+  transform: translateY(1px);
+}
+
+/* Ajustes responsivos suaves */
+@media (min-width: 1024px) {
+  .home { padding-bottom: 36px; }
+  .home .modules { gap: 20px; }
+  .home .module-card { padding: 18px; }
 }
