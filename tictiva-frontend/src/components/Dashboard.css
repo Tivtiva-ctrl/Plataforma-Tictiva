@@ -8,7 +8,7 @@
   --page-bg: #F8F9FA;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-  /* Colores tip/hero */
+  /* Tip / hero */
   --tip-amarillo-icon: #F1C40F;
   --tip-fondo: #EBF5FB;
   --tip-borde: #BEE3F8;
@@ -27,38 +27,24 @@ body {
 }
 
 /* ===== LAYOUT PRINCIPAL ===== */
-.dash {
-  padding: 0;
-  background: var(--page-bg);
-  color: var(--ink-700);
-}
+.dash { padding: 0; background: var(--page-bg); color: var(--ink-700); }
 
 /* ===== CABECERA ===== */
-.hero {
-  background-color: var(--card);
-  border-bottom: 1px solid var(--border);
-  padding: 0 2rem;
+.hero { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 2rem; }
+.hero__rail{
+  display:flex; justify-content:space-between; align-items:center;
+  max-width:1400px; margin:0 auto; padding:1rem 0;
 }
-
-.hero__rail {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1rem 0;
+.hero__brand{ display:flex; align-items:center; gap:10px; }
+.hero__logo{
+  width:32px; height:32px; border-radius:8px;
+  background:linear-gradient(135deg,#2e6cf6,#44b0ff);
+  position:relative; box-shadow:0 2px 8px rgba(68,176,255,.25);
 }
+.hero__logo::after{ content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
+.hero__brandText{ font-weight:800; color:var(--ink-900); font-size:1.25rem; }
 
-.hero__brand { display: flex; align-items: center; gap: 10px; }
-.hero__logo {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: linear-gradient(135deg, #2e6cf6, #44b0ff);
-  position: relative; box-shadow: 0 2px 8px rgba(68,176,255,.25);
-}
-.hero__logo::after { content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
-.hero__brandText { font-weight:800; color:var(--ink-900); font-size:1.25rem; }
-
-.hero__tools { position:relative; display:flex; align-items:center; gap:1rem; }
+.hero__tools{ position:relative; display:flex; align-items:center; gap:1rem; }
 .hero__search{
   display:flex; align-items:center; gap:8px;
   background:var(--page-bg); border:1px solid var(--border);
@@ -73,18 +59,17 @@ body {
   border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
 .hero__menu{
-  position:absolute; right:0; top:50px; width:200px;
-  background:var(--card); border:1px solid var(--border);
-  border-radius:12px; box-shadow:var(--shadow);
-  display:flex; flex-direction:column; overflow:hidden; z-index:1000;
+  position:absolute; right:0; top:50px; width:200px; z-index:1000;
+  background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; overflow:hidden;
 }
 .hero__menuItem{ padding:10px 12px; background:var(--card); border:none; text-align:left; cursor:pointer; color:var(--ink-700); }
 .hero__menuItem:hover{ background:var(--page-bg); }
 .hero__menuItem--danger{ color:#ef4444; }
 
-.hero__content { max-width:1400px; margin:0 auto; padding:2rem 2rem; }
-.hero__title { margin:0; font-size:2.25rem; font-weight:800; color:var(--ink-900); }
-.hero__subtitle { margin:.5rem 0 1.5rem 0; color:var(--ink-500); font-size:1.1rem; }
+.hero__content{ max-width:1400px; margin:0 auto; padding:2rem 2rem; }
+.hero__title{ margin:0; font-size:2.25rem; font-weight:800; color:var(--ink-900); }
+.hero__subtitle{ margin:.5rem 0 1.5rem 0; color:var(--ink-500); font-size:1.1rem; }
 
 /* ===== Tip VictorIA ===== */
 .tip{
@@ -99,68 +84,64 @@ body {
 }
 .tip__text{ font-size:1rem; flex:1; color:var(--ink-700); }
 .tip__text strong{ color:var(--ink-900); }
-.linkBtn, .tip__cta{ border:none; background:none; color:#2E6CF6; font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
+.linkBtn,.tip__cta{ border:none; background:none; color:#2E6CF6; font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
 
-/* Stats bajo el tip (si las usas) */
-.hero__stats { margin-top:2rem; color:var(--ink-500); font-size:.95rem; display:flex; gap:2rem; }
-.hero__stats strong { color:var(--ink-700); }
-
-/* ===== GRID DE MÓDULOS: 3 arriba / 2 abajo (desktop) ===== */
+/* ===== GRID: 3 arriba / 2 abajo ===== */
 .grid{
   max-width:1400px; margin:0 auto 2rem auto; padding:0 2rem;
-  display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:24px; align-items:start;
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; align-items:start;
 }
-@media (max-width:1200px){ .grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+@media (max-width:1200px){ .grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:680px){ .grid{ grid-template-columns:1fr; } }
 
-/* ===== CARD (estructura general) ===== */
+/* ===== CARD ===== */
 .card{
   background:var(--card); border:1px solid var(--border); border-radius:14px;
   box-shadow:var(--shadow); display:flex; flex-direction:column; padding:1.5rem;
-  /* barra superior del color del módulo */
-  border-top:5px solid var(--accent, #2E6CF6);
+  border-top:5px solid var(--accent, #2E6CF6); /* barra superior por módulo */
 }
-
 .card__head{ display:flex; align-items:center; gap:1rem; margin-bottom:.5rem; }
 .card__title{ margin:0; font-size:1.3rem; font-weight:800; color:var(--ink-900); }
 .card__desc{ margin:0 0 1rem 0; color:var(--ink-500); font-size:.95rem; line-height:1.5; flex-grow:1; }
 
-/* Lista interna en dos columnas (se apila en móviles pequeños) */
+/* Lista interna 2 columnas */
 .card__list{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:.75rem 1.5rem; }
 @media (max-width:420px){ .card__list{ grid-template-columns:1fr; } }
 .card__list li{ font-size:.95rem; color:var(--ink-700); display:flex; align-items:center; gap:.75rem; cursor:pointer; }
+.card .card__list li:hover{ color:var(--accent, #2E6CF6); }
+.card .card__list li:hover .icon{ color:var(--accent, #2E6CF6); }
 
+/* Footer */
 .card__foot{ display:flex; justify-content:flex-end; align-items:center; margin-top:1.5rem; }
-.card__open{ border:none; background:none; color:var(--accent, #2E6CF6); font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
+.card__open{
+  border:none; background:none; color:var(--accent, #2E6CF6);
+  font-weight:800; cursor:pointer; font-size:1rem; padding:0;
+}
 .card__open:hover{ text-decoration:underline; }
 
-/* ===== ICONO DE LA CARD (unificado, sin emojis realistas) ===== */
+/* ===== ICONO DE CARD (soporta svg/img/i/span) ===== */
 .card__icon{
   width:40px; height:40px; border-radius:10px; display:grid; place-items:center; flex-shrink:0;
   color:var(--accent, #2E6CF6);
   background:var(--icon-bg, #F7FAFF);
   border:2px solid var(--icon-bd, rgba(0,0,0,.06));
 }
-.card__icon svg{
+/* Normaliza el tamaño del contenido sea svg/img/i/span */
+.card__icon > svg,
+.card__icon > img,
+.card__icon > i,
+.card__icon > span{
   width:22px; height:22px; display:block;
-  stroke:currentColor; stroke-width:2; fill:none;
 }
-/* Por si quedó algún emoji/imagen puesta en el JSX */
-.card__icon > :not(svg){ display:none; }
-
-/* Hovers coherentes con el módulo */
-.card .card__list li:hover{ color:var(--accent, #2E6CF6); }
-.card .card__list li:hover .icon{ color:var(--accent, #2E6CF6); }
+.card__icon > svg{ stroke:currentColor; stroke-width:2; fill:none; }
 
 /* ===== DRAWER (panel lateral) ===== */
-.drawer__backdrop{
-  position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter:blur(2px); z-index:2000;
-}
+.drawer__backdrop{ position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter:blur(2px); z-index:2000; }
 .drawer{
   position:fixed; top:0; right:0; height:100vh; width:min(420px,92vw);
   background:#fff; border-left:1px solid var(--border);
-  box-shadow:-20px 0 50px rgba(2,8,23,.25);
-  display:flex; flex-direction:column; z-index:2001; animation:dashDrawerIn .22s ease-out;
+  box-shadow:-20px 0 50px rgba(2,8,23,.25); display:flex; flex-direction:column;
+  z-index:2001; animation:dashDrawerIn .22s ease-out;
 }
 @keyframes dashDrawerIn{ from{ transform:translateX(16px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
 .drawer__head{
@@ -183,121 +164,25 @@ body {
 .drawer__chev{ color:#64748B; font-size:18px; }
 
 /* ======================================================
-   PALETA FINAL POR MÓDULO — COMO LA MAQUETA (AZULES + TEAL)
-   RRHH / Comunicaciones / Reportería / Cuida: azules distintos
-   Asistencia: verde-azulado
+   PALETA FINAL POR MÓDULO — AZULES (según maqueta) + TEAL
    ====================================================== */
-
-/* RRHH — azul base Tictiva */
 .card.rrhh{
-  --accent: #2E6CF6;
-  --icon-bg: #EDF3FF;
-  --icon-bd: #D9E5FF;
-}
-
-/* Asistencia — teal */
-.card.asistencia{
-  --accent: #10B981;
-  --icon-bg: #EAFBF5;
-  --icon-bd: #CEF3E5;
-}
-
-/* Comunicaciones — azul vivo (sin morado) */
-.card.comunicaciones{
-  --accent: #3F7AFE;
-  --icon-bg: #E9F1FF;
-  --icon-bd: #D6E4FF;
-}
-
-/* Reportería — azul cielo */
-.card.reporteria{
-  --accent: #0EA5E9;
-  --icon-bg: #E8F7FF;
-  --icon-bd: #D3ECFF;
-}
-
-/* Tictiva Cuida — azul suave */
-.card.cuida{
-  --accent: #3898FF;
-  --icon-bg: #EEF6FF;
-  --icon-bd: #DCEAFF;
-}/* === HOTFIX: interior de cards + colores por módulo + iconos unificados === */
-
-/* Interior de la lista (sin viñetas y en 2 columnas) */
-.card__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1.5rem;
-}
-@media (max-width: 420px){
-  .card__list{ grid-template-columns: 1fr; }
-}
-.card__list li{
-  font-size: 0.95rem;
-  color: var(--ink-700);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-}
-.card .card__list li:hover{ color: var(--accent, #2E6CF6); }
-
-/* Botón “Abrir módulo” como link, sin borde */
-.card__open{
-  border: none !important;
-  background: none !important;
-  color: var(--accent, #2E6CF6) !important;
-  font-weight: 800;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0;
-}
-.card__open:hover{ text-decoration: underline; }
-
-/* Icono de cabecera de card: siempre SVG de línea (sin emojis) */
-.card__icon{
-  width: 40px; height: 40px; border-radius: 10px;
-  display: grid; place-items: center;
-  color: var(--accent, #2E6CF6);
-  background: var(--icon-bg, #F7FAFF);
-  border: 2px solid var(--icon-bd, rgba(0,0,0,.06));
-}
-.card__icon svg{
-  width: 22px; height: 22px; display: block;
-  stroke: currentColor; stroke-width: 2; fill: none;
-}
-.card__icon > :not(svg){ display: none; } /* oculta cualquier emoji accidental */
-
-/* ===== Paleta final por módulo (como la maqueta: azules + asistencia en teal) ===== */
-.card.rrhh{
-  --accent: #2E6CF6;   /* azul base Tictiva */
-  --icon-bg: #EDF3FF;
-  --icon-bd: #D9E5FF;
+  --accent:#2E6CF6;   /* azul base Tictiva */
+  --icon-bg:#EDF3FF;  --icon-bd:#D9E5FF;
 }
 .card.asistencia{
-  --accent: #10B981;   /* teal */
-  --icon-bg: #EAFBF5;
-  --icon-bd: #CEF3E5;
+  --accent:#10B981;   /* teal */
+  --icon-bg:#EAFBF5;  --icon-bd:#CEF3E5;
 }
 .card.comunicaciones{
-  --accent: #3F7AFE;   /* azul vivo (no morado) */
-  --icon-bg: #E9F1FF;
-  --icon-bd: #D6E4FF;
+  --accent:#3F7AFE;   /* azul vivo */
+  --icon-bg:#E9F1FF;  --icon-bd:#D6E4FF;
 }
 .card.reporteria{
-  --accent: #0EA5E9;   /* azul cielo */
-  --icon-bg: #E8F7FF;
-  --icon-bd: #D3ECFF;
+  --accent:#0EA5E9;   /* azul cielo */
+  --icon-bg:#E8F7FF;  --icon-bd:#D3ECFF;
 }
 .card.cuida{
-  --accent: #3898FF;   /* azul suave */
-  --icon-bg: #EEF6FF;
-  --icon-bd: #DCEAFF;
+  --accent:#3898FF;   /* azul suave */
+  --icon-bg:#EEF6FF;  --icon-bd:#DCEAFF;
 }
-
-/* Asegura barra superior de color en todas las cards */
-.card{ border-top: 5px solid var(--accent, #2E6CF6); }
-
