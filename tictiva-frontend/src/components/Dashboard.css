@@ -513,4 +513,54 @@ body {
 .card .card__list li:hover        { color: var(--accent); }
 .card .card__list li:hover .icon  { color: var(--accent); }
 
+/* === PALETA CORREGIDA (sin morado) ========================== */
+:root{
+  --tictiva-blue:    #2E6CF6;   /* azul marca */
+  --tictiva-blue-50:#EDF3FF;
+  --tictiva-blue-100:#D9E5FF;
+
+  --tictiva-teal:    #14B8A6;   /* teal azulado (Asistencia) */
+  --tictiva-teal-50:#EAFBF7;
+  --tictiva-teal-100:#CFF4ED;
+}
+
+/* Acento por módulo */
+.card.rrhh,
+.card.comunicaciones,
+.card.reporteria,
+.card.cuida{
+  --accent: var(--tictiva-blue) !important;
+  border-top-color: var(--tictiva-blue) !important;
+}
+.card.asistencia{
+  --accent: var(--tictiva-teal) !important;
+  border-top-color: var(--tictiva-teal) !important;
+}
+
+/* Chip del ícono (fondo suave y borde) */
+.card.rrhh .card__icon,
+.card.comunicaciones .card__icon,
+.card.reporteria .card__icon,
+.card.cuida .card__icon{
+  background: var(--tictiva-blue-50) !important;
+  border-color: var(--tictiva-blue-100) !important;
+  color: var(--tictiva-blue) !important;
+}
+.card.asistencia .card__icon{
+  background: var(--tictiva-teal-50) !important;
+  border-color: var(--tictiva-teal-100) !important;
+  color: var(--tictiva-teal) !important;
+}
+
+/* Enlaces y hovers a juego con el acento */
+.card .card__open{ color: var(--accent) !important; }
+.card .card__list li:hover{ color: var(--accent) !important; }
+.card .card__list li:hover .icon{ color: var(--accent) !important; }
+
+/* === EMOJIS (Comunicaciones 💬 y Reportería 📊) ============== */
+/* Si prefieres los SVG, borra este bloque */
+.card.comunicaciones .card__icon svg,
+.card.reporteria   .card__icon svg{ display:none !important; }
+.card.comunicaciones .card__icon::after{ content:"💬"; font-size:20px; line-height:1; }
+.card.reporteria   .card__icon::after{ content:"📊"; font-size:20px; line-height:1; }
 
