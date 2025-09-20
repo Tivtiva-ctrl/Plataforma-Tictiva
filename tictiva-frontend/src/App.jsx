@@ -8,34 +8,34 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-import { ROUTES } from "./router/routes"; // ✅ ruta real de tus rutas
+import { ROUTES } from "./router/routes";
 
 // Login / Shell
-import LoginPage from "./components/LoginPage.jsx";
+import LoginPage from "./components/LoginPage";
 
 // Dashboard
-import Dashboard from "./components/Dashboard.jsx";
+import Dashboard from "./components/Dashboard";
 
-// RRHH (están en src/components)
-import ListadoFichas from "./components/ListadoFichas.jsx";
-import EmpleadoDetalle from "./components/EmpleadoDetalle.jsx";
-import PermisosJustificaciones from "./components/PermisosJustificaciones.jsx";
-import ValidacionDT from "./components/ValidacionDT.jsx";
-import RepoDocs from "./components/RepoDocs.jsx";
+// RRHH (en src/components)
+import ListadoFichas from "./components/ListadoFichas";
+import EmpleadoDetalle from "./components/EmpleadoDetalle";
+import PermisosJustificaciones from "./components/PermisosJustificaciones";
+import ValidacionDT from "./components/ValidacionDT";
+import RepoDocs from "./components/RepoDocs";
 
-// Bodega (están en src/bodega)
-import BodegaLayout from "./bodega/BodegaLayout.jsx";
-import BodegaDashboard from "./bodega/BodegaDashboard.jsx";
-import BodegaInventario from "./bodega/BodegaInventario.jsx";
-import BodegaColaboradores from "./bodega/BodegaColaboradores.jsx";
-import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
+// Bodega (en src/bodega)
+import BodegaLayout from "./bodega/BodegaLayout";
+import BodegaDashboard from "./bodega/BodegaDashboard";
+import BodegaInventario from "./bodega/BodegaInventario";
+import BodegaColaboradores from "./bodega/BodegaColaboradores";
+import BodegaOperaciones from "./bodega/BodegaOperaciones";
 
-// Asistencia (también en src/components)
-import SupervisionIntegral from "./components/SupervisionIntegral.jsx";
-import MarcasRegistradas from "./components/MarcasRegistradas.jsx";
-import MapaCobertura from "./components/MapaCobertura.jsx";
-import GestionDispositivos from "./components/GestionDispositivos.jsx";
-import GestionTurnos from "./components/GestionTurnos.jsx";
+// Asistencia (en src/components)
+import SupervisionIntegral from "./components/SupervisionIntegral";
+import MarcasRegistradas from "./components/MarcasRegistradas";
+import MapaCobertura from "./components/MapaCobertura";
+import GestionDispositivos from "./components/GestionDispositivos";
+import GestionTurnos from "./components/GestionTurnos";
 
 import { EmpresaProvider } from "./context/EmpresaContext";
 
