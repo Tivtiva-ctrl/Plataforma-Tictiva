@@ -43,17 +43,20 @@ function Drawer({ module, onClose }) {
 
   // Dentro del componente Drawer en Dashboard.jsx
 
+  // Dentro del componente Drawer en Dashboard.jsx
+
   const go = (to) => {
+    // --- TRAMPAS DE DEPURACIÓN ---
+    console.log("1. Se hizo clic en un submódulo.");
+    console.log("2. La ruta recibida es:", to);
+    // ----------------------------
+
     if (typeof to === "string" && to.length) {
-      // --- LA CORRECCIÓN ESTÁ AQUÍ ---
-
-      // 1. Primero navegamos a la nueva página.
+      console.log("3. La ruta es válida, intentando navegar...");
       navigate(to);
-      
-      // 2. Después, cerramos el panel.
       onClose();
-
     } else {
+      console.log("3. La ruta NO es válida o es nula.");
       alert("Este submódulo estará disponible pronto.");
     }
   };
