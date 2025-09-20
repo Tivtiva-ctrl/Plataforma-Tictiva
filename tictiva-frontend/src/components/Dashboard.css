@@ -1,39 +1,50 @@
-/* ====== FIX COLORES EXACTOS (match maqueta) ====== */
-/* Forzamos el color del borde superior por módulo */
-.card.rrhh{           border-top-color:#2E6CF6 !important; } /* azul Tictiva */
-.card.asistencia{     border-top-color:#10B981 !important; } /* verde/teal */
-.card.comunicaciones{ border-top-color:#6D5EF8 !important; } /* morado */
-.card.reporteria{     border-top-color:#2E6CF6 !important; } /* azul */
-.card.cuida{          border-top-color:#26A69A !important; } /* turquesa */
+/* === PALETA CORREGIDA (sin morado) ========================== */
+:root{
+  --tictiva-blue:    #2E6CF6;   /* azul marca */
+  --tictiva-blue-50:#EDF3FF;
+  --tictiva-blue-100:#D9E5FF;
 
-/* Acento consistente en icono, hovers y link "Abrir módulo" */
-.card.rrhh         { --accent:#2E6CF6; }
-.card.asistencia   { --accent:#10B981; }
-.card.comunicaciones { --accent:#6D5EF8; }
-.card.reporteria   { --accent:#2E6CF6; }
-.card.cuida        { --accent:#26A69A; }
+  --tictiva-teal:    #14B8A6;   /* teal azulado (Asistencia) */
+  --tictiva-teal-50:#EAFBF7;
+  --tictiva-teal-100:#CFF4ED;
+}
 
-.card .card__open{ color:var(--accent); }
-.card .card__list li:hover{ color:var(--accent); }
-.card .card__list li:hover .icon{ color:var(--accent); }
-.card .card__icon{ color:var(--accent); }
+/* Acento por módulo */
+.card.rrhh,
+.card.comunicaciones,
+.card.reporteria,
+.card.cuida{
+  --accent: var(--tictiva-blue) !important;
+  border-top-color: var(--tictiva-blue) !important;
+}
+.card.asistencia{
+  --accent: var(--tictiva-teal) !important;
+  border-top-color: var(--tictiva-teal) !important;
+}
 
-/* Tintamos el “pastillón” del icono por módulo (suave) */
-.card.rrhh .card__icon{           background:#EDF3FF; border-color:#D9E5FF; }
-.card.asistencia .card__icon{     background:#EAFBF5; border-color:#CEF3E5; }
-.card.comunicaciones .card__icon{ background:#F3EDFF; border-color:#E2D7FF; }
-.card.reporteria .card__icon{     background:#EDF3FF; border-color:#D9E5FF; }
-.card.cuida .card__icon{          background:#EAFBFF; border-color:#D6F3FF; }
+/* Chip del ícono (fondo suave y borde) */
+.card.rrhh .card__icon,
+.card.comunicaciones .card__icon,
+.card.reporteria .card__icon,
+.card.cuida .card__icon{
+  background: var(--tictiva-blue-50) !important;
+  border-color: var(--tictiva-blue-100) !important;
+  color: var(--tictiva-blue) !important;
+}
+.card.asistencia .card__icon{
+  background: var(--tictiva-teal-50) !important;
+  border-color: var(--tictiva-teal-100) !important;
+  color: var(--tictiva-teal) !important;
+}
 
-/* ====== EMOJI en icono (solo para Comunicaciones y Reportería) ====== */
-/* Ocultamos el SVG y mostramos emoji dentro del recuadro */
+/* Enlaces y hovers a juego con el acento */
+.card .card__open{ color: var(--accent) !important; }
+.card .card__list li:hover{ color: var(--accent) !important; }
+.card .card__list li:hover .icon{ color: var(--accent) !important; }
+
+/* === EMOJIS (Comunicaciones 💬 y Reportería 📊) ============== */
+/* Si prefieres los SVG, borra este bloque */
 .card.comunicaciones .card__icon svg,
-.card.reporteria   .card__icon svg{
-  display:none !important;
-}
-.card.comunicaciones .card__icon::after{
-  content:"💬"; font-size:20px; line-height:1;
-}
-.card.reporteria .card__icon::after{
-  content:"📊"; font-size:20px; line-height:1;
-}
+.card.reporteria   .card__icon svg{ display:none !important; }
+.card.comunicaciones .card__icon::after{ content:"💬"; font-size:20px; line-height:1; }
+.card.reporteria   .card__icon::after{ content:"📊"; font-size:20px; line-height:1; }
