@@ -1,7 +1,7 @@
 // src/components/Dashboard.jsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "../router/routes";
 import "./Dashboard.css";
 
@@ -154,17 +154,16 @@ const Icon = ({ name, size = 24, className = "" }) => {
   }
 };
 
-/* ===== Drawer (link + navigate programático en el próximo frame) ===== */
+/* ===== Drawer: NAVEGA PRIMERO, CIERRA DESPUÉS ===== */
 function Drawer({ module, onClose }) {
   const navigate = useNavigate();
   if (!module) return null;
 
-  const go = (e, to) => {
-    e.preventDefault();           // no dejamos al navegador
-    onClose();                    // cerramos
-    requestAnimationFrame(() => { // navegamos en el próximo frame
-      navigate(to);
-    });
+  const handleClick = (to) => {
+    // 1) Navegamos ya
+    navigate(to);
+    // 2) Cerramos el drawer en el próximo tick
+    setTimeout(onClose, 0);
   };
 
   return (
@@ -189,15 +188,15 @@ function Drawer({ module, onClose }) {
             return (
               <li key={idx}>
                 {clickable ? (
-                  <Link
-                    to={it.to}
+                  <button
+                    type="button"
                     className="drawer__item"
-                    onClick={(e) => go(e, it.to)}
+                    onClick={() => handleClick(it.to)}
                   >
                     <span className="drawer__dot" />
                     <span className="drawer__text">{it.label}</span>
                     <span className="drawer__chev">›</span>
-                  </Link>
+                  </button>
                 ) : (
                   <div className="drawer__item drawer__item--disabled" aria-disabled="true">
                     <span className="drawer__dot" />
@@ -232,7 +231,7 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // Si cambia la ruta (por cualquier motivo), cerramos el drawer por si quedó abierto
+  // Por si cambia la URL desde otro lugar, cerramos el drawer
   useEffect(() => {
     if (openModule) setOpenModule(null);
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
