@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import "./LoginPage.css";
 // (si luego quieres volver a un PNG, podemos reactivar el import y el <img>)
 // import logo from "../assets/logo-tictiva.png";
-import illustration from "../assets/login-illustration.png";
+// import logo from "../../assets/logo-tictiva.png";
+import illustration from "../../assets/login-illustration.png";
 
 export default function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
