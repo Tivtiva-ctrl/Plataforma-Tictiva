@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-import { ROUTES } from "./router/routes.jsx";
+import { ROUTES } from "./router/routes.js";
 
 // Login / Shell
 import LoginPage from "./components/LoginPage.jsx";
