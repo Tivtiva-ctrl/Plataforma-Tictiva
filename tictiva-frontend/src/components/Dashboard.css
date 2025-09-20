@@ -380,4 +380,33 @@ body {
 /* El drawer no se tocó y no debería necesitar cambios */
 .drawer__backdrop {
     /* ... estilos del drawer ... */
+}/* === LOCK: 3 arriba / 2 abajo (desktop) === */
+.grid{
+  /* anulamos flex y forzamos Grid */
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 24px !important;
+  align-items: start;
+}
+
+/* cancelamos cualquier sizing de flex que puedan tener las cards */
+.grid > .card{
+  flex: initial !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* 2 columnas en pantallas medianas */
+@media (max-width: 1200px){
+  .grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* 1 columna en móviles */
+@media (max-width: 680px){
+  .grid{
+    grid-template-columns: 1fr !important;
+  }
 }
