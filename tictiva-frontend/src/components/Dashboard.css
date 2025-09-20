@@ -8,14 +8,7 @@
   --page-bg: #F8F9FA;
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-  /* Paleta de colores de la maqueta */
-  --color-rrhh: #5C6BC0;
-  --color-asistencia: #4CAF50;
-  --color-comunicaciones: #AB47BC;
-  --color-reporteria: #FF8A65;
-  --color-cuida: #26A69A;
-
-  /* Colores para el Tip de VictoriA */
+  /* Colores tip/hero */
   --tip-amarillo-icon: #F1C40F;
   --tip-fondo: #EBF5FB;
   --tip-borde: #BEE3F8;
@@ -56,523 +49,176 @@ body {
   padding: 1rem 0;
 }
 
-.hero__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.hero__brand { display: flex; align-items: center; gap: 10px; }
 .hero__logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 32px; height: 32px; border-radius: 8px;
   background: linear-gradient(135deg, #2e6cf6, #44b0ff);
-  position: relative;
-  box-shadow: 0 2px 8px rgba(68, 176, 255, 0.25);
+  position: relative; box-shadow: 0 2px 8px rgba(68,176,255,.25);
 }
-.hero__logo::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border: 2px solid #fff;
-  border-radius: 4px;
-}
-.hero__brandText {
-  font-weight: 800;
-  color: var(--ink-900);
-  font-size: 1.25rem;
-}
+.hero__logo::after { content:""; position:absolute; inset:4px; border:2px solid #fff; border-radius:4px; }
+.hero__brandText { font-weight:800; color:var(--ink-900); font-size:1.25rem; }
 
-.hero__tools {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.hero__tools { position:relative; display:flex; align-items:center; gap:1rem; }
+.hero__search{
+  display:flex; align-items:center; gap:8px;
+  background:var(--page-bg); border:1px solid var(--border);
+  border-radius:999px; padding:.75rem 1.25rem; min-width:300px;
 }
-.hero__search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--page-bg);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.75rem 1.25rem;
-  min-width: 300px;
-}
-.hero__search input {
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--ink-700);
-  font-size: 1rem;
-  width: 100%;
-}
-.hero__search input::placeholder {
-  color: var(--ink-500);
-}
+.hero__search input{ border:none; outline:none; background:transparent; color:var(--ink-700); font-size:1rem; width:100%; }
+.hero__search input::placeholder{ color:var(--ink-500); }
 
-.hero__avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-rrhh);
-  color: var(--card);
-  font-weight: 800;
-  font-size: 1.2rem;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero__avatar{
+  width:40px; height:40px; border-radius:50%;
+  background:#2E6CF6; color:#fff; font-weight:800; font-size:1.2rem;
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
-.hero__menu {
-  position: absolute;
-  right: 0;
-  top: 50px;
-  width: 200px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 1000;
+.hero__menu{
+  position:absolute; right:0; top:50px; width:200px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; overflow:hidden; z-index:1000;
 }
-.hero__menuItem {
-  padding: 10px 12px;
-  background: var(--card);
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  color: var(--ink-700);
-}
-.hero__menuItem:hover {
-  background: var(--page-bg);
-}
-.hero__menuItem--danger {
-  color: #ef4444;
-}
+.hero__menuItem{ padding:10px 12px; background:var(--card); border:none; text-align:left; cursor:pointer; color:var(--ink-700); }
+.hero__menuItem:hover{ background:var(--page-bg); }
+.hero__menuItem--danger{ color:#ef4444; }
 
-/* Contenido principal bajo la cabecera */
-.hero__content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem 2rem;
-}
-.hero__title {
-  margin: 0;
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: var(--ink-900);
-}
-.hero__subtitle {
-  margin: 0.5rem 0 1.5rem 0;
-  color: var(--ink-500);
-  font-size: 1.1rem;
-}
+.hero__content { max-width:1400px; margin:0 auto; padding:2rem 2rem; }
+.hero__title { margin:0; font-size:2.25rem; font-weight:800; color:var(--ink-900); }
+.hero__subtitle { margin:.5rem 0 1.5rem 0; color:var(--ink-500); font-size:1.1rem; }
 
 /* ===== Tip VictorIA ===== */
-.tip {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  border-radius: 14px;
-  background: var(--tip-fondo);
-  border: 1px solid var(--tip-borde);
-  box-shadow: var(--shadow);
-  margin: 1.5rem 0;
+.tip{
+  display:flex; align-items:center; gap:1rem;
+  padding:1rem 1.5rem; border-radius:14px;
+  background:var(--tip-fondo); border:1px solid var(--tip-borde);
+  box-shadow:var(--shadow); margin:1.5rem 0;
 }
-.tip__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--tip-amarillo-icon);
-  color: var(--card);
-  font-size: 1.25rem;
-  flex-shrink: 0;
+.tip__icon{
+  width:40px; height:40px; border-radius:50%; display:grid; place-items:center;
+  background:var(--tip-amarillo-icon); color:#fff; font-size:1.25rem; flex-shrink:0;
 }
-.tip__text {
-  font-size: 1rem;
-  flex: 1;
-  color: var(--ink-700);
-}
-.tip__text strong {
-  color: var(--ink-900);
-}
-.linkBtn {
-  border: none;
-  background: none;
-  color: var(--color-rrhh);
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0;
-}
-.tip__cta {
-  border: none;
-  background: none;
-  color: var(--color-rrhh);
-  font-weight: 800;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0;
-  margin-left: 1rem;
-}
+.tip__text{ font-size:1rem; flex:1; color:var(--ink-700); }
+.tip__text strong{ color:var(--ink-900); }
+.linkBtn, .tip__cta{ border:none; background:none; color:#2E6CF6; font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
 
-.hero__stats {
-  margin-top: 2rem;
-  color: var(--ink-500);
-  font-size: 0.95rem;
-  display: flex;
-  gap: 2rem;
-}
-.hero__stats strong {
-  color: var(--ink-700);
-}
+/* Stats bajo el tip (si las usas) */
+.hero__stats { margin-top:2rem; color:var(--ink-500); font-size:.95rem; display:flex; gap:2rem; }
+.hero__stats strong { color:var(--ink-700); }
 
-/* ===== GRID DE MÓDULOS (ESTRATEGIA FLEXBOX) ===== */
-.grid {
-  max-width: 1400px;
-  margin: 0 auto 2rem auto;
-  padding: 0 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-/* Damos un tamaño específico a cada tarjeta */
-.grid > .card {
-  width: calc(33.333% - 1rem);
-  flex-grow: 1;
-}
-
-/* En pantallas medianas, queremos 2 columnas */
-@media (max-width: 1024px) {
-  .grid > .card {
-    width: calc(50% - 0.75rem);
-  }
-}
-
-/* En pantallas pequeñas, queremos 1 columna */
-@media (max-width: 680px) {
-  .grid > .card {
-    width: 100%;
-  }
-}
-
-
-/* ===== ESTILOS DE CADA TARJETA (CARD) ===== */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-}
-
-/* Colores de borde específicos por módulo */
-.card.rrhh { border-top: 5px solid var(--color-rrhh); }
-.card.asistencia { border-top: 5px solid var(--color-asistencia); }
-.card.comunicaciones { border-top: 5px solid var(--color-comunicaciones); }
-.card.reporteria { border-top: 5px solid var(--color-reporteria); }
-.card.cuida { border-top: 5px solid var(--color-cuida); }
-
-.card__head {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-/* Colores de íconos que coinciden con el borde */
-.card.rrhh .card__icon { color: var(--color-rrhh); }
-.card.asistencia .card__icon { color: var(--color-asistencia); }
-.card.comunicaciones .card__icon { color: var(--color-comunicaciones); }
-.card.reporteria .card__icon { color: var(--color-reporteria); }
-.card.cuida .card__icon { color: var(--color-cuida); }
-
-.card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: var(--page-bg);
-  display: grid;
-  place-items: center;
-  font-size: 1.4rem;
-  flex-shrink: 0;
-}
-.card__title {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--ink-900);
-}
-.card__desc {
-  margin: 0 0 1rem 0;
-  color: var(--ink-500);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  flex-grow: 1;
-}
-
-.card__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1.5rem;
-}
-@media (max-width: 420px) { /* En móviles muy pequeños, 1 columna */
-  .card__list {
-    grid-template-columns: 1fr;
-  }
-}
-
-.card__list li {
-  font-size: 0.95rem;
-  color: var(--ink-700);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-}
-.card__list li:hover {
-  color: var(--color-rrhh);
-}
-
-.card__list li .icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-  color: var(--ink-500);
-}
-.card__list li:hover .icon {
-  color: var(--color-rrhh);
-}
-
-.card__foot {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 1.5rem;
-}
-
-.card__open {
-  border: none;
-  background: none;
-  color: var(--color-rrhh);
-  font-weight: 800;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0;
-  text-decoration: none;
-}
-.card__open:hover {
-  text-decoration: underline;
-}
-
-/* El drawer no se tocó y no debería necesitar cambios */
-.drawer__backdrop {
-    /* ... estilos del drawer ... */
-}/* === LOCK: 3 arriba / 2 abajo (desktop) === */
+/* ===== GRID DE MÓDULOS: 3 arriba / 2 abajo (desktop) ===== */
 .grid{
-  /* anulamos flex y forzamos Grid */
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 24px !important;
-  align-items: start;
+  max-width:1400px; margin:0 auto 2rem auto; padding:0 2rem;
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:24px; align-items:start;
+}
+@media (max-width:1200px){ .grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+@media (max-width:680px){ .grid{ grid-template-columns:1fr; } }
+
+/* ===== CARD (estructura general) ===== */
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  box-shadow:var(--shadow); display:flex; flex-direction:column; padding:1.5rem;
+  /* barra superior del color del módulo */
+  border-top:5px solid var(--accent, #2E6CF6);
 }
 
-/* cancelamos cualquier sizing de flex que puedan tener las cards */
-.grid > .card{
-  flex: initial !important;
-  width: auto !important;
-  max-width: none !important;
-  margin: 0 !important;
-}
+.card__head{ display:flex; align-items:center; gap:1rem; margin-bottom:.5rem; }
+.card__title{ margin:0; font-size:1.3rem; font-weight:800; color:var(--ink-900); }
+.card__desc{ margin:0 0 1rem 0; color:var(--ink-500); font-size:.95rem; line-height:1.5; flex-grow:1; }
 
-/* 2 columnas en pantallas medianas */
-@media (max-width: 1200px){
-  .grid{
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
+/* Lista interna en dos columnas (se apila en móviles pequeños) */
+.card__list{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:.75rem 1.5rem; }
+@media (max-width:420px){ .card__list{ grid-template-columns:1fr; } }
+.card__list li{ font-size:.95rem; color:var(--ink-700); display:flex; align-items:center; gap:.75rem; cursor:pointer; }
 
-/* 1 columna en móviles */
-@media (max-width: 680px){
-  .grid{
-    grid-template-columns: 1fr !important;
-  }
-}/* === FIX: Drawer como panel lateral (overlay) === */
+.card__foot{ display:flex; justify-content:flex-end; align-items:center; margin-top:1.5rem; }
+.card__open{ border:none; background:none; color:var(--accent, #2E6CF6); font-weight:800; cursor:pointer; font-size:1rem; padding:0; }
+.card__open:hover{ text-decoration:underline; }
+
+/* ===== ICONO DE LA CARD (unificado, sin emojis realistas) ===== */
+.card__icon{
+  width:40px; height:40px; border-radius:10px; display:grid; place-items:center; flex-shrink:0;
+  color:var(--accent, #2E6CF6);
+  background:var(--icon-bg, #F7FAFF);
+  border:2px solid var(--icon-bd, rgba(0,0,0,.06));
+}
+.card__icon svg{
+  width:22px; height:22px; display:block;
+  stroke:currentColor; stroke-width:2; fill:none;
+}
+/* Por si quedó algún emoji/imagen puesta en el JSX */
+.card__icon > :not(svg){ display:none; }
+
+/* Hovers coherentes con el módulo */
+.card .card__list li:hover{ color:var(--accent, #2E6CF6); }
+.card .card__list li:hover .icon{ color:var(--accent, #2E6CF6); }
+
+/* ===== DRAWER (panel lateral) ===== */
 .drawer__backdrop{
-  position: fixed !important;
-  inset: 0 !important;
-  background: rgba(2,8,23,.28);
-  backdrop-filter: blur(2px);
-  z-index: 2000 !important;
+  position:fixed; inset:0; background:rgba(2,8,23,.28); backdrop-filter:blur(2px); z-index:2000;
 }
-
 .drawer{
-  position: fixed !important;
-  top: 0; right: 0;
-  height: 100vh; width: min(420px, 92vw);
-  background: #fff;
-  border-left: 1px solid var(--border);
-  box-shadow: -20px 0 50px rgba(2,8,23,.25);
-  display: flex; flex-direction: column;
-  z-index: 2001 !important;
-  animation: dashDrawerIn .22s ease-out;
+  position:fixed; top:0; right:0; height:100vh; width:min(420px,92vw);
+  background:#fff; border-left:1px solid var(--border);
+  box-shadow:-20px 0 50px rgba(2,8,23,.25);
+  display:flex; flex-direction:column; z-index:2001; animation:dashDrawerIn .22s ease-out;
 }
-
-@keyframes dashDrawerIn{
-  from{ transform: translateX(16px); opacity: 0 }
-  to  { transform: translateX(0);   opacity: 1 }
-}
-
-/* Fallback de estilos internos del drawer (por si se perdieron) */
+@keyframes dashDrawerIn{ from{ transform:translateX(16px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
 .drawer__head{
-  display: grid; grid-template-columns: auto 1fr auto;
-  align-items: center; gap: 12px;
-  padding: 14px;
-  border-bottom: 1px solid #EEF2F7;
-  border-top: 4px solid transparent;
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px;
+  padding:14px; border-bottom:1px solid #EEF2F7; border-top:4px solid transparent;
 }
-.drawer__icon{
-  width: 34px; height: 34px; border-radius: 10px;
-  background: #F8FAFF; display: grid; place-items: center;
-  border: 2px solid transparent;
-}
-.drawer__label{ font-size: 12px; color: #64748B; }
-.drawer__title{ margin: 0; font-size: 18px; font-weight: 800; color: #0B1A38; }
-.drawer__desc{ margin: 4px 0 0; color: #64748B; }
-.drawer__close{ background: none; border: none; font-size: 20px; cursor: pointer; color: #334155; }
-
-.drawer__list{
-  list-style: none; margin: 0; padding: 12px 14px 18px;
-  display: grid; gap: 8px; overflow: auto;
-}
+.drawer__icon{ width:34px; height:34px; border-radius:10px; background:#F8FAFF; display:grid; place-items:center; border:2px solid transparent; }
+.drawer__label{ font-size:12px; color:#64748B; }
+.drawer__title{ margin:0; font-size:18px; font-weight:800; color:#0B1A38; }
+.drawer__desc{ margin:4px 0 0; color:#64748B; }
+.drawer__close{ background:none; border:none; font-size:20px; cursor:pointer; color:#334155; }
+.drawer__list{ list-style:none; margin:0; padding:12px 14px 18px; display:grid; gap:8px; overflow:auto; }
 .drawer__item{
-  width: 100%; display: grid; grid-template-columns: auto 1fr auto;
-  gap: 10px; align-items: center;
-  padding: 10px; border: 1px solid #E5E7EB; border-radius: 12px;
-  background: #F8FAFC; cursor: pointer;
+  width:100%; display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+  padding:10px; border:1px solid #E5E7EB; border-radius:12px; background:#F8FAFC; cursor:pointer;
 }
-.drawer__item:hover{ background: #fff; }
-.drawer__dot{ width: 8px; height: 8px; background: #CBD5E1; border-radius: 50%; }
-.drawer__text{ color: #0B1A38; font-weight: 600; }
-.drawer__chev{ color: #64748B; font-size: 18px; }
+.drawer__item:hover{ background:#fff; }
+.drawer__dot{ width:8px; height:8px; background:#CBD5E1; border-radius:50%; }
+.drawer__text{ color:#0B1A38; font-weight:600; }
+.drawer__chev{ color:#64748B; font-size:18px; }
 
-/* =========================
-   PALETA TICTIVA POR MÓDULO
-   (colores y visibilidad de íconos)
-   ========================= */
+/* ======================================================
+   PALETA FINAL POR MÓDULO — COMO LA MAQUETA (AZULES + TEAL)
+   RRHH / Comunicaciones / Reportería / Cuida: azules distintos
+   Asistencia: verde-azulado
+   ====================================================== */
 
-/* Acento de cada módulo (barra superior, links, hovers) */
-.card.rrhh         { --accent: #2E6CF6; } /* azul tictiva */
-.card.asistencia   { --accent: #10B981; } /* verde/teal */
-.card.comunicaciones { --accent: #6D5EF8; } /* morado */
-.card.reporteria   { --accent: #2E6CF6; } /* azul (como mock) */
-.card.cuida        { --accent: #26A69A; } /* turquesa */
-
-/* Barra superior usa --accent (tu card::before ya la toma) */
-.card::before { background: var(--accent); }
-
-/* Ícono visible y del color del módulo (arregla que no se vea en
-   Comunicaciones y Reportería) */
-.card__icon {
-  color: var(--accent);
-  display: grid;
-  place-items: center;
-  background: #F7FAFF;            /* base clara por si falta regla específica */
-  border: 2px solid rgba(0,0,0,.06);
-}
-.card__icon svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-  stroke-width: 2;
-  display: block;
-}
-
-/* Fondo del “pastillón” del ícono a juego (tintes suaves por módulo) */
-.card.rrhh .card__icon            { background: #EDF3FF; border-color: #D9E5FF; }
-.card.asistencia .card__icon      { background: #EAFBF5; border-color: #CEF3E5; }
-.card.comunicaciones .card__icon  { background: #F3EDFF; border-color: #E2D7FF; }
-.card.reporteria .card__icon      { background: #EDF3FF; border-color: #D9E5FF; }
-.card.cuida .card__icon           { background: #EAFBFF; border-color: #D6F3FF; }
-
-/* Enlaces y hovers a juego con el módulo */
-.card .card__open                 { color: var(--accent); }
-.card .card__open:hover           { text-decoration: underline; }
-.card .card__list li:hover        { color: var(--accent); }
-.card .card__list li:hover .icon  { color: var(--accent); }
-
-/* ========== PALETA FINAL POR MÓDULO (como la maqueta: azules + asistencia teal) ========== */
-/* RRHH (azul base Tictiva) */
+/* RRHH — azul base Tictiva */
 .card.rrhh{
-  --accent: #2E6CF6;       /* barra superior y links */
-  --icon-bg: #EDF3FF;      /* fondo del pastillón del icono */
-  --icon-bd: #D9E5FF;      /* borde suave del icono */
+  --accent: #2E6CF6;
+  --icon-bg: #EDF3FF;
+  --icon-bd: #D9E5FF;
 }
 
-/* Asistencia (verde-azulado/teal) */
+/* Asistencia — teal */
 .card.asistencia{
   --accent: #10B981;
   --icon-bg: #EAFBF5;
   --icon-bd: #CEF3E5;
 }
 
-/* Comunicaciones (azul distinto) */
+/* Comunicaciones — azul vivo (sin morado) */
 .card.comunicaciones{
-  --accent: #3F7AFE;       /* otro azul, más vivo */
+  --accent: #3F7AFE;
   --icon-bg: #E9F1FF;
   --icon-bd: #D6E4FF;
 }
 
-/* Reportería (tercer azul) */
+/* Reportería — azul cielo */
 .card.reporteria{
-  --accent: #0EA5E9;       /* azul cielo/azure */
+  --accent: #0EA5E9;
   --icon-bg: #E8F7FF;
   --icon-bd: #D3ECFF;
 }
 
-/* Tictiva Cuida (azul suave – en la maqueta también es azul) */
+/* Tictiva Cuida — azul suave */
 .card.cuida{
   --accent: #3898FF;
   --icon-bg: #EEF6FF;
   --icon-bd: #DCEAFF;
 }
-
-/* La barra superior de las cards ya toma --accent con tu .card::before */
-.card::before{ background: var(--accent); }
-
-/* ========== ICONO UNIFICADO (nada de emojis realistas) ========== */
-.card__icon{
-  color: var(--accent);
-  background: var(--icon-bg, #F7FAFF);
-  border: 2px solid var(--icon-bd, rgba(0,0,0,.06));
-  width: 40px; height: 40px; border-radius: 10px;
-  display: grid; place-items: center;
-}
-
-/* Fuerza a que se vea el SVG de línea y no aparezca ningún emoji/imagen accidental */
-.card__icon svg{
-  width: 22px; height: 22px;
-  display: block;
-  stroke: currentColor; stroke-width: 2;
-  fill: none;
-}
-/* Si alguien dejó un emoji, lo ocultamos sin tocar JSX */
-.card__icon > :not(svg){ display: none; }
-
-/* Enlaces y hovers coherentes con el color del módulo */
-.card .card__open{ color: var(--accent); }
-.card .card__open:hover{ text-decoration: underline; }
-.card .card__list li:hover{ color: var(--accent); }
-.card .card__list li:hover .icon{ color: var(--accent); }
