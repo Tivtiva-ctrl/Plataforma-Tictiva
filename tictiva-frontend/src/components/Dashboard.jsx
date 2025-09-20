@@ -154,9 +154,18 @@ const Icon = ({ name, size = 24, className = "" }) => {
   }
 };
 
-/* ===== Drawer (Link navega; el cierre lo maneja el Dashboard al cambiar la ruta) ===== */
+/* ===== Drawer (link + navigate programático en el próximo frame) ===== */
 function Drawer({ module, onClose }) {
+  const navigate = useNavigate();
   if (!module) return null;
+
+  const go = (e, to) => {
+    e.preventDefault();           // no dejamos al navegador
+    onClose();                    // cerramos
+    requestAnimationFrame(() => { // navegamos en el próximo frame
+      navigate(to);
+    });
+  };
 
   return (
     <>
@@ -180,7 +189,11 @@ function Drawer({ module, onClose }) {
             return (
               <li key={idx}>
                 {clickable ? (
-                  <Link to={it.to} className="drawer__item">
+                  <Link
+                    to={it.to}
+                    className="drawer__item"
+                    onClick={(e) => go(e, it.to)}
+                  >
                     <span className="drawer__dot" />
                     <span className="drawer__text">{it.label}</span>
                     <span className="drawer__chev">›</span>
@@ -219,7 +232,7 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // 🔒 Cierra el drawer automáticamente cuando cambia la ruta
+  // Si cambia la ruta (por cualquier motivo), cerramos el drawer por si quedó abierto
   useEffect(() => {
     if (openModule) setOpenModule(null);
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
