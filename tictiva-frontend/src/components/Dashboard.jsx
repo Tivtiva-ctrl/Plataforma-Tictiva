@@ -30,6 +30,9 @@ const Icon = ({ name, size = 24, className = "" }) => {
     case "heart": return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
     case "search": return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
     case "info": return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>);
+    /* === AGREGADOS para que se vean Comunicaciones y Reportería === */
+    case "chat": return (<svg {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h13a4 4 0 0 1 4 4z"/></svg>);
+    case "chart": return (<svg {...p}><path d="M3 20h18"/><path d="M7 20V10"/><path d="M12 20V4"/><path d="M17 20v-7"/></svg>);
     default: return null;
   }
 };
@@ -38,10 +41,18 @@ function Drawer({ module, onClose }) {
   const navigate = useNavigate();
   if (!module) return null;
 
+  // Dentro del componente Drawer en Dashboard.jsx
+
   const go = (to) => {
     if (typeof to === "string" && to.length) {
+      // --- LA CORRECCIÓN ESTÁ AQUÍ ---
+
+      // 1. Primero navegamos a la nueva página.
+      navigate(to);
+      
+      // 2. Después, cerramos el panel.
       onClose();
-      setTimeout(() => navigate(to), 0);
+
     } else {
       alert("Este submódulo estará disponible pronto.");
     }
