@@ -74,18 +74,20 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
             <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
 
             {/* Bodega */}
-            <Route path={`${BODEGA.root}/*`} element={<BodegaLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<BodegaDashboard />} />
-              <Route path="inventario" element={<BodegaInventario />} />
-              <Route path="colaboradores" element={<BodegaColaboradores />} />
-              <Route path="operaciones" element={<BodegaOperaciones />} />
-            </Route>
+           <Route path={`${ROUTES.rrhhBodegaRoot}/*`} element={<BodegaLayout />}>
+           <Route index element={<Navigate to="dashboard" replace />} />
+           <Route path="dashboard" element={<BodegaDashboard />} />
+           <Route path="inventario" element={<BodegaInventario />} />
+           <Route path="colaboradores" element={<BodegaColaboradores />} />
+           <Route path="operaciones" element={<BodegaOperaciones />} />
+         </Route>
+
 
             {/* Empleado */}
-            <Route path="/rrhh/empleado/:id" element={<EmpleadoDetalle />} />
-            <Route path="/rrhh/empleado/rut/:rut" element={<EmpleadoDetalle />} />
-            <Route path="/rrhh/empleado" element={<Navigate to={ROUTES.listadoFichas} replace />} />
+           <Route path={ROUTES.empleadoDetalleById} element={<EmpleadoDetalle />} />
+           <Route path={ROUTES.empleadoDetalleByRut} element={<EmpleadoDetalle />} />
+           <Route path={ROUTES.empleadoBase} element={<Navigate to={ROUTES.listadoFichas} replace />} />
+
 
             {/* Asistencia */}
             <Route path="/asistencia" element={<Navigate to={ROUTES.asistenciaSupervision} replace />} />

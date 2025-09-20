@@ -166,7 +166,7 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  /* ====== Data (3 arriba, 2 abajo) ====== */
+  /* ====== Data ====== */
   const MODULES = useMemo(
     () => [
       {
@@ -175,13 +175,14 @@ export default function Dashboard({ onLogout }) {
         icon: "users",
         color: "#2E6CF6",
         description: "Gestiona fichas, contratos, permisos y documentación legal.",
-        // Submódulos con rutas reales
+        // Chips en la card: ESTÁTICOS
         quick: [
-          { label: "Fichas", icon: "id-card", to: ROUTES.listadoFichas },
-          { label: "Permisos", icon: "file-signature", to: ROUTES.rrhhPermisos },
-          { label: "Turnos", icon: "clock", to: ROUTES.asistenciaTurnos },
-          { label: "Validación DT", icon: "users", to: ROUTES.rrhhValidacionDT },
+          { label: "Fichas", icon: "id-card" },
+          { label: "Permisos", icon: "file-signature" },
+          { label: "Turnos", icon: "clock" },
+          { label: "Validación DT", icon: "users" },
         ],
+        // Drawer (despliegue derecha): CLIC navega
         all: [
           { label: "Listado y Fichas", to: ROUTES.listadoFichas },
           { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos },
@@ -197,10 +198,10 @@ export default function Dashboard({ onLogout }) {
         color: "#10B981",
         description: "Controla horarios, marcas, dispositivos y turnos.",
         quick: [
-          { label: "Supervisión", icon: "eye", to: ROUTES.asistenciaSupervision },
-          { label: "Marcas registradas", icon: "map-pin", to: ROUTES.asistenciaMarcas },
-          { label: "Mapa de cobertura", icon: "map-pin", to: ROUTES.asistenciaMapa },
-          { label: "Dispositivos", icon: "smartphone", to: ROUTES.asistenciaDispositivos },
+          { label: "Supervisión", icon: "eye" },
+          { label: "Marcas registradas", icon: "map-pin" },
+          { label: "Mapa de cobertura", icon: "map-pin" },
+          { label: "Dispositivos", icon: "smartphone" },
         ],
         all: [
           { label: "Supervisión Integral", to: ROUTES.asistenciaSupervision },
@@ -216,14 +217,13 @@ export default function Dashboard({ onLogout }) {
         icon: "chat",
         color: "#3F7AFE",
         description: "Envía mensajes, encuestas y comunicados a tu equipo.",
-        // Sin rutas definidas aún -> quedan deshabilitados
         quick: [
           { label: "Mensajes", icon: "mail" },
           { label: "Plantillas", icon: "file-text" },
           { label: "Encuestas de clima", icon: "bar-chart" },
         ],
         all: [
-          { label: "Enviar mensaje" },
+          { label: "Enviar mensaje" }, // sin ruta todavía
           { label: "Plantillas" },
           { label: "Encuestas" },
         ],
@@ -254,7 +254,6 @@ export default function Dashboard({ onLogout }) {
           { label: "VictorIA" },
         ],
       },
-      // OJO: se elimina la card separada "RRHH → Bodega & EPP"
     ],
     []
   );
@@ -269,7 +268,7 @@ export default function Dashboard({ onLogout }) {
             <span className="hero__brandText">Tictiva</span>
           </div>
 
-        <div className="hero__tools" ref={menuRef}>
+          <div className="hero__tools" ref={menuRef}>
             <div className="hero__search">
               <Icon name="search" size={18} />
               <input placeholder="Buscar en Tictiva…" />
@@ -364,24 +363,14 @@ export default function Dashboard({ onLogout }) {
 
             <p className="card__desc">{m.description}</p>
 
-            {/* Submódulos CLICABLES en la card (si tienen 'to') */}
+            {/* Chips ESTÁTICOS en la card */}
             <ul className="card__list">
-              {m.quick.map((q, i) => {
-                const clickable = !!q.to;
-                return (
-                  <li key={i}>
-                    <button
-                      className={`chip ${clickable ? "" : "chip--disabled"}`}
-                      onClick={() => clickable && safeGo(navigate, q.to)}
-                      disabled={!clickable}
-                      aria-disabled={!clickable}
-                    >
-                      <Icon name={q.icon || "info"} size={16} />
-                      <span>{q.label}</span>
-                    </button>
-                  </li>
-                );
-              })}
+              {m.quick.map((q, i) => (
+                <li key={i} aria-disabled="true" style={{ cursor: "default" }}>
+                  <Icon name={q.icon || "info"} size={16} />
+                  <span>{q.label}</span>
+                </li>
+              ))}
             </ul>
 
             <footer className="card__foot">
