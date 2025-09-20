@@ -17,11 +17,11 @@ import LoginPage from "./components/LoginPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 
 // RRHH (en src/components)
-import ListadoFichas from "./components/ListadoFichas.jsx";
-import EmpleadoDetalle from "./components/EmpleadoDetalle.jsx";
-import PermisosJustificaciones from "./components/PermisosJustificaciones.jsx";
-import ValidacionDT from "./components/ValidacionDT.jsx";
-import RepoDocs from "./components/RepoDocs.jsx";
+import ListadoFichas from "./pages/ListadoFichas.jsx";
+import EmpleadoDetalle from "./pages/EmpleadoDetalle.jsx";
+import PermisosJustificaciones from "./pages/PermisosJustificaciones.jsx";
+import ValidacionDT from "./pages/ValidacionDT.jsx";
+import RepoDocs from "./pages/RepoDocs.jsx";
 
 // Bodega (en src/bodega)
 import BodegaLayout from "./bodega/BodegaLayout.jsx";
@@ -31,11 +31,11 @@ import BodegaColaboradores from "./bodega/BodegaColaboradores.jsx";
 import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
 
 // Asistencia (en src/components)
-import SupervisionIntegral from "./components/SupervisionIntegral.jsx";
-import MarcasRegistradas from "./components/MarcasRegistradas.jsx";
-import MapaCobertura from "./components/MapaCobertura.jsx";
-import GestionDispositivos from "./components/GestionDispositivos.jsx";
-import GestionTurnos from "./components/GestionTurnos.jsx";
+import SupervisionIntegral from "./pages/SupervisionIntegral.jsx";
+import MarcasRegistradas from "./pages/MarcasRegistradas.jsx";
+import MapaCobertura from "./pages/MapaCobertura.jsx";
+import GestionDispositivos from "./pages/GestionDispositivos.jsx";
+import GestionTurnos from "./pages/GestionTurnos.jsx";
 
 import { EmpresaProvider } from "./context/EmpresaContext";
 
