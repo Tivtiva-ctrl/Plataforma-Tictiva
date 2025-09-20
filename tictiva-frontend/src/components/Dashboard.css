@@ -468,3 +468,49 @@ body {
 .drawer__text{ color: #0B1A38; font-weight: 600; }
 .drawer__chev{ color: #64748B; font-size: 18px; }
 
+/* =========================
+   PALETA TICTIVA POR MÓDULO
+   (colores y visibilidad de íconos)
+   ========================= */
+
+/* Acento de cada módulo (barra superior, links, hovers) */
+.card.rrhh         { --accent: #2E6CF6; } /* azul tictiva */
+.card.asistencia   { --accent: #10B981; } /* verde/teal */
+.card.comunicaciones { --accent: #6D5EF8; } /* morado */
+.card.reporteria   { --accent: #2E6CF6; } /* azul (como mock) */
+.card.cuida        { --accent: #26A69A; } /* turquesa */
+
+/* Barra superior usa --accent (tu card::before ya la toma) */
+.card::before { background: var(--accent); }
+
+/* Ícono visible y del color del módulo (arregla que no se vea en
+   Comunicaciones y Reportería) */
+.card__icon {
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  background: #F7FAFF;            /* base clara por si falta regla específica */
+  border: 2px solid rgba(0,0,0,.06);
+}
+.card__icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 2;
+  display: block;
+}
+
+/* Fondo del “pastillón” del ícono a juego (tintes suaves por módulo) */
+.card.rrhh .card__icon            { background: #EDF3FF; border-color: #D9E5FF; }
+.card.asistencia .card__icon      { background: #EAFBF5; border-color: #CEF3E5; }
+.card.comunicaciones .card__icon  { background: #F3EDFF; border-color: #E2D7FF; }
+.card.reporteria .card__icon      { background: #EDF3FF; border-color: #D9E5FF; }
+.card.cuida .card__icon           { background: #EAFBFF; border-color: #D6F3FF; }
+
+/* Enlaces y hovers a juego con el módulo */
+.card .card__open                 { color: var(--accent); }
+.card .card__open:hover           { text-decoration: underline; }
+.card .card__list li:hover        { color: var(--accent); }
+.card .card__list li:hover .icon  { color: var(--accent); }
+
+
