@@ -409,4 +409,62 @@ body {
   .grid{
     grid-template-columns: 1fr !important;
   }
+}/* === FIX: Drawer como panel lateral (overlay) === */
+.drawer__backdrop{
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(2,8,23,.28);
+  backdrop-filter: blur(2px);
+  z-index: 2000 !important;
 }
+
+.drawer{
+  position: fixed !important;
+  top: 0; right: 0;
+  height: 100vh; width: min(420px, 92vw);
+  background: #fff;
+  border-left: 1px solid var(--border);
+  box-shadow: -20px 0 50px rgba(2,8,23,.25);
+  display: flex; flex-direction: column;
+  z-index: 2001 !important;
+  animation: dashDrawerIn .22s ease-out;
+}
+
+@keyframes dashDrawerIn{
+  from{ transform: translateX(16px); opacity: 0 }
+  to  { transform: translateX(0);   opacity: 1 }
+}
+
+/* Fallback de estilos internos del drawer (por si se perdieron) */
+.drawer__head{
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid #EEF2F7;
+  border-top: 4px solid transparent;
+}
+.drawer__icon{
+  width: 34px; height: 34px; border-radius: 10px;
+  background: #F8FAFF; display: grid; place-items: center;
+  border: 2px solid transparent;
+}
+.drawer__label{ font-size: 12px; color: #64748B; }
+.drawer__title{ margin: 0; font-size: 18px; font-weight: 800; color: #0B1A38; }
+.drawer__desc{ margin: 4px 0 0; color: #64748B; }
+.drawer__close{ background: none; border: none; font-size: 20px; cursor: pointer; color: #334155; }
+
+.drawer__list{
+  list-style: none; margin: 0; padding: 12px 14px 18px;
+  display: grid; gap: 8px; overflow: auto;
+}
+.drawer__item{
+  width: 100%; display: grid; grid-template-columns: auto 1fr auto;
+  gap: 10px; align-items: center;
+  padding: 10px; border: 1px solid #E5E7EB; border-radius: 12px;
+  background: #F8FAFC; cursor: pointer;
+}
+.drawer__item:hover{ background: #fff; }
+.drawer__dot{ width: 8px; height: 8px; background: #CBD5E1; border-radius: 50%; }
+.drawer__text{ color: #0B1A38; font-weight: 600; }
+.drawer__chev{ color: #64748B; font-size: 18px; }
+
