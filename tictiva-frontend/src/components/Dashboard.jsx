@@ -5,8 +5,8 @@ function Drawer({ module, onClose }) {
 
   const go = (to) => {
     if (typeof to === "string" && to.length) {
-      onClose();                 // 1) cerrar el drawer
-      requestAnimationFrame(() => navigate(to)); // 2) navegar después de cerrar
+      onClose();                          // 1) cerrar el drawer
+      setTimeout(() => navigate(to), 0);  // 2) navegar en el próximo tick
     } else {
       alert("Este submódulo estará disponible pronto.");
     }
