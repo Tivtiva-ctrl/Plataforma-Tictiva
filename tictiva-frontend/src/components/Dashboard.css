@@ -380,4 +380,33 @@ body {
 /* El drawer no se tocó y no debería necesitar cambios */
 .drawer__backdrop {
     /* ... estilos del drawer ... */
+}/* === PATCH: forzar 3 columnas arriba / 2 abajo en desktop === */
+/* Mantiene flexbox, solo fija el ancho por columna */
+.grid{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;                /* 1.5rem */
+}
+
+/* 3 columnas firmes en desktop */
+.grid > .card{
+  flex: 0 0 calc((100% - 2 * 24px) / 3) !important;  /* 3 columnas con dos gaps */
+  max-width: calc((100% - 2 * 24px) / 3) !important;
+  margin: 0;                                        /* por si algún estilo agrega margen */
+}
+
+/* 2 columnas en pantallas medianas */
+@media (max-width: 1024px){
+  .grid > .card{
+    flex-basis: calc((100% - 24px) / 2) !important;  /* 2 columnas con un gap */
+    max-width: calc((100% - 24px) / 2) !important;
+  }
+}
+
+/* 1 columna en móviles */
+@media (max-width: 680px){
+  .grid > .card{
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
 }
