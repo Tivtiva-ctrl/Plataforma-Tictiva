@@ -2,11 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Esta es la ruta de importación correcta y definitiva
 import { ROUTES } from "../router/routes"; 
 import "./Dashboard.css";
 
-/* ===== Iconos SVG (los que ya tenías + los nuevos que necesitamos) ===== */
+/* ===== Iconos SVG ===== */
 const Icon = ({ name, size = 24, className = "" }) => {
   const p = {
     width: size, height: size, viewBox: "0 0 24 24",
@@ -30,33 +29,24 @@ const Icon = ({ name, size = 24, className = "" }) => {
     case "heart": return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
     case "search": return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
     case "info": return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>);
-    /* === AGREGADOS para que se vean Comunicaciones y Reportería === */
     case "chat": return (<svg {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h13a4 4 0 0 1 4 4z"/></svg>);
     case "chart": return (<svg {...p}><path d="M3 20h18"/><path d="M7 20V10"/><path d="M12 20V4"/><path d="M17 20v-7"/></svg>);
     default: return null;
   }
 };
 
-function Drawer({ module, onClose }) {
-  const navigate = useNavigate();
+/* ===== Componente Drawer Corregido ===== */
+// Acepta 'onNavigate' del componente padre para asegurar que la navegación funcione
+function Drawer({ module, onClose, onNavigate }) {
   if (!module) return null;
 
-  // Dentro del componente Drawer en Dashboard.jsx
-
-  // Dentro del componente Drawer en Dashboard.jsx
-
   const go = (to) => {
-    // --- TRAMPAS DE DEPURACIÓN ---
-    console.log("1. Se hizo clic en un submódulo.");
-    console.log("2. La ruta recibida es:", to);
-    // ----------------------------
-
     if (typeof to === "string" && to.length) {
-      console.log("3. La ruta es válida, intentando navegar...");
-      navigate(to);
+      // 1. Navega usando la función del padre
+      onNavigate(to);
+      // 2. Cierra el panel
       onClose();
     } else {
-      console.log("3. La ruta NO es válida o es nula.");
       alert("Este submódulo estará disponible pronto.");
     }
   };
@@ -100,6 +90,8 @@ function Drawer({ module, onClose }) {
   );
 }
 
+
+/* ===== Componente Principal del Dashboard ===== */
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const [openModule, setOpenModule] = useState(null);
@@ -116,14 +108,8 @@ export default function Dashboard({ onLogout }) {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // Dentro de tu componente Dashboard en src/components/Dashboard.jsx
-
   const MODULES = useMemo(() => [
-    {
-      id: "rrhh",
-      title: "RRHH",
-      icon: "users",
-      description: "Gestiona fichas, contratos, permisos y documentación legal.",
+    { id: "rrhh", title: "RRHH", icon: "users", description: "Gestiona fichas, contratos, permisos y documentación legal.",
       quick: [
         { label: "Fichas", to: ROUTES.listadoFichas, icon: "id-card" },
         { label: "Permisos", to: ROUTES.rrhhPermisos, icon: "file-signature" },
@@ -138,11 +124,7 @@ export default function Dashboard({ onLogout }) {
         { label: "Bodega y EPP", to: null },
       ],
     },
-    {
-      id: "asistencia",
-      title: "Asistencia",
-      icon: "clock",
-      description: "Controla horarios, marcas, dispositivos y turnos.",
+    { id: "asistencia", title: "Asistencia", icon: "clock", description: "Controla horarios, marcas, dispositivos y turnos.",
       quick: [
         { label: "Supervisión", to: ROUTES.asistenciaSupervision, icon: "eye" },
         { label: "Marcas registradas", to: ROUTES.asistenciaMarcas, icon: "map-pin" },
@@ -157,13 +139,8 @@ export default function Dashboard({ onLogout }) {
         { label: "Gestión de Turnos y Jornadas", to: ROUTES.asistenciaTurnos },
       ],
     },
-    {
-      id: "comunicaciones",
-      title: "Comunicaciones",
-      icon: "chat",
-      description: "Envía mensajes, encuestas y comunicados a tu equipo.",
+    { id: "comunicaciones", title: "Comunicaciones", icon: "chat", description: "Envía mensajes, encuestas y comunicados a tu equipo.",
       quick: [
-        // --- MIRA AQUÍ: Se añaden los íconos que faltaban ---
         { label: "Mensajes", to: null, icon: "mail" },
         { label: "Plantillas", to: null, icon: "file-text" },
         { label: "Encuestas de clima", to: null, icon: "pie-chart" },
@@ -174,26 +151,15 @@ export default function Dashboard({ onLogout }) {
         { label: "Encuestas", to: null },
       ],
     },
-    {
-      id: "reporteria",
-      title: "Reportería",
-      icon: "chart",
-      description: "Genera informes, dashboards y comparte resultados.",
-      quick: [
-        // --- Y AQUÍ ---
-        { label: "Dashboards y descargas", to: null, icon: "bar-chart" }
-      ],
+    { id: "reporteria", title: "Reportería", icon: "chart", description: "Genera informes, dashboards y comparte resultados.",
+      quick: [{ label: "Dashboards y descargas", to: null, icon: "bar-chart" }],
       all: [
         { label: "Informes Gerenciales", to: null },
         { label: "Dashboards", to: null },
         { label: "Documentos", to: ROUTES.rrhhDocumentos },
       ],
     },
-    {
-      id: "cuida",
-      title: "Tictiva Cuida",
-      icon: "heart",
-      description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
+    { id: "cuida", title: "Tictiva Cuida", icon: "heart", description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
       quick: [{ label: "Bienestar y VictorIA", to: null, icon: "heart" }],
       all: [
         { label: "Test Psicológicos", to: null },
@@ -286,6 +252,7 @@ export default function Dashboard({ onLogout }) {
         <Drawer
           module={openModule}
           onClose={() => setOpenModule(null)}
+          onNavigate={navigate} 
         />
       )}
     </div>
