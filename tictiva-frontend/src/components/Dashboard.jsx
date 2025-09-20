@@ -45,7 +45,7 @@ const Icon = ({ name, size = 24, className = "" }) => {
     /* === FALTABAN ESTOS DOS (comunicaciones / reportería) === */
     case "chat": // burbuja de chat
       return (<svg {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h13a4 4 0 0 1 4 4z"/></svg>);
-    case "chart": // alias para reportería
+    case "chart": // barras para reportería
       return (<svg {...p}><path d="M3 20h18"/><path d="M7 20V10"/><path d="M12 20V4"/><path d="M17 20v-7"/></svg>);
     case "info":
       return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>);
@@ -127,14 +127,14 @@ export default function Dashboard({ onLogout }) {
         color: "#3F7AFE",
         description: "Envía mensajes, encuestas y comunicados a tu equipo.",
         quick: [
-          { label: "Mensajes", to: null, icon: "mail" },
-          { label: "Plantillas", to: null, icon: "file-text" },
-          { label: "Encuestas de clima", to: null, icon: "pie-chart" },
+          { label: "Mensajes",           to: ROUTES.comunicacionesMensajes,   icon: "mail" },
+          { label: "Plantillas",         to: ROUTES.comunicacionesPlantillas, icon: "file-text" },
+          { label: "Encuestas de clima", to: ROUTES.comunicacionesEncuestas,  icon: "pie-chart" },
         ],
         all: [
-          { label: "Enviar mensaje", to: null },
-          { label: "Plantillas", to: null },
-          { label: "Encuestas", to: null },
+          { label: "Enviar mensaje",     to: ROUTES.comunicacionesMensajes },
+          { label: "Plantillas",         to: ROUTES.comunicacionesPlantillas },
+          { label: "Encuestas",          to: ROUTES.comunicacionesEncuestas },
         ],
       },
       {
@@ -143,11 +143,13 @@ export default function Dashboard({ onLogout }) {
         icon: "chart",
         color: "#0EA5E9",
         description: "Genera informes, dashboards y comparte resultados.",
-        quick: [{ label: "Dashboards y descargas", to: null, icon: "bar-chart" }],
+        quick: [
+          { label: "Dashboards y descargas", to: ROUTES.reporteriaDashboards, icon: "bar-chart" },
+        ],
         all: [
-          { label: "Informes Gerenciales", to: null },
-          { label: "Dashboards", to: null },
-          { label: "Documentos", to: ROUTES.rrhhDocumentos },
+          { label: "Informes Gerenciales",   to: ROUTES.reporteriaDashboards },
+          { label: "Dashboards",             to: ROUTES.reporteriaDashboards },
+          { label: "Documentos",             to: ROUTES.rrhhDocumentos },
         ],
       },
       {
@@ -156,11 +158,13 @@ export default function Dashboard({ onLogout }) {
         icon: "heart",
         color: "#3898FF",
         description: "Monitorea bienestar, aplica tests y recibe apoyo de VictorIA.",
-        quick: [{ label: "Bienestar y VictorIA", to: null, icon: "heart" }],
+        quick: [
+          { label: "Bienestar y VictorIA",   to: ROUTES.cuidaBienestar, icon: "heart" },
+        ],
         all: [
-          { label: "Test Psicológicos", to: null },
-          { label: "Dashboard de Bienestar", to: null },
-          { label: "VictorIA", to: null },
+          { label: "Test Psicológicos",      to: ROUTES.cuidaTests },
+          { label: "Dashboard de Bienestar", to: ROUTES.cuidaBienestar },
+          { label: "VictorIA",               to: ROUTES.cuidaVictoria },
         ],
       },
     ],
@@ -177,7 +181,7 @@ export default function Dashboard({ onLogout }) {
             <span className="hero__brandText">Tictiva</span>
           </div>
 
-          <div className="hero__tools" ref={menuRef}>
+        <div className="hero__tools" ref={menuRef}>
             <div className="hero__search">
               <Icon name="search" size={18} />
               <input placeholder="Buscar en Tictiva…" />
