@@ -1,7 +1,7 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 // Asumiremos que tu logo está en esta ruta, ¡ajústala si es necesario!
-import logoBlanco from '../assets/logo-tictiva-blanco.png'; 
+import logo from "../../assets/logo-tictiva-blanco.png";
 
 function LoginPage({ onLoginSuccess }) {
   // Estado para controlar la visibilidad de la contraseña
