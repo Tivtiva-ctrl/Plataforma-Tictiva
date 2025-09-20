@@ -241,4 +241,30 @@ body {
 .card .card__open:hover{ text-decoration: underline; }
 .card .card__list li:hover{ color: var(--accent); }
 .card .card__list li:hover .icon{ color: var(--accent); }
+/* === FORZAR 3 ARRIBA / 2 ABAJO EN DESKTOP === */
+.grid{
+  display: grid !important;
+  grid-auto-flow: row;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 24px !important;
+  align-items: start;
+}
+
+/* Anula medidas heredadas de Flex para cada card */
+.grid > .card{
+  flex: initial !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* 2 columnas en pantallas medianas */
+@media (max-width: 1200px){
+  .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* 1 columna en móviles */
+@media (max-width: 680px){
+  .grid{ grid-template-columns: 1fr !important; }
+}
 
