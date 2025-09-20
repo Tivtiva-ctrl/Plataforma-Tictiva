@@ -1,7 +1,7 @@
 // src/components/Dashboard.jsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "../router/routes";
 import "./Dashboard.css";
 
@@ -154,7 +154,7 @@ const Icon = ({ name, size = 24, className = "" }) => {
   }
 };
 
-/* ===== Drawer (usa <Link> para navegar y cierra) ===== */
+/* ===== Drawer (Link navega; el cierre lo maneja el Dashboard al cambiar la ruta) ===== */
 function Drawer({ module, onClose }) {
   if (!module) return null;
 
@@ -180,7 +180,7 @@ function Drawer({ module, onClose }) {
             return (
               <li key={idx}>
                 {clickable ? (
-                  <Link to={it.to} className="drawer__item" onClick={onClose}>
+                  <Link to={it.to} className="drawer__item">
                     <span className="drawer__dot" />
                     <span className="drawer__text">{it.label}</span>
                     <span className="drawer__chev">›</span>
@@ -204,6 +204,7 @@ function Drawer({ module, onClose }) {
 /* ===== Dashboard ===== */
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [openModule, setOpenModule] = useState(null);
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef(null);
@@ -217,6 +218,11 @@ export default function Dashboard({ onLogout }) {
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
   }, []);
+
+  // 🔒 Cierra el drawer automáticamente cuando cambia la ruta
+  useEffect(() => {
+    if (openModule) setOpenModule(null);
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const MODULES = useMemo(
     () => [
