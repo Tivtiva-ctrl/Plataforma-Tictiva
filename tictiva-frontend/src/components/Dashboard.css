@@ -513,54 +513,66 @@ body {
 .card .card__list li:hover        { color: var(--accent); }
 .card .card__list li:hover .icon  { color: var(--accent); }
 
-/* === PALETA CORREGIDA (sin morado) ========================== */
-:root{
-  --tictiva-blue:    #2E6CF6;   /* azul marca */
-  --tictiva-blue-50:#EDF3FF;
-  --tictiva-blue-100:#D9E5FF;
-
-  --tictiva-teal:    #14B8A6;   /* teal azulado (Asistencia) */
-  --tictiva-teal-50:#EAFBF7;
-  --tictiva-teal-100:#CFF4ED;
+/* ========== PALETA FINAL POR MÓDULO (como la maqueta: azules + asistencia teal) ========== */
+/* RRHH (azul base Tictiva) */
+.card.rrhh{
+  --accent: #2E6CF6;       /* barra superior y links */
+  --icon-bg: #EDF3FF;      /* fondo del pastillón del icono */
+  --icon-bd: #D9E5FF;      /* borde suave del icono */
 }
 
-/* Acento por módulo */
-.card.rrhh,
-.card.comunicaciones,
-.card.reporteria,
-.card.cuida{
-  --accent: var(--tictiva-blue) !important;
-  border-top-color: var(--tictiva-blue) !important;
-}
+/* Asistencia (verde-azulado/teal) */
 .card.asistencia{
-  --accent: var(--tictiva-teal) !important;
-  border-top-color: var(--tictiva-teal) !important;
+  --accent: #10B981;
+  --icon-bg: #EAFBF5;
+  --icon-bd: #CEF3E5;
 }
 
-/* Chip del ícono (fondo suave y borde) */
-.card.rrhh .card__icon,
-.card.comunicaciones .card__icon,
-.card.reporteria .card__icon,
-.card.cuida .card__icon{
-  background: var(--tictiva-blue-50) !important;
-  border-color: var(--tictiva-blue-100) !important;
-  color: var(--tictiva-blue) !important;
-}
-.card.asistencia .card__icon{
-  background: var(--tictiva-teal-50) !important;
-  border-color: var(--tictiva-teal-100) !important;
-  color: var(--tictiva-teal) !important;
+/* Comunicaciones (azul distinto) */
+.card.comunicaciones{
+  --accent: #3F7AFE;       /* otro azul, más vivo */
+  --icon-bg: #E9F1FF;
+  --icon-bd: #D6E4FF;
 }
 
-/* Enlaces y hovers a juego con el acento */
-.card .card__open{ color: var(--accent) !important; }
-.card .card__list li:hover{ color: var(--accent) !important; }
-.card .card__list li:hover .icon{ color: var(--accent) !important; }
+/* Reportería (tercer azul) */
+.card.reporteria{
+  --accent: #0EA5E9;       /* azul cielo/azure */
+  --icon-bg: #E8F7FF;
+  --icon-bd: #D3ECFF;
+}
 
-/* === EMOJIS (Comunicaciones 💬 y Reportería 📊) ============== */
-/* Si prefieres los SVG, borra este bloque */
-.card.comunicaciones .card__icon svg,
-.card.reporteria   .card__icon svg{ display:none !important; }
-.card.comunicaciones .card__icon::after{ content:"💬"; font-size:20px; line-height:1; }
-.card.reporteria   .card__icon::after{ content:"📊"; font-size:20px; line-height:1; }
+/* Tictiva Cuida (azul suave – en la maqueta también es azul) */
+.card.cuida{
+  --accent: #3898FF;
+  --icon-bg: #EEF6FF;
+  --icon-bd: #DCEAFF;
+}
 
+/* La barra superior de las cards ya toma --accent con tu .card::before */
+.card::before{ background: var(--accent); }
+
+/* ========== ICONO UNIFICADO (nada de emojis realistas) ========== */
+.card__icon{
+  color: var(--accent);
+  background: var(--icon-bg, #F7FAFF);
+  border: 2px solid var(--icon-bd, rgba(0,0,0,.06));
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center;
+}
+
+/* Fuerza a que se vea el SVG de línea y no aparezca ningún emoji/imagen accidental */
+.card__icon svg{
+  width: 22px; height: 22px;
+  display: block;
+  stroke: currentColor; stroke-width: 2;
+  fill: none;
+}
+/* Si alguien dejó un emoji, lo ocultamos sin tocar JSX */
+.card__icon > :not(svg){ display: none; }
+
+/* Enlaces y hovers coherentes con el color del módulo */
+.card .card__open{ color: var(--accent); }
+.card .card__open:hover{ text-decoration: underline; }
+.card .card__list li:hover{ color: var(--accent); }
+.card .card__list li:hover .icon{ color: var(--accent); }
