@@ -1,3 +1,6 @@
+// ⬆️ Agrega esta línea en la cabecera de src/components/Dashboard.jsx (junto a tus otros imports)
+import { useNavigate } from "react-router-dom";
+
 /* ===== Drawer: submódulos ACTIVOS (clic navega y cierra) ===== */
 function Drawer({ module, onClose }) {
   const navigate = useNavigate();
@@ -34,7 +37,7 @@ function Drawer({ module, onClose }) {
         </div>
 
         <ul className="drawer__list">
-          {module.all.map((it, idx) => {
+          {(module.all ?? []).map((it, idx) => {
             const clickable = !!it.to;
             return (
               <li key={idx}>

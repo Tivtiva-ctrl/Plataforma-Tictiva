@@ -1,5 +1,5 @@
 // src/routes.js
-const ROUTES = {
+export const ROUTES = {
   home: "/",
 
   // RRHH
@@ -28,10 +28,6 @@ const ROUTES = {
   // 👉 Aliases para coincidir con lo usado en App/Dashboard
   asistenciaGestionDispositivos: "/asistencia/gestion-dispositivos",
   asistenciaDispositivos: "/asistencia/gestion-dispositivos", // alias
-
   asistenciaGestionTurnos: "/asistencia/gestion-turnos-jornadas",
   asistenciaTurnos: "/asistencia/gestion-turnos-jornadas", // alias
 };
-
-export default ROUTES;
-export { ROUTES };

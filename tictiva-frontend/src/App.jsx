@@ -43,7 +43,7 @@ function MainApp({ isLoggedIn, handleLoginSuccess, handleLogout }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isLoggedIn) navigate(ROUTES.home || "/", { replace: true });
+    if (isLoggedIn) navigate(ROUTES.home, { replace: true });
   }, [isLoggedIn, navigate]);
 
   return (
