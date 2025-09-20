@@ -1,10 +1,12 @@
-// src/routes.js
+// src/router/routes.js
+
+// Esta es la única forma en que debe ser exportado.
 export const ROUTES = {
   home: "/",
 
   // RRHH
   listadoFichas: "/rrhh/fichas",
-  empleadoDetalle: "/rrhh/empleado/:rut",      // compatibilidad existente
+  empleadoDetalle: "/rrhh/empleado/:rut",
   empleadoDetalleByRut: "/rrhh/empleado/rut/:rut",
   empleadoDetalleById: "/rrhh/empleado/:id",
   empleadoBase: "/rrhh/empleado",
@@ -23,11 +25,11 @@ export const ROUTES = {
   asistenciaSupervision: "/asistencia/supervision",
   asistenciaMarcas: "/asistencia/marcas-registradas",
   asistenciaMapaCobertura: "/asistencia/mapa-cobertura",
-  asistenciaMapa: "/asistencia/mapa-cobertura", // alias
+  asistenciaMapa: "/asistencia/mapa-cobertura",
 
-  // 👉 Aliases para coincidir con lo usado en App/Dashboard
   asistenciaGestionDispositivos: "/asistencia/gestion-dispositivos",
-  asistenciaDispositivos: "/asistencia/gestion-dispositivos", // alias
+  asistenciaDispositivos: "/asistencia/gestion-dispositivos",
+
   asistenciaGestionTurnos: "/asistencia/gestion-turnos-jornadas",
-  asistenciaTurnos: "/asistencia/gestion-turnos-jornadas", // alias
+  asistenciaTurnos: "/asistencia/gestion-turnos-jornadas",
 };
