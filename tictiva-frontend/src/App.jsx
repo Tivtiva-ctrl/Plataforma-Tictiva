@@ -9,7 +9,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-import { ROUTES } from "./router/routes.js";
+import { ROUTES } from "./router/routes";
 import { EmpresaProvider } from "./context/EmpresaContext";
 
 // --- Tus Componentes de Página ---
