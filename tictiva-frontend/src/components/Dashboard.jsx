@@ -42,10 +42,10 @@ const Icon = ({ name, size = 24, className = "" }) => {
       return (<svg {...p}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-.9-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21.3l8.8-8.8a5.5 5.5 0 0 0 0-7.9z"/></svg>);
     case "search":
       return (<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>);
-    /* === FALTABAN ESTOS DOS (comunicaciones / reportería) === */
-    case "chat": // burbuja de chat
+    /* Comunicaciones / Reportería */
+    case "chat":
       return (<svg {...p}><path d="M21 15a4 4 0 0 1-4 4H8l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h13a4 4 0 0 1 4 4z"/></svg>);
-    case "chart": // barras para reportería
+    case "chart":
       return (<svg {...p}><path d="M3 20h18"/><path d="M7 20V10"/><path d="M12 20V4"/><path d="M17 20v-7"/></svg>);
     case "info":
       return (<svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>);
@@ -181,7 +181,7 @@ export default function Dashboard({ onLogout }) {
             <span className="hero__brandText">Tictiva</span>
           </div>
 
-        <div className="hero__tools" ref={menuRef}>
+          <div className="hero__tools" ref={menuRef}>
             <div className="hero__search">
               <Icon name="search" size={18} />
               <input placeholder="Buscar en Tictiva…" />
@@ -224,7 +224,15 @@ export default function Dashboard({ onLogout }) {
 
       {/* GRID DE MÓDULOS */}
       <div className="grid">
-        {MODULES.map((m, index) => (
+        {MODULES.map((m, index) => {
+          // Ruta del botón "Abrir módulo": usa m.route si existe; si no, el primer "to" disponible.
+          const moduleRoute =
+            m.route ||
+            (m.quick.find(q => q.to)?.to) ||
+            (m.all.find(a => a.to)?.to) ||
+            "";
+
+        return (
           <article
             key={m.id}
             className={`card ${m.id} ${index >= 3 ? 'card--last-row' : ''}`}
@@ -238,9 +246,10 @@ export default function Dashboard({ onLogout }) {
 
             <p className="card__desc">{m.description}</p>
 
+            {/* Submódulos ESTÁTICOS (no clickeables) */}
             <ul className="card__list">
               {m.quick.map((q, i) => (
-                <li key={i} onClick={() => safeGo(navigate, q.to)} role="button" tabIndex={0}>
+                <li key={i} aria-disabled="true" style={{ cursor: "default" }}>
                   <Icon name={q.icon || "info"} size={16} />
                   <span>{q.label}</span>
                 </li>
@@ -248,25 +257,29 @@ export default function Dashboard({ onLogout }) {
             </ul>
 
             <footer className="card__foot">
-              <button className="card__open" onClick={() => setOpenModule(m.id)}>Abrir módulo →</button>
+              <button
+                className="card__open"
+                onClick={() => safeGo(navigate, moduleRoute)}
+              >
+                Abrir módulo →
+              </button>
             </footer>
           </article>
-        ))}
+        )})}
       </div>
 
       {openModule && (
         <Drawer
           module={MODULES.find(m => m.id === openModule)}
           onClose={() => setOpenModule(null)}
-          onGo={(to) => safeGo(navigate, to)}
         />
       )}
     </div>
   );
 }
 
-/* ===== Panel lateral ===== */
-function Drawer({ module, onClose, onGo }) {
+/* ===== Panel lateral (submódulos estáticos) ===== */
+function Drawer({ module, onClose }) {
   if (!module) return null;
   return (
     <>
@@ -287,11 +300,12 @@ function Drawer({ module, onClose, onGo }) {
         <ul className="drawer__list">
           {module.all.map((it, idx) => (
             <li key={idx}>
-              <button className="drawer__item" onClick={() => onGo(it.to)}>
+              {/* Ítems estáticos, sin navegación */}
+              <div className="drawer__item" aria-disabled="true" style={{ cursor: "default" }}>
                 <span className="drawer__dot" />
                 <span className="drawer__text">{it.label}</span>
                 <span className="drawer__chev">›</span>
-              </button>
+              </div>
             </li>
           ))}
         </ul>
