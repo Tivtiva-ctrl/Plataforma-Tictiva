@@ -1,12 +1,19 @@
 // src/App.jsx
 
 import React, { useState, Suspense, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom"; // ✅ IMPORT QUE FALTABA
 import "./App.css";
 import { ROUTES } from "./router/routes";
 import { EmpresaProvider } from "./context/EmpresaContext";
 
 // --- Tus Componentes de Página ---
-import LoginPage from "./components/LoginPage.jsx"; // Asumo que LoginPage está en pages
+import LoginPage from "./components/LoginPage.jsx"; // Asumo que LoginPage está en components
 import Dashboard from "./components/Dashboard.jsx";
 import ListadoFichas from "./pages/ListadoFichas.jsx";
 import EmpleadoDetalle from "./pages/EmpleadoDetalle.jsx";
@@ -25,7 +32,6 @@ import BodegaDashboard from "./bodega/BodegaDashboard.jsx";
 import BodegaInventario from "./bodega/BodegaInventario.jsx";
 import BodegaColaboradores from "./bodega/BodegaColaboradores.jsx";
 import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
-
 
 // --- NUEVO COMPONENTE PARA MANEJAR LAS RUTAS ---
 // Este componente vive DENTRO del Router y puede usar hooks de navegación sin problemas
@@ -51,7 +57,7 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
         <Route path={ROUTES.rrhhPermisos} element={<PermisosJustificaciones />} />
         <Route path={`${ROUTES.rrhhValidacionDT}/*`} element={<ValidacionDT />} />
         <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
-        
+
         {/* Empleado */}
         <Route path={ROUTES.empleadoDetalleById} element={<EmpleadoDetalle />} />
         <Route path={ROUTES.empleadoDetalleByRut} element={<EmpleadoDetalle />} />
@@ -67,11 +73,11 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
 
         {/* Bodega (anidado) */}
         <Route path={`${ROUTES.rrhhBodegaRoot}/*`} element={<BodegaLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<BodegaDashboard />} />
-            <Route path="inventario" element={<BodegaInventario />} />
-            <Route path="colaboradores" element={<BodegaColaboradores />} />
-            <Route path="operaciones" element={<BodegaOperaciones />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<BodegaDashboard />} />
+          <Route path="inventario" element={<BodegaInventario />} />
+          <Route path="colaboradores" element={<BodegaColaboradores />} />
+          <Route path="operaciones" element={<BodegaOperaciones />} />
         </Route>
 
         {/* Fallback */}
@@ -80,7 +86,7 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
     </Suspense>
   ) : (
     <Routes>
-        <Route path="*" element={<LoginPage onLoginSuccess={onLoginSuccess} />} />
+      <Route path="*" element={<LoginPage onLoginSuccess={onLoginSuccess} />} />
     </Routes>
   );
 }
