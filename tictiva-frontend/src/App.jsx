@@ -1,13 +1,6 @@
 // src/App.jsx
 
 import React, { useState, Suspense, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-} from "react-router-dom";
 import "./App.css";
 import { ROUTES } from "./router/routes";
 import { EmpresaProvider } from "./context/EmpresaContext";
