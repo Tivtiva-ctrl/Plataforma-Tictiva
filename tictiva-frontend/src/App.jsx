@@ -1,5 +1,4 @@
 // src/App.jsx
-
 import React, { useState, Suspense, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -7,19 +6,21 @@ import {
   Route,
   Navigate,
   useNavigate,
-} from "react-router-dom"; // ✅ IMPORT QUE FALTABA
+} from "react-router-dom";
 import "./App.css";
 import { ROUTES } from "./router/routes";
 import { EmpresaProvider } from "./context/EmpresaContext";
 
-// --- Tus Componentes de Página ---
-import LoginPage from "./components/LoginPage.jsx"; // Asumo que LoginPage está en components
+// Pages / Components existentes en tu repo
+import LoginPage from "./components/LoginPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
+
 import ListadoFichas from "./pages/ListadoFichas.jsx";
 import EmpleadoDetalle from "./pages/EmpleadoDetalle.jsx";
 import PermisosJustificaciones from "./pages/PermisosJustificaciones.jsx";
 import ValidacionDT from "./pages/ValidacionDT.jsx";
 import RepoDocs from "./pages/RepoDocs.jsx";
+
 import SupervisionIntegral from "./pages/SupervisionIntegral.jsx";
 import MarcasRegistradas from "./pages/MarcasRegistradas.jsx";
 import MapaCobertura from "./pages/MapaCobertura.jsx";
@@ -33,19 +34,13 @@ import BodegaInventario from "./bodega/BodegaInventario.jsx";
 import BodegaColaboradores from "./bodega/BodegaColaboradores.jsx";
 import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
 
-// --- NUEVO COMPONENTE PARA MANEJAR LAS RUTAS ---
-// Este componente vive DENTRO del Router y puede usar hooks de navegación sin problemas
 function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   const navigate = useNavigate();
 
-  // Este efecto te redirige al home después de iniciar sesión
   useEffect(() => {
-    if (isLoggedIn) {
-      navigate(ROUTES.home, { replace: true });
-    }
+    if (isLoggedIn) navigate(ROUTES.home, { replace: true });
   }, [isLoggedIn, navigate]);
 
-  // Si el usuario está logueado, muestra las rutas protegidas. Si no, muestra el Login.
   return isLoggedIn ? (
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
@@ -91,9 +86,8 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   );
 }
 
-// --- COMPONENTE PRINCIPAL (más limpio) ---
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Cambia a true para pruebas sin login
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const handleLoginSuccess = () => setIsLoggedIn(true);
   const handleLogout = () => setIsLoggedIn(false);
 

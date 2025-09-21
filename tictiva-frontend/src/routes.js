@@ -1,28 +1,34 @@
-// src/routes.js
-const ROUTES = {
+// src/router/routes.js
+export const ROUTES = {
   home: "/",
 
   // RRHH
   listadoFichas: "/rrhh/fichas",
-  empleadoDetalle: "/rrhh/empleado/:rut",
+  empleadoDetalle: "/rrhh/empleado/:rut",       // compat
+  empleadoDetalleByRut: "/rrhh/empleado/rut/:rut",
+  empleadoDetalleById: "/rrhh/empleado/:id",
+  empleadoBase: "/rrhh/empleado",
   rrhhPermisos: "/rrhh/permisos",
   rrhhValidacionDT: "/rrhh/validacion-dt",
   rrhhDocumentos: "/rrhh/documentos",
-  rrhhBodega: {
-    root: "/rrhh/bodega",
-    dashboard: "/rrhh/bodega/dashboard",
-    inventario: "/rrhh/bodega/inventario",
-    colaboradores: "/rrhh/bodega/colaboradores",
-    operaciones: "/rrhh/bodega/operaciones",
-  },
+
+  // RRHH → Bodega & EPP
+  rrhhBodegaRoot: "/rrhh/bodega",
+  rrhhBodegaDashboard: "/rrhh/bodega/dashboard",
+  rrhhBodegaInventario: "/rrhh/bodega/inventario",
+  rrhhBodegaColaboradores: "/rrhh/bodega/colaboradores",
+  rrhhBodegaOperaciones: "/rrhh/bodega/operaciones",
 
   // Asistencia
   asistenciaSupervision: "/asistencia/supervision",
-  asistenciaMarcas: "/asistencia/marcas",
-  asistenciaMapa: "/asistencia/mapa",              // 👈 Mapa de Cobertura
-  asistenciaDispositivos: "/asistencia/dispositivos", // 👈 Gestión de Dispositivos
-  asistenciaTurnos: "/asistencia/turnos",          // (opcional/futuro)
-};
+  asistenciaMarcas: "/asistencia/marcas-registradas",
+  asistenciaMapaCobertura: "/asistencia/mapa-cobertura",
+  asistenciaMapa: "/asistencia/mapa-cobertura", // alias
 
-export default ROUTES;
-export { ROUTES };
+  // Aliases App/Dashboard
+  asistenciaGestionDispositivos: "/asistencia/gestion-dispositivos",
+  asistenciaDispositivos: "/asistencia/gestion-dispositivos", // alias
+
+  asistenciaGestionTurnos: "/asistencia/gestion-turnos-jornadas",
+  asistenciaTurnos: "/asistencia/gestion-turnos-jornadas", // alias
+};
