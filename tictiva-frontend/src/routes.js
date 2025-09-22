@@ -1,10 +1,9 @@
-// src/router/routes.js
 export const ROUTES = {
   home: "/",
 
   // RRHH
   listadoFichas: "/rrhh/fichas",
-  empleadoDetalle: "/rrhh/empleado/:rut",       // compat
+  empleadoDetalle: "/rrhh/empleado/:rut",
   empleadoDetalleByRut: "/rrhh/empleado/rut/:rut",
   empleadoDetalleById: "/rrhh/empleado/:id",
   empleadoBase: "/rrhh/empleado",
@@ -23,12 +22,11 @@ export const ROUTES = {
   asistenciaSupervision: "/asistencia/supervision",
   asistenciaMarcas: "/asistencia/marcas-registradas",
   asistenciaMapaCobertura: "/asistencia/mapa-cobertura",
-  asistenciaMapa: "/asistencia/mapa-cobertura", // alias
+  asistenciaMapa: "/asistencia/mapa-cobertura",
 
-  // Aliases App/Dashboard
   asistenciaGestionDispositivos: "/asistencia/gestion-dispositivos",
-  asistenciaDispositivos: "/asistencia/gestion-dispositivos", // alias
+  asistenciaDispositivos: "/asistencia/gestion-dispositivos",
 
   asistenciaGestionTurnos: "/asistencia/gestion-turnos-jornadas",
-  asistenciaTurnos: "/asistencia/gestion-turnos-jornadas", // alias
+  asistenciaTurnos: "/asistencia/gestion-turnos-jornadas",
 };
