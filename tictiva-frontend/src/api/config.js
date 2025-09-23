@@ -1,9 +1,11 @@
-// Quita la / final si viene con slash
-export const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+// src/api/config.js
+export const API_BASE = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/g, "");
+export const api = (path = "") =>
+  `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
 
-// Construye URL absolutas a tu API
-export function api(path) {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  if (!API_BASE) throw new Error("Falta configurar VITE_API_URL");
-  return `${API_BASE}${p}`;
+/** Helper para pedir JSON con manejo de error HTTP */
+export async function fetchJSON(path, opts) {
+  const res = await fetch(api(path), opts);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
