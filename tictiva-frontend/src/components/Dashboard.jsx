@@ -1,7 +1,7 @@
 // src/components/Dashboard.jsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "../router/routes"; 
 import "./Dashboard.css";
 
@@ -35,13 +35,12 @@ const Icon = ({ name, size = 24, className = "" }) => {
   }
 };
 
-// --- CORRECCIÓN CLAVE 1: El componente Drawer recibe 'onNavigate' del padre ---
+// --- Drawer: usar <Link> para navegar y cerrar con onClose ---
 function Drawer({ module, onClose, onNavigate }) {
   if (!module) return null;
 
   const go = (to) => {
     if (typeof to === "string" && to.length) {
-      // Usa la función que viene del padre para asegurar que funcione
       onNavigate(to);
       onClose();
     } else {
@@ -69,16 +68,26 @@ function Drawer({ module, onClose, onNavigate }) {
             const clickable = !!it.to;
             return (
               <li key={idx}>
-                <button
-                  className={`drawer__item ${clickable ? "" : "drawer__item--disabled"}`}
-                  onClick={() => clickable && go(it.to)}
-                  disabled={!clickable}
-                  aria-disabled={!clickable}
-                >
-                  <span className="drawer__dot" />
-                  <span className="drawer__text">{it.label}</span>
-                  <span className="drawer__chev">{clickable ? "›" : "•"}</span>
-                </button>
+                {clickable ? (
+                  <Link
+                    className="drawer__item"
+                    to={it.to}
+                    onClick={onClose}
+                  >
+                    <span className="drawer__dot" />
+                    <span className="drawer__text">{it.label}</span>
+                    <span className="drawer__chev">›</span>
+                  </Link>
+                ) : (
+                  <div
+                    className="drawer__item drawer__item--disabled"
+                    aria-disabled="true"
+                  >
+                    <span className="drawer__dot" />
+                    <span className="drawer__text">{it.label}</span>
+                    <span className="drawer__chev">•</span>
+                  </div>
+                )}
               </li>
             );
           })}
@@ -90,7 +99,7 @@ function Drawer({ module, onClose, onNavigate }) {
 
 // --- Componente Principal ---
 export default function Dashboard({ onLogout }) {
-  const navigate = useNavigate(); // El hook se define aquí, en el componente que no desaparece
+  const navigate = useNavigate();
   const [openModule, setOpenModule] = useState(null);
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef(null);
@@ -118,7 +127,8 @@ export default function Dashboard({ onLogout }) {
         { label: "Permisos y Justificaciones", to: ROUTES.rrhhPermisos },
         { label: "Validación DT", to: ROUTES.rrhhValidacionDT },
         { label: "Repositorio Documental", to: ROUTES.rrhhDocumentos },
-        { label: "Bodega y EPP", to: null },
+        { label: "Bodega y EPP", to: ROUTES.rrhhBodegaDashboard },
+
       ],
     },
     { id: "asistencia", title: "Asistencia", icon: "clock", description: "Controla horarios, marcas, dispositivos y turnos.",
@@ -245,7 +255,6 @@ export default function Dashboard({ onLogout }) {
         ))}
       </div>
 
-      {/* --- CORRECCIÓN CLAVE 2: Aquí le pasamos la función 'navigate' al Drawer --- */}
       {openModule && (
         <Drawer
           module={openModule}
