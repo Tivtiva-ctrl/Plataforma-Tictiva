@@ -1,7 +1,8 @@
 // src/components/HRSubnav.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ROUTES } from "../routes";
+import { ROUTES } from "../router/routes";
+
 import "./HRSubnav.css";
 
 export default function HRSubnav() {
@@ -10,7 +11,7 @@ export default function HRSubnav() {
     { to: ROUTES.rrhhPermisos,     label: "Permisos y Justificaciones" },
     { to: ROUTES.rrhhValidacionDT, label: "Validación DT" },
     { to: ROUTES.rrhhDocumentos,   label: "Repositorio Documental" },
-    { to: ROUTES.rrhhBodega.dashboard, label: "Bodega & EPP" }, // 👈 nuevo
+    { to: ROUTES.rrhhBodegaDashboard, label: "Bodega & EPP" }, // ✅ clave plana
   ];
 
   return (
