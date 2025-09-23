@@ -1,7 +1,7 @@
 // src/components/BodegaSubnav.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ROUTES } from "../routes";
+import { ROUTES } from "../router/routes";
 import "./Bodega.css";
 
 export default function BodegaSubnav() {
@@ -14,7 +14,12 @@ export default function BodegaSubnav() {
   return (
     <div className="bod-subnav" role="navigation" aria-label="Submenú Bodega & EPP">
       {items.map(i => (
-        <NavLink key={i.to} to={i.to} end className={({isActive}) => "bod-pill" + (isActive?" is-active":"")}>
+        <NavLink
+          key={i.to}
+          to={i.to}
+          end
+          className={({isActive}) => "bod-pill" + (isActive ? " is-active" : "")}
+        >
           {i.label}
         </NavLink>
       ))}

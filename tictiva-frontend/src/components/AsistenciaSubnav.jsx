@@ -1,22 +1,21 @@
 // src/components/AsistenciaSubnav.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ROUTES } from "../routes";
+import { ROUTES } from "../router/routes";
 
 export default function AsistenciaSubnav() {
   const items = [
-    { to: ROUTES.asistenciaSupervision, label: "Supervisión Integral", },
-    { to: ROUTES.asistenciaMarcas,      label: "Marcas Registradas",   },
-    { to: ROUTES.asistenciaMapa,        label: "Mapa de Cobertura"},
-    { to: ROUTES.asistenciaDispositivos,label: "Gestión de Dispositivos"},
-    // si aún no tienes ruta de turnos, puedes dejarlo apuntando a un placeholder
-    { to: "/asistencia/turnos",         label: "Gestión de Turnos y Jornadas", },
+    { to: ROUTES.asistenciaSupervision, label: "Supervisión Integral" },
+    { to: ROUTES.asistenciaMarcas, label: "Marcas Registradas" },
+    { to: ROUTES.asistenciaMapa, label: "Mapa de Cobertura" },
+    { to: ROUTES.asistenciaDispositivos, label: "Gestión de Dispositivos" },
+    { to: ROUTES.asistenciaTurnos, label: "Gestión de Turnos y Jornadas" },
   ];
 
   return (
     <div className="as-subnav-wrap">
       <nav className="as-subnav">
-        {items.map(it => (
+        {items.map((it) => (
           <NavLink
             key={it.to}
             to={it.to}
@@ -24,7 +23,9 @@ export default function AsistenciaSubnav() {
               "as-subnav-link" + (isActive ? " is-active" : "")
             }
           >
-            <span className="as-subnav-emoji" aria-hidden>{it.emoji}</span>
+            <span className="as-subnav-emoji" aria-hidden>
+              {it.emoji}
+            </span>
             <span>{it.label}</span>
           </NavLink>
         ))}

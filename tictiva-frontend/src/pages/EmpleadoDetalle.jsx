@@ -1,3 +1,4 @@
+// src/pages/EmpleadoDetalle.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import DocumentosTab from "../components/DocumentosTab.jsx";
@@ -625,7 +626,7 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
         <div className="hv-row"><span className="hv-label">Medicamentos Habituales:</span>
           {modoEdicion
             ? <input className="hv-val" value={md.medicamentos||""} onChange={(e)=>setMed("medicamentos", e.target.value)} />
-            : <span className="hv-val">md.medicamentos||"N/D")</span>}
+            : <span className="hv-val">{md.medicamentos || "N/D"}</span>}
         </div>
         <div className="hv-row"><span className="hv-label">Observaciones:</span>
           {modoEdicion
@@ -731,7 +732,7 @@ function HojaDeVida({ empleado, modoEdicion, onChange }) {
   );
 }
 
-/* ======================= Tab: Asistencia (NO editable) ====================== */
+/* ===================== Tab: Asistencia (NO editable) ====================== */
 function AsistenciaTab({ empleado }) {
   const [metricas, setMetricas] = useState({ horasTrabajadas: 0, porcentajeAsistencia: 0, atrasosMes: 0, horasExtra: 0 });
   const marcas = Array.isArray(empleado?.marcas) ? empleado.marcas : [];
