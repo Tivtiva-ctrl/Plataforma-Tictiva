@@ -3,7 +3,22 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HRSubnav from "../components/HRSubnav";
 import "./ListadoFichas.css";
-import { EmpleadosAPI } from "../api";
+import { api } from "../api/config";
+
+// Ejemplo:
+async function cargarFichas() {
+  try {
+    const res = await fetch(api("/fichas"));   // <-- en vez de /fichas o http://127.0.0.1:3001/fichas
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    // setState(data) ...
+  } catch (err) {
+    console.error(err);
+    alert("No se pudo conectar al backend. Revisa VITE_API_URL en Vercel.");
+  }
+}
+
+
 
 // --- Helpers (sin cambios, tu código original) ---
 const initials = (name = "") =>
