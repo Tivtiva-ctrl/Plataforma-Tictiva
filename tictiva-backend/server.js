@@ -4,7 +4,7 @@
 // ==========================================================
 console.log("=== BACKEND CONECTADO A SUPABASE ===");
 
-const express = require("express");
+import express from "express";
 const cors = require("cors");
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
