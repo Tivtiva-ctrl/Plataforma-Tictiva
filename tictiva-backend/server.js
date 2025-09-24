@@ -1,13 +1,13 @@
 // ==========================================================
-//  SERVIDOR COMPLETO CONECTADO A SUPABASE
-//  (Sistema de Empleados, PINs y Marcaciones)
+//  SERVIDOR COMPLETO CONECTADO A SUPABASE (CON ES MODULES)
 // ==========================================================
 console.log("=== BACKEND CONECTADO A SUPABASE ===");
 
-import express from "express";
-const cors = require("cors");
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+// --- Bloque de importaciones corregido ---
+import express from 'express';
+import cors from 'cors';
+import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config'; // Esto reemplaza require('dotenv').config()
 
 const app = express();
 app.use(cors());
@@ -42,7 +42,6 @@ async function generatePin() {
   }
   return pin;
 }
-
 
 // ==========================================================
 //  RUTAS DE LA API (TRADUCIDAS A SUPABASE)
