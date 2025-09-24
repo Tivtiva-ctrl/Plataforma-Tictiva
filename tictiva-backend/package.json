@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node server.js",
     "dev:db": "json-server --watch ./db.json --port 3001 --host 127.0.0.1",
     "dev:api": "API_KEY=dev-secret-key node server.js"
   },
