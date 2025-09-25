@@ -56,14 +56,8 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
         {/* Raíz → Home */}
-        <Route
-  path={ROUTES.home}
-  element={
-    <div style={{ padding: 24, background: "#111", color: "#fff", borderRadius: 8 }}>
-      HOME OK (router) — {ROUTES.home}
-    </div>
-  }
-/>
+        <Route path={ROUTES.home} element={<Dashboard onLogout={onLogout} />} />
+
 
 
         {/* RRHH */}
