@@ -56,8 +56,15 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
         {/* Raíz → Home */}
-        <Route path="/" element={<Navigate to={ROUTES.home} replace />} />
-        <Route path={ROUTES.home} element={<Dashboard onLogout={onLogout} />} />
+        <Route
+  path={ROUTES.home}
+  element={
+    <div style={{ padding: 24, background: "#111", color: "#fff", borderRadius: 8 }}>
+      HOME OK (router) — {ROUTES.home}
+    </div>
+  }
+/>
+
 
         {/* RRHH */}
         <Route path={ROUTES.listadoFichas} element={<ListadoFichas />} />
