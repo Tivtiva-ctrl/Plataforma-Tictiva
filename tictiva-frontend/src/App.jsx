@@ -11,7 +11,7 @@ import "./App.css";
 import { ROUTES } from "./router/routes";
 import { EmpresaProvider } from "./context/EmpresaContext";
 
-// Pages / Components
+// Pages / Components existentes en tu repo
 import LoginPage from "./components/LoginPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 
@@ -37,15 +37,16 @@ import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
 function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   const navigate = useNavigate();
 
-  // ✅ Post-login vuelve al Dashboard (mosaico de módulos)
+  // Al loguear, enviar directo a Listado de Fichas (evita "Not Available")
   useEffect(() => {
-    if (isLoggedIn) navigate(ROUTES.home, { replace: true });
+    if (isLoggedIn) navigate(ROUTES.listadoFichas, { replace: true });
   }, [isLoggedIn, navigate]);
 
   if (!isLoggedIn) {
     return (
       <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
         <Routes>
+          {/* Cargamos siempre Login si no hay sesión */}
           <Route path="*" element={<LoginPage onLoginSuccess={onLoginSuccess} />} />
         </Routes>
       </Suspense>
@@ -55,12 +56,13 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   return (
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
-        {/* ✅ La raíz entra al Dashboard para ver todos los módulos */}
-        <Route path="/" element={<Navigate to={ROUTES.home} replace />} />
+        {/* Redirecciones base y home */}
+        <Route path="/" element={<Navigate to={ROUTES.listadoFichas} replace />} />
         <Route path={ROUTES.home} element={<Dashboard onLogout={onLogout} />} />
 
         {/* RRHH */}
         <Route path={ROUTES.listadoFichas} element={<ListadoFichas />} />
+        {/* Si estos módulos están inestables, coméntalos temporalmente */}
         <Route path={ROUTES.rrhhPermisos} element={<PermisosJustificaciones />} />
         <Route path={`${ROUTES.rrhhValidacionDT}/*`} element={<ValidacionDT />} />
         <Route path={ROUTES.rrhhDocumentos} element={<RepoDocs />} />
@@ -87,8 +89,8 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
           <Route path="operaciones" element={<BodegaOperaciones />} />
         </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
+        {/* Fallback: SIEMPRE manda a Listado de Fichas (evita "Not Available") */}
+        <Route path="*" element={<Navigate to={ROUTES.listadoFichas} replace />} />
       </Routes>
     </Suspense>
   );
