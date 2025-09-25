@@ -87,21 +87,25 @@ app.post("/admin/empleados", (req, res) => {
   const existingCodes = new Set(db.empleados.map((e) => e.codigoMarcacion).filter(Boolean));
   const codigoMarcacion = generatePunchCode(existingCodes);
 
-  const nuevo = {
-    id: nextId(db.empleados),
-    rut,
-    nombre,
-    cargo,
-    estado,
-    fechaIngreso,
-    area,
-    codigoMarcacion,
-    marcas: [],
-    salud: { condiciones: "", accidentes: "", religion: "", indicaciones: "" },
-    contacto: { nombre: "", relacion: "", telefono: "", direccion: "" },
-    evaluacion: { comentarios: "" },
-    datosContractuales: { tipoContrato: "Indefinido" }
-  };
+  // Listar empleados (solo lectura)
+app.get("/admin/empleados", (req, res) => {
+  const db = loadDB();
+  const empleados = Array.isArray(db.empleados) ? db.empleados : [];
+  // Devuelve solo campos seguros para listado (ajusta a gusto)
+  const safe = empleados.map(e => ({
+    id: e.id,
+    rut: e.rut,
+    nombre: e.nombre,
+    cargo: e.cargo ?? "",
+    estado: e.estado ?? "Activo",
+    fechaIngreso: e.fechaIngreso ?? "",
+    area: e.area ?? "",
+    codigoMarcacion: e.codigoMarcacion ?? null,
+    marcasCount: Array.isArray(e.marcas) ? e.marcas.length : 0,
+  }));
+  res.json(safe);
+});
+
 
   db.empleados.push(nuevo);
   saveDB(db);
