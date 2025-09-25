@@ -1,25 +1,32 @@
 // vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "node:path";
 
 export default defineConfig({
   plugins: [react()],
+
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      "@": path.resolve(process.cwd(), "src"), // alias sólido para @
     },
-    dedupe: ['react', 'react-dom'],
+    dedupe: ["react", "react-dom"], // previene múltiples copias en monorepos
   },
+
   server: {
     proxy: {
-      // Todo lo que empiece con /api va al json-server
-      '/api': {
-        target: 'http://127.0.0.1:3001',
+      // Solo en dev: redirige /api -> json-server local
+      "/api": {
+        target: "http://127.0.0.1:3001",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ''), // /api/empleados -> /empleados
+        rewrite: (p) => p.replace(/^\/api/, ""),
       },
     },
   },
-})
+
+  // Opcional pero útil si algún paquete usa process.env en runtime cliente
+  define: {
+    "process.env": {}, // evita fallos de paquetes que miran process.env
+  },
+});
