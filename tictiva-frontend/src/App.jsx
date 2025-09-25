@@ -37,7 +37,7 @@ import BodegaOperaciones from "./bodega/BodegaOperaciones.jsx";
 function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   const navigate = useNavigate();
 
-  // Tras login, ir al Dashboard (home)
+  // ✅ Post-login vuelve al Dashboard (mosaico de módulos)
   useEffect(() => {
     if (isLoggedIn) navigate(ROUTES.home, { replace: true });
   }, [isLoggedIn, navigate]);
@@ -55,7 +55,7 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   return (
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
-        {/* Raíz → Home */}
+        {/* ✅ La raíz entra al Dashboard para ver todos los módulos */}
         <Route path="/" element={<Navigate to={ROUTES.home} replace />} />
         <Route path={ROUTES.home} element={<Dashboard onLogout={onLogout} />} />
 
@@ -87,7 +87,7 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
           <Route path="operaciones" element={<BodegaOperaciones />} />
         </Route>
 
-        {/* Fallback → Home */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
       </Routes>
     </Suspense>
