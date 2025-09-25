@@ -60,7 +60,29 @@ app.use((req, res, next) => {
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// Crear empleado con código de marcación
+// ======================
+//  GET /admin/empleados
+// ======================
+app.get("/admin/empleados", (req, res) => {
+  const db = loadDB();
+  const empleados = Array.isArray(db.empleados) ? db.empleados : [];
+  const safe = empleados.map(e => ({
+    id: e.id,
+    rut: e.rut,
+    nombre: e.nombre,
+    cargo: e.cargo ?? "",
+    estado: e.estado ?? "Activo",
+    fechaIngreso: e.fechaIngreso ?? "",
+    area: e.area ?? "",
+    codigoMarcacion: e.codigoMarcacion ?? null,
+    marcasCount: Array.isArray(e.marcas) ? e.marcas.length : 0,
+  }));
+  res.json(safe);
+});
+
+// ==================================
+//  POST /admin/empleados  (crear)
+// ==================================
 app.post("/admin/empleados", (req, res) => {
   const {
     rut,
@@ -87,33 +109,30 @@ app.post("/admin/empleados", (req, res) => {
   const existingCodes = new Set(db.empleados.map((e) => e.codigoMarcacion).filter(Boolean));
   const codigoMarcacion = generatePunchCode(existingCodes);
 
-  // Listar empleados (solo lectura)
-app.get("/admin/empleados", (req, res) => {
-  const db = loadDB();
-  const empleados = Array.isArray(db.empleados) ? db.empleados : [];
-  // Devuelve solo campos seguros para listado (ajusta a gusto)
-  const safe = empleados.map(e => ({
-    id: e.id,
-    rut: e.rut,
-    nombre: e.nombre,
-    cargo: e.cargo ?? "",
-    estado: e.estado ?? "Activo",
-    fechaIngreso: e.fechaIngreso ?? "",
-    area: e.area ?? "",
-    codigoMarcacion: e.codigoMarcacion ?? null,
-    marcasCount: Array.isArray(e.marcas) ? e.marcas.length : 0,
-  }));
-  res.json(safe);
-});
-
+  const nuevo = {
+    id: nextId(db.empleados),
+    rut,
+    nombre,
+    cargo,
+    estado,
+    fechaIngreso,
+    area,
+    codigoMarcacion,
+    marcas: [],
+    salud: { condiciones: "", accidentes: "", religion: "", indicaciones: "" },
+    contacto: { nombre: "", relacion: "", telefono: "", direccion: "" },
+    evaluacion: { comentarios: "" },
+    datosContractuales: { tipoContrato: "Indefinido" }
+  };
 
   db.empleados.push(nuevo);
   saveDB(db);
   return res.status(201).json(nuevo);
-  
 });
 
-// Regenerar código de marcación
+// ======================================================
+//  POST /admin/empleados/:id/regenerar-codigo (regenerar)
+// ======================================================
 app.post("/admin/empleados/:id/regenerar-codigo", (req, res) => {
   const db = loadDB();
   const emp = (db.empleados || []).find((e) => String(e.id) === String(req.params.id));
@@ -125,8 +144,10 @@ app.post("/admin/empleados/:id/regenerar-codigo", (req, res) => {
   res.json({ ok: true, codigoMarcacion: emp.codigoMarcacion });
 });
 
-// Ingesta de marca por código O por RUT
-// Body: { codigo?:string, rut?:string, tipo:"Entrada"|"Salida", ts:ISO, estado?, metodo?, ip? }
+// =====================================================
+//  POST /ingest/marca  (por codigo o por rut)
+//  Body: { codigo?:string, rut?:string, tipo:"Entrada"|"Salida", ts:ISO, estado?, metodo?, ip? }
+// =====================================================
 app.post("/ingest/marca", (req, res) => {
   const { codigo, rut, tipo, ts, estado = "Válida", metodo = "App", ip = "" } = req.body || {};
   if ((!codigo && !rut) || !tipo || !ts) {
