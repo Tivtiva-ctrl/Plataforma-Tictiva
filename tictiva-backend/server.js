@@ -110,6 +110,7 @@ app.get("/admin/empleados", (req, res) => {
   db.empleados.push(nuevo);
   saveDB(db);
   return res.status(201).json(nuevo);
+  
 });
 
 // Regenerar código de marcación

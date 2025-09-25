@@ -1,36 +1,28 @@
-// src/api/empleados.js
-import { fetchJSON } from "./config";
+// src/services/empleados.js
+import { api } from "../api/client";
 
-export const EmpleadosAPI = {
-  async list() {
-    // Intenta /empleados y si no existe, cae a /fichas
-    try {
-      return await fetchJSON("/empleados");
-    } catch (e1) {
-      try {
-        return await fetchJSON("/fichas");
-      } catch (e2) {
-        console.warn("No hay /empleados ni /fichas, devolviendo []");
-        return [];
-      }
-    }
+// Export default con las funciones esperadas por tu UI
+const empleados = {
+  async listar() {
+    // GET /admin/empleados
+    return api.get("/admin/empleados");
   },
 
-  async getById(id) {
-    try {
-      return await fetchJSON(`/empleados/${encodeURIComponent(id)}`);
-    } catch {
-      return null;
-    }
+  async crear({ rut, nombre, cargo = "", estado = "Activo", fechaIngreso = "", area = "" }) {
+    return api.post("/admin/empleados", { rut, nombre, cargo, estado, fechaIngreso, area });
   },
 
-  async searchByRut(rut) {
-    try {
-      const q = encodeURIComponent(rut);
-      const data = await fetchJSON(`/empleados?rut=${q}`);
-      return Array.isArray(data) ? data[0] : data;
-    } catch {
-      return null;
-    }
+  async regenerarCodigo(id) {
+    return api.post(`/admin/empleados/${id}/regenerar-codigo`);
+  },
+
+  async ingresarMarcaPorRut({ rut, tipo, ts, estado = "Válida", metodo = "App", ip = "" }) {
+    return api.post("/ingest/marca", { rut, tipo, ts, estado, metodo, ip });
+  },
+
+  async ingresarMarcaPorCodigo({ codigo, tipo, ts, estado = "Válida", metodo = "App", ip = "" }) {
+    return api.post("/ingest/marca", { codigo, tipo, ts, estado, metodo, ip });
   },
 };
+
+export default empleados;
