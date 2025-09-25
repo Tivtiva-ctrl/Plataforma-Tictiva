@@ -1,9 +1,9 @@
+// src/router/routes.js
 export const ROUTES = {
   home: "/home",
 
   // RRHH
-  listadoFichas: "/rrhh/fichas",
-  empleadoDetalle: "/rrhh/empleado/:rut",
+  listadoFichas: "/rrhh/fichas/listado",
   empleadoDetalleByRut: "/rrhh/empleado/rut/:rut",
   empleadoDetalleById: "/rrhh/empleado/:id",
   empleadoBase: "/rrhh/empleado",
@@ -11,7 +11,7 @@ export const ROUTES = {
   rrhhValidacionDT: "/rrhh/validacion-dt",
   rrhhDocumentos: "/rrhh/documentos",
 
-  // RRHH → Bodega & EPP
+  // RRHH Bodega & EPP
   rrhhBodegaRoot: "/rrhh/bodega",
   rrhhBodegaDashboard: "/rrhh/bodega/dashboard",
   rrhhBodegaInventario: "/rrhh/bodega/inventario",
@@ -23,10 +23,9 @@ export const ROUTES = {
   asistenciaMarcas: "/asistencia/marcas-registradas",
   asistenciaMapaCobertura: "/asistencia/mapa-cobertura",
   asistenciaMapa: "/asistencia/mapa-cobertura",
-
   asistenciaGestionDispositivos: "/asistencia/gestion-dispositivos",
-  asistenciaDispositivos: "/asistencia/gestion-dispositivos",
-
   asistenciaGestionTurnos: "/asistencia/gestion-turnos-jornadas",
   asistenciaTurnos: "/asistencia/gestion-turnos-jornadas",
 };
+
+export default ROUTES;
