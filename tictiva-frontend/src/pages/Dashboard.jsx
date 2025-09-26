@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import "./Dashboard.css";
 
-/** Datos de ejemplo (reemplazar luego por datos reales) */
+/* KPIs y módulos de ejemplo */
 const KPIS = [
   { key: "mensajes", label: "Mensajes", value: 3 },
   { key: "marcas", label: "Marcas hoy", value: 128 },
@@ -9,42 +9,18 @@ const KPIS = [
 ];
 
 const MODULES = [
-  {
-    key: "rrhh",
-    title: "RRHH",
-    desc: "Gestión humana, clara y cercana",
-    items: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"],
-  },
-  {
-    key: "asistencia",
-    title: "Asistencia",
-    desc: "Control preciso, en tiempo real",
-    items: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"],
-  },
-  {
-    key: "comunicaciones",
-    title: "Comunicaciones",
-    desc: "Mensajes y encuestas sin fricción",
-    items: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Dashboard"],
-  },
-  {
-    key: "reporteria",
-    title: "Reportería",
-    desc: "Datos que cuentan historias",
-    items: ["Informes gerenciales", "Dashboards y presentaciones", "Gestión de documentos", "Integraciones"],
-  },
-  {
-    key: "cuida",
-    title: "Tictiva Cuida",
-    desc: "Bienestar con ADIA integrado",
-    items: ["ADIA (IA central)", "Test psicológicos", "Dashboard de bienestar", "+ Integrado con RRHH"],
-  },
-  {
-    key: "bodega",
-    title: "Bodega & EPP",
-    desc: "Inventario al servicio del equipo",
-    items: ["Inventario", "Colaboradores", "Operaciones", "Alertas"],
-  },
+  { key: "rrhh", title: "RRHH", desc: "Gestión humana, clara y cercana",
+    items: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"] },
+  { key: "asistencia", title: "Asistencia", desc: "Control preciso, en tiempo real",
+    items: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"] },
+  { key: "comunicaciones", title: "Comunicaciones", desc: "Mensajes y encuestas sin fricción",
+    items: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Dashboard"] },
+  { key: "reporteria", title: "Reportería", desc: "Datos que cuentan historias",
+    items: ["Informes gerenciales", "Dashboards y presentaciones", "Gestión de documentos", "Integraciones"] },
+  { key: "cuida", title: "Tictiva Cuida", desc: "Bienestar con ADIA integrado",
+    items: ["ADIA (IA central)", "Test psicológicos", "Dashboard de bienestar", "+ Integrado con RRHH"] },
+  { key: "bodega", title: "Bodega & EPP", desc: "Inventario al servicio del equipo",
+    items: ["Inventario", "Colaboradores", "Operaciones", "Alertas"] },
 ];
 
 const ADIA_TIPS = {
@@ -56,43 +32,70 @@ const ADIA_TIPS = {
   bodega: "ADIA: Define mínimos por EPP para evitar quiebres de stock inesperados.",
 };
 
-function AdiaTip({ moduleKey }) {
-  const tip = ADIA_TIPS[moduleKey] || "ADIA: Consejos contextuales aparecerán aquí.";
-  return (
-    <div className="adiaTip">
-      <div className="adiaTipIcon">💡</div>
-      <div>
-        <div className="adiaTipTitle">Tip de ADIA</div>
-        <div className="adiaTipText">{tip}</div>
-      </div>
-    </div>
-  );
-}
+export default function Dashboard({ userName = "Usuario", onLogout }) {
+  const [open, setOpen] = useState(null);       // panel derecho
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-export default function Dashboard() {
-  const [open, setOpen] = useState(null); // moduleKey o null
   const selected = useMemo(() => MODULES.find(m => m.key === open), [open]);
 
   return (
     <div className="dashboardPage">
       <div className="dashboardContainer">
-        {/* Encabezado */}
-        <header className="dashHeader">
-          <div className="dashBrand">
-            <span className="brandDot" />
-            <span className="brandName">Tictiva Plataforma</span>
+        {/* ===== TOPBAR (ARRIBA) ===== */}
+        <div className="topbar">
+          <div className="brandBlock">
+            <div className="brandBadge" />
+            <div className="brandText">
+              <div className="brandWelcome">Bienvenido de nuevo</div>
+              <div className="brandName">Tictiva Plataforma</div>
+            </div>
           </div>
-          <div className="dashGreetings">
-            <h1 className="dashTitle">Buenas tardes, Verónica Mateo</h1>
-            <p className="dashMotto">“Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve”.</p>
+
+          <div className="topbarRight">
+            <input
+              className="topSearch"
+              placeholder="Buscar módulos o escribe / para comandos"
+              aria-label="Buscar módulos"
+            />
+
+            <button className="iconBtn" aria-label="Notificaciones">🔔</button>
+
+            <div className="userWrap">
+              <button
+                className="userChip"
+                onClick={() => setShowUserMenu(v => !v)}
+                aria-expanded={showUserMenu}
+                aria-haspopup="menu"
+              >
+                <span className="userAvatar">VM</span>
+                <span className="userName">{userName}</span>
+              </button>
+
+              <div className={`userMenu ${showUserMenu ? "show" : ""}`} role="menu">
+                <button className="menuItem" disabled>Configuraciones (pronto)</button>
+                <button
+                  className="menuItem danger"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    if (typeof onLogout === "function") onLogout();
+                  }}
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
           </div>
-          {/* Barra de búsqueda (no funcional por ahora) */}
-          <div className="dashSearch">
-            <input className="dashSearchInput" placeholder="Buscar módulos o escribe / para comandos" />
-          </div>
+        </div>
+
+        {/* ===== SALUDO (DEBAJO) ===== */}
+        <header className="pageHead">
+          <h1 className="dashTitle">Buenas tardes, {userName}</h1>
+          <p className="dashMotto">
+            “Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve”.
+          </p>
         </header>
 
-        {/* KPIs superiores */}
+        {/* ===== KPIs ===== */}
         <section className="kpis">
           {KPIS.map(k => (
             <div key={k.key} className="kpiCard">
@@ -102,15 +105,17 @@ export default function Dashboard() {
           ))}
         </section>
 
-        {/* Texto guía */}
+        {/* ===== SUBTÍTULO ===== */}
         <section className="dashSubtitleCard">
-          <div>
-            <div className="dashSubtitleTitle">Humanizamos la gestión, digitalizamos tu tranquilidad</div>
-            <div className="dashSubtitleText">Accede a tus módulos. Todo es simple, rápido y consistente.</div>
+          <div className="dashSubtitleTitle">
+            Humanizamos la gestión, digitalizamos tu tranquilidad
+          </div>
+          <div className="dashSubtitleText">
+            Accede a tus módulos. Todo es simple, rápido y consistente.
           </div>
         </section>
 
-        {/* Grid de módulos (sin chips “Juvenil/Empresarial/Moderno”) */}
+        {/* ===== MÓDULOS ===== */}
         <section className="modulesGrid">
           {MODULES.map(m => (
             <article key={m.key} className="moduleCard">
@@ -130,7 +135,7 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {/* Push panel derecho con Tip de ADIA */}
+      {/* ===== PANEL DERECHO + TIP ADIA ===== */}
       <div className={`backdrop ${open ? "show" : ""}`} onClick={() => setOpen(null)} />
       <aside className={`sidePanel ${open ? "open" : ""}`} aria-hidden={!open}>
         <header className="panelHeader">
@@ -150,8 +155,15 @@ export default function Dashboard() {
                 ))}
               </ul>
 
-              {/* Tip contextual de ADIA */}
-              <AdiaTip moduleKey={selected.key} />
+              <div className="adiaTip">
+                <div className="adiaTipIcon">💡</div>
+                <div>
+                  <div className="adiaTipTitle">Tip de ADIA</div>
+                  <div className="adiaTipText">
+                    {ADIA_TIPS[selected.key] || "ADIA: Consejos contextuales aparecerán aquí."}
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
