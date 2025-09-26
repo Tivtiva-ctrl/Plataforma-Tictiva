@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect, Suspense } from "react";
 import {
   BrowserRouter as Router,
@@ -8,11 +7,9 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-
-// 🔐 Pantalla de login (ya existente)
 import LoginPage from "./components/LoginPage.jsx";
 
-// 🏠 Placeholder de inicio (reemplázalo por tu Dashboard real cuando quieras)
+/** Placeholder de inicio; reemplázalo por tu Dashboard cuando quieras */
 function Home() {
   return (
     <main style={{ padding: 24 }}>

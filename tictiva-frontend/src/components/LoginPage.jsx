@@ -1,77 +1,80 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import "./LoginPage.css";
-// Para usar Supabase en el futuro:
-// import { supabase } from "@/services/supabaseClient";
+
+/**
+ * Usa la imagen desde /public/assets/ con RUTA ABSOLUTA.
+ * Verifica que exista: public/assets/login-illustration.png
+ * Puedes abrirla directo: https://TU_DOMINIO/assets/login-illustration.png
+ */
+const ILLUSTRATION_ABS_PATH = "/assets/login-illustration.png";
 
 export default function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
+  const [pwd, setPwd] = useState("");
   const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
+  const [error, setError] = useState("");
 
-  async function handleSubmit(e) {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setErr("");
-    setLoading(true);
-    try {
-      // MOCK login simplificado
-      if (!email || !pass) throw new Error("Ingresa correo y contraseña");
-      onLoginSuccess?.();
 
-      // Supabase (más adelante)
-      /*
-      const { error } = await supabase.auth.signInWithPassword({
-        email, password: pass,
-      });
-      if (error) throw error;
-      onLoginSuccess?.();
-      */
-    } catch (e) {
-      setErr(e.message || "No se pudo iniciar sesión");
-    } finally {
-      setLoading(false);
+    if (!email.trim() || !pwd.trim()) {
+      setError("Ingresa correo y contraseña");
+      return;
     }
-  }
+
+    // Aquí iría tu llamada real de login. Por ahora simulamos éxito:
+    setError("");
+    if (remember) {
+      try {
+        localStorage.setItem("tictiva.remember.email", email.trim());
+      } catch (_) {}
+    }
+    onLoginSuccess?.();
+  };
 
   return (
-    <div className="login-wrap">
-      <div className="login-card">
-        <div className="login-col left">
-          <div className="brand">
-            <div className="logo-dot" />
-            <span>Tictiva</span>
-          </div>
+    <div className="loginPage">
+      <div className="loginCard">
+        {/* Columna izquierda: formulario */}
+        <section className="loginLeft">
+          <header className="brand">
+            <span className="brand-dot" />
+            <span className="brand-name">Tictiva</span>
+          </header>
 
-          <h1>Bienvenido de nuevo</h1>
+          <h1 className="title">Bienvenido de nuevo</h1>
           <p className="subtitle">a tu plataforma de gestión</p>
-          <p className="lead">Humanizamos la gestión, digitalizamos tu tranquilidad.</p>
+          <p className="tagline">Humanizamos la gestión, digitalizamos tu tranquilidad.</p>
 
-          <form onSubmit={handleSubmit} className="form">
-            {err && <div className="alert">{err}</div>}
+          {error && <div className="errorBox">{error}</div>}
 
-            <label className="label">Correo electrónico</label>
+          <form className="form" onSubmit={handleSubmit} noValidate>
+            <label className="label" htmlFor="email">Correo electrónico</label>
             <input
-              className="input"
+              id="email"
               type="email"
+              className="input"
               placeholder="ejemplo@empresa.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
 
-            <label className="label">Contraseña</label>
+            <div className="fieldGap" />
+
+            <label className="label" htmlFor="password">Contraseña</label>
             <input
-              className="input"
+              id="password"
               type="password"
+              className="input"
               placeholder="••••••••"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
               autoComplete="current-password"
             />
 
-            <div className="row">
-              <label className="remember">
+            <div className="rowBetween">
+              <label className="checkbox">
                 <input
                   type="checkbox"
                   checked={remember}
@@ -79,37 +82,37 @@ export default function LoginPage({ onLoginSuccess }) {
                 />
                 <span>Recuérdame</span>
               </label>
-              <a className="link" href="#">¿Olvidaste tu contraseña?</a>
+
+              <a className="link" href="#recuperar">¿Olvidaste tu contraseña?</a>
             </div>
 
-            <button className="btn-primary" disabled={loading}>
-              {loading ? "Ingresando..." : "Iniciar sesión"}
-            </button>
-
-            <div className="hint">
-              ¿No tienes cuenta? <a className="link" href="#">Regístrate</a>
-            </div>
+            <button type="submit" className="btnPrimary">Iniciar sesión</button>
           </form>
 
-          <a className="dt-card" href="#">
-            <strong>Acceso para Fiscalización DT</strong> — Acceso temporal para
-            fiscalizadores según normativa legal
-            <span className="arrow">→</span>
-          </a>
-        </div>
+          <p className="small">
+            ¿No tienes cuenta? <a className="link" href="#registro">Regístrate</a>
+          </p>
 
-        <div className="login-col right">
-          <div className="art">
-            {/* Si la imagen está en /public/img/login-illustration.png */}
-            <img
-              src="/img/login-illustration.png"
-              alt="Ilustración de trabajo en equipo"
-              className="hero-img"
-            />
-            <h3>Humanizamos la gestión,</h3>
-            <h3>digitalizamos tu tranquilidad</h3>
+          <div className="dtBox">
+            <strong>Acceso para Fiscalización DT</strong> — Acceso temporal para
+            fiscalizadores según normativa legal <span className="arrow">→</span>
           </div>
-        </div>
+        </section>
+
+        {/* Columna derecha: ilustración + frase (usa fondo por CSS) */}
+        <aside className="loginRight" aria-label="Ilustración">
+          {/* Fallback por si quisieras usar <img> en lugar de background: */}
+          <img
+            className="sr-only"
+            src={ILLUSTRATION_ABS_PATH}
+            alt="Ilustración de trabajo en equipo"
+          />
+          <div className="rightOverlay">
+            <p className="rightSlogan">
+              Humanizamos la gestión,<br />digitalizamos tu tranquilidad
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
   );
