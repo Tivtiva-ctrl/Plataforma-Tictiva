@@ -1,4 +1,3 @@
-// src/components/LoginPage.jsx
 import React, { useState } from "react";
 import "./LoginPage.css";
 
@@ -74,7 +73,8 @@ export default function LoginPage({ onLoginSuccess }) {
               required
             />
 
-            <div className="rowBetween">
+            {/* Solo el checkbox; quitamos el link azul de arriba */}
+            <div className="rowBetween" style={{ justifyContent: "flex-start" }}>
               <label className="checkbox">
                 <input
                   type="checkbox"
@@ -83,15 +83,12 @@ export default function LoginPage({ onLoginSuccess }) {
                 />
                 <span>Recuérdame</span>
               </label>
-
-              {/* Enlace a recuperación (arriba a la derecha del form) */}
-              <a className="link" href="/recuperar">¿Olvidaste tu contraseña?</a>
             </div>
 
             <button type="submit" className="btnPrimary">Iniciar sesión</button>
           </form>
 
-          {/* Reemplazo de “¿No tienes cuenta? Regístrate” */}
+          {/* Enlace único de recuperación debajo del botón */}
           <p className="small" style={{ marginTop: 12 }}>
             ¿Olvidaste tu contraseña?{" "}
             <a className="link" href="/recuperar">Recuperar acceso</a>
