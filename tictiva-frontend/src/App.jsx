@@ -13,7 +13,6 @@ import RecuperarContrasena from "./components/RecuperarContrasena.jsx";
 import CambiarContrasena from "./components/CambiarContrasena.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 
-/* Aviso post-login para cambio de contraseña */
 function PasswordChangeNotice({ onGoChange, onDismiss }) {
   return (
     <div style={{
@@ -29,42 +28,35 @@ function PasswordChangeNotice({ onGoChange, onDismiss }) {
       boxShadow: "0 6px 18px rgba(124,45,18,.06)",
       margin: "16px 24px"
     }}>
-      <div style={{ fontWeight: 700 }}>
-        🔒 Por seguridad, te recomendamos cambiar tu contraseña.
-      </div>
+      <div style={{ fontWeight: 700 }}>🔒 Por seguridad, te recomendamos cambiar tu contraseña.</div>
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={onGoChange} style={{
           height: 36, padding: "0 14px", borderRadius: 10, border: "none",
           fontWeight: 700, background: "linear-gradient(90deg,#2563eb,#06b6d4)",
           color: "#fff", cursor: "pointer"
-        }}>
-          Cambiar ahora
-        </button>
+        }}>Cambiar ahora</button>
         <button onClick={onDismiss} style={{
           height: 36, padding: "0 12px", borderRadius: 10,
           border: "1px solid #e2e8f0", background: "#fff",
           color: "#0f172a", cursor: "pointer", fontWeight: 600
-        }}>
-          Después
-        </button>
+        }}>Después</button>
       </div>
     </div>
   );
 }
 
-/* Home: muestra Dashboard y (si aplica) el aviso */
-function Home({ mustChangePassword, onGoChange, onDismissNotice }) {
+function Home({ mustChangePassword, onGoChange, onDismissNotice, onLogout }) {
   return (
     <>
       {mustChangePassword && (
         <PasswordChangeNotice onGoChange={onGoChange} onDismiss={onDismissNotice} />
       )}
-      <Dashboard />
+      <Dashboard userName="Verónica Mateo" onLogout={onLogout} />
     </>
   );
 }
 
-function AppRoutes({ isLoggedIn, onLoginSuccess, mustChangePassword, setMustChangePassword }) {
+function AppRoutes({ isLoggedIn, onLoginSuccess, mustChangePassword, setMustChangePassword, onLogout }) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,6 +82,7 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, mustChangePassword, setMustChan
               mustChangePassword={mustChangePassword}
               onGoChange={() => navigate("/cambiar-contrasena")}
               onDismissNotice={() => setMustChangePassword(false)}
+              onLogout={onLogout}
             />
           }
         />
@@ -105,6 +98,11 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setMustChangePassword(false);
+  };
+
   return (
     <Router>
       <AppRoutes
@@ -115,6 +113,7 @@ export default function App() {
           setIsLoggedIn(true);
           setMustChangePassword(true);
         }}
+        onLogout={handleLogout}
       />
     </Router>
   );
