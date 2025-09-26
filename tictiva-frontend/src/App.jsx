@@ -1,19 +1,38 @@
+// src/App.jsx
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import "./App.css";
-import { ROUTES } from "./router/routes";
 
+// 🔐 Pantalla de login (ya existente)
 import LoginPage from "./components/LoginPage.jsx";
-import ListadoFichas from "./pages/ListadoFichas.jsx";
+
+// 🏠 Placeholder de inicio (reemplázalo por tu Dashboard real cuando quieras)
+function Home() {
+  return (
+    <main style={{ padding: 24 }}>
+      <h1 style={{ margin: 0 }}>Inicio</h1>
+      <p style={{ opacity: 0.75, marginTop: 8 }}>
+        🚧 Módulo principal aún no disponible. Aquí irá tu Dashboard.
+      </p>
+    </main>
+  );
+}
 
 function AppRoutes({ isLoggedIn, onLoginSuccess }) {
   const navigate = useNavigate();
 
-  // Post-login → Listado de Fichas
+  // Post-login → ir al inicio "/"
   useEffect(() => {
-    if (isLoggedIn) navigate(ROUTES.listadoFichas, { replace: true });
+    if (isLoggedIn) navigate("/", { replace: true });
   }, [isLoggedIn, navigate]);
 
+  // Si NO está logueado: todo va a Login
   if (!isLoggedIn) {
     return (
       <Routes>
@@ -22,19 +41,22 @@ function AppRoutes({ isLoggedIn, onLoginSuccess }) {
     );
   }
 
+  // Si está logueado: rutas de la app (SIN ListadoFichas)
   return (
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
-        <Route path="/" element={<Navigate to={ROUTES.listadoFichas} replace />} />
-        <Route path={ROUTES.listadoFichas} element={<ListadoFichas />} />
-        <Route path="*" element={<Navigate to={ROUTES.listadoFichas} replace />} />
+        {/* Ruta principal */}
+        <Route path="/" element={<Home />} />
+
+        {/* Cualquier ruta desconocida redirige al inicio */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
 }
 
 export default function App() {
-  // si aún no cableamos auth real, partimos en false y probamos login
+  // Si aún no cableas auth real, parte en false y usa onLoginSuccess para simular login
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
