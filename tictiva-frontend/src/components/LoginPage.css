@@ -222,4 +222,37 @@
     padding: 12px 16px 16px;
   }
   .title { font-size: 36px; }
+}/* ====== AJUSTES DE CONTRASTE LADO IZQUIERDO (sin cambiar layout) ====== */
+.loginLeft {
+  color: #0f172a;             /* texto base más nítido */
+  background: #fff;           /* asegura blanco sólido, sin velo */
 }
+
+.title {
+  color: #0f172a;             /* título bien marcado */
+  font-weight: 800;           /* grosor como en tu referencia */
+}
+
+.subtitle {
+  color: #334155;             /* un poco más oscuro que antes */
+}
+
+.tagline {
+  color: #475569;             /* más legible */
+}
+
+/* Asegura que la tarjeta DT NO quede deshabilitada/tenue */
+.dtBox {
+  opacity: 1;                 /* fuerza 100% */
+  color: #111827;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Por si algún estilo global estuviera “velando” el contenido */
+.loginLeft * {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
