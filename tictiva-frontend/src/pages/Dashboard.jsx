@@ -33,15 +33,14 @@ const ADIA_TIPS = {
 };
 
 export default function Dashboard({ userName = "Usuario", onLogout }) {
-  const [open, setOpen] = useState(null);       // panel derecho
+  const [open, setOpen] = useState(null);        // panel derecho (módulo abierto)
   const [showUserMenu, setShowUserMenu] = useState(false);
-
   const selected = useMemo(() => MODULES.find(m => m.key === open), [open]);
 
   return (
     <div className="dashboardPage">
       <div className="dashboardContainer">
-        {/* ===== TOPBAR (ARRIBA) ===== */}
+        {/* ===== TOPBAR (ARRIBA, COMPACTO) ===== */}
         <div className="topbar">
           <div className="brandBlock">
             <div className="brandBadge" />
@@ -87,7 +86,7 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
           </div>
         </div>
 
-        {/* ===== SALUDO (DEBAJO) ===== */}
+        {/* ===== SALUDO (DEBAJO DEL TOPBAR) ===== */}
         <header className="pageHead">
           <h1 className="dashTitle">Buenas tardes, {userName}</h1>
           <p className="dashMotto">
@@ -107,15 +106,11 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
 
         {/* ===== SUBTÍTULO ===== */}
         <section className="dashSubtitleCard">
-          <div className="dashSubtitleTitle">
-            Humanizamos la gestión, digitalizamos tu tranquilidad
-          </div>
-          <div className="dashSubtitleText">
-            Accede a tus módulos. Todo es simple, rápido y consistente.
-          </div>
+          <div className="dashSubtitleTitle">Humanizamos la gestión, digitalizamos tu tranquilidad</div>
+          <div className="dashSubtitleText">Accede a tus módulos. Todo es simple, rápido y consistente.</div>
         </section>
 
-        {/* ===== MÓDULOS ===== */}
+        {/* ===== GRID MÓDULOS ===== */}
         <section className="modulesGrid">
           {MODULES.map(m => (
             <article key={m.key} className="moduleCard">
@@ -149,9 +144,7 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
               <h4 className="panelSubtitle">Accesos rápidos</h4>
               <ul className="panelLinks">
                 {selected.items.map(it => (
-                  <li key={it}>
-                    <a href="#" onClick={e => e.preventDefault()}>{it}</a>
-                  </li>
+                  <li key={it}><a href="#" onClick={e => e.preventDefault()}>{it}</a></li>
                 ))}
               </ul>
 
