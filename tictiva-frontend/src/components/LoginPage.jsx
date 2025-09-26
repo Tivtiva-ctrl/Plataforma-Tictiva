@@ -1,11 +1,8 @@
+// src/components/LoginPage.jsx
 import React, { useState } from "react";
 import "./LoginPage.css";
 
-/**
- * Usa la imagen desde /public/assets/ con RUTA ABSOLUTA.
- * Verifica que exista: public/assets/login-illustration.png
- * Puedes abrirla directo: https://TU_DOMINIO/assets/login-illustration.png
- */
+/** Imagen servida desde /public/assets/ */
 const ILLUSTRATION_ABS_PATH = "/assets/login-illustration.png";
 
 export default function LoginPage({ onLoginSuccess }) {
@@ -22,20 +19,22 @@ export default function LoginPage({ onLoginSuccess }) {
       return;
     }
 
-    // Aquí iría tu llamada real de login. Por ahora simulamos éxito:
+    // TODO: conectar con backend real
     setError("");
     if (remember) {
       try {
         localStorage.setItem("tictiva.remember.email", email.trim());
       } catch (_) {}
     }
-    onLoginSuccess?.();
+    if (typeof onLoginSuccess === "function") {
+      onLoginSuccess();
+    }
   };
 
   return (
     <div className="loginPage">
       <div className="loginCard">
-        {/* Columna izquierda: formulario */}
+        {/* Izquierda: formulario */}
         <section className="loginLeft">
           <header className="brand">
             <span className="brand-dot" />
@@ -58,6 +57,7 @@ export default function LoginPage({ onLoginSuccess }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              required
             />
 
             <div className="fieldGap" />
@@ -71,6 +71,7 @@ export default function LoginPage({ onLoginSuccess }) {
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
               autoComplete="current-password"
+              required
             />
 
             <div className="rowBetween">
@@ -83,14 +84,17 @@ export default function LoginPage({ onLoginSuccess }) {
                 <span>Recuérdame</span>
               </label>
 
-              <a className="link" href="#recuperar">¿Olvidaste tu contraseña?</a>
+              {/* Enlace a recuperación (arriba a la derecha del form) */}
+              <a className="link" href="/recuperar">¿Olvidaste tu contraseña?</a>
             </div>
 
             <button type="submit" className="btnPrimary">Iniciar sesión</button>
           </form>
 
-          <p className="small">
-            ¿No tienes cuenta? <a className="link" href="#registro">Regístrate</a>
+          {/* Reemplazo de “¿No tienes cuenta? Regístrate” */}
+          <p className="small" style={{ marginTop: 12 }}>
+            ¿Olvidaste tu contraseña?{" "}
+            <a className="link" href="/recuperar">Recuperar acceso</a>
           </p>
 
           <div className="dtBox">
@@ -99,9 +103,9 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
         </section>
 
-        {/* Columna derecha: ilustración + frase (usa fondo por CSS) */}
+        {/* Derecha: ilustración + lema */}
         <aside className="loginRight" aria-label="Ilustración">
-          {/* Fallback por si quisieras usar <img> en lugar de background: */}
+          {/* Fallback accesible */}
           <img
             className="sr-only"
             src={ILLUSTRATION_ABS_PATH}
