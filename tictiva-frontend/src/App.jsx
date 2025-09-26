@@ -7,12 +7,9 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css";
-
 import LoginPage from "./components/LoginPage.jsx";
-import RecuperarContrasena from "./components/RecuperarContrasena.jsx";
-import CambiarContrasena from "./components/CambiarContrasena.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
 
+/* Aviso post-login para forzar cambio de contraseña */
 function PasswordChangeNotice({ onGoChange, onDismiss }) {
   return (
     <div
@@ -69,14 +66,149 @@ function PasswordChangeNotice({ onGoChange, onDismiss }) {
   );
 }
 
+/* ====== Vistas embebidas (evitan errores de importación) ====== */
+
+/* Recuperar contraseña (estilo Tictiva: reutiliza clases de LoginPage.css) */
+function RecuperarContrasena() {
+  const [email, setEmail] = useState("");
+  const onSubmit = (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    alert("Si el correo existe, enviaremos un enlace de recuperación.");
+  };
+  return (
+    <div className="authPage">
+      <div className="authCard">
+        <h1 className="authTitle">Recuperar acceso</h1>
+        <p className="authSub">
+          Ingresa tu correo para enviarte un enlace de recuperación.
+        </p>
+        <form onSubmit={onSubmit} className="authForm" noValidate>
+          <label className="label" htmlFor="rec-email">Correo electrónico</label>
+          <input
+            id="rec-email"
+            type="email"
+            className="input"
+            placeholder="ejemplo@empresa.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <div className="actionsRow">
+            <button type="submit" className="btnPrimary">Enviar enlace</button>
+            <a href="/" className="btnSecondary">Volver</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* Cambiar contraseña */
+function CambiarContrasena() {
+  const [oldPass, setOldPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [newPass2, setNewPass2] = useState("");
+  const [error, setError] = useState("");
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+    if (!oldPass || !newPass || !newPass2) {
+      setError("Completa todos los campos.");
+      return;
+    }
+    if (newPass.length < 8) {
+      setError("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (newPass !== newPass2) {
+      setError("Las contraseñas nuevas no coinciden.");
+      return;
+    }
+    alert("Contraseña actualizada correctamente.");
+    window.location.href = "/";
+  };
+
+  return (
+    <div className="authPage">
+      <div className="authCard">
+        <h1 className="authTitle">Cambiar contraseña</h1>
+        <p className="authSub">Define una nueva contraseña segura para tu cuenta.</p>
+
+        {error && (
+          <div
+            style={{
+              background: "#fee2e2",
+              border: "1px solid #fecaca",
+              color: "#b91c1c",
+              padding: "10px 12px",
+              borderRadius: 10,
+              fontWeight: 600,
+              marginBottom: 8,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={onSubmit} className="authForm" noValidate>
+          <label className="label" htmlFor="old-pass">Contraseña actual</label>
+          <input
+            id="old-pass"
+            type="password"
+            className="input"
+            placeholder="••••••••"
+            value={oldPass}
+            onChange={(e) => setOldPass(e.target.value)}
+            required
+          />
+
+          <label className="label" htmlFor="new-pass">Nueva contraseña</label>
+          <input
+            id="new-pass"
+            type="password"
+            className="input"
+            placeholder="••••••••"
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+            minLength={8}
+            required
+          />
+
+          <label className="label" htmlFor="new-pass2">Confirmar nueva contraseña</label>
+          <input
+            id="new-pass2"
+            type="password"
+            className="input"
+            placeholder="••••••••"
+            value={newPass2}
+            onChange={(e) => setNewPass2(e.target.value)}
+            minLength={8}
+            required
+          />
+
+          <div className="actionsRow">
+            <button type="submit" className="btnPrimary">Guardar</button>
+            <a href="/" className="btnSecondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* Inicio (placeholder de dashboard) */
 function Home({ mustChangePassword, onGoChange, onDismissNotice }) {
   return (
     <main style={{ padding: 24 }}>
       {mustChangePassword && (
         <PasswordChangeNotice onGoChange={onGoChange} onDismiss={onDismissNotice} />
       )}
-      {/* Dashboard real */}
-      <Dashboard />
+      <h1 style={{ margin: 0 }}>Inicio</h1>
+      <p style={{ opacity: 0.75, marginTop: 8 }}>
+        🚧 Aquí irá tu Dashboard principal.
+      </p>
     </main>
   );
 }
