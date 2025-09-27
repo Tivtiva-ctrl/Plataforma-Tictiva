@@ -8,12 +8,18 @@
 }
 .dashboardContainer { width: 100%; max-width: 1120px; margin: 0 auto; }
 
-/* ====================== TOPBAR ====================== */
 :root { --tictiva-pink:#e91e63; }
 
+/* ====================== TOPBAR (ARRIBA) ====================== */
 .topbar { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
+
 .brandBlock { display:flex; align-items:center; gap:12px; min-width:260px; }
-.brandBadge { width:36px; height:36px; border-radius:12px; background:linear-gradient(135deg,#2563eb,#06b6d4); box-shadow:0 6px 16px rgba(37,99,235,.25); }
+/* Logo PNG */
+.brandLogo{
+  width:36px; height:36px; display:block;
+  object-fit:contain; /* respeta proporción del PNG */
+  box-shadow:0 6px 16px rgba(2,6,23,.10);
+}
 .brandText { line-height:1.1; }
 .brandWelcome { color:#64748b; font-size:12px; }
 .brandName { color:#0f172a; font-weight:800; }
@@ -61,9 +67,7 @@
 .dashSubtitleTitle { font-weight:800; color:#0f172a; }
 .dashSubtitleText { color:#64748b; }
 
-.introKpis {
-  display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;
-}
+.introKpis { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; }
 .introKpiCard {
   background:#fff; border:1px solid #e2e8f0; border-radius:12px;
   padding:10px 12px; min-width: 150px;
@@ -106,7 +110,7 @@
 .panelLinks a { color:#2563eb; text-decoration:none; }
 .panelLinks a:hover { text-decoration:underline; }
 .panelFooter { padding:12px 16px; border-top:1px solid #e2e8f0; }
-.btnPrimary { height:44px; border:none; border-radius:12px; font-weight:700; color:#fff; cursor:pointer; background:linear-gradient(90deg,#2563eb,#06b6d4); box-shadow:0 6px 18px rgba(37,99,235,.25); padding:0 16px; }
+.btnPrimary { height:44px; border:none; border-radius:12px; font-weight:700; color:#fff; cursor:pointer; background:linear-gradient(90deg,#2563eb,#06b6d4); box-shadow:0 6px 18px rgba(37, 99, 235, .25); padding:0 16px; }
 
 /* ====================== Responsive general ====================== */
 @media (max-width: 1100px) {
@@ -118,4 +122,15 @@
   .topbarRight { width:100%; }
   .modulesGrid { grid-template-columns: 1fr; }
   .sidePanel { width:92vw; }
+}/* Botón con estilo de enlace para accesos rápidos (evita <a href="#">) */
+.panelLinks { margin: 0; padding: 0 0 0 16px; }
+.panelLinkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #2563eb;
+  font: inherit;
+  cursor: pointer;
 }
+.panelLinkBtn:hover { text-decoration: underline; }
+
