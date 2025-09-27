@@ -15,11 +15,23 @@
 
 .brandBlock { display:flex; align-items:center; gap:12px; min-width:260px; }
 /* Logo PNG */
+/* Logo PNG (sin cuadrado) */
 .brandLogo{
-  width:36px; height:36px; display:block;
-  object-fit:contain; /* respeta proporción del PNG */
-  box-shadow:0 6px 16px rgba(2,6,23,.10);
+  width:36px;
+  height:36px;
+  display:block;
+  object-fit:contain;
+  background:transparent !important;
+  box-shadow:none !important;
+  border:none !important;
+  border-radius:0 !important;
+  padding:0 !important;
 }
+
+/* Asegura que no quede nada del badge viejo */
+.brandBadge{ display:none !important; }
+
+
 .brandText { line-height:1.1; }
 .brandWelcome { color:#64748b; font-size:12px; }
 .brandName { color:#0f172a; font-weight:800; }
