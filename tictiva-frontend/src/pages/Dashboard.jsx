@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
-import "./Dashboard.css";
-import "./DashboardTopbar.css";
-/* KPIs y módulos de ejemplo */
+import "./DashboardTopbar.css"; // <= mismo nombre que ya venimos usando
+
 const KPIS = [
   { key: "mensajes", label: "Mensajes", value: 3 },
   { key: "marcas", label: "Marcas hoy", value: 128 },
@@ -33,14 +32,15 @@ const ADIA_TIPS = {
 };
 
 export default function Dashboard({ userName = "Usuario", onLogout }) {
-  const [open, setOpen] = useState(null);        // panel derecho (módulo abierto)
+  const [open, setOpen] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const selected = useMemo(() => MODULES.find(m => m.key === open), [open]);
 
   return (
     <div className="dashboardPage">
       <div className="dashboardContainer">
-        {/* ===== TOPBAR (ARRIBA, COMPACTO) ===== */}
+
+        {/* ===== TOPBAR (arriba, compacto) ===== */}
         <div className="topbar">
           <div className="brandBlock">
             <div className="brandBadge" />
@@ -57,7 +57,14 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
               aria-label="Buscar módulos"
             />
 
-            <button className="iconBtn" aria-label="Notificaciones">🔔</button>
+            <button className="iconBtn" aria-label="Notificaciones">
+              <svg className="bellIcon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 17H9a1 1 0 0 1-1-1V11a4 4 0 0 1 8 0v5a1 1 0 0 1-1 1Z" fill="none"/>
+                <path d="M5 17h14" />
+                <path d="M10 21h4" />
+              </svg>
+              <span className="badge">3</span>
+            </button>
 
             <div className="userWrap">
               <button
@@ -86,7 +93,7 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
           </div>
         </div>
 
-        {/* ===== SALUDO (DEBAJO DEL TOPBAR) ===== */}
+        {/* ===== Saludo ===== */}
         <header className="pageHead">
           <h1 className="dashTitle">Buenas tardes, {userName}</h1>
           <p className="dashMotto">
@@ -94,23 +101,24 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
           </p>
         </header>
 
-        {/* ===== KPIs ===== */}
-        <section className="kpis">
-          {KPIS.map(k => (
-            <div key={k.key} className="kpiCard">
-              <div className="kpiLabel">{k.label}</div>
-              <div className="kpiValue">{k.value}</div>
-            </div>
-          ))}
+        {/* ===== Card grande con texto IZQ y KPIs pequeñas DER ===== */}
+        <section className="dashIntro">
+          <div className="introText">
+            <div className="dashSubtitleTitle">Humanizamos la gestión, digitalizamos tu tranquilidad</div>
+            <div className="dashSubtitleText">Accede a tus módulos. Todo es simple, rápido y consistente.</div>
+          </div>
+
+          <div className="introKpis">
+            {KPIS.map(k => (
+              <div key={k.key} className="introKpiCard">
+                <div className="introKpiLabel">{k.label}</div>
+                <div className="introKpiValue">{k.value}</div>
+              </div>
+            ))}
+          </div>
         </section>
 
-        {/* ===== SUBTÍTULO ===== */}
-        <section className="dashSubtitleCard">
-          <div className="dashSubtitleTitle">Humanizamos la gestión, digitalizamos tu tranquilidad</div>
-          <div className="dashSubtitleText">Accede a tus módulos. Todo es simple, rápido y consistente.</div>
-        </section>
-
-        {/* ===== GRID MÓDULOS ===== */}
+        {/* ===== Grid de módulos ===== */}
         <section className="modulesGrid">
           {MODULES.map(m => (
             <article key={m.key} className="moduleCard">
@@ -130,7 +138,7 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
         </section>
       </div>
 
-      {/* ===== PANEL DERECHO + TIP ADIA ===== */}
+      {/* ===== Side panel derecho + Tip ADIA ===== */}
       <div className={`backdrop ${open ? "show" : ""}`} onClick={() => setOpen(null)} />
       <aside className={`sidePanel ${open ? "open" : ""}`} aria-hidden={!open}>
         <header className="panelHeader">
