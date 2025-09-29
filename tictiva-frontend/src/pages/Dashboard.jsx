@@ -1,6 +1,14 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import "./DashboardTopbar.css";
 
+/* ===== Helper saludo según hora local ===== */
+const getSaludo = (d = new Date()) => {
+  const h = d.getHours();
+  if (h < 12) return "Buenos días";
+  if (h < 20) return "Buenas tardes";
+  return "Buenas noches";
+};
+
 /* ===== KPIs (demo) ===== */
 const KPIS = [
   { key: "mensajes", label: "Mensajes", value: 3 },
@@ -110,6 +118,13 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const selected = useMemo(() => MODULES.find((m) => m.key === open), [open]);
 
+  /* Saludo dinámico */
+  const [saludo, setSaludo] = useState(getSaludo());
+  useEffect(() => {
+    const id = setInterval(() => setSaludo(getSaludo()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   /* Cerrar menú al hacer click fuera o con Esc */
   const userWrapRef = useRef(null);
   useEffect(() => {
@@ -186,7 +201,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
 
         {/* ===== Saludo ===== */}
         <header className="pageHead">
-          <h1 className="dashTitle">Buenas tardes, {userName}</h1>
+          <h1 className="dashTitle">{saludo}, {userName}</h1>
           <p className="dashMotto">“Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve”.</p>
         </header>
 
