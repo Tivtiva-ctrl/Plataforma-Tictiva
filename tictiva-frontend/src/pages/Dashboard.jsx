@@ -67,6 +67,54 @@ const MODULES = [
   },
 ];
 
+/* ===== Iconitos azules estilo “campana” (solo trazo) ===== */
+const IconUser = () => (
+  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="7.5" r="3.5" />
+    <path d="M5 19a7 7 0 0 1 14 0" />
+  </svg>
+);
+const IconClock = () => (
+  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="8" />
+    <path d="M12 8v5l3 2" />
+  </svg>
+);
+const IconChat = () => (
+  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z" />
+  </svg>
+);
+const IconBars = () => (
+  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 19h16" />
+    <path d="M7 17V10h3v7" />
+    <path d="M12 17V6h3v11" />
+    <path d="M17 17v-5h3v5" />
+  </svg>
+);
+const IconHeart = () => (
+  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20.8 8.6a5.5 5.5 0 0 0-9-1.6 5.5 5.5 0 0 0-9 1.6C2.8 12.8 12 19 12 19s9.2-6.2 8.8-10.4z" />
+  </svg>
+);
+const IconBox = () => (
+  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3l9 4.5v9L12 21 3 16.5v-9L12 3z" />
+    <path d="M12 3v18" />
+    <path d="M21 7.5 12 12 3 7.5" />
+  </svg>
+);
+
+const MODULE_ICONS = {
+  rrhh: IconUser,
+  asistencia: IconClock,
+  comunicaciones: IconChat,
+  reporteria: IconBars,
+  cuida: IconHeart,
+  bodega: IconBox,
+};
+
 const ADIA_TIPS = {
   rrhh: "ADIA: Mantén actualizadas las fichas para agilizar permisos y procesos.",
   asistencia:
@@ -85,15 +133,8 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const selected = useMemo(() => MODULES.find((m) => m.key === open), [open]);
 
-  const handleQuickAccess = (label) => {
-    // aquí luego cableamos navegación real
-    console.log("Abrir acceso rápido:", label);
-  };
-
-  const handleEnterModule = () => {
-    if (!selected) return;
-    console.log("Entrar al módulo:", selected.title);
-  };
+  const handleQuickAccess = (label) => console.log("Acceso rápido:", label);
+  const handleEnterModule = () => selected && console.log("Entrar:", selected.title);
 
   return (
     <div className="dashboardPage">
@@ -101,7 +142,6 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
         {/* ===== TOPBAR (arriba) ===== */}
         <div className="topbar">
           <div className="brandBlock">
-            {/* Logo PNG */}
             <img
               src="/assets/tictiva-logo.png"
               alt="Tictiva"
@@ -122,7 +162,6 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
               aria-label="Buscar módulos"
             />
 
-            {/* Campana (SVG rosado) */}
             <button className="iconBtn" aria-label="Notificaciones">
               <svg className="bellIcon" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -135,7 +174,6 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
               <span className="badge">3</span>
             </button>
 
-            {/* Menú usuario */}
             <div className="userWrap">
               <button
                 className="userChip"
@@ -172,8 +210,7 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
         <header className="pageHead">
           <h1 className="dashTitle">Buenas tardes, {userName}</h1>
           <p className="dashMotto">
-            “Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo
-            ve”.
+            “Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve”.
           </p>
         </header>
 
@@ -200,23 +237,29 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
 
         {/* ===== Grid de módulos ===== */}
         <section className="modulesGrid">
-          {MODULES.map((m) => (
-            <article key={m.key} className="moduleCard">
-              <div className="moduleIcon" />
-              <div className="moduleHeader">
-                <h3 className="moduleTitle">{m.title}</h3>
+          {MODULES.map((m) => {
+            const Icon = MODULE_ICONS[m.key] || IconBars;
+            return (
+              <article key={m.key} className="moduleCard">
+                <div className="moduleHeader">
+                  <div className="moduleGlyphSquare">
+                    <Icon />
+                  </div>
+                  <h3 className="moduleTitle">{m.title}</h3>
+                </div>
+
                 <p className="moduleDesc">{m.desc}</p>
-              </div>
-              <ul className="moduleList">
-                {m.items.map((it) => (
-                  <li key={it}>{it}</li>
-                ))}
-              </ul>
-              <button className="moduleOpen" onClick={() => setOpen(m.key)}>
-                Abrir módulo <span className="arrow">›</span>
-              </button>
-            </article>
-          ))}
+                <ul className="moduleList">
+                  {m.items.map((it) => (
+                    <li key={it}>{it}</li>
+                  ))}
+                </ul>
+                <button className="moduleOpen" onClick={() => setOpen(m.key)}>
+                  Abrir módulo <span className="arrow">›</span>
+                </button>
+              </article>
+            );
+          })}
         </section>
       </div>
 
@@ -238,7 +281,6 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
               <p className="panelDesc">{selected.desc}</p>
               <h4 className="panelSubtitle">Accesos rápidos</h4>
 
-              {/* Enlaces válidos como botones (para evitar eslint a11y) */}
               <ul className="panelLinks">
                 {selected.items.map((it) => (
                   <li key={it}>

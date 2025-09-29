@@ -8,13 +8,13 @@
 }
 .dashboardContainer { width: 100%; max-width: 1120px; margin: 0 auto; }
 
-:root { --tictiva-pink:#e91e63; }
+:root { --tictiva-pink:#2563eb; }
 
 /* ====================== TOPBAR (ARRIBA) ====================== */
 .topbar { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
 
 .brandBlock { display:flex; align-items:center; gap:12px; min-width:260px; }
-/* Logo PNG */
+
 /* Logo PNG (sin cuadrado) */
 .brandLogo{
   width:36px;
