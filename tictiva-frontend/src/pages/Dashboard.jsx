@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from "react";
 import "./DashboardTopbar.css";
 
-/* ===== Datos demo ===== */
+/* ===== KPIs demo ===== */
 const KPIS = [
   { key: "mensajes", label: "Mensajes", value: 3 },
   { key: "marcas", label: "Marcas hoy", value: 128 },
   { key: "dispositivos", label: "Dispositivos activos", value: 5 },
 ];
 
+/* ===== Módulos ===== */
 const MODULES = [
   {
     key: "rrhh",
@@ -67,39 +68,39 @@ const MODULES = [
   },
 ];
 
-/* ===== Iconitos azules estilo “campana” (solo trazo) ===== */
-const IconUser = () => (
-  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+/* ===== Iconitos (trazo, estilo campana) ===== */
+const IconUser = ({ className = "moduleEmoji" }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="7.5" r="3.5" />
     <path d="M5 19a7 7 0 0 1 14 0" />
   </svg>
 );
-const IconClock = () => (
-  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+const IconClock = ({ className = "moduleEmoji" }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="8" />
     <path d="M12 8v5l3 2" />
   </svg>
 );
-const IconChat = () => (
-  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+const IconChat = ({ className = "moduleEmoji" }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z" />
   </svg>
 );
-const IconBars = () => (
-  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+const IconBars = ({ className = "moduleEmoji" }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <path d="M4 19h16" />
     <path d="M7 17V10h3v7" />
     <path d="M12 17V6h3v11" />
     <path d="M17 17v-5h3v5" />
   </svg>
 );
-const IconHeart = () => (
-  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+const IconHeart = ({ className = "moduleEmoji" }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <path d="M20.8 8.6a5.5 5.5 0 0 0-9-1.6 5.5 5.5 0 0 0-9 1.6C2.8 12.8 12 19 12 19s9.2-6.2 8.8-10.4z" />
   </svg>
 );
-const IconBox = () => (
-  <svg className="modGlyph" viewBox="0 0 24 24" aria-hidden="true">
+const IconBox = ({ className = "moduleEmoji" }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 3l9 4.5v9L12 21 3 16.5v-9L12 3z" />
     <path d="M12 3v18" />
     <path d="M21 7.5 12 12 3 7.5" />
@@ -139,7 +140,7 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
   return (
     <div className="dashboardPage">
       <div className="dashboardContainer">
-        {/* ===== TOPBAR (arriba) ===== */}
+        {/* ===== TOPBAR ===== */}
         <div className="topbar">
           <div className="brandBlock">
             <img
@@ -161,13 +162,9 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
               placeholder="Buscar módulos o escribe / para comandos"
               aria-label="Buscar módulos"
             />
-
             <button className="iconBtn" aria-label="Notificaciones">
               <svg className="bellIcon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M15 17H9a1 1 0 0 1-1-1V11a4 4 0 0 1 8 0v5a1 1 0 0 1-1 1Z"
-                  fill="none"
-                />
+                <path d="M15 17H9a1 1 0 0 1-1-1V11a4 4 0 0 1 8 0v5a1 1 0 0 1-1 1Z" fill="none" />
                 <path d="M5 17h14" />
                 <path d="M10 21h4" />
               </svg>
@@ -185,13 +182,8 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
                 <span className="userName">{userName}</span>
               </button>
 
-              <div
-                className={`userMenu ${showUserMenu ? "show" : ""}`}
-                role="menu"
-              >
-                <button className="menuItem" disabled>
-                  Configuraciones (pronto)
-                </button>
+              <div className={`userMenu ${showUserMenu ? "show" : ""}`} role="menu">
+                <button className="menuItem" disabled>Configuraciones (pronto)</button>
                 <button
                   className="menuItem danger"
                   onClick={() => {
@@ -209,20 +201,14 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
         {/* ===== Saludo ===== */}
         <header className="pageHead">
           <h1 className="dashTitle">Buenas tardes, {userName}</h1>
-          <p className="dashMotto">
-            “Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve”.
-          </p>
+          <p className="dashMotto">“Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve”.</p>
         </header>
 
-        {/* ===== Card intro: texto IZQ + KPIs pequeñas DER ===== */}
+        {/* ===== Intro con KPIs a la derecha ===== */}
         <section className="dashIntro">
           <div className="introText">
-            <div className="dashSubtitleTitle">
-              Humanizamos la gestión, digitalizamos tu tranquilidad
-            </div>
-            <div className="dashSubtitleText">
-              Accede a tus módulos. Todo es simple, rápido y consistente.
-            </div>
+            <div className="dashSubtitleTitle">Humanizamos la gestión, digitalizamos tu tranquilidad</div>
+            <div className="dashSubtitleText">Accede a tus módulos. Todo es simple, rápido y consistente.</div>
           </div>
 
           <div className="introKpis">
@@ -238,13 +224,15 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
         {/* ===== Grid de módulos ===== */}
         <section className="modulesGrid">
           {MODULES.map((m) => {
-            const Icon = MODULE_ICONS[m.key] || IconBars;
+            const Ico = MODULE_ICONS[m.key] || IconBars;
             return (
               <article key={m.key} className="moduleCard">
-                <div className="moduleHeader">
-                  <div className="moduleGlyphSquare">
-                    <Icon />
+                <div className="moduleHeaderRow">
+                  {/* Cuadrado azul con el iconito dentro */}
+                  <div className="moduleIcon">
+                    <Ico />
                   </div>
+                  {/* Título a la derecha (misma línea) */}
                   <h3 className="moduleTitle">{m.title}</h3>
                 </div>
 
@@ -264,31 +252,22 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
       </div>
 
       {/* ===== Side panel + Tip ADIA ===== */}
-      <div
-        className={`backdrop ${open ? "show" : ""}`}
-        onClick={() => setOpen(null)}
-      />
+      <div className={`backdrop ${open ? "show" : ""}`} onClick={() => setOpen(null)} />
       <aside className={`sidePanel ${open ? "open" : ""}`} aria-hidden={!open}>
         <header className="panelHeader">
           <div className="panelTitle">{selected?.title || "Módulo"}</div>
-          <button className="panelClose" onClick={() => setOpen(null)}>
-            ✕
-          </button>
+          <button className="panelClose" onClick={() => setOpen(null)}>✕</button>
         </header>
+
         <div className="panelBody">
           {selected && (
             <>
               <p className="panelDesc">{selected.desc}</p>
               <h4 className="panelSubtitle">Accesos rápidos</h4>
-
               <ul className="panelLinks">
                 {selected.items.map((it) => (
                   <li key={it}>
-                    <button
-                      type="button"
-                      className="panelLinkBtn"
-                      onClick={() => handleQuickAccess(it)}
-                    >
+                    <button type="button" className="panelLinkBtn" onClick={() => console.log("Acceso rápido:", it)}>
                       {it}
                     </button>
                   </li>
@@ -300,16 +279,23 @@ export default function Dashboard({ userName = "Usuario", onLogout }) {
                 <div>
                   <div className="adiaTipTitle">Tip de ADIA</div>
                   <div className="adiaTipText">
-                    {ADIA_TIPS[selected.key] ||
-                      "ADIA: Consejos contextuales aparecerán aquí."}
+                    {({
+                      rrhh: ADIA_TIPS.rrhh,
+                      asistencia: ADIA_TIPS.asistencia,
+                      comunicaciones: ADIA_TIPS.comunicaciones,
+                      reporteria: ADIA_TIPS.reporteria,
+                      cuida: ADIA_TIPS.cuida,
+                      bodega: ADIA_TIPS.bodega,
+                    }[selected.key]) || "ADIA: Consejos contextuales aparecerán aquí."}
                   </div>
                 </div>
               </div>
             </>
           )}
         </div>
+
         <footer className="panelFooter">
-          <button className="btnPrimary" onClick={handleEnterModule}>
+          <button className="btnPrimary" onClick={() => selected && console.log("Entrar:", selected.title)}>
             Entrar al módulo
           </button>
         </footer>
