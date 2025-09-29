@@ -113,6 +113,41 @@ const ADIA_TIPS = {
   bodega: "ADIA: Define mínimos por EPP para evitar quiebres de stock inesperados.",
 };
 
+/* ===== Utilidades de búsqueda ===== */
+const normalize = (s) =>
+  (s || "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const buildSearchIndex = (modules) => {
+  const rows = [];
+  modules.forEach((m) => {
+    rows.push({
+      id: `m:${m.key}`,
+      type: "module",
+      moduleKey: m.key,
+      title: m.title,
+      subtitle: m.desc,
+      tokens: `${m.title} ${m.desc}`,
+    });
+    (m.items || []).forEach((it, i) => {
+      rows.push({
+        id: `i:${m.key}:${i}`,
+        type: "item",
+        moduleKey: m.key,
+        title: it,
+        subtitle: m.title,
+        tokens: `${m.title} ${it}`,
+      });
+    });
+  });
+  return rows.map((r) => ({ ...r, norm: normalize(r.tokens) }));
+};
+
+const index = buildSearchIndex(MODULES);
+
 export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const [open, setOpen] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -125,7 +160,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     return () => clearInterval(id);
   }, []);
 
-  /* Cerrar menú al hacer click fuera o con Esc */
+  /* Cerrar menú usuario al hacer click fuera o con Esc */
   const userWrapRef = useRef(null);
   useEffect(() => {
     const onDocClick = (e) => {
@@ -141,6 +176,87 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     };
   }, []);
 
+  /* ===== Buscador ===== */
+  const [query, setQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const searchWrapRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  // Abrir foco con "/"
+  useEffect(() => {
+    const onSlash = (e) => {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = e.target;
+        const typingInInput =
+          el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+        if (!typingInInput) {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+          setShowSearch(true);
+        }
+      }
+    };
+    document.addEventListener("keydown", onSlash);
+    return () => document.removeEventListener("keydown", onSlash);
+  }, []);
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!searchWrapRef.current) return;
+      if (!searchWrapRef.current.contains(e.target)) {
+        setShowSearch(false);
+        setActiveIdx(-1);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  const results = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return [];
+    return index
+      .filter((r) => r.norm.includes(q))
+      .slice(0, 8); // top 8
+  }, [query]);
+
+  const openResult = (r) => {
+    setOpen(r.moduleKey); // abre panel del módulo
+    setShowSearch(false);
+    setActiveIdx(-1);
+    // Si es un acceso específico, aquí podrías navegar realmente:
+    if (r.type === "item") {
+      console.log("Abrir acceso:", r.title, "de", r.subtitle);
+    } else {
+      console.log("Abrir módulo:", r.title);
+    }
+  };
+
+  const onSearchKeyDown = (e) => {
+    if (!showSearch && ["ArrowDown", "ArrowUp"].includes(e.key)) {
+      setShowSearch(true);
+    }
+    if (e.key === "Escape") {
+      setShowSearch(false);
+      setActiveIdx(-1);
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIdx((i) => Math.min(i + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      if (results[activeIdx]) {
+        e.preventDefault();
+        openResult(results[activeIdx]);
+      }
+    }
+  };
+
   return (
     <div className="dashboardPage">
       <div className="dashboardContainer">
@@ -154,12 +270,46 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
             </div>
           </div>
 
-          <div className="topbarRight">
-            <input
-              className="topSearch"
-              placeholder="Buscar módulos o escribe / para comandos"
-              aria-label="Buscar módulos"
-            />
+          <div className="topbarRight" ref={searchWrapRef}>
+            <div className="searchBox">
+              <input
+                ref={searchInputRef}
+                className="topSearch"
+                placeholder="Buscar módulos o escribe / para comandos"
+                aria-label="Buscar módulos"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setShowSearch(true);
+                }}
+                onFocus={() => setShowSearch(query.trim().length > 0)}
+                onKeyDown={onSearchKeyDown}
+              />
+              {/* Dropdown resultados */}
+              {showSearch && (
+                <div className="searchDropdown" role="listbox">
+                  {results.length === 0 ? (
+                    <div className="searchEmpty">Escribe para buscar módulos y accesos…</div>
+                  ) : (
+                    results.map((r, i) => (
+                      <button
+                        key={r.id}
+                        role="option"
+                        className={`searchItem ${i === activeIdx ? "active" : ""}`}
+                        onMouseEnter={() => setActiveIdx(i)}
+                        onMouseLeave={() => setActiveIdx(-1)}
+                        onClick={() => openResult(r)}
+                      >
+                        <div className="searchPrimary">{r.title}</div>
+                        <div className="searchSecondary">
+                          {r.type === "item" ? r.subtitle : "Módulo"}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Campana */}
             <button className="iconBtn" aria-label="Notificaciones">
