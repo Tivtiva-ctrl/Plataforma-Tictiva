@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ROUTES, MODULE_ROUTES } from "../router/routes";
 import "./DashboardTopbar.css";
 
@@ -58,7 +58,7 @@ const MODULES = [
   },
 ];
 
-/* ===== Iconitos (estilo campana) ===== */
+/* ===== Iconitos de trazo (estilo campana) para cada módulo ===== */
 const IconUser = ({ className = "moduleEmoji" }) => (
   <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="7.5" r="3.5" />
@@ -232,11 +232,11 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     }
   };
 
-  // ⬇️ FIX: accesos rápidos del panel -> navega directo a Listado (RRHH)
-  const handleQuickLink = (moduleKey /*, itemTitle */) => {
+  const handleQuickLink = (moduleKey /* , itemTitle */) => {
+    // Por ahora: RRHH -> Listado de fichas; resto -> ruta del módulo
     if (moduleKey === "rrhh") {
-      navigate(ROUTES.rrhh.listadoFichas);
       setOpen(null);
+      navigate(ROUTES.rrhh.listadoFichas);
       return;
     }
     const path = MODULE_ROUTES[moduleKey];
@@ -428,17 +428,33 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
               <p className="panelDesc">{selected.desc}</p>
               <h4 className="panelSubtitle">Accesos rápidos</h4>
               <ul className="panelLinks">
-                {selected.items.map((it) => (
-                  <li key={it}>
-                    <button
-                      type="button"
-                      className="panelLinkBtn"
-                      onClick={() => handleQuickLink(selected.key)}
-                    >
-                      {it}
-                    </button>
-                  </li>
-                ))}
+                {selected.items.map((it) => {
+                  const isRRHHListado =
+                    selected.key === "rrhh" &&
+                    it.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "") ===
+                      "listado de fichas";
+                  return (
+                    <li key={it}>
+                      {isRRHHListado ? (
+                        <Link
+                          to={ROUTES.rrhh.listadoFichas}
+                          className="panelLinkBtn"
+                          onClick={() => setOpen(null)}
+                        >
+                          {it}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          className="panelLinkBtn"
+                          onClick={() => handleQuickLink(selected.key /*, it */)}
+                        >
+                          {it}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="adiaTip">
@@ -455,8 +471,19 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
         </div>
 
         <footer className="panelFooter">
-          {/* Desde el panel SÍ navega */}
-          <button className="btnPrimary" onClick={() => selected && handleQuickLink(selected.key)}>
+          {/* Desde el panel SÍ navega: RRHH -> Listado; otros -> ruta del módulo */}
+          <button
+            className="btnPrimary"
+            onClick={() => {
+              if (!selected) return;
+              if (selected.key === "rrhh") {
+                setOpen(null);
+                navigate(ROUTES.rrhh.listadoFichas);
+              } else {
+                openModule(selected.key);
+              }
+            }}
+          >
             Entrar al módulo
           </button>
         </footer>
