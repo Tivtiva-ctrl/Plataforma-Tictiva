@@ -251,7 +251,6 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     setShowSearch(false);
     setActiveIdx(-1);
     if (r.type === "item") {
-      // por ahora solo listado de RRHH tiene ruta real
       return handleQuickLink(r.moduleKey, r.title);
     }
     return openModule(r.moduleKey);
@@ -293,7 +292,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
             </div>
           </div>
 
-          <div className="topbarRight" ref={searchWrapRef}>
+        <div className="topbarRight" ref={searchWrapRef}>
             <div className="searchBox">
               <input
                 ref={searchInputRef}
@@ -413,7 +412,9 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                     <li key={it}>{it}</li>
                   ))}
                 </ul>
-                <button className="moduleOpen" onClick={() => openModule(m.key)}>
+
+                {/* ⬇️ Abrir panel lateral (NO navegar) */}
+                <button className="moduleOpen" onClick={() => setOpen(m.key)}>
                   Abrir módulo <span className="arrow">›</span>
                 </button>
               </article>
@@ -463,6 +464,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
         </div>
 
         <footer className="panelFooter">
+          {/* ⬇️ Desde el panel SÍ navega */}
           <button className="btnPrimary" onClick={() => selected && openModule(selected.key)}>
             Entrar al módulo
           </button>
