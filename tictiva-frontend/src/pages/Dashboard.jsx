@@ -165,47 +165,74 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
       {/* Panel lateral */}
       <div className={`backdrop ${open ? "show" : ""}`} onClick={() => setOpen(null)} />
       <aside className={`sidePanel ${open ? "open" : ""}`} aria-hidden={!open}>
-        <header className="panelHeader">
-          <div className="panelTitle">{selected?.title || "Módulo"}</div>
-          <button className="panelClose" onClick={() => setOpen(null)}>✕</button>
-        </header>
-        <div className="panelBody">
-          {selected && (
-            <>
-              <p className="panelDesc">{selected.desc}</p>
-              <h4 className="panelSubtitle">Accesos rápidos</h4>
+  <header className="panelHeader">
+    <div className="panelTitle">{selected?.title || "Módulo"}</div>
+    <button className="panelCloseIcon" onClick={() => setOpen(null)} aria-label="Cerrar">×</button>
+  </header>
 
-              {selected.key === "rrhh" ? (
-                <ul className="panelLinks">
-                  <li>
-                    <Link to={ROUTES.rrhh.listadoFichas} className="panelLinkBtn" onClick={() => setOpen(null)}>Listado de fichas</Link>
-                  </li>
-                  <li><button className="panelLinkBtn" disabled>Permisos y justificaciones</button></li>
-                  <li><button className="panelLinkBtn" disabled>Gestión de turnos</button></li>
-                  <li><button className="panelLinkBtn" disabled>Validación DT</button></li>
-                </ul>
-              ) : (
-                <ul className="panelLinks">
-                  {(selected.items || []).map((it) => (
-                    <li key={it}><button className="panelLinkBtn" disabled>{it}</button></li>
-                  ))}
-                </ul>
-              )}
+  <div className="panelBody">
+    {selected && (
+      <>
+        {/* Card de módulo (igual look que la card de la grilla) */}
+        <article className="panelModuleCard">
+          <div className="moduleHeaderRow">
+            <div className="moduleIcon moduleIcon--panel">
+              {(MODULE_ICONS[selected.key] || (() => null))({})}
+            </div>
+            <div>
+              <h3 className="moduleTitle">{selected.title}</h3>
+              <p className="moduleDesc">{selected.desc}</p>
+            </div>
+          </div>
 
-              <div className="adiaTip">
-                <div className="adiaTipIcon">💡</div>
-                <div>
-                  <div className="adiaTipTitle">Tip de ADIA</div>
-                  <div className="adiaTipText">{ADIA_TIPS[selected.key] || "ADIA: Consejos contextuales aparecerán aquí."}</div>
-                </div>
-              </div>
-            </>
+          <h4 className="panelSubtitle strong">Accesos rápidos</h4>
+
+          {/* RRHH: solo “Listado de fichas” clickeable por ahora */}
+          {selected.key === "rrhh" ? (
+            <ul className="panelLinks panelLinks--plain">
+              <li>
+                <Link
+                  to={ROUTES.rrhh.listadoFichas}
+                  className="panelLinkPlain"
+                  onClick={() => setOpen(null)}
+                >
+                  Listado de fichas
+                </Link>
+              </li>
+              <li><span className="panelLinkPlain disabled">Permisos y justificaciones</span></li>
+              <li><span className="panelLinkPlain disabled">Gestión de turnos</span></li>
+              <li><span className="panelLinkPlain disabled">Validación DT</span></li>
+            </ul>
+          ) : (
+            <ul className="panelLinks panelLinks--plain">
+              {(selected.items || []).map((it) => (
+                <li key={it}><span className="panelLinkPlain disabled">{it}</span></li>
+              ))}
+            </ul>
           )}
-        </div>
-        <footer className="panelFooter">
-          <button className="btnEmbossed" onClick={() => setOpen(null)}>Cerrar</button>
-        </footer>
-      </aside>
+        </article>
+
+        {/* Card separada para el Tip de ADIA */}
+        <article className="panelTipCard">
+          <div className="adiaTipHeader">
+            <span className="adiaLight">💡</span>
+            <span className="adiaTitle">Tip de ADIA</span>
+          </div>
+          <p className="adiaText">
+            {ADIA_TIPS[selected.key] || "ADIA: Consejos contextuales aparecerán aquí."}
+          </p>
+        </article>
+      </>
+    )}
+  </div>
+
+  {/* Footer del panel: botón tipo “Entrar al módulo”, pero dice Cerrar */}
+  <footer className="panelFooter">
+    <button className="btnPrimaryGradient" onClick={() => setOpen(null)}>
+      Cerrar
+    </button>
+  </footer>
+</aside>
     </div>
   );
 }

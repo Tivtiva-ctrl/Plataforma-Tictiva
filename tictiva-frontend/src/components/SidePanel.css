@@ -2,14 +2,18 @@
   --panel-w: 420px;
   --bg: #fff;
   --overlay: rgba(9, 12, 17, 0.35);
-  --title: #1f2937;
-  --muted: #6b7280;
-  --blue: #3b82f6; /* color corporativo */
+  --title: #0f172a;
+  --muted: #64748b;
+  --ink: #0b1220;
+  --blue: #3b82f6;
   --radius: 16px;
   --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.16);
+  --card-bg: #ffffff;
+  --card-border: #eef2f7;
+  --soft-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
-/* Fondo semitransparente */
+/* Backdrop */
 .backdrop {
   position: fixed;
   inset: 0;
@@ -38,24 +42,22 @@
   flex-direction: column;
   transition: right 0.3s ease;
 }
-.sidePanel.open {
-  right: 0;
-}
+.sidePanel.open { right: 0; }
 
-/* Header del panel */
+/* Header */
 .panelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px;
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 1px solid var(--card-border);
 }
 .panelTitle {
   font-size: 18px;
   font-weight: 700;
   color: var(--title);
 }
-.panelClose {
+.panelCloseIcon {
   border: 0;
   background: #f3f4f6;
   border-radius: 999px;
@@ -67,104 +69,137 @@
   text-align: center;
 }
 
-/* Cuerpo */
+/* Body */
 .panelBody {
   flex: 1;
   padding: 16px 20px;
   overflow-y: auto;
 }
-.panelDesc {
-  margin: 0 0 8px 0;
-  color: var(--muted);
-}
-.panelSubtitle {
-  margin: 16px 0 6px 0;
-  font-size: 14px;
-  text-transform: uppercase;
-  color: #94a3b8;
+
+/* === Card de módulo (clona el look de la card grande) === */
+.panelModuleCard {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--soft-shadow);
+  margin-bottom: 14px;
 }
 
-/* Enlaces */
+.moduleHeaderRow {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* iconito con gradiente */
+.moduleIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #5aa9ff, #6e5bff);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 18px rgba(60,90,255, .25);
+}
+.moduleIcon svg {
+  width: 22px;
+  height: 22px;
+  fill: white;
+  stroke: white;
+  stroke-width: 1.5;
+}
+.moduleIcon--panel { /* por si quieres variar algo en el panel */ }
+
+.moduleTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.moduleDesc {
+  margin: 2px 0 8px 0;
+  color: var(--muted);
+  font-size: 14.5px;
+}
+
+/* Subtítulo “Accesos rápidos” visible y en negrita */
+.panelSubtitle {
+  margin: 12px 0 6px 0;
+  font-size: 14.5px;
+  color: var(--ink);
+  letter-spacing: .2px;
+}
+.panelSubtitle.strong { font-weight: 700; }
+
+/* Lista de accesos en negro, sin subrayado, pero clickeables */
 .panelLinks {
-  list-style: none;
-  margin: 0 0 14px 0;
-  padding: 0;
+  list-style: disc;
+  padding-left: 18px;
+  margin: 0 0 4px 0;
 }
-.panelLinks li {
-  margin: 4px 0;
-}
-.panelLinkBtn {
-  background: none;
-  border: none;
-  padding: 6px 0;
-  color: var(--blue);
-  font: inherit;
+.panelLinks--plain { list-style: disc; }
+
+.panelLinkPlain,
+.panelLinkPlain:visited {
+  color: var(--ink);
+  text-decoration: none;
   cursor: pointer;
-  text-align: left;
 }
-.panelLinkBtn:disabled {
+.panelLinkPlain:hover { opacity: .9; }
+.panelLinkPlain.disabled {
   color: #cbd5e1;
   cursor: default;
-}
-.panelLinkBtn:hover:not(:disabled) {
-  text-decoration: underline;
+  pointer-events: none;
 }
 
-/* Tip de ADIA */
-.adiaTip {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 8px;
-  align-items: start;
-  margin-top: 8px;
-  padding: 10px 12px;
+/* === Card del Tip de ADIA === */
+.panelTipCard {
   background: #f8fafc;
   border: 1px dashed #e2e8f0;
-  border-radius: 12px;
+  border-radius: 16px;
+  padding: 14px 12px;
+  color: #334155;
+}
+.adiaTipHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.adiaLight { font-size: 18px; }
+.adiaTitle { font-weight: 700; font-size: 14.5px; color: var(--ink); }
+.adiaText {
+  margin: 0;
+  font-size: 13.5px;
   color: #475569;
-}
-.adiaTipIcon {
-  font-size: 18px;
-  line-height: 1;
-}
-.adiaTipTitle {
-  font-weight: 600;
-  font-size: 14px;
-}
-.adiaTipText {
-  margin: 4px 0 0 0;
-  color: #64748b;
-  font-size: 13px;
 }
 
 /* Footer */
 .panelFooter {
   padding: 14px 20px 18px;
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid var(--card-border);
   display: flex;
   justify-content: flex-end;
 }
 
-/* Botón con efecto grabado */
-.btnEmbossed {
+/* Botón primario con gradiente (mismo look que “Entrar al módulo”) */
+.btnPrimaryGradient {
   appearance: none;
   border: 0;
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: linear-gradient(#ffffff, #f3f4f6);
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #5aa9ff, #6e5bff);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: .2px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 1px 1px rgba(15, 23, 42, 0.08),
-    0 6px 18px rgba(15, 23, 42, 0.06);
-  color: #111827;
-  font-weight: 600;
+    0 8px 18px rgba(60, 90, 255, .25),
+    inset 0 1px 0 rgba(255,255,255,.18);
   cursor: pointer;
+  transition: transform .05s ease, filter .15s ease;
 }
-.btnEmbossed:hover {
-  background: linear-gradient(#ffffff, #eceff3);
-}
-.btnEmbossed:active {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 4px 10px rgba(15, 23, 42, 0.12);
-}
+.btnPrimaryGradient:hover { filter: brightness(1.02); }
+.btnPrimaryGradient:active { transform: translateY(1px); }
