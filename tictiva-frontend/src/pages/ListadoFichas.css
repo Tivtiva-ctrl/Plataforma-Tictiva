@@ -1,8 +1,8 @@
-/* ======== Fondo y layout ======== */
-.listadoPage {
+/* ======== Tema claro + layout base ======== */
+.listadoPage,
+.lf-page {
   min-height: 100vh;
   padding: 24px;
-  /* mismo vibe del dashboard: claro con suaves brillos */
   background:
     radial-gradient(900px 420px at 110% -10%, rgba(110, 91, 255, .07) 0%, rgba(110, 91, 255, 0) 60%),
     radial-gradient(900px 420px at -10% 100%, rgba(90, 169, 255, .08) 0%, rgba(90,169,255,0) 60%),
@@ -10,28 +10,20 @@
   color: #0f172a;
 }
 
-/* fijador por si tenías reglas oscuras previas */
-.listadoPage, .listadoPage * {
-  color-scheme: light;
+/* ======== Cards genéricas ======== */
+.lf-card {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(15,23,42,.08);
 }
 
 /* ======== Tabs (píldoras claras) ======== */
-.listadoPage .tabsBar {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  margin-bottom: 16px;
-}
+.lf-tabs { background: transparent; border: 0; padding: 0; margin-bottom: 16px; }
+.tabsBar { background: transparent; border: 0; }
+.tabsInner { display: flex; gap: 10px; flex-wrap: wrap; }
 
-.listadoPage .tabsInner {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.listadoPage .tabPill,
-.listadoPage .tabsBar button,
-.listadoPage .tabsBar a {
+.lf-tab {
   appearance: none;
   border: 1px solid #e5eaf2;
   background: #ffffff;
@@ -41,67 +33,74 @@
   font-weight: 700;
   box-shadow: 0 2px 10px rgba(15,23,42,.06);
   cursor: pointer;
-  text-decoration: none;
 }
-
-.listadoPage .tabPill.active,
-.listadoPage .tabsBar .active {
+.lf-tab.is-active,
+.tabsBar .active {
   border-color: transparent;
   color: #fff;
   background: linear-gradient(135deg, #5aa9ff, #6e5bff);
   box-shadow: 0 8px 18px rgba(60, 90, 255, .22), inset 0 1px 0 rgba(255,255,255,.18);
 }
 
-/* ======== Encabezado + buscador ======== */
-.listadoPage .listHead {
-  background: #fff;
-  border: 1px solid #eef2f7;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 28px rgba(15,23,42,.08);
-  margin-bottom: 14px;
-}
+/* ======== Encabezado + acciones ======== */
+.lf-header { padding: 16px; margin-bottom: 14px; }
+.lf-title  { margin: 0 0 4px 0; font-weight: 800; font-size: 22px; color: #0b1220; }
+.lf-sub    { margin: 0 0 12px 0; color: #64748b; }
 
-.listadoPage .listTitle {
-  margin: 0 0 4px 0;
-  font-weight: 800;
-  font-size: 20px;
-  color: #0b1220;
-}
+.lf-headerLeft { }
+.lf-headerRight { display: flex; gap: 10px; align-items: center; }
 
-.listadoPage .listSub {
-  margin: 0 0 12px 0;
-  color: #64748b;
-}
-
-.listadoPage .searchRow {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.listadoPage .searchInput {
-  flex: 1;
+/* Botones */
+.lf-btn {
   border: 1px solid #e5eaf2;
   background: #fff;
   color: #0f172a;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 12px;
-  outline: none;
-  box-shadow: 0 2px 10px rgba(15,23,42,.06) inset;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(15,23,42,.06);
+}
+.lf-btnGhost {
+  background: #fff;
+  color: #0f172a;
+}
+.lf-btnPrimary {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #5aa9ff, #6e5bff);
+  box-shadow: 0 8px 18px rgba(60, 90, 255, .22), inset 0 1px 0 rgba(255,255,255,.18);
 }
 
+/* Buscador */
+.lf-searchWrap { margin-top: 12px; }
+.searchRow { display: flex; gap: 10px; align-items: center; }
+.lf-search,
+.searchInput {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #e5eaf2;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px 14px;
+  border-radius: 12px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(15,23,42,.06);
+}
+.lf-search::placeholder { color: #94a3b8; }
+
 /* ======== KPIs ======== */
-.listadoPage .kpiBar {
+.lf-kpis { padding: 12px; }
+.kpiBar {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
-  margin: 16px 0;
 }
-@media (max-width: 1024px){ .listadoPage .kpiBar { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 640px){ .listadoPage .kpiBar { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1024px){ .kpiBar { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px){ .kpiBar { grid-template-columns: repeat(2, 1fr); } }
 
-.listadoPage .kpiCard {
+.lf-kpi,
+.kpiCard {
   background: #fff;
   border: 1px solid #eef2f7;
   border-radius: 14px;
@@ -109,27 +108,20 @@
   box-shadow: 0 8px 24px rgba(15,23,42,.06);
   text-align: center;
 }
-
-.listadoPage .kpiLabel { color: #64748b; font-weight: 600; }
-.listadoPage .kpiValue { color: #0b1220; font-weight: 800; font-size: 20px; }
+.lf-kpiValue { color: #0b1220; font-weight: 800; font-size: 20px; }
+.lf-kpiLabel { color: #64748b; font-weight: 600; }
 
 /* ======== Tabla ======== */
-.listadoPage .tableCard {
-  background: #fff;
-  border: 1px solid #eef2f7;
-  border-radius: 16px;
-  box-shadow: 0 10px 28px rgba(15,23,42,.08);
-  overflow: hidden;
-}
+.lf-tableWrap { overflow: hidden; }
+.tableCard { overflow: hidden; }
 
-.listadoPage table {
+.lf-table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
   color: #0f172a;
 }
-
-.listadoPage thead th {
+.lf-table thead th {
   background: #f8fafc;
   color: #475569;
   text-align: left;
@@ -137,39 +129,47 @@
   padding: 12px;
   border-bottom: 1px solid #eef2f7;
 }
-
-.listadoPage tbody td {
+.lf-table tbody td {
   padding: 12px;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.listadoPage .badge {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+/* Avatar iniciales */
+.lf-avatar {
+  width: 40px; height: 40px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  display: grid; place-items: center;
+  font-weight: 800;
+}
+
+/* Link del nombre (estilo home) */
+.lf-linkBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #2563eb;       /* azul marca */
+  font-weight: 700;
+  cursor: pointer;
+}
+.lf-linkBtn:hover { text-decoration: underline; }
+
+/* Chips de estado */
+.lf-chip {
+  display: inline-block;
   padding: 4px 10px;
   border-radius: 999px;
   font-weight: 700;
   font-size: 12px;
+  border: 1px solid transparent;
+}
+.lf-chip.ok {
+  background: #ecfdf5; color: #047857; border-color: #a7f3d0;
+}
+.lf-chip.off {
+  background: #f1f5f9; color: #475569; border-color: #e2e8f0;
 }
 
-/* ======== Botones acción ======== */
-.listadoPage .btn,
-.listadoPage .btnPrimary,
-.listadoPage .btnSecondary {
-  border: 1px solid #e5eaf2;
-  background: #fff;
-  color: #0f172a;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(15,23,42,.06);
-}
-
-.listadoPage .btnPrimary {
-  border-color: transparent;
-  color: #fff;
-  background: linear-gradient(135deg, #5aa9ff, #6e5bff);
-  box-shadow: 0 8px 18px rgba(60, 90, 255, .22), inset 0 1px 0 rgba(255,255,255,.18);
-}
+/* Vacío */
+.lf-empty { text-align: center; color: #64748b; padding: 24px; }
