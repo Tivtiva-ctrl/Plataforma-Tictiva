@@ -58,7 +58,7 @@ const MODULES = [
   },
 ];
 
-/* ===== Iconitos de trazo (estilo campana) para cada módulo ===== */
+/* ===== Iconitos (estilo campana) ===== */
 const IconUser = ({ className = "moduleEmoji" }) => (
   <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="7.5" r="3.5" />
@@ -115,7 +115,7 @@ const ADIA_TIPS = {
   bodega: "ADIA: Define mínimos por EPP para evitar quiebres de stock inesperados.",
 };
 
-/* ===== Utilidades buscador ===== */
+/* ===== Buscador ===== */
 const normalize = (s) =>
   (s || "")
     .toString()
@@ -149,27 +149,6 @@ const buildSearchIndex = (modules) => {
 };
 const index = buildSearchIndex(MODULES);
 
-/* ===== Mapa de accesos rápidos -> rutas reales ===== */
-const normalizeKey = (s) =>
-  (s || "")
-    .toString()
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
-
-const QUICK_ROUTES = {
-  rrhh: {
-    "listado de fichas": ROUTES.rrhh.listadoFichas,
-    "permisos y justificaciones": ROUTES.rrhh.root, // TODO: actualizar cuando tengas subruta real
-    "gestión de turnos": ROUTES.rrhh.root,
-    "gestion de turnos": ROUTES.rrhh.root,
-    "validación dt": ROUTES.rrhh.root,
-    "validacion dt": ROUTES.rrhh.root,
-  },
-  // puedes agregar mapas para otros módulos si creas subrutas
-};
-
 export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const navigate = useNavigate();
 
@@ -184,7 +163,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     return () => clearInterval(id);
   }, []);
 
-  /* Cerrar menú usuario al hacer click fuera o con Esc */
+  /* Cerrar menú usuario */
   const userWrapRef = useRef(null);
   useEffect(() => {
     const onDocClick = (e) => {
@@ -200,7 +179,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     };
   }, []);
 
-  /* ===== Buscador ===== */
+  /* ===== Buscador (UI) ===== */
   const [query, setQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
@@ -242,7 +221,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     return index.filter((r) => r.norm.includes(q)).slice(0, 8);
   }, [query]);
 
-  /* ===== Navegación centralizada ===== */
+  /* ===== Navegación ===== */
   const openModule = (moduleKey) => {
     const path = MODULE_ROUTES[moduleKey];
     if (path) {
@@ -253,15 +232,14 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     }
   };
 
-  const handleQuickLink = (moduleKey, itemTitle) => {
-    const key = normalizeKey(itemTitle);
-    const map = QUICK_ROUTES[moduleKey] || {};
-    // intentar con la clave tal cual y variantes sin acento
-    const path =
-      map[key] ||
-      map[key.replaceAll("ó", "o").replaceAll("í", "i").replaceAll("é", "e").replaceAll("á", "a").replaceAll("ú", "u")] ||
-      MODULE_ROUTES[moduleKey];
-
+  // ⬇️ FIX: accesos rápidos del panel -> navega directo a Listado (RRHH)
+  const handleQuickLink = (moduleKey /*, itemTitle */) => {
+    if (moduleKey === "rrhh") {
+      navigate(ROUTES.rrhh.listadoFichas);
+      setOpen(null);
+      return;
+    }
+    const path = MODULE_ROUTES[moduleKey];
     if (path) navigate(path);
     setOpen(null);
   };
@@ -269,7 +247,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const openResult = (r) => {
     setShowSearch(false);
     setActiveIdx(-1);
-    if (r.type === "item") return handleQuickLink(r.moduleKey, r.title);
+    if (r.type === "item") return handleQuickLink(r.moduleKey);
     return openModule(r.moduleKey);
   };
 
@@ -455,7 +433,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                     <button
                       type="button"
                       className="panelLinkBtn"
-                      onClick={() => handleQuickLink(selected.key, it)}
+                      onClick={() => handleQuickLink(selected.key)}
                     >
                       {it}
                     </button>
@@ -478,7 +456,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
 
         <footer className="panelFooter">
           {/* Desde el panel SÍ navega */}
-          <button className="btnPrimary" onClick={() => selected && openModule(selected.key)}>
+          <button className="btnPrimary" onClick={() => selected && handleQuickLink(selected.key)}>
             Entrar al módulo
           </button>
         </footer>
