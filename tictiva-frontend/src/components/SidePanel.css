@@ -1,0 +1,170 @@
+:root {
+  --panel-w: 420px;
+  --bg: #fff;
+  --overlay: rgba(9, 12, 17, 0.35);
+  --title: #1f2937;
+  --muted: #6b7280;
+  --blue: #3b82f6; /* color corporativo */
+  --radius: 16px;
+  --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.16);
+}
+
+/* Fondo semitransparente */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 59;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Panel lateral */
+.sidePanel {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: min(100%, var(--panel-w));
+  height: 100vh;
+  background: var(--bg);
+  z-index: 60;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease;
+}
+.sidePanel.open {
+  right: 0;
+}
+
+/* Header del panel */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #eef2f7;
+}
+.panelTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--title);
+}
+.panelClose {
+  border: 0;
+  background: #f3f4f6;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 32px;
+  text-align: center;
+}
+
+/* Cuerpo */
+.panelBody {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+.panelDesc {
+  margin: 0 0 8px 0;
+  color: var(--muted);
+}
+.panelSubtitle {
+  margin: 16px 0 6px 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+/* Enlaces */
+.panelLinks {
+  list-style: none;
+  margin: 0 0 14px 0;
+  padding: 0;
+}
+.panelLinks li {
+  margin: 4px 0;
+}
+.panelLinkBtn {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  color: var(--blue);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.panelLinkBtn:disabled {
+  color: #cbd5e1;
+  cursor: default;
+}
+.panelLinkBtn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+/* Tip de ADIA */
+.adiaTip {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  align-items: start;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  color: #475569;
+}
+.adiaTipIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+.adiaTipTitle {
+  font-weight: 600;
+  font-size: 14px;
+}
+.adiaTipText {
+  margin: 4px 0 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Footer */
+.panelFooter {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #eef2f7;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Botón con efecto grabado */
+.btnEmbossed {
+  appearance: none;
+  border: 0;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: linear-gradient(#ffffff, #f3f4f6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 1px rgba(15, 23, 42, 0.08),
+    0 6px 18px rgba(15, 23, 42, 0.06);
+  color: #111827;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btnEmbossed:hover {
+  background: linear-gradient(#ffffff, #eceff3);
+}
+.btnEmbossed:active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 4px 10px rgba(15, 23, 42, 0.12);
+}
