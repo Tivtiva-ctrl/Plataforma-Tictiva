@@ -25,4 +25,14 @@ export const ROUTES = {
   notFound: "*",
 };
 
+// Mapa para abrir módulos desde el Dashboard / buscador
+export const MODULE_ROUTES = {
+  rrhh: ROUTES.rrhh.listadoFichas,
+  asistencia: ROUTES.asistencia,
+  comunicaciones: ROUTES.comunicaciones,
+  reporteria: ROUTES.reporteria,
+  cuida: ROUTES.cuida,
+  bodega: ROUTES.bodega,
+};
+
 export default ROUTES;
