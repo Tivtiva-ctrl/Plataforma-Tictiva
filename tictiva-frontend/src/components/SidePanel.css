@@ -23,10 +23,7 @@
   pointer-events: none;
   transition: opacity 0.25s ease;
 }
-.backdrop.show {
-  opacity: 1;
-  pointer-events: auto;
-}
+.backdrop.show { opacity: 1; pointer-events: auto; }
 
 /* Panel lateral */
 .sidePanel {
@@ -44,39 +41,10 @@
 }
 .sidePanel.open { right: 0; }
 
-/* Header */
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--card-border);
-}
-.panelTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--title);
-}
-.panelCloseIcon {
-  border: 0;
-  background: #f3f4f6;
-  border-radius: 999px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 32px;
-  text-align: center;
-}
+/* Cuerpo */
+.panelBody { flex: 1; padding: 16px 20px; overflow-y: auto; }
 
-/* Body */
-.panelBody {
-  flex: 1;
-  padding: 16px 20px;
-  overflow-y: auto;
-}
-
-/* === Card de módulo (clona el look de la card grande) === */
+/* Card de módulo (clona la card grande) */
 .panelModuleCard {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -94,107 +62,66 @@
   margin-bottom: 4px;
 }
 
-/* iconito con gradiente */
 .moduleIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 44px; height: 44px; border-radius: 12px;
   background: linear-gradient(135deg, #5aa9ff, #6e5bff);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 8px 18px rgba(60,90,255, .25);
+  display: grid; place-items: center;
+  box-shadow: 0 8px 18px rgba(60,90,255,.25);
 }
-.moduleIcon svg {
-  width: 22px;
-  height: 22px;
-  fill: white;
-  stroke: white;
-  stroke-width: 1.5;
-}
-.moduleIcon--panel { /* por si quieres variar algo en el panel */ }
+.moduleIcon svg { width: 22px; height: 22px; fill: #fff; stroke: #fff; stroke-width: 1.5; }
 
-.moduleTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--ink);
-}
-.moduleDesc {
-  margin: 2px 0 8px 0;
-  color: var(--muted);
-  font-size: 14.5px;
-}
+.moduleTitle { margin: 0; font-size: 18px; font-weight: 800; color: var(--ink); }
+.moduleDesc  { margin: 2px 0 8px 0; color: var(--muted); font-size: 14.5px; }
 
-/* Subtítulo “Accesos rápidos” visible y en negrita */
-.panelSubtitle {
-  margin: 12px 0 6px 0;
-  font-size: 14.5px;
-  color: var(--ink);
-  letter-spacing: .2px;
-}
-.panelSubtitle.strong { font-weight: 700; }
+/* Subtítulo Accesos rápidos en negro y fuerte */
+.panelSubtitle { margin: 12px 0 6px 0; font-size: 14.5px; color: var(--ink); }
+.panelSubtitle.strong { font-weight: 800; }
 
-/* Lista de accesos en negro, sin subrayado, pero clickeables */
-.panelLinks {
-  list-style: disc;
-  padding-left: 18px;
-  margin: 0 0 4px 0;
-}
-.panelLinks--plain { list-style: disc; }
+/* Lista */
+.panelLinks { list-style: disc; padding-left: 18px; margin: 0 0 6px 0; }
 
-.panelLinkPlain,
-.panelLinkPlain:visited {
+/* Enlaces/ítems en NEGRO, NEGRITA, sin subrayado */
+.panelLinkPlain, .panelLinkPlain:visited {
   color: var(--ink);
   text-decoration: none;
+  font-weight: 700;
   cursor: pointer;
 }
 .panelLinkPlain:hover { opacity: .9; }
-.panelLinkPlain.disabled {
-  color: #cbd5e1;
-  cursor: default;
-  pointer-events: none;
+
+.panelItemText {
+  color: var(--ink);
+  font-weight: 700;
 }
 
-/* === Card del Tip de ADIA === */
+/* Card del Tip de ADIA */
 .panelTipCard {
   background: #f8fafc;
   border: 1px dashed #e2e8f0;
   border-radius: 16px;
   padding: 14px 12px;
   color: #334155;
+  margin-top: 12px;
 }
-.adiaTipHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
+.adiaTipHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .adiaLight { font-size: 18px; }
-.adiaTitle { font-weight: 700; font-size: 14.5px; color: var(--ink); }
-.adiaText {
-  margin: 0;
-  font-size: 13.5px;
-  color: #475569;
-}
+.adiaTitle { font-weight: 800; font-size: 14.5px; color: var(--ink); }
+.adiaText { margin: 0; font-size: 13.5px; color: #475569; }
 
-/* Footer */
+/* Footer y botón Cerrar con degradado (igual a “Entrar al módulo”) */
 .panelFooter {
   padding: 14px 20px 18px;
   border-top: 1px solid var(--card-border);
-  display: flex;
-  justify-content: flex-end;
+  display: flex; justify-content: flex-end;
 }
 
-/* Botón primario con gradiente (mismo look que “Entrar al módulo”) */
 .btnPrimaryGradient {
   appearance: none;
   border: 0;
   padding: 12px 18px;
   border-radius: 14px;
   background: linear-gradient(135deg, #5aa9ff, #6e5bff);
-  color: #fff;
-  font-weight: 700;
-  letter-spacing: .2px;
+  color: #fff; font-weight: 800; letter-spacing: .2px;
   box-shadow:
     0 8px 18px rgba(60, 90, 255, .25),
     inset 0 1px 0 rgba(255,255,255,.18);
