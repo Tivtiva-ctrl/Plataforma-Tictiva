@@ -58,7 +58,7 @@ const MODULES = [
   },
 ];
 
-/* ===== Iconitos de trazo (estilo campana) para cada módulo ===== */
+/* ===== Iconitos (estilo campana) ===== */
 const IconUser = ({ className = "moduleEmoji" }) => (
   <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="7.5" r="3.5" />
@@ -232,44 +232,6 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     }
   };
 
-  const handleQuickLink = (moduleKey /* , itemTitle */) => {
-    // Por ahora: RRHH -> Listado de fichas; resto -> ruta del módulo
-    if (moduleKey === "rrhh") {
-      setOpen(null);
-      navigate(ROUTES.rrhh.listadoFichas);
-      return;
-    }
-    const path = MODULE_ROUTES[moduleKey];
-    if (path) navigate(path);
-    setOpen(null);
-  };
-
-  const openResult = (r) => {
-    setShowSearch(false);
-    setActiveIdx(-1);
-    if (r.type === "item") return handleQuickLink(r.moduleKey);
-    return openModule(r.moduleKey);
-  };
-
-  const onSearchKeyDown = (e) => {
-    if (!showSearch && ["ArrowDown", "ArrowUp"].includes(e.key)) setShowSearch(true);
-    if (e.key === "Escape") {
-      setShowSearch(false);
-      setActiveIdx(-1);
-      return;
-    }
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, results.length - 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIdx((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter" && results[activeIdx]) {
-      e.preventDefault();
-      openResult(results[activeIdx]);
-    }
-  };
-
   return (
     <div className="dashboardPage">
       <div className="dashboardContainer">
@@ -296,7 +258,31 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                   setShowSearch(true);
                 }}
                 onFocus={() => setShowSearch(query.trim().length > 0)}
-                onKeyDown={onSearchKeyDown}
+                onKeyDown={(e) => {
+                  if (!showSearch && ["ArrowDown", "ArrowUp"].includes(e.key)) setShowSearch(true);
+                  if (e.key === "Escape") {
+                    setShowSearch(false);
+                    setActiveIdx(-1);
+                    return;
+                  }
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveIdx((i) => Math.min(i + 1, results.length - 1));
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveIdx((i) => Math.max(i - 1, 0));
+                  } else if (e.key === "Enter" && results[activeIdx]) {
+                    e.preventDefault();
+                    const r = results[activeIdx];
+                    setShowSearch(false);
+                    setActiveIdx(-1);
+                    if (r.type === "item" && r.moduleKey === "rrhh" && r.title.toLowerCase().includes("listado")) {
+                      navigate(ROUTES.rrhh.listadoFichas);
+                    } else {
+                      openModule(r.moduleKey);
+                    }
+                  }
+                }}
               />
               {showSearch && (
                 <div className="searchDropdown" role="listbox">
@@ -310,7 +296,15 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                         className={`searchItem ${i === activeIdx ? "active" : ""}`}
                         onMouseEnter={() => setActiveIdx(i)}
                         onMouseLeave={() => setActiveIdx(-1)}
-                        onClick={() => openResult(r)}
+                        onClick={() => {
+                          setShowSearch(false);
+                          setActiveIdx(-1);
+                          if (r.type === "item" && r.moduleKey === "rrhh" && r.title.toLowerCase().includes("listado")) {
+                            navigate(ROUTES.rrhh.listadoFichas);
+                          } else {
+                            openModule(r.moduleKey);
+                          }
+                        }}
                       >
                         <div className="searchPrimary">{r.title}</div>
                         <div className="searchSecondary">
@@ -426,36 +420,33 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
           {selected && (
             <>
               <p className="panelDesc">{selected.desc}</p>
+
               <h4 className="panelSubtitle">Accesos rápidos</h4>
-              <ul className="panelLinks">
-                {selected.items.map((it) => {
-                  const isRRHHListado =
-                    selected.key === "rrhh" &&
-                    it.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "") ===
-                      "listado de fichas";
-                  return (
-                    <li key={it}>
-                      {isRRHHListado ? (
-                        <Link
-                          to={ROUTES.rrhh.listadoFichas}
-                          className="panelLinkBtn"
-                          onClick={() => setOpen(null)}
-                        >
-                          {it}
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          className="panelLinkBtn"
-                          onClick={() => handleQuickLink(selected.key /*, it */)}
-                        >
-                          {it}
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+
+              {/* RRHH: solo “Listado de fichas” clickeable */}
+              {selected.key === "rrhh" ? (
+                <ul className="panelLinks">
+                  <li>
+                    <Link
+                      to={ROUTES.rrhh.listadoFichas}
+                      className="panelLinkBtn"
+                      onClick={() => setOpen(null)}
+                    >
+                      Listado de fichas
+                    </Link>
+                  </li>
+                  <li><button className="panelLinkBtn" disabled>Permisos y justificaciones</button></li>
+                  <li><button className="panelLinkBtn" disabled>Gestión de turnos</button></li>
+                  <li><button className="panelLinkBtn" disabled>Validación DT</button></li>
+                </ul>
+              ) : (
+                // Otros módulos: por ahora sin subrutas reales
+                <ul className="panelLinks">
+                  {(selected.items || []).map((it) => (
+                    <li key={it}><button className="panelLinkBtn" disabled>{it}</button></li>
+                  ))}
+                </ul>
+              )}
 
               <div className="adiaTip">
                 <div className="adiaTipIcon">💡</div>
@@ -470,21 +461,10 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
           )}
         </div>
 
+        {/* Footer del panel: solo cerrar */}
         <footer className="panelFooter">
-          {/* Desde el panel SÍ navega: RRHH -> Listado; otros -> ruta del módulo */}
-          <button
-            className="btnPrimary"
-            onClick={() => {
-              if (!selected) return;
-              if (selected.key === "rrhh") {
-                setOpen(null);
-                navigate(ROUTES.rrhh.listadoFichas);
-              } else {
-                openModule(selected.key);
-              }
-            }}
-          >
-            Entrar al módulo
+          <button className="btnSecondary" onClick={() => setOpen(null)}>
+            Cerrar
           </button>
         </footer>
       </aside>
