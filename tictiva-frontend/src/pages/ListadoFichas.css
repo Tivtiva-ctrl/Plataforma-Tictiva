@@ -1,117 +1,175 @@
-:root{
-  --t-blue:#2563eb;
-  --t-cyan:#06b6d4;
-  --t-text:#0f172a;
-  --t-muted:#64748b;
-  --t-border:#e2e8f0;
-  --t-bg:#fff;
+/* ======== Fondo y layout ======== */
+.listadoPage {
+  min-height: 100vh;
+  padding: 24px;
+  /* mismo vibe del dashboard: claro con suaves brillos */
+  background:
+    radial-gradient(900px 420px at 110% -10%, rgba(110, 91, 255, .07) 0%, rgba(110, 91, 255, 0) 60%),
+    radial-gradient(900px 420px at -10% 100%, rgba(90, 169, 255, .08) 0%, rgba(90,169,255,0) 60%),
+    #f7f9fc;
+  color: #0f172a;
 }
 
-.lf-page{
+/* fijador por si tenías reglas oscuras previas */
+.listadoPage, .listadoPage * {
+  color-scheme: light;
+}
+
+/* ======== Tabs (píldoras claras) ======== */
+.listadoPage .tabsBar {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.listadoPage .tabsInner {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.listadoPage .tabPill,
+.listadoPage .tabsBar button,
+.listadoPage .tabsBar a {
+  appearance: none;
+  border: 1px solid #e5eaf2;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(15,23,42,.06);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.listadoPage .tabPill.active,
+.listadoPage .tabsBar .active {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #5aa9ff, #6e5bff);
+  box-shadow: 0 8px 18px rgba(60, 90, 255, .22), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+/* ======== Encabezado + buscador ======== */
+.listadoPage .listHead {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
   padding: 16px;
-  max-width: 1120px;
-  margin: 0 auto;
+  box-shadow: 0 10px 28px rgba(15,23,42,.08);
+  margin-bottom: 14px;
 }
 
-/* Tabs */
-.lf-tabs{
-  display:flex; gap:12px; margin-bottom:12px; padding:0 4px;
-}
-.lf-tab{
-  padding:10px 14px; border-radius:12px; border:1px solid var(--t-border);
-  background:#fff; color:#0f172a; font-weight:600;
-  box-shadow:0 2px 8px rgba(2,6,23,.05);
-}
-.lf-tab.is-active{
-  border-color:transparent;
-  background: linear-gradient(135deg, #f8fbff 0%, #f1f9f7 100%);
+.listadoPage .listTitle {
+  margin: 0 0 4px 0;
+  font-weight: 800;
+  font-size: 20px;
+  color: #0b1220;
 }
 
-/* Cards base */
-.lf-card{
-  background: var(--t-bg);
-  border:1px solid var(--t-border);
-  border-radius:16px;
-  box-shadow:0 8px 20px rgba(0,0,0,.05);
-  padding:16px;
-  margin-bottom:16px;
+.listadoPage .listSub {
+  margin: 0 0 12px 0;
+  color: #64748b;
 }
 
-/* Header card */
-.lf-header{
-  display:grid;
-  grid-template-columns: 1fr auto;
-  gap:12px;
-}
-.lf-headerRight{ display:flex; align-items:center; gap:8px; }
-.lf-title{ margin:0 0 6px 0; font-size:22px; color:var(--t-text); font-weight:800; }
-.lf-sub{ margin:0; color:var(--t-muted); }
-.lf-searchWrap{ grid-column:1 / -1; }
-.lf-search{
-  width:100%; height:38px; border-radius:12px; border:1px solid var(--t-border);
-  padding:0 12px; outline:none; background:#fff;
+.listadoPage .searchRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-/* Botones */
-.lf-btn{
-  height:36px; border-radius:10px; padding:0 12px; font-weight:700; cursor:pointer; border:none;
-}
-.lf-btnPrimary{
-  color:#fff; background: linear-gradient(90deg, var(--t-blue), var(--t-cyan));
-  box-shadow:0 6px 16px rgba(37,99,235,.22);
-}
-.lf-btnGhost{
-  background:#fff; border:1px solid var(--t-border); color:var(--t-text);
-}
-
-/* KPIs */
-.lf-kpis{
-  display:grid; grid-template-columns: repeat(7, 1fr); gap:12px;
-}
-.lf-kpi{
-  background:#fff; border:1px solid var(--t-border); border-radius:12px;
-  padding:10px 12px; text-align:left; box-shadow:0 6px 14px rgba(2,6,23,.06);
-}
-.lf-kpiValue{ font-size:20px; font-weight:800; color:var(--t-text); line-height:1; }
-.lf-kpiLabel{ color:var(--t-muted); font-size:12px; }
-
-/* Tabla */
-.lf-tableWrap{ overflow:auto; }
-.lf-table{ width:100%; border-collapse:separate; border-spacing:0; }
-.lf-table thead th{
-  text-align:left; color:var(--t-muted); font-weight:700; padding:10px 12px;
-  position:sticky; top:0; background:#fff;
-}
-.lf-table tbody td{ padding:12px; border-top:1px solid var(--t-border); }
-
-/* Avatar */
-.lf-avatar{
-  width:36px; height:36px; border-radius:999px; display:grid; place-items:center;
-  background:#eef2ff; color:#475569; font-weight:800; box-shadow: inset 0 0 0 1px #dbeafe;
+.listadoPage .searchInput {
+  flex: 1;
+  border: 1px solid #e5eaf2;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px 12px;
+  border-radius: 12px;
+  outline: none;
+  box-shadow: 0 2px 10px rgba(15,23,42,.06) inset;
 }
 
-/* Ficha link */
-.lf-linkBtn{
-  background:none; border:none; color:var(--t-blue); font-weight:700; cursor:pointer; padding:0;
+/* ======== KPIs ======== */
+.listadoPage .kpiBar {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+@media (max-width: 1024px){ .listadoPage .kpiBar { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px){ .listadoPage .kpiBar { grid-template-columns: repeat(2, 1fr); } }
+
+.listadoPage .kpiCard {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(15,23,42,.06);
+  text-align: center;
 }
 
-/* Estado */
-.lf-chip{
-  display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;
-  border:1px solid var(--t-border);
-}
-.lf-chip.ok{ color:#065f46; background:#ecfdf5; border-color:#a7f3d0; }
-.lf-chip.off{ color:#334155; background:#f1f5f9; }
+.listadoPage .kpiLabel { color: #64748b; font-weight: 600; }
+.listadoPage .kpiValue { color: #0b1220; font-weight: 800; font-size: 20px; }
 
-/* Vacío */
-.lf-empty{ text-align:center; color:var(--t-muted); padding:24px 12px; }
-
-/* Responsive */
-@media (max-width: 1100px){
-  .lf-kpis{ grid-template-columns: repeat(4, 1fr); }
+/* ======== Tabla ======== */
+.listadoPage .tableCard {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(15,23,42,.08);
+  overflow: hidden;
 }
-@media (max-width: 720px){
-  .lf-header{ grid-template-columns: 1fr; }
-  .lf-headerRight{ justify-content:flex-start; }
-  .lf-kpis{ grid-template-columns: repeat(2, 1fr); }
+
+.listadoPage table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  color: #0f172a;
+}
+
+.listadoPage thead th {
+  background: #f8fafc;
+  color: #475569;
+  text-align: left;
+  font-weight: 700;
+  padding: 12px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.listadoPage tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.listadoPage .badge {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* ======== Botones acción ======== */
+.listadoPage .btn,
+.listadoPage .btnPrimary,
+.listadoPage .btnSecondary {
+  border: 1px solid #e5eaf2;
+  background: #fff;
+  color: #0f172a;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(15,23,42,.06);
+}
+
+.listadoPage .btnPrimary {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #5aa9ff, #6e5bff);
+  box-shadow: 0 8px 18px rgba(60, 90, 255, .22), inset 0 1px 0 rgba(255,255,255,.18);
 }

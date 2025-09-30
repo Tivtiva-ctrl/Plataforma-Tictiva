@@ -63,16 +63,18 @@ export default function ListadoFichas() {
   }, []);
 
   return (
-    <div className="lf-page">
-      {/* Tabs superiores (mismo estilo, solo visual) */}
-      <nav className="lf-tabs">
-        <button className="lf-tab is-active">Listado y Fichas</button>
-        <button className="lf-tab" disabled>Permisos y Justificaciones</button>
-        <button className="lf-tab" disabled>Validación DT</button>
-        <button className="lf-tab" disabled>Gestión de Turnos</button>
+    <div className="listadoPage lf-page">
+      {/* Tabs superiores (mismo estilo claro del dashboard) */}
+      <nav className="lf-tabs tabsBar">
+        <div className="tabsInner">
+          <button className="lf-tab is-active">Listado y Fichas</button>
+          <button className="lf-tab" disabled>Permisos y Justificaciones</button>
+          <button className="lf-tab" disabled>Validación DT</button>
+          <button className="lf-tab" disabled>Gestión de Turnos</button>
+        </div>
       </nav>
 
-      <section className="lf-card lf-header">
+      <section className="lf-card lf-header listHead">
         <div className="lf-headerLeft">
           <h1 className="lf-title">Listado de Empleados - Prueba 1</h1>
           <p className="lf-sub">
@@ -90,9 +92,9 @@ export default function ListadoFichas() {
           </button>
         </div>
 
-        <div className="lf-searchWrap">
+        <div className="lf-searchWrap searchRow">
           <input
-            className="lf-search"
+            className="lf-search searchInput"
             placeholder="Buscar por nombre o RUT…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -101,9 +103,9 @@ export default function ListadoFichas() {
       </section>
 
       {/* KPIs / Resumen */}
-      <section className="lf-card lf-kpis">
+      <section className="lf-card lf-kpis kpiBar">
         {KPIS.map((k) => (
-          <div key={k.key} className="lf-kpi">
+          <div key={k.key} className="lf-kpi kpiCard">
             <div className="lf-kpiValue">{k.value}</div>
             <div className="lf-kpiLabel">{k.label}</div>
           </div>
@@ -111,7 +113,7 @@ export default function ListadoFichas() {
       </section>
 
       {/* Tabla */}
-      <section className="lf-card lf-tableWrap">
+      <section className="lf-card lf-tableWrap tableCard">
         <table className="lf-table">
           <thead>
             <tr>
