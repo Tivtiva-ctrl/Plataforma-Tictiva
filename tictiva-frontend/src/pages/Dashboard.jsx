@@ -149,10 +149,31 @@ const buildSearchIndex = (modules) => {
 };
 const index = buildSearchIndex(MODULES);
 
+/* ===== Mapa de accesos rápidos -> rutas reales ===== */
+const normalizeKey = (s) =>
+  (s || "")
+    .toString()
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const QUICK_ROUTES = {
+  rrhh: {
+    "listado de fichas": ROUTES.rrhh.listadoFichas,
+    "permisos y justificaciones": ROUTES.rrhh.root, // TODO: actualizar cuando tengas subruta real
+    "gestión de turnos": ROUTES.rrhh.root,
+    "gestion de turnos": ROUTES.rrhh.root,
+    "validación dt": ROUTES.rrhh.root,
+    "validacion dt": ROUTES.rrhh.root,
+  },
+  // puedes agregar mapas para otros módulos si creas subrutas
+};
+
 export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const navigate = useNavigate();
 
-  const [open, setOpen] = useState(null);
+  const [open, setOpen] = useState(null); // módulo abierto en el panel
   const [showUserMenu, setShowUserMenu] = useState(false);
   const selected = useMemo(() => MODULES.find((m) => m.key === open), [open]);
 
@@ -233,33 +254,27 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   };
 
   const handleQuickLink = (moduleKey, itemTitle) => {
-    const txt = itemTitle.toLowerCase();
-    if (moduleKey === "rrhh") {
-      if (txt.includes("listado")) {
-        navigate(ROUTES.rrhh.listadoFichas);
-      } else {
-        // otros submódulos de RRHH los cableamos después
-        navigate(ROUTES.rrhh.root);
-      }
-    } else {
-      openModule(moduleKey);
-    }
+    const key = normalizeKey(itemTitle);
+    const map = QUICK_ROUTES[moduleKey] || {};
+    // intentar con la clave tal cual y variantes sin acento
+    const path =
+      map[key] ||
+      map[key.replaceAll("ó", "o").replaceAll("í", "i").replaceAll("é", "e").replaceAll("á", "a").replaceAll("ú", "u")] ||
+      MODULE_ROUTES[moduleKey];
+
+    if (path) navigate(path);
     setOpen(null);
   };
 
   const openResult = (r) => {
     setShowSearch(false);
     setActiveIdx(-1);
-    if (r.type === "item") {
-      return handleQuickLink(r.moduleKey, r.title);
-    }
+    if (r.type === "item") return handleQuickLink(r.moduleKey, r.title);
     return openModule(r.moduleKey);
   };
 
   const onSearchKeyDown = (e) => {
-    if (!showSearch && ["ArrowDown", "ArrowUp"].includes(e.key)) {
-      setShowSearch(true);
-    }
+    if (!showSearch && ["ArrowDown", "ArrowUp"].includes(e.key)) setShowSearch(true);
     if (e.key === "Escape") {
       setShowSearch(false);
       setActiveIdx(-1);
@@ -271,11 +286,9 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIdx((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter") {
-      if (results[activeIdx]) {
-        e.preventDefault();
-        openResult(results[activeIdx]);
-      }
+    } else if (e.key === "Enter" && results[activeIdx]) {
+      e.preventDefault();
+      openResult(results[activeIdx]);
     }
   };
 
@@ -292,7 +305,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
             </div>
           </div>
 
-        <div className="topbarRight" ref={searchWrapRef}>
+          <div className="topbarRight" ref={searchWrapRef}>
             <div className="searchBox">
               <input
                 ref={searchInputRef}
@@ -413,7 +426,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                   ))}
                 </ul>
 
-                {/* ⬇️ Abrir panel lateral (NO navegar) */}
+                {/* Abrir panel lateral (NO navegar) */}
                 <button className="moduleOpen" onClick={() => setOpen(m.key)}>
                   Abrir módulo <span className="arrow">›</span>
                 </button>
@@ -464,7 +477,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
         </div>
 
         <footer className="panelFooter">
-          {/* ⬇️ Desde el panel SÍ navega */}
+          {/* Desde el panel SÍ navega */}
           <button className="btnPrimary" onClick={() => selected && openModule(selected.key)}>
             Entrar al módulo
           </button>

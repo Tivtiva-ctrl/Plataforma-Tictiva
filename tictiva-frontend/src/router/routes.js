@@ -12,6 +12,7 @@ export const ROUTES = {
   rrhh: {
     root: "/rrhh",
     listadoFichas: "/rrhh/listado-fichas",
+    permisosJustificaciones: "/rrhh/permisos-justificaciones",
     ficha: (id = ":id") => `/rrhh/ficha/${id}`,
   },
 
