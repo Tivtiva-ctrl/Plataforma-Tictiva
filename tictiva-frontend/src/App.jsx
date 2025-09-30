@@ -12,6 +12,8 @@ import LoginPage from "./components/LoginPage.jsx";
 import RecuperarContrasena from "./components/RecuperarContrasena.jsx";
 import CambiarContrasena from "./components/CambiarContrasena.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import ListadoFichas from "./pages/ListadoFichas.jsx";
+
 
 function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   const navigate = useNavigate();
@@ -33,6 +35,9 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
     <Suspense fallback={<div style={{ padding: 24 }}>Cargando…</div>}>
       <Routes>
         <Route path="/" element={<Dashboard userName="Verónica Mateo" onLogout={onLogout} />} />
+        
+         <Route path={ROUTES.rrhh.listadoFichas} element={<ListadoFichas />} />
+
         <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
         <Route path="/recuperar" element={<RecuperarContrasena />} />
         <Route path="*" element={<Navigate to="/" replace />} />
