@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES, MODULE_ROUTES } from "../router/routes";
 import "./DashboardTopbar.css";
 
 /* ===== Helper saludo según hora local ===== */
@@ -113,7 +115,7 @@ const ADIA_TIPS = {
   bodega: "ADIA: Define mínimos por EPP para evitar quiebres de stock inesperados.",
 };
 
-/* ===== Utilidades de búsqueda ===== */
+/* ===== Utilidades buscador ===== */
 const normalize = (s) =>
   (s || "")
     .toString()
@@ -145,10 +147,11 @@ const buildSearchIndex = (modules) => {
   });
   return rows.map((r) => ({ ...r, norm: normalize(r.tokens) }));
 };
-
 const index = buildSearchIndex(MODULES);
 
 export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
+  const navigate = useNavigate();
+
   const [open, setOpen] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const selected = useMemo(() => MODULES.find((m) => m.key === open), [open]);
@@ -183,7 +186,6 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const searchWrapRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // Abrir foco con "/"
   useEffect(() => {
     const onSlash = (e) => {
       if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -201,7 +203,6 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
     return () => document.removeEventListener("keydown", onSlash);
   }, []);
 
-  // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const onDocClick = (e) => {
       if (!searchWrapRef.current) return;
@@ -217,21 +218,43 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
   const results = useMemo(() => {
     const q = normalize(query.trim());
     if (!q) return [];
-    return index
-      .filter((r) => r.norm.includes(q))
-      .slice(0, 8); // top 8
+    return index.filter((r) => r.norm.includes(q)).slice(0, 8);
   }, [query]);
 
+  /* ===== Navegación centralizada ===== */
+  const openModule = (moduleKey) => {
+    const path = MODULE_ROUTES[moduleKey];
+    if (path) {
+      navigate(path);
+      setOpen(null);
+    } else {
+      console.log("Módulo sin ruta definida:", moduleKey);
+    }
+  };
+
+  const handleQuickLink = (moduleKey, itemTitle) => {
+    const txt = itemTitle.toLowerCase();
+    if (moduleKey === "rrhh") {
+      if (txt.includes("listado")) {
+        navigate(ROUTES.rrhh.listadoFichas);
+      } else {
+        // otros submódulos de RRHH los cableamos después
+        navigate(ROUTES.rrhh.root);
+      }
+    } else {
+      openModule(moduleKey);
+    }
+    setOpen(null);
+  };
+
   const openResult = (r) => {
-    setOpen(r.moduleKey); // abre panel del módulo
     setShowSearch(false);
     setActiveIdx(-1);
-    // Si es un acceso específico, aquí podrías navegar realmente:
     if (r.type === "item") {
-      console.log("Abrir acceso:", r.title, "de", r.subtitle);
-    } else {
-      console.log("Abrir módulo:", r.title);
+      // por ahora solo listado de RRHH tiene ruta real
+      return handleQuickLink(r.moduleKey, r.title);
     }
+    return openModule(r.moduleKey);
   };
 
   const onSearchKeyDown = (e) => {
@@ -285,7 +308,6 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                 onFocus={() => setShowSearch(query.trim().length > 0)}
                 onKeyDown={onSearchKeyDown}
               />
-              {/* Dropdown resultados */}
               {showSearch && (
                 <div className="searchDropdown" role="listbox">
                   {results.length === 0 ? (
@@ -391,7 +413,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
                     <li key={it}>{it}</li>
                   ))}
                 </ul>
-                <button className="moduleOpen" onClick={() => setOpen(m.key)}>
+                <button className="moduleOpen" onClick={() => openModule(m.key)}>
                   Abrir módulo <span className="arrow">›</span>
                 </button>
               </article>
@@ -416,7 +438,11 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
               <ul className="panelLinks">
                 {selected.items.map((it) => (
                   <li key={it}>
-                    <button type="button" className="panelLinkBtn" onClick={() => console.log("Acceso rápido:", it)}>
+                    <button
+                      type="button"
+                      className="panelLinkBtn"
+                      onClick={() => handleQuickLink(selected.key, it)}
+                    >
                       {it}
                     </button>
                   </li>
@@ -437,7 +463,7 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
         </div>
 
         <footer className="panelFooter">
-          <button className="btnPrimary" onClick={() => selected && console.log("Entrar:", selected.title)}>
+          <button className="btnPrimary" onClick={() => selected && openModule(selected.key)}>
             Entrar al módulo
           </button>
         </footer>
