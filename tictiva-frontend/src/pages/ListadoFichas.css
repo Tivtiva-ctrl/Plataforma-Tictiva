@@ -173,3 +173,54 @@
 
 /* Vacío */
 .lf-empty { text-align: center; color: #64748b; padding: 24px; }
+
+/* === OVERRIDE: 7 KPIs en una sola línea === */
+.listadoPage section.lf-card.lf-kpis.kpiBar {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important; /* 7 columnas iguales */
+  gap: 10px !important;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.listadoPage section.lf-card.lf-kpis.kpiBar .kpiCard,
+.listadoPage section.lf-card.lf-kpis.kpiBar .lf-kpi {
+  padding: 10px 8px;
+  border-radius: 12px;
+}
+
+.listadoPage section.lf-card.lf-kpis.kpiBar .lf-kpiValue {
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #0b1220;
+}
+
+.listadoPage section.lf-card.lf-kpis.kpiBar .lf-kpiLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Responsivo: rompe ordenadamente en pantallas menores */
+@media (max-width: 1280px) {
+  .listadoPage section.lf-card.lf-kpis.kpiBar {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+}
+@media (max-width: 1024px) {
+  .listadoPage section.lf-card.lf-kpis.kpiBar {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+@media (max-width: 820px) {
+  .listadoPage section.lf-card.lf-kpis.kpiBar {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+@media (max-width: 560px) {
+  .listadoPage section.lf-card.lf-kpis.kpiBar {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
