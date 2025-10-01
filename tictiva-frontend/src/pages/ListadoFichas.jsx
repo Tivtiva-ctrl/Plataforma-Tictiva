@@ -1,19 +1,9 @@
 import React, { useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";                  // para inserts
+import { useEmployees } from "../data/useEmployees";         // datos por tenant
+import { useTenant } from "../context/TenantProvider";       // tenant activo
 import { useNavigate } from "react-router-dom";
 import "./ListadoFichas.css";
-
-/** ===== Dummy data de ejemplo (cámbialo por tu fetch) ===== */
-const EMPLEADOS = [
-  { id: 1, nombre: "Eva", apellido: "Green", rut: "11.111.111-1", cargo: "Tester Lead", genero: "F", discapacidad: false, activo: true },
-  { id: 2, nombre: "Juan", apellido: "Pérez", rut: "22.222.222-2", cargo: "Automation Tester", genero: "M", discapacidad: false, activo: true },
-  { id: 3, nombre: "Ana", apellido: "Temporal (P1)", rut: "10.101.101-0", cargo: "Asistente Bodega", genero: "F", discapacidad: false, activo: true },
-  { id: 4, nombre: "Carlos", apellido: "Ventas", rut: "12.121.212-1", cargo: "Ejecutivo Ventas", genero: "M", discapacidad: false, activo: true },
-  { id: 5, nombre: "Felipe", apellido: "Gómez", rut: "13.131.313-3", cargo: "Analista", genero: "M", discapacidad: true, activo: true },
-  { id: 6, nombre: "Rocío", apellido: "Silva", rut: "14.141.414-4", cargo: "Generalista RRHH", genero: "F", discapacidad: false, activo: false },
-  { id: 7, nombre: "Alex", apellido: "Roldán", rut: "15.151.515-5", cargo: "Back Office", genero: "O", discapacidad: false, activo: true },
-  { id: 8, nombre: "Marta", apellido: "Suárez", rut: "16.161.616-6", cargo: "Supervisora", genero: "F", discapacidad: false, activo: true },
-  { id: 9, nombre: "Tomás", apellido: "Ibarra", rut: "17.171.717-7", cargo: "Operaciones", genero: "M", discapacidad: false, activo: false },
-];
 
 /** Utilidades */
 const norm = (s) =>
@@ -35,22 +25,29 @@ export default function ListadoFichas() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
 
+  // ⬇️ Datos reales por tenant
+  const { employees } = useEmployees();
+  const { tenant } = useTenant();
+
+  // Lista filtrada (igual que antes, pero con employees del hook)
   const lista = useMemo(() => {
     const nq = norm(q);
-    if (!nq) return EMPLEADOS;
-    return EMPLEADOS.filter((e) =>
+    if (!nq) return employees || [];
+    return (employees || []).filter((e) =>
       [fullName(e), e.rut, e.cargo].some((f) => norm(f).includes(nq))
     );
-  }, [q]);
+  }, [q, employees]);
 
+  // KPIs desde employees
   const KPIS = useMemo(() => {
-    const total = EMPLEADOS.length;
-    const activos = EMPLEADOS.filter((e) => e.activo).length;
+    const arr = employees || [];
+    const total = arr.length;
+    const activos = arr.filter((e) => e.activo).length;
     const inactivos = total - activos;
-    const hombres = EMPLEADOS.filter((e) => e.genero === "M").length;
-    const mujeres = EMPLEADOS.filter((e) => e.genero === "F").length;
-    const otros = EMPLEADOS.filter((e) => e.genero === "O").length;
-    const disc = EMPLEADOS.filter((e) => e.discapacidad).length;
+    const hombres = arr.filter((e) => e.genero === "M").length;
+    const mujeres = arr.filter((e) => e.genero === "F").length;
+    const otros = arr.filter((e) => e.genero === "O").length;
+    const disc = arr.filter((e) => e.discapacidad).length;
     return [
       { key: "total", label: "Total", value: total },
       { key: "activos", label: "Activos", value: activos },
@@ -60,7 +57,30 @@ export default function ListadoFichas() {
       { key: "otros", label: "Otros", value: otros },
       { key: "disc", label: "Con Discapacidad", value: disc },
     ];
-  }, []);
+  }, [employees]);
+
+  // Crear empleado con tenant_id
+  async function handleCrearEmpleado() {
+    if (!tenant?.id) return;
+    const nuevo = {
+      nombre: "Nuevo",
+      apellido: "Empleado",
+      rut: "00.000.000-0",
+      cargo: "Sin cargo",
+      genero: "O",
+      discapacidad: false,
+      activo: true,
+      tenant_id: tenant.id, // CLAVE
+    };
+    const { error } = await supabase.from("employees").insert(nuevo);
+    if (error) {
+      console.error(error);
+      alert("No se pudo crear el empleado.");
+    } else {
+      // refresco simple para ver el nuevo registro; puedes reemplazar por refetch en tu hook
+      window.location.reload();
+    }
+  }
 
   return (
     <div className="listadoPage lf-page">
@@ -76,9 +96,9 @@ export default function ListadoFichas() {
 
       <section className="lf-card lf-header listHead">
         <div className="lf-headerLeft">
-          <h1 className="lf-title">Listado de Empleados - Prueba 1</h1>
+          <h1 className="lf-title">Listado de Empleados</h1>
           <p className="lf-sub">
-            Información de los empleados para <strong>Prueba Uno SpA</strong>. Haz clic en el nombre para ver detalles.
+            Información de los empleados para <strong>{tenant?.name || "—"}</strong>. Haz clic en el nombre para ver detalles.
           </p>
         </div>
         <div className="lf-headerRight">
@@ -86,7 +106,7 @@ export default function ListadoFichas() {
           <button
             type="button"
             className="lf-btn lf-btnPrimary"
-            onClick={() => console.log("Crear Empleado")}
+            onClick={handleCrearEmpleado}
           >
             Crear Empleado
           </button>

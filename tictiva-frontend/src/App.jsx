@@ -20,6 +20,9 @@ import CambiarContrasena from "./components/CambiarContrasena.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ListadoFichas from "./pages/ListadoFichas.jsx";
 
+/* ⬇️⬇️ ÚNICO AGREGADO: Provider multi-empresa ⬇️⬇️ */
+import { TenantProvider } from "./context/TenantProvider.jsx";
+
 /* ===== Util: Restaurar scroll al cambiar ruta ===== */
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -111,11 +114,14 @@ export default function App() {
 
   return (
     <Router>
-      <AppRoutes
-        isLoggedIn={isLoggedIn}
-        onLoginSuccess={() => setIsLoggedIn(true)}
-        onLogout={handleLogout}
-      />
+      {/* ⬇️ Envolvemos TODAS las rutas dentro del TenantProvider */}
+      <TenantProvider>
+        <AppRoutes
+          isLoggedIn={isLoggedIn}
+          onLoginSuccess={() => setIsLoggedIn(true)}
+          onLogout={handleLogout}
+        />
+      </TenantProvider>
     </Router>
   );
 }

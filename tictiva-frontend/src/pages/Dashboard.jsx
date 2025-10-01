@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { ROUTES, MODULE_ROUTES } from "../router/routes";
 import "./DashboardTopbar.css";
 import "../styles/sidePanel.css";
+import TenantSwitcher from "../components/TenantSwitcher.jsx"; // ruta desde /pages
+
 
 /* ===== Helper saludo según hora local ===== */
 const getSaludo = (d = new Date()) => {
@@ -329,6 +331,9 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
               <span className="badge">3</span>
             </button>
 
+            {/* ⬇️ Selector de empresa (multi-tenant) */}
+            <TenantSwitcher />
+
             {/* Chip usuario + dropdown */}
             <div className="userWrap" ref={userWrapRef}>
               <button
@@ -369,6 +374,8 @@ export default function Dashboard({ userName = "Verónica Mateo", onLogout }) {
             <div className="dashSubtitleTitle">Humanizamos la gestión, digitalizamos tu tranquilidad</div>
             <div className="dashSubtitleText">Accede a tus módulos. Todo es simple, rápido y consistente.</div>
           </div>
+
+        {/* ...resto del archivo tal cual... */}
 
           <div className="introKpis">
             {KPIS.map((k) => (
