@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./LoginPage.css";
+import { supabase } from "../lib/supabase"; // ⬅️ NUEVO: cliente Supabase
 
 /** Imagen servida desde /public/assets/ */
 const ILLUSTRATION_ABS_PATH = "/assets/login-illustration.png";
@@ -10,7 +11,7 @@ export default function LoginPage({ onLoginSuccess }) {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email.trim() || !pwd.trim()) {
@@ -18,15 +19,29 @@ export default function LoginPage({ onLoginSuccess }) {
       return;
     }
 
-    // TODO: conectar con backend real
     setError("");
-    if (remember) {
-      try {
-        localStorage.setItem("tictiva.remember.email", email.trim());
-      } catch (_) {}
-    }
-    if (typeof onLoginSuccess === "function") {
-      onLoginSuccess();
+    try {
+      // ⬇️ Inicia sesión en Supabase
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: pwd.trim(),
+      });
+      if (authError) {
+        setError("Correo o contraseña inválidos");
+        return;
+      }
+
+      // Guarda email si corresponde
+      if (remember) {
+        try {
+          localStorage.setItem("tictiva.remember.email", email.trim());
+        } catch (_) {}
+      }
+
+      // Continúa con tu flujo actual
+      if (typeof onLoginSuccess === "function") onLoginSuccess();
+    } catch {
+      setError("Error de conexión. Intenta nuevamente.");
     }
   };
 
