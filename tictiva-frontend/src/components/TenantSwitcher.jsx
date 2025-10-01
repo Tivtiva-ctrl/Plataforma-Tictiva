@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTenant } from "/context/TenantProvider";
+import { useTenant } from "../context/TenantProvider";
 
 export default function TenantSwitcher() {
   const { tenants, tenant, setActiveTenant, loading } = useTenant();
