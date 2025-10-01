@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase"; // ajusta este import a tu ruta real
+import { supabase } from "/lib/supabase"; // ajusta este import a tu ruta real
 
 const TenantContext = createContext(null);
 
