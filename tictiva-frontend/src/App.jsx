@@ -19,6 +19,7 @@ import CambiarContrasena from "./components/CambiarContrasena.jsx";
 
 import Dashboard from "./pages/Dashboard.jsx";
 import ListadoFichas from "./pages/ListadoFichas.jsx";
+import EmpleadoFicha from "./pages/EmpleadoFicha.jsx"; // ⬅️ NUEVO
 
 /* ⬇️⬇️ ÚNICO AGREGADO: Provider multi-empresa ⬇️⬇️ */
 import { TenantProvider } from "./context/TenantProvider.jsx";
@@ -91,9 +92,7 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
 
           {/* RRHH */}
           <Route path={ROUTES.rrhh.listadoFichas} element={<ListadoFichas />} />
-          {/* Ejemplo de ruta futura:
-          <Route path={ROUTES.rrhh.ficha(":rut")} element={<FichaEmpleado />} />
-          */}
+          <Route path={ROUTES.rrhh.ficha(":rut")} element={<EmpleadoFicha />} /> {/* ⬅️ NUEVO */}
 
           {/* Cualquier otra ruta privada va al dashboard */}
           <Route
