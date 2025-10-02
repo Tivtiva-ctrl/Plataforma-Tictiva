@@ -22,6 +22,13 @@ const initials = (e) => {
   return `${a[0] || ""}${b[0] || ""}`.toUpperCase();
 };
 
+// Construye la ruta de detalle según tengas id o rut
+const buildDetallePath = (e) => {
+  if (e?.id != null) return `/rrhh/fichas/${encodeURIComponent(String(e.id))}`;
+  const rut = (e?.rut || "").replace(/\./g, "").toUpperCase();
+  return `/rrhh/fichas/rut/${encodeURIComponent(rut)}`;
+};
+
 export default function ListadoFichas() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -82,6 +89,11 @@ export default function ListadoFichas() {
       window.location.reload();
     }
   }
+
+  // Navegar a detalle
+  const goToDetalle = (e) => {
+    navigate(buildDetallePath(e));
+  };
 
   return (
     <div className="listadoPage lf-page">
@@ -148,7 +160,7 @@ export default function ListadoFichas() {
           </thead>
           <tbody>
             {lista.map((e) => (
-              <tr key={e.id}>
+              <tr key={e.id ?? e.rut}>
                 <td>
                   <div className="lf-avatar">{initials(e)}</div>
                 </td>
@@ -156,7 +168,7 @@ export default function ListadoFichas() {
                   <button
                     type="button"
                     className="lf-linkBtn"
-                    onClick={() => console.log("Abrir ficha de", fullName(e))}
+                    onClick={() => goToDetalle(e)}
                     title="Ver detalles"
                   >
                     {fullName(e)}
@@ -173,7 +185,7 @@ export default function ListadoFichas() {
                   <button
                     type="button"
                     className="lf-btn lf-btnGhost"
-                    onClick={() => console.log("Ver detalles de", fullName(e))}
+                    onClick={() => goToDetalle(e)}
                   >
                     Ver Detalles
                   </button>
