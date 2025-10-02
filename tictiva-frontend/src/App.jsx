@@ -20,6 +20,10 @@ import CambiarContrasena from "./components/CambiarContrasena.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ListadoFichas from "./pages/ListadoFichas.jsx";
 import EmpleadoFicha from "./pages/EmpleadoFicha.jsx"; // ⬅️ NUEVO
+import EmpleadoFicha from "./pages/EmpleadoFicha.jsx"; // NUEVO
+
+// ⬇️ Import por DEFECTO (sin llaves)
+import TenantProvider from "./context/TenantProvider.jsx";
 
 /* ⬇️⬇️ ÚNICO AGREGADO: Provider multi-empresa ⬇️⬇️ */
 import { TenantProvider } from "./context/TenantProvider.jsx";
