@@ -22,11 +22,11 @@ const initials = (e) => {
   return `${a[0] || ""}${b[0] || ""}`.toUpperCase();
 };
 
-// Construye la ruta de detalle según tengas id o rut
+// Construye la ruta de detalle según tengas id o rut → EmpleadoFichas
 const buildDetallePath = (e) => {
-  if (e?.id != null) return `/rrhh/fichas/${encodeURIComponent(String(e.id))}`;
+  if (e?.id != null) return `/rrhh/empleado/fichas/${encodeURIComponent(String(e.id))}`;
   const rut = (e?.rut || "").replace(/\./g, "").toUpperCase();
-  return `/rrhh/fichas/rut/${encodeURIComponent(rut)}`;
+  return `/rrhh/empleado/fichas/rut/${encodeURIComponent(rut)}`;
 };
 
 export default function ListadoFichas() {
@@ -110,7 +110,7 @@ export default function ListadoFichas() {
       <section className="lf-card lf-header listHead">
         <div className="lf-headerLeft">
           <h1 className="lf-title">Listado de Empleados</h1>
-          <p className="lf-sub">
+        <p className="lf-sub">
             Información de los empleados para <strong>{tenant?.name || "—"}</strong>. Haz clic en el nombre para ver detalles.
           </p>
         </div>
