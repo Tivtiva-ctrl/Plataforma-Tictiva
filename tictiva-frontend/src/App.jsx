@@ -77,6 +77,9 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
           {/* RRHH */}
           <Route path={ROUTES.rrhh.listadoFichas} element={<ListadoFichas />} />
           <Route path="/rrhh/ficha/:rut" element={<EmpleadoFicha />} />
+          {/* NUEVAS rutas alineadas con ListadoFichas */}
+          <Route path="/rrhh/empleado/fichas/:id" element={<EmpleadoFicha />} />
+          <Route path="/rrhh/empleado/fichas/rut/:rut" element={<EmpleadoFicha />} />
 
           {/* Catch-all privado */}
           <Route path={ROUTES.notFound} element={<Navigate to={ROUTES.dashboard} replace />} />
