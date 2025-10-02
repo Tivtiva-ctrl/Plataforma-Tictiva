@@ -1,13 +1,10 @@
+// src/pages/ListadoFichas.jsx
 import React, { useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";                  // para inserts
 import { useEmployees } from "../data/useEmployees";         // datos por tenant
 import { useTenant } from "../context/TenantProvider";       // tenant activo
 import { useNavigate } from "react-router-dom";
 import "./ListadoFichas.css";
-import { useNavigate } from "react-router-dom";
-import { useNavigate, Link } from "react-router-dom";
-import { ROUTES } from "../router/routes";
-
 
 /** Utilidades */
 const norm = (s) =>
