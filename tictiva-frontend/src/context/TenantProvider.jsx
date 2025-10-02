@@ -1,79 +1,109 @@
+// src/context/TenantProvider.jsx
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { supabase } from "../lib/supabase"; // ajusta este import a tu ruta real
+import { supabase } from "../lib/supabase"; // ajusta si tu ruta real es distinta
 
 const TenantContext = createContext(null);
 
-export function TenantProvider({ children }) {
+function TenantProvider({ children }) {
   const [user, setUser] = useState(null);
   const [tenants, setTenants] = useState([]);
   const [tenant, setTenant] = useState(null); // { id, name, slug }
   const [loading, setLoading] = useState(true);
 
-  // Carga usuario
+  // Carga usuario y suscribe a cambios de auth
   useEffect(() => {
-    let sub = null;
+    let authSub;
     (async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data.user ?? null);
-      sub = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(data?.user ?? null);
+
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
         setUser(session?.user ?? null);
       });
+      authSub = sub?.subscription;
     })();
-    return () => sub?.data.subscription?.unsubscribe?.();
+
+    return () => {
+      try { authSub?.unsubscribe(); } catch (_) {}
+    };
   }, []);
 
   // Carga tenants por membresía y fija activo
   useEffect(() => {
     (async () => {
-      if (!user) { setTenants([]); setTenant(null); setLoading(false); return; }
+      if (!user) {
+        setTenants([]);
+        setTenant(null);
+        setLoading(false);
+        return;
+      }
 
-      // Traer empresas donde el user tiene membresía
+      setLoading(true);
       const { data: tdata, error } = await supabase
         .from("tenants")
         .select("id, name, slug")
-        .order("name");
+        .order("name", { ascending: true });
 
-      if (error) { console.error(error); setLoading(false); return; }
-      setTenants(tdata || []);
+      if (error) {
+        console.error(error);
+        setTenants([]);
+        setTenant(null);
+        setLoading(false);
+        return;
+      }
 
-      // Decide activo: metadata o el primero
+      const list = tdata || [];
+      setTenants(list);
+
+      // Activo: metadata o primero disponible
       const currentId = user.user_metadata?.current_tenant_id || null;
-      const found = tdata?.find(t => t.id === currentId) || tdata?.[0] || null;
-      setTenant(found);
+      const active = list.find((t) => t.id === currentId) || list[0] || null;
+      setTenant(active);
 
-      // Si no coincide, actualiza metadata para futuros tokens
-      if (found && found.id !== currentId) {
+      // Guarda en metadata para próximos tokens (opcional pero útil)
+      if (active && active.id !== currentId) {
         await supabase.auth.updateUser({
           data: {
-            current_tenant_id: found.id,
-            current_tenant_slug: found.slug,
-            current_tenant_name: found.name,
-          }
+            current_tenant_id: active.id,
+            current_tenant_slug: active.slug,
+            current_tenant_name: active.name,
+          },
         });
       }
+
       setLoading(false);
     })();
   }, [user]);
 
   const value = useMemo(() => ({
-    user, tenants, tenant, setActiveTenant: async (t) => {
+    user,
+    tenants,
+    tenant,
+    loading,
+    setActiveTenant: async (t) => {
       setTenant(t);
-      await supabase.auth.updateUser({
-        data: {
-          current_tenant_id: t?.id || null,
-          current_tenant_slug: t?.slug || null,
-          current_tenant_name: t?.name || null,
-        }
-      });
-      // Opcional: recargar para que el token nuevo aplique en todas las llamadas
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            current_tenant_id: t?.id || null,
+            current_tenant_slug: t?.slug || null,
+            current_tenant_name: t?.name || null,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+      }
+      // Si quieres forzar refresh de token en todas las llamadas:
       // window.location.reload();
     },
-    loading
   }), [user, tenants, tenant, loading]);
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
 }
 
-export function useTenant() {
+function useTenant() {
   return useContext(TenantContext);
 }
+
+export { TenantProvider, useTenant };
+export default TenantProvider;
