@@ -19,14 +19,10 @@ import CambiarContrasena from "./components/CambiarContrasena.jsx";
 
 import Dashboard from "./pages/Dashboard.jsx";
 import ListadoFichas from "./pages/ListadoFichas.jsx";
-import EmpleadoFicha from "./pages/EmpleadoFicha.jsx"; // ⬅️ NUEVO
-import EmpleadoFicha from "./pages/EmpleadoFicha.jsx"; // NUEVO
+import EmpleadoFicha from "./pages/EmpleadoFicha.jsx"; // ✅ único import
 
-// ⬇️ Import por DEFECTO (sin llaves)
+// Provider multi-empresa (import por DEFECTO)
 import TenantProvider from "./context/TenantProvider.jsx";
-
-/* ⬇️⬇️ ÚNICO AGREGADO: Provider multi-empresa ⬇️⬇️ */
-import { TenantProvider } from "./context/TenantProvider.jsx";
 
 /* ===== Util: Restaurar scroll al cambiar ruta ===== */
 function ScrollToTop() {
@@ -42,14 +38,11 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
   const location = useLocation();
 
   // Detecta si la ruta actual es pública
-  const isPublicPath = (p) => {
-    return (
-      p === "/" ||
-      p === ROUTES.login ||
-      p === ROUTES.recuperar ||
-      p === ROUTES.cambiarContrasena
-    );
-  };
+  const isPublicPath = (p) =>
+    p === "/" ||
+    p === ROUTES.login ||
+    p === ROUTES.recuperar ||
+    p === ROUTES.cambiarContrasena;
 
   // Si se loguea y estaba en una ruta pública, lo mandamos al dashboard.
   useEffect(() => {
@@ -69,15 +62,9 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
             element={<LoginPage onLoginSuccess={onLoginSuccess} />}
           />
           <Route path={ROUTES.recuperar} element={<RecuperarContrasena />} />
-          <Route
-            path={ROUTES.cambiarContrasena}
-            element={<CambiarContrasena />}
-          />
+          <Route path={ROUTES.cambiarContrasena} element={<CambiarContrasena />} />
           {/* Cualquier otra ruta pública redirige a /login */}
-          <Route
-            path={ROUTES.notFound}
-            element={<Navigate to={ROUTES.login} replace />}
-          />
+          <Route path={ROUTES.notFound} element={<Navigate to={ROUTES.login} replace />} />
         </Routes>
       </>
     );
@@ -96,13 +83,11 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
 
           {/* RRHH */}
           <Route path={ROUTES.rrhh.listadoFichas} element={<ListadoFichas />} />
-          <Route path={ROUTES.rrhh.ficha(":rut")} element={<EmpleadoFicha />} /> {/* ⬅️ NUEVO */}
+          {/* Ruta literal para la ficha por RUT */}
+          <Route path="/rrhh/ficha/:rut" element={<EmpleadoFicha />} />
 
           {/* Cualquier otra ruta privada va al dashboard */}
-          <Route
-            path={ROUTES.notFound}
-            element={<Navigate to={ROUTES.dashboard} replace />}
-          />
+          <Route path={ROUTES.notFound} element={<Navigate to={ROTES.dashboard} replace />} />
         </Routes>
       </Suspense>
     </>
@@ -117,7 +102,7 @@ export default function App() {
 
   return (
     <Router>
-      {/* ⬇️ Envolvemos TODAS las rutas dentro del TenantProvider */}
+      {/* Envolvemos TODAS las rutas dentro del TenantProvider */}
       <TenantProvider>
         <AppRoutes
           isLoggedIn={isLoggedIn}
