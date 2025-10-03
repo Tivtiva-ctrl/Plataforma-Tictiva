@@ -29,17 +29,10 @@ export default function ListadoFichas() {
 
         const { data, error } = await query;
         if (cancel) return;
-        if (error) {
-          console.error("Supabase error:", error);
-          setRows([]);
-        } else {
-          setRows(Array.isArray(data) ? data : []);
-        }
+        if (error) { console.error("Supabase error:", error); setRows([]); }
+        else { setRows(Array.isArray(data) ? data : []); }
       } catch (e) {
-        if (!cancel) {
-          console.error("Excepción cargando employees:", e);
-          setRows([]);
-        }
+        if (!cancel) { console.error("Excepción cargando employees:", e); setRows([]); }
       } finally {
         if (!cancel) setLoading(false);
       }
@@ -62,19 +55,14 @@ export default function ListadoFichas() {
     const total = filtered.length;
     const activos = filtered.filter((e) => e.activo === true).length;
     const inactivos = filtered.filter((e) => e.activo === false).length;
-    const hombres =
-      filtered.filter((e) => (e.genero ?? "").toUpperCase() === "M").length;
-    const mujeres =
-      filtered.filter((e) => (e.genero ?? "").toUpperCase() === "F").length;
+    const hombres = filtered.filter((e) => (e.genero ?? "").toUpperCase() === "M").length;
+    const mujeres = filtered.filter((e) => (e.genero ?? "").toUpperCase() === "F").length;
     const otros = Math.max(0, total - hombres - mujeres);
     const discapacidad = filtered.filter((e) => e.discapacidad === true).length;
     return { total, activos, inactivos, hombres, mujeres, otros, discapacidad };
   }, [filtered]);
 
-  const goToFicha = (emp) => {
-    if (!emp?.id) return;
-    navigate(`/rrhh/ficha/${emp.id}`);
-  };
+  const goToFicha = (emp) => { if (emp?.id) navigate(`/rrhh/ficha/${emp.id}`); };
 
   return (
     <div className="lf-page">
@@ -84,9 +72,8 @@ export default function ListadoFichas() {
           <div className="lf-header-left">
             <h2 className="lf-title">Listado de Empleados</h2>
             <p className="lf-sub">
-              Información de los empleados{" "}
-              {tenant?.name ? <>para <strong>{tenant.name}</strong></> : "para —"}
-              . Haz clic en el nombre para ver detalles.
+              Información de los empleados {tenant?.name ? <>para <strong>{tenant.name}</strong></> : "para —"}.
+              Haz clic en el nombre para ver detalles.
             </p>
           </div>
 
@@ -130,9 +117,7 @@ export default function ListadoFichas() {
             </thead>
             <tbody>
               {loading && (
-                <tr>
-                  <td colSpan={6} className="lf-empty">Cargando…</td>
-                </tr>
+                <tr><td colSpan={6} className="lf-empty">Cargando…</td></tr>
               )}
 
               {!loading && filtered.length === 0 && (
@@ -147,15 +132,14 @@ export default function ListadoFichas() {
                 <tr key={e.id}>
                   <td>
                     <div className="lf-avatar">
-                      {(e.nombre?.[0] ?? "E")}
-                      {(e.apellido?.[0] ?? "")}
+                      {(e.nombre?.[0] ?? "E")}{(e.apellido?.[0] ?? "")}
                     </div>
                   </td>
                   <td>
-                    {/* Negro, sin estilo de link (sigue siendo clickeable) */}
-                    <button className="lf-name" onClick={() => goToFicha(e)}>
+                    {/* texto negro, sin estilo de link ni “pill” */}
+                    <span className="lf-name" onClick={() => goToFicha(e)}>
                       {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() || "Sin nombre"}
-                    </button>
+                    </span>
                   </td>
                   <td>{e.rut ?? "—"}</td>
                   <td>{e.cargo ?? "—"}</td>
@@ -165,7 +149,7 @@ export default function ListadoFichas() {
                     </span>
                   </td>
                   <td className="lf-text-right">
-                    {/* Botón “Ver” con gradiente, sin emoji */}
+                    {/* botón gradiente */}
                     <button className="lf-btn lf-btn-primary lf-btn-sm" onClick={() => goToFicha(e)}>
                       Ver
                     </button>
