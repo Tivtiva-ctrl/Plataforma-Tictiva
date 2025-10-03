@@ -78,7 +78,8 @@ export default function ListadoFichas() {
           </div>
 
           <div className="lf-actions">
-            <button className="lf-btn lf-btn-ghost">Carga Masiva</button>
+            {/* ⬇️ ahora con gradiente */}
+            <button className="lf-btn lf-btn-primary">Carga Masiva</button>
             <button className="lf-btn lf-btn-primary">Crear Empleado</button>
           </div>
 
@@ -136,7 +137,7 @@ export default function ListadoFichas() {
                     </div>
                   </td>
                   <td>
-                    {/* texto negro, sin estilo de link ni “pill” */}
+                    {/* Negro, sin look de link */}
                     <span className="lf-name" onClick={() => goToFicha(e)}>
                       {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() || "Sin nombre"}
                     </span>
@@ -149,7 +150,6 @@ export default function ListadoFichas() {
                     </span>
                   </td>
                   <td className="lf-text-right">
-                    {/* botón gradiente */}
                     <button className="lf-btn lf-btn-primary lf-btn-sm" onClick={() => goToFicha(e)}>
                       Ver
                     </button>
