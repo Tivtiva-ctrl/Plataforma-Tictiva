@@ -18,7 +18,7 @@ export default function ListadoFichas() {
     const load = async () => {
       setLoading(true);
       try {
-        // 👇 TABLA CORRECTA: employees
+        // TABLA correcta: employees (coincide con tu SQL)
         let query = supabase
           .from("employees")
           .select(
@@ -26,14 +26,13 @@ export default function ListadoFichas() {
           )
           .order("created_at", { ascending: false });
 
-        // si tenés tenant en el provider, filtramos por tenant_id
         if (tenant?.id) query = query.eq("tenant_id", tenant.id);
 
-        const { data, error, status } = await query;
+        const { data, error } = await query;
         if (cancel) return;
 
         if (error) {
-          console.error("Supabase error:", { status, error });
+          console.error("Supabase error:", error);
           setRows([]);
         } else {
           setRows(Array.isArray(data) ? data : []);
@@ -81,100 +80,105 @@ export default function ListadoFichas() {
 
   return (
     <div className="lf-page">
-      <div className="lf-card lf-header">
-        <div className="lf-header-left">
-          <span className="lf-pill">Listado y Fichas</span>
-          <p className="lf-sub">
-            Información de los empleados{" "}
-            {tenant?.name ? (
-              <>para <strong>{tenant.name}</strong></>
-            ) : (
-              ""
-            )}
-            . Haz clic en el nombre para ver detalles.
-          </p>
+      <div className="lf-wrap">
+        {/* Header */}
+        <div className="lf-card lf-header">
+          <div className="lf-header-left">
+            <h2 className="lf-title">Listado de Empleados</h2>
+            <p className="lf-sub">
+              Información de los empleados{" "}
+              {tenant?.name ? (
+                <>para <strong>{tenant.name}</strong></>
+              ) : (
+                ""
+              )}
+              . Haz clic en el nombre para ver detalles.
+            </p>
+          </div>
+
+          <div className="lf-actions">
+            <button className="lf-btn lf-btn-ghost">Carga Masiva</button>
+            <button className="lf-btn lf-btn-primary">Crear Empleado</button>
+          </div>
+
+          <div className="lf-search">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nombre o RUT…"
+              className="lf-input"
+            />
+          </div>
         </div>
 
-        <div className="lf-actions">
-          <button className="lf-btn lf-btn-ghost">Carga Masiva</button>
-          <button className="lf-btn lf-btn-primary">Crear Empleado</button>
+        {/* Contadores */}
+        <div className="lf-stats">
+          <Stat label="Total" value={stats.total} />
+          <Stat label="Activos" value={stats.activos} />
+          <Stat label="Inactivos" value={stats.inactivos} />
+          <Stat label="Hombres" value={stats.hombres} />
+          <Stat label="Mujeres" value={stats.mujeres} />
+          <Stat label="Con Discapacidad" value={stats.discapacidad} />
         </div>
 
-        <div className="lf-search">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nombre o RUT…"
-            className="lf-input"
-          />
-        </div>
-      </div>
-
-      <div className="lf-stats">
-        <Stat label="Total" value={stats.total} />
-        <Stat label="Activos" value={stats.activos} />
-        <Stat label="Inactivos" value={stats.inactivos} />
-        <Stat label="Hombres" value={stats.hombres} />
-        <Stat label="Mujeres" value={stats.mujeres} />
-        <Stat label="Con Discapacidad" value={stats.discapacidad} />
-      </div>
-
-      <div className="lf-card lf-table-wrap">
-        <table className="lf-table">
-          <thead>
-            <tr>
-              <th>Foto</th>
-              <th>Nombre Completo</th>
-              <th>RUT</th>
-              <th>Cargo</th>
-              <th>Estado</th>
-              <th className="lf-text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
+        {/* Tabla */}
+        <div className="lf-card lf-table-wrap">
+          <table className="lf-table">
+            <thead>
               <tr>
-                <td colSpan={6} className="lf-empty">Cargando…</td>
+                <th>Foto</th>
+                <th>Nombre Completo</th>
+                <th>RUT</th>
+                <th>Cargo</th>
+                <th>Estado</th>
+                <th className="lf-text-right">Acciones</th>
               </tr>
-            )}
+            </thead>
+            <tbody>
+              {loading && (
+                <tr>
+                  <td colSpan={6} className="lf-empty">Cargando…</td>
+                </tr>
+              )}
 
-            {!loading && filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="lf-empty">
-                  No encontramos resultados {q ? <>para “{q}”.</> : "."}
-                </td>
-              </tr>
-            )}
+              {!loading && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="lf-empty">
+                    No encontramos resultados {q ? <>para “{q}”.</> : "."}
+                  </td>
+                </tr>
+              )}
 
-            {!loading && filtered.map((e) => (
-              <tr key={e.id}>
-                <td>
-                  <div className="lf-avatar">
-                    {(e.nombre?.[0] ?? "E")}
-                    {(e.apellido?.[0] ?? "")}
-                  </div>
-                </td>
-                <td>
-                  <button className="lf-link" onClick={() => goToFicha(e)}>
-                    {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() || "Sin nombre"}
-                  </button>
-                </td>
-                <td>{e.rut ?? "—"}</td>
-                <td>{e.cargo ?? "—"}</td>
-                <td>
-                  <span className={e.activo ? "lf-badge lf-badge-green" : "lf-badge lf-badge-gray"}>
-                    {e.activo ? "ACTIVO" : "INACTIVO"}
-                  </span>
-                </td>
-                <td className="lf-text-right">
-                  <button className="lf-btn lf-btn-ghost" onClick={() => goToFicha(e)}>
-                    👁️ Ver
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              {!loading && filtered.map((e) => (
+                <tr key={e.id}>
+                  <td>
+                    <div className="lf-avatar">
+                      {(e.nombre?.[0] ?? "E")}
+                      {(e.apellido?.[0] ?? "")}
+                    </div>
+                  </td>
+                  <td>
+                    <button className="lf-link" onClick={() => goToFicha(e)}>
+                      {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() || "Sin nombre"}
+                    </button>
+                  </td>
+                  <td>{e.rut ?? "—"}</td>
+                  <td>{e.cargo ?? "—"}</td>
+                  <td>
+                    <span className={e.activo ? "lf-badge lf-badge-green" : "lf-badge lf-badge-gray"}>
+                      {e.activo ? "ACTIVO" : "INACTIVO"}
+                    </span>
+                  </td>
+                  <td className="lf-text-right">
+                    <button className="lf-btn lf-btn-ghost" onClick={() => goToFicha(e)}>
+                      👁️ Ver
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
