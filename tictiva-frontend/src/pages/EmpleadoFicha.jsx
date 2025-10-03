@@ -18,15 +18,16 @@ const TABS = [
 ];
 
 export default function EmpleadoFicha() {
-  const { id, rut } = useParams();                 // ← ahora soporta ambos
-  const { state } = useLocation();                 // ← empleado desde la lista
+  const { id, rut } = useParams();                 // soporta .../fichas/:id y .../fichas/rut/:rut
+  const { state } = useLocation();                 // empleado desde la lista (state)
   const navigate = useNavigate();
   const { tenant } = useTenant();
 
   const idParam = useMemo(() => (id ? String(id) : null), [id]);
+  const idNumber = useMemo(() => (idParam != null ? Number(idParam) : null), [idParam]); // 👈 cast numérico
   const rutParamRaw = useMemo(() => decodeURIComponent(rut || "").trim(), [rut]);
   const rutParamNorm = useMemo(
-    () => rutParamRaw ? rutParamRaw.replace(/\./g, "").toUpperCase() : null,
+    () => (rutParamRaw ? rutParamRaw.replace(/\./g, "").toUpperCase() : null),
     [rutParamRaw]
   );
 
@@ -38,13 +39,12 @@ export default function EmpleadoFicha() {
     let mounted = true;
 
     async function load() {
-      // Esperar tenant
       if (!tenant?.id) {
         setLoading(true);
         return;
       }
 
-      // Si viene por state desde la lista, usarlo directo
+      // 1) Preferir el empleado pasado por state
       if (state?.empleado) {
         if (!mounted) return;
         setEmpleado(state.empleado);
@@ -52,8 +52,8 @@ export default function EmpleadoFicha() {
         return;
       }
 
-      // Si no hay ni id ni rut, no podemos resolver
-      if (!idParam && !rutParamRaw) {
+      // 2) Sin identificador alguno => no podemos resolver
+      if (idParam == null && !rutParamRaw) {
         if (!mounted) return;
         setEmpleado(null);
         setLoading(false);
@@ -65,16 +65,18 @@ export default function EmpleadoFicha() {
       let data = null;
       let error = null;
 
-      // 1) Priorizar búsqueda por ID si viene
-      if (idParam) {
-        ({ data, error } = await supabase
-          .from("employees")
-          .select("*")
-          .eq("tenant_id", tenant.id)
-          .eq("id", idParam)
-          .maybeSingle());
+      if (idParam != null) {
+        // 👇 si el id no es número válido, evitamos la query por id
+        if (Number.isFinite(idNumber)) {
+          ({ data, error } = await supabase
+            .from("employees")
+            .select("*")
+            .eq("tenant_id", tenant.id)
+            .eq("id", idNumber) // 👈 comparar como número
+            .maybeSingle());
+        }
       } else {
-        // 2) Buscar por RUT tal cual
+        // Buscar por RUT tal cual
         ({ data, error } = await supabase
           .from("employees")
           .select("*")
@@ -82,7 +84,7 @@ export default function EmpleadoFicha() {
           .eq("rut", rutParamRaw)
           .maybeSingle());
 
-        // 3) Si no aparece, intentar con RUT normalizado (sin puntos, upper)
+        // Fallback por RUT normalizado (sin puntos, upper)
         if (!data && rutParamNorm) {
           ({ data, error } = await supabase
             .from("employees")
@@ -105,14 +107,13 @@ export default function EmpleadoFicha() {
 
     load();
     return () => { mounted = false; };
-  }, [tenant?.id, idParam, rutParamRaw, rutParamNorm, state?.empleado]);
+  }, [tenant?.id, idParam, idNumber, rutParamRaw, rutParamNorm, state?.empleado]);
 
   const nombreCompleto = useMemo(() => {
     if (!empleado) return "";
     return `${empleado.nombre ?? ""} ${empleado.apellido ?? ""}`.trim();
   }, [empleado]);
 
-  // Datos mock del panel derecho (luego los enchufamos a BD)
   const quickInfo = { cumple: "15 Abril", horario: "08:30 - 18:00", oficina: "Santiago Centro" };
   const performance = { productividad: 92, puntualidad: 96, colaboracion: 88 };
 
@@ -131,7 +132,7 @@ export default function EmpleadoFicha() {
           <p>
             No encontramos la ficha para{" "}
             <strong>
-              {idParam ? `ID: ${idParam}` : rutParamRaw ? `RUT: ${rutParamRaw}` : "—"}
+              {idParam != null ? `ID: ${idParam}` : rutParamRaw ? `RUT: ${rutParamRaw}` : "—"}
             </strong>
           </p>
           <button className="ef-btn" onClick={() => navigate(ROUTES.rrhh.listadoFichas)}>
@@ -146,7 +147,9 @@ export default function EmpleadoFicha() {
 
   return (
     <div className="ef-page">
-      <button className="ef-backLink" onClick={() => navigate(ROUTES.rrhh.listadoFichas)}>← Volver al Listado</button>
+      <button className="ef-backLink" onClick={() => navigate(ROUTES.rrhh.listadoFichas)}>
+        ← Volver al Listado
+      </button>
 
       {/* Encabezado */}
       <section className="ef-header card">
@@ -166,7 +169,7 @@ export default function EmpleadoFicha() {
           <div className="ef-meta">Miembro desde el 03 de Marzo de 2021 (ejemplo)</div>
         </div>
         <div className="ef-headActions">
-          <button className="ef-btnGhost" onClick={() => alert("Editar ficha (pronto)")}>
+          <button className="ef-btnGhost" onClick={() => alert("Editar Ficha (pronto)")}>
             Editar Ficha
           </button>
         </div>
@@ -174,7 +177,7 @@ export default function EmpleadoFicha() {
 
       {/* Tabs */}
       <nav className="ef-tabs">
-        {TABS.map(t => (
+        {TABS.map((t) => (
           <button
             key={t.key}
             className={`ef-tab ${tab === t.key ? "active" : ""}`}
@@ -188,7 +191,6 @@ export default function EmpleadoFicha() {
       {/* Contenido */}
       <section className="ef-content">
         <main className={`ef-main ${showAside ? "" : "full"}`}>
-          {/* PERSONALES */}
           {tab === "personales" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Información Personal</h2>
@@ -204,7 +206,6 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* CONTRACTUALES */}
           {tab === "contractuales" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Información Contractual</h2>
@@ -220,7 +221,6 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* DOCUMENTOS */}
           {tab === "documentos" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Documentos del Empleado</h2>
@@ -255,7 +255,6 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* PREVISIÓN */}
           {tab === "prevision" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Información Previsional</h2>
@@ -268,7 +267,6 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* BANCARIOS */}
           {tab === "bancarios" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Datos Bancarios</h2>
@@ -281,7 +279,6 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* ASISTENCIA (FULL WIDTH) */}
           {tab === "asistencia" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Registro de Asistencia</h2>
@@ -298,11 +295,9 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* HOJA DE VIDA (incluye SALUD) */}
           {tab === "hoja" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Hoja de Vida</h2>
-
               <div className="ef-cvBlock">
                 <h3>Experiencia Laboral</h3>
                 <ul className="ef-timeline">
@@ -341,7 +336,6 @@ export default function EmpleadoFicha() {
             </div>
           )}
 
-          {/* HISTORIAL (FULL WIDTH) */}
           {tab === "historial" && (
             <div className="card">
               <h2 className="ef-sectionTitle">Historial</h2>
