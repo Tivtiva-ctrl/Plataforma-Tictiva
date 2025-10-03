@@ -12,24 +12,32 @@ const TABS = [
   { key: "documentos", label: "Documentos" },
   { key: "prevision", label: "Previsión" },
   { key: "bancarios", label: "Bancarios" },
-  { key: "asistencia", label: "Asistencia" },     // pantalla completa
+  { key: "asistencia", label: "Asistencia" },
   { key: "hoja", label: "Hoja de Vida" },
-  { key: "historial", label: "Historial" },       // pantalla completa
+  { key: "historial", label: "Historial" },
 ];
 
+const normRut = (r) => String(r || "").replace(/\./g, "").toUpperCase();
+
 export default function EmpleadoFicha() {
-  const { id, rut } = useParams();                 // soporta .../fichas/:id y .../fichas/rut/:rut
-  const { state } = useLocation();                 // empleado desde la lista (state)
+  const { id, rut } = useParams();                  // soporta /rrhh/empleado/fichas/:id y .../rut/:rut
+  const { state } = useLocation();                  // empleado desde la lista
   const navigate = useNavigate();
   const { tenant } = useTenant();
 
+  // 🔒 Si llegamos sin params (ej: /rrhh/listado-fichas), salimos al listado
+  const noParams = id == null && rut == null;
+  useEffect(() => {
+    if (noParams) navigate(ROUTES.rrhh.listadoFichas, { replace: true });
+  }, [noParams, navigate]);
+
   const idParam = useMemo(() => (id ? String(id) : null), [id]);
-  const idNumber = useMemo(() => (idParam != null ? Number(idParam) : null), [idParam]); // 👈 cast numérico
-  const rutParamRaw = useMemo(() => decodeURIComponent(rut || "").trim(), [rut]);
-  const rutParamNorm = useMemo(
-    () => (rutParamRaw ? rutParamRaw.replace(/\./g, "").toUpperCase() : null),
-    [rutParamRaw]
+  const idNumber = useMemo(
+    () => (idParam != null && !Number.isNaN(Number(idParam)) ? Number(idParam) : null),
+    [idParam]
   );
+  const rutParamRaw = useMemo(() => decodeURIComponent(rut || "").trim(), [rut]);
+  const rutParamNorm = useMemo(() => (rutParamRaw ? normRut(rutParamRaw) : null), [rutParamRaw]);
 
   const [tab, setTab] = useState("personales");
   const [loading, setLoading] = useState(true);
@@ -39,12 +47,10 @@ export default function EmpleadoFicha() {
     let mounted = true;
 
     async function load() {
-      if (!tenant?.id) {
-        setLoading(true);
-        return;
-      }
+      if (noParams) return;               // ya redirigimos arriba
+      if (!tenant?.id) { setLoading(true); return; }
 
-      // 1) Preferir el empleado pasado por state
+      // 1) Preferir el empleado pasado por state (desde Listado)
       if (state?.empleado) {
         if (!mounted) return;
         setEmpleado(state.empleado);
@@ -52,7 +58,7 @@ export default function EmpleadoFicha() {
         return;
       }
 
-      // 2) Sin identificador alguno => no podemos resolver
+      // 2) Si no tenemos identificador, no podemos resolver
       if (idParam == null && !rutParamRaw) {
         if (!mounted) return;
         setEmpleado(null);
@@ -62,21 +68,18 @@ export default function EmpleadoFicha() {
 
       setLoading(true);
 
-      let data = null;
-      let error = null;
+      let data = null, error = null;
 
-      if (idParam != null) {
-        // 👇 si el id no es número válido, evitamos la query por id
-        if (Number.isFinite(idNumber)) {
-          ({ data, error } = await supabase
-            .from("employees")
-            .select("*")
-            .eq("tenant_id", tenant.id)
-            .eq("id", idNumber) // 👈 comparar como número
-            .maybeSingle());
-        }
-      } else {
-        // Buscar por RUT tal cual
+      if (idParam != null && idNumber != null) {
+        // Buscar por ID numérico
+        ({ data, error } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("tenant_id", tenant.id)
+          .eq("id", idNumber)
+          .maybeSingle());
+      } else if (rutParamRaw) {
+        // Buscar por RUT crudo
         ({ data, error } = await supabase
           .from("employees")
           .select("*")
@@ -107,16 +110,18 @@ export default function EmpleadoFicha() {
 
     load();
     return () => { mounted = false; };
-  }, [tenant?.id, idParam, idNumber, rutParamRaw, rutParamNorm, state?.empleado]);
+  }, [tenant?.id, noParams, state?.empleado, idParam, idNumber, rutParamRaw, rutParamNorm]);
 
-  const nombreCompleto = useMemo(() => {
-    if (!empleado) return "";
-    return `${empleado.nombre ?? ""} ${empleado.apellido ?? ""}`.trim();
-  }, [empleado]);
+  const nombreCompleto = useMemo(
+    () => (empleado ? `${empleado.nombre ?? ""} ${empleado.apellido ?? ""}`.trim() : ""),
+    [empleado]
+  );
 
+  // mocks panel derecho (como tenías)
   const quickInfo = { cumple: "15 Abril", horario: "08:30 - 18:00", oficina: "Santiago Centro" };
   const performance = { productividad: 92, puntualidad: 96, colaboracion: 88 };
 
+  if (noParams) return null; // evita parpadeo antes del redirect
   if (loading || !tenant?.id) {
     return (
       <div className="ef-page">
@@ -169,7 +174,7 @@ export default function EmpleadoFicha() {
           <div className="ef-meta">Miembro desde el 03 de Marzo de 2021 (ejemplo)</div>
         </div>
         <div className="ef-headActions">
-          <button className="ef-btnGhost" onClick={() => alert("Editar Ficha (pronto)")}>
+          <button className="ef-btnGhost" onClick={() => alert("Editar ficha (pronto)")}>
             Editar Ficha
           </button>
         </div>
