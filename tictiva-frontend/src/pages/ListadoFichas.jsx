@@ -1,4 +1,3 @@
-// src/pages/ListadoFichas.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -19,7 +18,6 @@ export default function ListadoFichas() {
     const load = async () => {
       setLoading(true);
       try {
-        // TABLA correcta: employees (coincide con tu SQL)
         let query = supabase
           .from("employees")
           .select(
@@ -31,7 +29,6 @@ export default function ListadoFichas() {
 
         const { data, error } = await query;
         if (cancel) return;
-
         if (error) {
           console.error("Supabase error:", error);
           setRows([]);
@@ -48,9 +45,7 @@ export default function ListadoFichas() {
       }
     };
     load();
-    return () => {
-      cancel = true;
-    };
+    return () => { cancel = true; };
   }, [tenant?.id]);
 
   const filtered = useMemo(() => {
@@ -81,25 +76,6 @@ export default function ListadoFichas() {
     navigate(`/rrhh/ficha/${emp.id}`);
   };
 
-  // 🔒 Estilos inline para evitar que un CSS global los “aplane”
-  const S = {
-    statsGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-      gap: "12px",
-      margin: "0 4px 16px",
-    },
-    statCard: {
-      background: "#ffffff",
-      border: "1px solid #e5e7eb",
-      borderRadius: "18px",
-      boxShadow: "0 6px 18px rgba(16,24,40,.06)",
-      padding: "14px",
-    },
-    statLabel: { fontSize: "13px", color: "#6b7280" },
-    statValue: { fontSize: "22px", fontWeight: 700, marginTop: "4px" },
-  };
-
   return (
     <div className="lf-page">
       <div className="lf-wrap">
@@ -109,13 +85,7 @@ export default function ListadoFichas() {
             <h2 className="lf-title">Listado de Empleados</h2>
             <p className="lf-sub">
               Información de los empleados{" "}
-              {tenant?.name ? (
-                <>
-                  para <strong>{tenant.name}</strong>
-                </>
-              ) : (
-                ""
-              )}
+              {tenant?.name ? <>para <strong>{tenant.name}</strong></> : "para —"}
               . Haz clic en el nombre para ver detalles.
             </p>
           </div>
@@ -135,32 +105,14 @@ export default function ListadoFichas() {
           </div>
         </div>
 
-        {/* Contadores (forzados con inline styles) */}
-        <div className="lf-stats" style={S.statsGrid}>
-          <div style={S.statCard}>
-            <div style={S.statLabel}>Total</div>
-            <div style={S.statValue}>{stats.total}</div>
-          </div>
-          <div style={S.statCard}>
-            <div style={S.statLabel}>Activos</div>
-            <div style={S.statValue}>{stats.activos}</div>
-          </div>
-          <div style={S.statCard}>
-            <div style={S.statLabel}>Inactivos</div>
-            <div style={S.statValue}>{stats.inactivos}</div>
-          </div>
-          <div style={S.statCard}>
-            <div style={S.statLabel}>Hombres</div>
-            <div style={S.statValue}>{stats.hombres}</div>
-          </div>
-          <div style={S.statCard}>
-            <div style={S.statLabel}>Mujeres</div>
-            <div style={S.statValue}>{stats.mujeres}</div>
-          </div>
-          <div style={S.statCard}>
-            <div style={S.statLabel}>Con Discapacidad</div>
-            <div style={S.statValue}>{stats.discapacidad}</div>
-          </div>
+        {/* KPIs (mismo look de la segunda captura: número grande centrado) */}
+        <div className="lf-stats">
+          <Stat value={stats.total} label="Total" />
+          <Stat value={stats.activos} label="Activos" />
+          <Stat value={stats.inactivos} label="Inactivos" />
+          <Stat value={stats.hombres} label="Hombres" />
+          <Stat value={stats.mujeres} label="Mujeres" />
+          <Stat value={stats.discapacidad} label="Con Discapacidad" />
         </div>
 
         {/* Tabla */}
@@ -172,16 +124,14 @@ export default function ListadoFichas() {
                 <th>Nombre Completo</th>
                 <th>RUT</th>
                 <th>Cargo</th>
-                <th>Estado</th>
+                <th>Estado Laboral</th>
                 <th className="lf-text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={6} className="lf-empty">
-                    Cargando…
-                  </td>
+                  <td colSpan={6} className="lf-empty">Cargando…</td>
                 </tr>
               )}
 
@@ -193,48 +143,52 @@ export default function ListadoFichas() {
                 </tr>
               )}
 
-              {!loading &&
-                filtered.map((e) => (
-                  <tr key={e.id}>
-                    <td>
-                      <div className="lf-avatar">
-                        {(e.nombre?.[0] ?? "E")}
-                        {(e.apellido?.[0] ?? "")}
-                      </div>
-                    </td>
-                    <td>
-                      <button className="lf-link" onClick={() => goToFicha(e)}>
-                        {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() ||
-                          "Sin nombre"}
-                      </button>
-                    </td>
-                    <td>{e.rut ?? "—"}</td>
-                    <td>{e.cargo ?? "—"}</td>
-                    <td>
-                      <span
-                        className={
-                          e.activo
-                            ? "lf-badge lf-badge-green"
-                            : "lf-badge lf-badge-gray"
-                        }
-                      >
-                        {e.activo ? "ACTIVO" : "INACTIVO"}
-                      </span>
-                    </td>
-                    <td className="lf-text-right">
-                      <button
-                        className="lf-btn lf-btn-ghost"
-                        onClick={() => goToFicha(e)}
-                      >
-                        👁️ Ver
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              {!loading && filtered.map((e) => (
+                <tr key={e.id}>
+                  <td>
+                    <div className="lf-avatar">
+                      {(e.nombre?.[0] ?? "E")}
+                      {(e.apellido?.[0] ?? "")}
+                    </div>
+                  </td>
+                  <td>
+                    {/* sin “pill” y con estilo de enlace simple */}
+                    <a
+                      role="button"
+                      className="lf-link"
+                      onClick={() => goToFicha(e)}
+                    >
+                      {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() || "Sin nombre"}
+                    </a>
+                  </td>
+                  <td>{e.rut ?? "—"}</td>
+                  <td>{e.cargo ?? "—"}</td>
+                  <td>
+                    <span className={e.activo ? "lf-badge lf-badge-green" : "lf-badge lf-badge-gray"}>
+                      {e.activo ? "ACTIVO" : "INACTIVO"}
+                    </span>
+                  </td>
+                  <td className="lf-text-right">
+                    {/* sin emoji 👁️ */}
+                    <button className="lf-btn lf-btn-ghost" onClick={() => goToFicha(e)}>
+                      Ver
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Stat({ value, label }) {
+  return (
+    <div className="lf-stat">
+      <div className="lf-stat-value">{value}</div>
+      <div className="lf-stat-label">{label}</div>
     </div>
   );
 }
