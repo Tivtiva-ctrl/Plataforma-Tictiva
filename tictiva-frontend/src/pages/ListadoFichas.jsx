@@ -105,7 +105,7 @@ export default function ListadoFichas() {
           </div>
         </div>
 
-        {/* KPIs (mismo look de la segunda captura: número grande centrado) */}
+        {/* KPIs */}
         <div className="lf-stats">
           <Stat value={stats.total} label="Total" />
           <Stat value={stats.activos} label="Activos" />
@@ -152,14 +152,10 @@ export default function ListadoFichas() {
                     </div>
                   </td>
                   <td>
-                    {/* sin “pill” y con estilo de enlace simple */}
-                    <a
-                      role="button"
-                      className="lf-link"
-                      onClick={() => goToFicha(e)}
-                    >
+                    {/* Negro, sin estilo de link (sigue siendo clickeable) */}
+                    <button className="lf-name" onClick={() => goToFicha(e)}>
                       {`${e.nombre ?? ""} ${e.apellido ?? ""}`.trim() || "Sin nombre"}
-                    </a>
+                    </button>
                   </td>
                   <td>{e.rut ?? "—"}</td>
                   <td>{e.cargo ?? "—"}</td>
@@ -169,8 +165,8 @@ export default function ListadoFichas() {
                     </span>
                   </td>
                   <td className="lf-text-right">
-                    {/* sin emoji 👁️ */}
-                    <button className="lf-btn lf-btn-ghost" onClick={() => goToFicha(e)}>
+                    {/* Botón “Ver” con gradiente, sin emoji */}
+                    <button className="lf-btn lf-btn-primary lf-btn-sm" onClick={() => goToFicha(e)}>
                       Ver
                     </button>
                   </td>
