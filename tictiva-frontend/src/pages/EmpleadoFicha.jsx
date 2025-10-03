@@ -1,6 +1,6 @@
 // src/pages/EmpleadoFicha.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useTenant } from "../context/TenantProvider";
 import { ROUTES } from "../router/routes";
@@ -18,12 +18,17 @@ const TABS = [
 ];
 
 export default function EmpleadoFicha() {
-  const { rut } = useParams();
+  const { id, rut } = useParams();                 // ← ahora soporta ambos
+  const { state } = useLocation();                 // ← empleado desde la lista
   const navigate = useNavigate();
   const { tenant } = useTenant();
 
-  // ⚠️ Decodificamos y normalizamos el RUT que viene por URL
-  const rutParam = useMemo(() => decodeURIComponent(rut || "").trim(), [rut]);
+  const idParam = useMemo(() => (id ? String(id) : null), [id]);
+  const rutParamRaw = useMemo(() => decodeURIComponent(rut || "").trim(), [rut]);
+  const rutParamNorm = useMemo(
+    () => rutParamRaw ? rutParamRaw.replace(/\./g, "").toUpperCase() : null,
+    [rutParamRaw]
+  );
 
   const [tab, setTab] = useState("personales");
   const [loading, setLoading] = useState(true);
@@ -31,19 +36,62 @@ export default function EmpleadoFicha() {
 
   useEffect(() => {
     let mounted = true;
+
     async function load() {
-      // Si aún no tenemos tenant (o falta RUT), no consultamos
-      if (!tenant?.id || !rutParam) {
+      // Esperar tenant
+      if (!tenant?.id) {
         setLoading(true);
         return;
       }
+
+      // Si viene por state desde la lista, usarlo directo
+      if (state?.empleado) {
+        if (!mounted) return;
+        setEmpleado(state.empleado);
+        setLoading(false);
+        return;
+      }
+
+      // Si no hay ni id ni rut, no podemos resolver
+      if (!idParam && !rutParamRaw) {
+        if (!mounted) return;
+        setEmpleado(null);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      const { data, error } = await supabase
-        .from("employees")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .eq("rut", rutParam)
-        .maybeSingle();
+
+      let data = null;
+      let error = null;
+
+      // 1) Priorizar búsqueda por ID si viene
+      if (idParam) {
+        ({ data, error } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("tenant_id", tenant.id)
+          .eq("id", idParam)
+          .maybeSingle());
+      } else {
+        // 2) Buscar por RUT tal cual
+        ({ data, error } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("tenant_id", tenant.id)
+          .eq("rut", rutParamRaw)
+          .maybeSingle());
+
+        // 3) Si no aparece, intentar con RUT normalizado (sin puntos, upper)
+        if (!data && rutParamNorm) {
+          ({ data, error } = await supabase
+            .from("employees")
+            .select("*")
+            .eq("tenant_id", tenant.id)
+            .eq("rut", rutParamNorm)
+            .maybeSingle());
+        }
+      }
 
       if (!mounted) return;
       if (error) {
@@ -54,9 +102,10 @@ export default function EmpleadoFicha() {
       }
       setLoading(false);
     }
+
     load();
     return () => { mounted = false; };
-  }, [tenant?.id, rutParam]);
+  }, [tenant?.id, idParam, rutParamRaw, rutParamNorm, state?.empleado]);
 
   const nombreCompleto = useMemo(() => {
     if (!empleado) return "";
@@ -79,7 +128,12 @@ export default function EmpleadoFicha() {
     return (
       <div className="ef-page">
         <div className="ef-empty">
-          <p>No encontramos la ficha para el RUT: <strong>{rutParam}</strong></p>
+          <p>
+            No encontramos la ficha para{" "}
+            <strong>
+              {idParam ? `ID: ${idParam}` : rutParamRaw ? `RUT: ${rutParamRaw}` : "—"}
+            </strong>
+          </p>
           <button className="ef-btn" onClick={() => navigate(ROUTES.rrhh.listadoFichas)}>
             Volver al Listado
           </button>
