@@ -62,7 +62,13 @@ export default function ListadoFichas() {
     return { total, activos, inactivos, hombres, mujeres, otros, discapacidad };
   }, [filtered]);
 
-  const goToFicha = (emp) => { if (emp?.id) navigate(`/rrhh/ficha/${emp.id}`); };
+  const goToFicha = (emp) => {
+  if (!emp) return;
+  const rut = emp.rut ? encodeURIComponent(emp.rut) : "";
+  const ref = rut || String(emp.id || "");
+  navigate(`/rrhh/ficha/${ref}`); // 👈 la ruta ahora usa RUT
+};
+
 
   return (
     <div className="lf-page">
