@@ -65,3 +65,35 @@ html,body,#root{background:var(--bg); color:var(--text);}
 .ef-meter{height:10px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin:10px 0;}
 .ef-meter span{display:block; height:100%; background:#3b82f6;}
 .ef-meter.purple span{background:#8b5cf6;}
+/* --- Info Rápida (lista con íconos) --- */
+.ef-quick-list{
+  list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:12px;
+}
+.ef-quick-list li{
+  display:flex; align-items:center; gap:10px;
+  color:#374151; font-size:14px;
+}
+.ef-ico{
+  width:28px; height:28px; border-radius:999px;
+  background:#eef2ff; display:flex; align-items:center; justify-content:center;
+}
+
+/* --- Rendimiento (fila label + % a la derecha) --- */
+.ef-metric-row{
+  margin-top:10px; display:flex; align-items:center; justify-content:space-between;
+  font-size:14px;
+}
+.ef-metric-label{ color:#374151; }
+.ef-metric-val{ font-weight:800; }
+.ef-metric-val.blue{ color:#2563eb; }
+.ef-metric-val.green{ color:#16a34a; }
+.ef-metric-val.purple{ color:#8b5cf6; }
+
+/* Barras */
+.ef-meter{
+  height:10px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-top:8px;
+}
+.ef-meter > span{ display:block; height:100%; border-radius:999px; }
+.ef-meter > span.blue{ background:#3b82f6; }
+.ef-meter > span.green{ background:#22c55e; }
+.ef-meter > span.purple{ background:#8b5cf6; }
