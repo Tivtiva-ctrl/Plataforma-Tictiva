@@ -1,0 +1,9 @@
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.form-field{display:flex;flex-direction:column}
+.form-field label{font-size:13px;color:#6b7280;margin-bottom:6px}
+.form-field input,.form-field select{
+  height:38px;border:1px solid #e5e7eb;border-radius:10px;padding:0 10px;background:#fff
+}
+.form-col-2{grid-column:span 2}
+.form-error{color:#dc2626;font-size:12px;margin-top:6px}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
