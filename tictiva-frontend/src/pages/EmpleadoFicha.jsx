@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 
-// 👇 agregados
+// 👇 mantenemos tus imports
 import PersonalesForm from "../components/PersonalesForm";
 import "./Personales.css";
 
@@ -35,7 +35,37 @@ export default function EmpleadoFicha() {
   const [loading, setLoading] = useState(true);
   const [emp, setEmp] = useState(null);
   const [tab, setTab] = useState("personales");
-  const [editing, setEditing] = useState(false); // 👈 agregado
+  const [editing, setEditing] = useState(false);
+
+  // 👉 soporte opcional para una vista externa de Personales
+  const [ExtPersonales, setExtPersonales] = useState(null);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      // Intentamos varias rutas comunes; si ninguna existe, no pasa nada.
+      const candidates = [
+        "../components/Personales.jsx",
+        "../components/Personales/index.jsx",
+        "../components/Personales.js",
+        "../components/Personales", // por si exporta sin extensión
+      ];
+      for (const p of candidates) {
+        try {
+          // @vite-ignore evita que Vite falle el build si el archivo no existe
+          const mod = await import(/* @vite-ignore */ p);
+          if (!mounted) return;
+          const Comp = mod.default || mod.Personales || null;
+          if (Comp) {
+            setExtPersonales(() => Comp);
+            break;
+          }
+        } catch (_) {
+          // seguimos probando
+        }
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // Carga empleado (por RUT o por ID)
   useEffect(() => {
@@ -136,7 +166,7 @@ export default function EmpleadoFicha() {
           <div className="ef-head-actions">
             <button
               className="lf-btn lf-btn-primary"
-              onClick={() => setEditing(true)} // 👈 abre el form
+              onClick={() => setEditing(true)}
             >
               Editar Ficha
             </button>
@@ -160,16 +190,17 @@ export default function EmpleadoFicha() {
         <div className={`ef-layout ${sidebarHidden ? "full" : ""}`}>
           <div className="ef-main">
             {tab === "personales" && (
-              editing
-                ? (
-                  <PersonalesForm
-                    key={emp.id}
-                    employee={emp}
-                    onCancel={() => setEditing(false)}
-                    onSaved={(updated) => { setEmp(updated); setEditing(false); }}
-                  />
-                )
-                : <Personales emp={emp} />
+              editing ? (
+                <PersonalesForm
+                  key={emp.id}
+                  employee={emp}
+                  onCancel={() => setEditing(false)}
+                  onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+                />
+              ) : (
+                // 👉 si existe una vista externa, úsala; si no, usa la interna
+                ExtPersonales ? <ExtPersonales emp={emp} /> : <Personales emp={emp} />
+              )
             )}
             {tab === "contractuales" && <Contractuales emp={emp} />}
             {tab === "documentos" && <Documentos emp={emp} />}
