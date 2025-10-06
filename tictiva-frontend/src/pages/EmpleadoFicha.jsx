@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 
-// 👇 importes solicitados
+// Solo dejamos tus importes reales
 import PersonalesForm from "../components/PersonalesForm";
 import "./Personales.css";
 
@@ -157,6 +157,7 @@ export default function EmpleadoFicha() {
         {/* Layout principal */}
         <div className={`ef-layout ${sidebarHidden ? "full" : ""}`}>
           <div className="ef-main">
+            {/* PERSONALES: solo tu Form en modo edición; si no, no renderiza nada */}
             {tab === "personales" && (
               editing ? (
                 <PersonalesForm
@@ -165,17 +166,17 @@ export default function EmpleadoFicha() {
                   onCancel={() => setEditing(false)}
                   onSaved={(updated) => { setEmp(updated); setEditing(false); }}
                 />
-              ) : (
-                <Personales emp={emp} />   // ← vista interna por defecto
-              )
+              ) : null
             )}
-            {tab === "contractuales" && <Contractuales emp={emp} />}
-            {tab === "documentos" && <Documentos emp={emp} />}
-            {tab === "prevision" && <Prevision emp={emp} />}
-            {tab === "bancarios" && <Bancarios emp={emp} />}
-            {tab === "asistencia" && <Asistencia emp={emp} />}
-            {tab === "hoja" && <HojaDeVida emp={emp} />}
-            {tab === "historial" && <Historial emp={emp} />}
+
+            {/* El resto de pestañas no renderizan nada por ahora (evita cualquier “demo”) */}
+            {tab === "contractuales" && null}
+            {tab === "documentos" && null}
+            {tab === "prevision" && null}
+            {tab === "bancarios" && null}
+            {tab === "asistencia" && null}
+            {tab === "hoja" && null}
+            {tab === "historial" && null}
           </div>
 
           {/* Sidebar: oculto para Asistencia e Historial */}
@@ -243,93 +244,6 @@ export default function EmpleadoFicha() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ======== Secciones de ejemplo (se mantienen) ======== */
-function Row({ label, value }) {
-  return (
-    <div className="ef-row">
-      <div className="ef-row-label">{label}</div>
-      <div className="ef-row-value">{value || "—"}</div>
-    </div>
-  );
-}
-
-function Personales({ emp }) {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Información Personal</h3>
-      <Row label="Nombre Completo:" value={`${emp.nombre ?? ""} ${emp.apellido ?? ""}`} />
-      <Row label="RUT:" value={emp.rut} />
-      <Row label="Cargo:" value={emp.cargo} />
-      <Row label="Género:" value={emp.genero} />
-      <Row label="Discapacidad:" value={emp.discapacidad ? "Sí" : "No"} />
-      <Row label="Estado:" value={emp.activo ? "ACTIVO" : "INACTIVO"} />
-    </div>
-  );
-}
-
-function Contractuales() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Información Contractual</h3>
-      <div className="ef-hint">Detalle de contrato, tipo, vigencia, anexos, etc.</div>
-    </div>
-  );
-}
-
-function Documentos() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Documentos</h3>
-      <div className="ef-hint">Listado y acciones de documentos (ver, descargar, subir).</div>
-    </div>
-  );
-}
-
-function Prevision() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Previsión</h3>
-      <div className="ef-hint">AFP, Isapre/Fonasa, cargas, plan, etc.</div>
-    </div>
-  );
-}
-
-function Bancarios() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Bancarios</h3>
-      <div className="ef-hint">Banco, tipo de cuenta, número, titular.</div>
-    </div>
-  );
-}
-
-function Asistencia() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Asistencia (pantalla completa)</h3>
-      <div className="ef-hint">Resumen de marcas, calendario, cumplimiento DT, etc.</div>
-    </div>
-  );
-}
-
-function HojaDeVida() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Hoja de Vida</h3>
-      <div className="ef-hint">Reconocimientos, llamados de atención, capacitaciones, etc.</div>
-    </div>
-  );
-}
-
-function Historial() {
-  return (
-    <div className="ef-card p20">
-      <h3 className="ef-block-title">Historial (pantalla completa)</h3>
-      <div className="ef-hint">Bitácora de cambios, eventos y acciones del colaborador.</div>
     </div>
   );
 }
