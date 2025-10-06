@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 
-// 👇 mantenemos tus imports
+// 👇 importes solicitados
 import PersonalesForm from "../components/PersonalesForm";
 import "./Personales.css";
 
@@ -37,36 +37,6 @@ export default function EmpleadoFicha() {
   const [tab, setTab] = useState("personales");
   const [editing, setEditing] = useState(false);
 
-  // 👉 soporte opcional para una vista externa de Personales
-  const [ExtPersonales, setExtPersonales] = useState(null);
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      // Intentamos varias rutas comunes; si ninguna existe, no pasa nada.
-      const candidates = [
-        "../components/Personales.jsx",
-        "../components/Personales/index.jsx",
-        "../components/Personales.js",
-        "../components/Personales", // por si exporta sin extensión
-      ];
-      for (const p of candidates) {
-        try {
-          // @vite-ignore evita que Vite falle el build si el archivo no existe
-          const mod = await import(/* @vite-ignore */ p);
-          if (!mounted) return;
-          const Comp = mod.default || mod.Personales || null;
-          if (Comp) {
-            setExtPersonales(() => Comp);
-            break;
-          }
-        } catch (_) {
-          // seguimos probando
-        }
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
   // Carga empleado (por RUT o por ID)
   useEffect(() => {
     let cancel = false;
@@ -97,9 +67,7 @@ export default function EmpleadoFicha() {
       }
     };
     load();
-    return () => {
-      cancel = true;
-    };
+    return () => { cancel = true; };
   }, [ref]);
 
   const initials = useMemo(() => {
@@ -198,8 +166,7 @@ export default function EmpleadoFicha() {
                   onSaved={(updated) => { setEmp(updated); setEditing(false); }}
                 />
               ) : (
-                // 👉 si existe una vista externa, úsala; si no, usa la interna
-                ExtPersonales ? <ExtPersonales emp={emp} /> : <Personales emp={emp} />
+                <Personales emp={emp} />   // ← vista interna por defecto
               )
             )}
             {tab === "contractuales" && <Contractuales emp={emp} />}
