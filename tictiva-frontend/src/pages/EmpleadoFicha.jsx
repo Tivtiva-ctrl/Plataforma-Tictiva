@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
+import PersonalesView from "../components/Personales"; // <-- tu componente de lectura
 
 // Solo dejamos tus importes reales
 import PersonalesForm from "../components/PersonalesForm";
@@ -160,14 +161,18 @@ export default function EmpleadoFicha() {
             {/* PERSONALES: solo tu Form en modo edición; si no, no renderiza nada */}
             {tab === "personales" && (
               editing ? (
-                <PersonalesForm
-                  key={emp.id}
-                  employee={emp}
-                  onCancel={() => setEditing(false)}
-                  onSaved={(updated) => { setEmp(updated); setEditing(false); }}
-                />
-              ) : null
-            )}
+               <PersonalesForm
+                 key={emp.id}
+                 employee={emp}
+                 onCancel={() => setEditing(false)}
+                 onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+               />
+             ) : (
+               <PersonalesView emp={emp} />           // <-- SIEMPRE visible en lectura
+             )  
+            )}  
+  
+
 
             {/* El resto de pestañas no renderizan nada por ahora (evita cualquier “demo”) */}
             {tab === "contractuales" && null}

@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const asInt = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+
 function toYMD(d) {
   if (!d) return "";
   const dt = typeof d === "string" ? new Date(d) : d;
@@ -13,13 +15,11 @@ function toYMD(d) {
 }
 
 export default function PersonalesForm({ employee, onCancel, onSaved }) {
-  // Catálogos
   const [regiones, setRegiones] = useState([]);
   const [comunas, setComunas] = useState([]);
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
-  // Carga catálogos de una
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -36,29 +36,28 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     return () => { cancel = true; };
   }, []);
 
-  // Estado del formulario (soporta columnas antiguas y nuevas)
   const [form, setForm] = useState(() => ({
     nombre: employee?.nombre ?? employee?.nombres ?? "",
     apellido: employee?.apellido ?? employee?.apellidos ?? "",
     rut: employee?.rut ?? "",
     cargo: employee?.cargo ?? "",
-    genero: employee?.genero ?? "O", // 'M','F','O'
+    genero: employee?.genero ?? "O",
     discapacidad: !!employee?.discapacidad,
     activo: employee?.activo ?? true,
 
     fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
     direccion: employee?.direccion ?? "",
 
-    region_id: employee?.region_id ?? null,
-    comuna_id: employee?.comuna_id ?? null,
+    region_id: asInt(employee?.region_id),
+    comuna_id: asInt(employee?.comuna_id),
 
     telefono_movil: employee?.telefono_movil ?? "",
     telefono_fijo: employee?.telefono_fijo ?? "",
     email_personal: employee?.email_personal ?? "",
     email_corporativo: employee?.email_corporativo ?? "",
 
-    estado_civil_id: employee?.estado_civil_id ?? null,
-    nacionalidad_id: employee?.nacionalidad_id ?? null,
+    estado_civil_id: asInt(employee?.estado_civil_id),
+    nacionalidad_id: asInt(employee?.nacionalidad_id),
 
     pais_residencia: employee?.pais_residencia ?? "",
     idioma_preferido: employee?.idioma_preferido ?? "",
@@ -67,43 +66,42 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Cargar comunas cuando cambia la región (y al iniciar si viene seteada)
+  // Cargar comunas cuando hay región (y al inicio si ya venía seteada)
   useEffect(() => {
     let cancel = false;
-    const load = async () => {
+    (async () => {
       if (!form.region_id) {
         setComunas([]);
-        // si quitan la región, limpia comuna
-        setForm((s) => ({ ...s, comuna_id: null }));
         return;
       }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("cl_comunas")
         .select("id, nombre")
-        .eq("region_id", form.region_id)
+        .eq("region_id", form.region_id) // <- region_id NUMÉRICO
         .order("nombre", { ascending: true });
-      if (!cancel) setComunas(data || []);
-    };
-    load();
+      if (cancel) return;
+      if (!error) setComunas(data || []);
+      // Si la comuna actual no pertenece a la región seleccionada, límpiala
+      if (data && form.comuna_id && !data.some((c) => c.id === form.comuna_id)) {
+        setForm((s) => ({ ...s, comuna_id: null }));
+      }
+    })();
     return () => { cancel = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.region_id]);
 
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
-  // Validación mínima
   const validate = () => {
     const e = {};
     if (!form.nombre?.trim()) e.nombre = "Obligatorio";
     if (!form.apellido?.trim()) e.apellido = "Obligatorio";
     if (!form.rut?.trim()) e.rut = "Obligatorio";
-    // Si hay comuna, debe haber región (el trigger en DB también lo cuida)
     if (form.comuna_id && !form.region_id) e.region_id = "Selecciona región para esa comuna";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // Payload a enviar (incluye columnas antiguas y nuevas si existen)
   const payload = useMemo(() => {
     const base = {
       nombre: form.nombre?.trim() || null,
@@ -117,27 +115,22 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       fecha_nacimiento: form.fecha_nacimiento || null,
       direccion: form.direccion?.trim() || null,
 
-      region_id: form.region_id ?? null,
-      comuna_id: form.comuna_id ?? null,
+      region_id: asInt(form.region_id),
+      comuna_id: asInt(form.comuna_id),
 
       telefono_movil: form.telefono_movil?.trim() || null,
       telefono_fijo: form.telefono_fijo?.trim() || null,
       email_personal: form.email_personal?.trim() || null,
       email_corporativo: form.email_corporativo?.trim() || null,
 
-      estado_civil_id: form.estado_civil_id ?? null,
-      nacionalidad_id: form.nacionalidad_id ?? null,
+      estado_civil_id: asInt(form.estado_civil_id),
+      nacionalidad_id: asInt(form.nacionalidad_id),
 
       pais_residencia: form.pais_residencia?.trim() || null,
       idioma_preferido: form.idioma_preferido?.trim() || null,
       pronombres: form.pronombres?.trim() || null,
     };
-    // Por compatibilidad con columnas nuevas (si las usas)
-    return {
-      ...base,
-      nombres: base.nombre,
-      apellidos: base.apellido,
-    };
+    return { ...base, nombres: base.nombre, apellidos: base.apellido };
   }, [form]);
 
   const save = async (e) => {
@@ -248,12 +241,16 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           />
         </div>
 
-        {/* Región / Comuna (dependiente) */}
+        {/* Región / Comuna */}
         <div className="form-field">
           <label>Región</label>
           <select
             value={form.region_id ?? ""}
-            onChange={(e) => set("region_id", e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => set({
+              ...form,
+              region_id: asInt(e.target.value),
+              comuna_id: null, // reset al cambiar región
+            })}
           >
             <option value="">— Selecciona región —</option>
             {regiones.map((r) => (
@@ -262,11 +259,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           </select>
           {errors.region_id && <div className="form-error">{errors.region_id}</div>}
         </div>
+
         <div className="form-field">
           <label>Comuna</label>
           <select
             value={form.comuna_id ?? ""}
-            onChange={(e) => set("comuna_id", e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => set("comuna_id", asInt(e.target.value))}
             disabled={!form.region_id}
           >
             <option value="">{form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}</option>
@@ -313,12 +311,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           />
         </div>
 
-        {/* Nacionalidad / Estado Civil */}
+        {/* Nacionalidad / Estado civil */}
         <div className="form-field">
           <label>Nacionalidad</label>
           <select
             value={form.nacionalidad_id ?? ""}
-            onChange={(e) => set("nacionalidad_id", e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => set("nacionalidad_id", asInt(e.target.value))}
           >
             <option value="">— Selecciona nacionalidad —</option>
             {nacionalidades.map((n) => (
@@ -330,7 +328,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Estado civil</label>
           <select
             value={form.estado_civil_id ?? ""}
-            onChange={(e) => set("estado_civil_id", e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => set("estado_civil_id", asInt(e.target.value))}
           >
             <option value="">— Selecciona estado civil —</option>
             {estadosCivil.map((ec) => (
@@ -376,7 +374,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           </select>
         </div>
 
-        {/* Full row (espaciador opcional) */}
         <div className="form-col-2" />
       </div>
 
