@@ -97,3 +97,35 @@ html,body,#root{background:var(--bg); color:var(--text);}
 .ef-meter > span.blue{ background:#3b82f6; }
 .ef-meter > span.green{ background:#22c55e; }
 .ef-meter > span.purple{ background:#8b5cf6; }
+/* -----------------------
+  Emergency: permitir clicks en la ficha
+   - Forzar z-index y pointer-events
+   - No es solución definitiva, pero desatasca la UI
+------------------------*/
+.ef-page .ef-wrap,
+.ef-page .ef-layout,
+.ef-page .ef-main,
+.ef-card {
+  position: relative;
+  z-index: 1; /* asegura que no quede debajo de un overlay */
+  pointer-events: auto !important;
+}
+
+/* Por si hay un overlay transparente con z-index alto */
+[role="presentation"],
+.modal-backdrop,
+.app-overlay,
+.page-cover,
+.backdrop {
+  pointer-events: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Forzar inputs/selects/buttons dentro de la ficha a ser clickeables */
+.ef-card input,
+.ef-card select,
+.ef-card textarea,
+.ef-card button {
+  pointer-events: auto !important;
+}
