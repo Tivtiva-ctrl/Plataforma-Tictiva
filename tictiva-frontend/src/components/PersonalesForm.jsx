@@ -92,8 +92,8 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     try {
       console.log("[PersonalesForm] cargando comunas para region_id =", regionId);
       const { data, error } = await supabase
-        .from("cl_comunas")
-        .select("id,nombre")
+        .from("import_cl_comunas")  // <-- tabla corregida
+        .select("codigo,nombre,region_id") // <-- columnas correctas
         .eq("region_id", regionId)
         .order("nombre", { ascending: true });
       if (error) {
@@ -125,7 +125,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       const data = await loadComunas(regionId);
       if (canceled) return;
       // si la comuna actual no está en la lista (p. ej. fue de otra región), la limpiamos
-      if (form.comuna_id && Array.isArray(data) && !data.some((c) => c.id === form.comuna_id)) {
+      if (form.comuna_id && Array.isArray(data) && !data.some((c) => c.codigo === form.comuna_id)) {
         setForm((s) => ({ ...s, comuna_id: null }));
       }
     })();
@@ -242,7 +242,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             onChange={(e) => {
               const val = asInt(e.target.value);
               setField("region_id", val);
-              // reset comuna_id al cambiar de región
               setField("comuna_id", null);
             }}
           >
@@ -260,12 +259,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Comuna</label>
           <select
             value={form.comuna_id ?? ""}
-            onChange={(e) => setField("comuna_id", asInt(e.target.value))}
+            onChange={(e) => setField("comuna_id", e.target.value)} // usamos valor tal cual
             disabled={!form.region_id || comunas.length === 0}
           >
             <option value="">{form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}</option>
             {comunas.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option key={c.codigo} value={c.codigo}>
                 {c.nombre}
               </option>
             ))}
