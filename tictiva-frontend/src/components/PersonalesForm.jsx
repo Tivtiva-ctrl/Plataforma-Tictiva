@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-const asInt = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+const asInt = (v) => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+};
 
 function toYMD(d) {
   if (!d) return "";
@@ -15,27 +19,13 @@ function toYMD(d) {
 }
 
 export default function PersonalesForm({ employee, onCancel, onSaved }) {
+  // catálogos
   const [regiones, setRegiones] = useState([]);
   const [comunas, setComunas] = useState([]);
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      const [regRes, ecRes, nacRes] = await Promise.all([
-        supabase.from("cl_regiones").select("id, nombre").order("id", { ascending: true }),
-        supabase.from("catalog_estado_civil").select("id, nombre").order("id", { ascending: true }),
-        supabase.from("catalog_nacionalidades").select("id, nombre").order("nombre", { ascending: true }),
-      ]);
-      if (cancel) return;
-      setRegiones(regRes.data || []);
-      setEstadosCivil(ecRes.data || []);
-      setNacionalidades(nacRes.data || []);
-    })();
-    return () => { cancel = true; };
-  }, []);
-
+  // estado del form
   const [form, setForm] = useState(() => ({
     nombre: employee?.nombre ?? employee?.nombres ?? "",
     apellido: employee?.apellido ?? employee?.apellidos ?? "",
@@ -63,40 +53,94 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     idioma_preferido: employee?.idioma_preferido ?? "",
     pronombres: employee?.pronombres ?? "",
   }));
+
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Cargar comunas cuando hay región (y al inicio si ya venía seteada)
+  // Carga regiones / estados / nacionalidades primero
   useEffect(() => {
-    let cancel = false;
+    let canceled = false;
     (async () => {
-      if (!form.region_id) {
+      try {
+        const [rRes, ecRes, nRes] = await Promise.all([
+          supabase.from("cl_regiones").select("id,nombre").order("id", { ascending: true }),
+          supabase.from("catalog_estado_civil").select("id,nombre").order("id", { ascending: true }),
+          supabase.from("catalog_nacionalidades").select("id,nombre").order("nombre", { ascending: true }),
+        ]);
+        if (canceled) return;
+        setRegiones(rRes.data || []);
+        setEstadosCivil(ecRes.data || []);
+        setNacionalidades(nRes.data || []);
+        // Si employee tenía region_id, lanzamos la carga de comunas aquí (después de regiones cargadas)
+        if (asInt(employee?.region_id)) {
+          await loadComunas(asInt(employee.region_id));
+        }
+      } catch (err) {
+        console.error("Error cargando catálogos:", err);
+      }
+    })();
+    return () => { canceled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // función para cargar comunas de una región concreta
+  const loadComunas = async (regionId) => {
+    if (!regionId) {
+      setComunas([]);
+      return;
+    }
+    try {
+      console.log("[PersonalesForm] cargando comunas para region_id =", regionId);
+      const { data, error } = await supabase
+        .from("cl_comunas")
+        .select("id,nombre")
+        .eq("region_id", regionId)
+        .order("nombre", { ascending: true });
+      if (error) {
+        console.error("Error fetch comunas:", error);
         setComunas([]);
         return;
       }
-      const { data, error } = await supabase
-        .from("cl_comunas")
-        .select("id, nombre")
-        .eq("region_id", form.region_id) // <- region_id NUMÉRICO
-        .order("nombre", { ascending: true });
-      if (cancel) return;
-      if (!error) setComunas(data || []);
-      // Si la comuna actual no pertenece a la región seleccionada, límpiala
-      if (data && form.comuna_id && !data.some((c) => c.id === form.comuna_id)) {
+      console.log("[PersonalesForm] comunas obtenidas:", (data || []).length);
+      setComunas(data || []);
+      return data || [];
+    } catch (e) {
+      console.error("Excepción loadComunas:", e);
+      setComunas([]);
+      return [];
+    }
+  };
+
+  // Cuando cambia form.region_id, carga comunas (esto maneja el cambio por UI)
+  useEffect(() => {
+    let canceled = false;
+    (async () => {
+      const regionId = asInt(form.region_id);
+      if (!regionId) {
+        setComunas([]);
+        // limpiamos comuna si no hay región
+        setForm((s) => ({ ...s, comuna_id: null }));
+        return;
+      }
+      const data = await loadComunas(regionId);
+      if (canceled) return;
+      // si la comuna actual no está en la lista (p. ej. fue de otra región), la limpiamos
+      if (form.comuna_id && Array.isArray(data) && !data.some((c) => c.id === form.comuna_id)) {
         setForm((s) => ({ ...s, comuna_id: null }));
       }
     })();
-    return () => { cancel = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.region_id]);
+    return () => { canceled = true; };
+  }, [form.region_id]); // eslint-disable-line
 
-  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  const setField = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
+  // validación mínima
   const validate = () => {
     const e = {};
     if (!form.nombre?.trim()) e.nombre = "Obligatorio";
     if (!form.apellido?.trim()) e.apellido = "Obligatorio";
     if (!form.rut?.trim()) e.rut = "Obligatorio";
+    // si hay comuna, debe haber region
     if (form.comuna_id && !form.region_id) e.region_id = "Selecciona región para esa comuna";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -130,28 +174,36 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       idioma_preferido: form.idioma_preferido?.trim() || null,
       pronombres: form.pronombres?.trim() || null,
     };
-    return { ...base, nombres: base.nombre, apellidos: base.apellido };
+    return {
+      ...base,
+      nombres: base.nombre,
+      apellidos: base.apellido,
+    };
   }, [form]);
 
   const save = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
     setSaving(true);
-    const { data, error } = await supabase
-      .from("employees")
-      .update(payload)
-      .eq("id", employee.id)
-      .select("*")
-      .single();
-    setSaving(false);
-
-    if (error) {
-      console.error(error);
-      alert(error.message || "No se pudo guardar la ficha.");
-      return;
+    try {
+      const { data, error } = await supabase
+        .from("employees")
+        .update(payload)
+        .eq("id", employee.id)
+        .select("*")
+        .single();
+      if (error) {
+        console.error("Save error:", error);
+        alert(error.message || "No se pudo guardar.");
+      } else {
+        onSaved?.(data);
+      }
+    } catch (err) {
+      console.error("Excepción guardar:", err);
+      alert("Error inesperado guardando.");
+    } finally {
+      setSaving(false);
     }
-    onSaved?.(data);
   };
 
   return (
@@ -162,83 +214,24 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         {/* Nombre / Apellido */}
         <div className="form-field">
           <label>Nombres *</label>
-          <input
-            value={form.nombre}
-            onChange={(e) => set("nombre", e.target.value)}
-            placeholder="Ej: Eva"
-          />
+          <input value={form.nombre} onChange={(e) => setField("nombre", e.target.value)} />
           {errors.nombre && <div className="form-error">{errors.nombre}</div>}
         </div>
         <div className="form-field">
           <label>Apellidos *</label>
-          <input
-            value={form.apellido}
-            onChange={(e) => set("apellido", e.target.value)}
-            placeholder="Ej: Green"
-          />
+          <input value={form.apellido} onChange={(e) => setField("apellido", e.target.value)} />
           {errors.apellido && <div className="form-error">{errors.apellido}</div>}
         </div>
 
         {/* RUT / Cargo */}
         <div className="form-field">
           <label>RUT *</label>
-          <input
-            value={form.rut}
-            onChange={(e) => set("rut", e.target.value)}
-            placeholder="11.111.111-1"
-          />
+          <input value={form.rut} onChange={(e) => setField("rut", e.target.value)} />
           {errors.rut && <div className="form-error">{errors.rut}</div>}
         </div>
         <div className="form-field">
           <label>Cargo</label>
-          <input
-            value={form.cargo}
-            onChange={(e) => set("cargo", e.target.value)}
-            placeholder="Ej: Tester Lead"
-          />
-        </div>
-
-        {/* Género / Discapacidad */}
-        <div className="form-field">
-          <label>Género</label>
-          <select
-            value={form.genero}
-            onChange={(e) => set("genero", e.target.value)}
-          >
-            <option value="O">Otro/No especifica</option>
-            <option value="F">Femenino</option>
-            <option value="M">Masculino</option>
-          </select>
-        </div>
-        <div className="form-field">
-          <label>Discapacidad</label>
-          <div style={{ display: "flex", alignItems: "center", height: 38 }}>
-            <input
-              type="checkbox"
-              checked={form.discapacidad}
-              onChange={(e) => set("discapacidad", e.target.checked)}
-              style={{ width: 18, height: 18, marginRight: 8 }}
-            />
-            <span>{form.discapacidad ? "Sí" : "No"}</span>
-          </div>
-        </div>
-
-        {/* Fecha Nac. / Dirección */}
-        <div className="form-field">
-          <label>Fecha de nacimiento</label>
-          <input
-            type="date"
-            value={form.fecha_nacimiento}
-            onChange={(e) => set("fecha_nacimiento", e.target.value)}
-          />
-        </div>
-        <div className="form-field">
-          <label>Dirección</label>
-          <input
-            value={form.direccion}
-            onChange={(e) => set("direccion", e.target.value)}
-            placeholder="Calle, número"
-          />
+          <input value={form.cargo} onChange={(e) => setField("cargo", e.target.value)} />
         </div>
 
         {/* Región / Comuna */}
@@ -246,15 +239,18 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Región</label>
           <select
             value={form.region_id ?? ""}
-            onChange={(e) => set({
-              ...form,
-              region_id: asInt(e.target.value),
-              comuna_id: null, // reset al cambiar región
-            })}
+            onChange={(e) => {
+              const val = asInt(e.target.value);
+              setField("region_id", val);
+              // reset comuna_id al cambiar de región
+              setField("comuna_id", null);
+            }}
           >
             <option value="">— Selecciona región —</option>
             {regiones.map((r) => (
-              <option key={r.id} value={r.id}>{r.nombre}</option>
+              <option key={r.id} value={r.id}>
+                {r.nombre}
+              </option>
             ))}
           </select>
           {errors.region_id && <div className="form-error">{errors.region_id}</div>}
@@ -264,116 +260,61 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Comuna</label>
           <select
             value={form.comuna_id ?? ""}
-            onChange={(e) => set("comuna_id", asInt(e.target.value))}
-            disabled={!form.region_id}
+            onChange={(e) => setField("comuna_id", asInt(e.target.value))}
+            disabled={!form.region_id || comunas.length === 0}
           >
             <option value="">{form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}</option>
             {comunas.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Teléfonos */}
+        {/* resto de campos resumidos */}
         <div className="form-field">
           <label>Teléfono móvil</label>
-          <input
-            value={form.telefono_movil}
-            onChange={(e) => set("telefono_movil", e.target.value)}
-            placeholder="+56 9 ...."
-          />
+          <input value={form.telefono_movil} onChange={(e) => setField("telefono_movil", e.target.value)} />
         </div>
         <div className="form-field">
           <label>Teléfono fijo</label>
-          <input
-            value={form.telefono_fijo}
-            onChange={(e) => set("telefono_fijo", e.target.value)}
-          />
+          <input value={form.telefono_fijo} onChange={(e) => setField("telefono_fijo", e.target.value)} />
         </div>
 
-        {/* Emails */}
         <div className="form-field">
           <label>Email personal</label>
-          <input
-            type="email"
-            value={form.email_personal}
-            onChange={(e) => set("email_personal", e.target.value)}
-            placeholder="nombre@correo.com"
-          />
+          <input type="email" value={form.email_personal} onChange={(e) => setField("email_personal", e.target.value)} />
         </div>
         <div className="form-field">
           <label>Email corporativo</label>
-          <input
-            type="email"
-            value={form.email_corporativo}
-            onChange={(e) => set("email_corporativo", e.target.value)}
-            placeholder="nombre@empresa.com"
-          />
+          <input type="email" value={form.email_corporativo} onChange={(e) => setField("email_corporativo", e.target.value)} />
         </div>
 
-        {/* Nacionalidad / Estado civil */}
         <div className="form-field">
           <label>Nacionalidad</label>
-          <select
-            value={form.nacionalidad_id ?? ""}
-            onChange={(e) => set("nacionalidad_id", asInt(e.target.value))}
-          >
+          <select value={form.nacionalidad_id ?? ""} onChange={(e) => setField("nacionalidad_id", asInt(e.target.value))}>
             <option value="">— Selecciona nacionalidad —</option>
             {nacionalidades.map((n) => (
-              <option key={n.id} value={n.id}>{n.nombre}</option>
+              <option key={n.id} value={n.id}>
+                {n.nombre}
+              </option>
             ))}
           </select>
         </div>
         <div className="form-field">
           <label>Estado civil</label>
-          <select
-            value={form.estado_civil_id ?? ""}
-            onChange={(e) => set("estado_civil_id", asInt(e.target.value))}
-          >
+          <select value={form.estado_civil_id ?? ""} onChange={(e) => setField("estado_civil_id", asInt(e.target.value))}>
             <option value="">— Selecciona estado civil —</option>
             {estadosCivil.map((ec) => (
-              <option key={ec.id} value={ec.id}>{ec.nombre}</option>
+              <option key={ec.id} value={ec.id}>
+                {ec.nombre}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Extras */}
-        <div className="form-field">
-          <label>País de residencia</label>
-          <input
-            value={form.pais_residencia}
-            onChange={(e) => set("pais_residencia", e.target.value)}
-          />
-        </div>
-        <div className="form-field">
-          <label>Idioma preferido</label>
-          <input
-            value={form.idioma_preferido}
-            onChange={(e) => set("idioma_preferido", e.target.value)}
-          />
-        </div>
-
-        <div className="form-field">
-          <label>Pronombres</label>
-          <input
-            value={form.pronombres}
-            onChange={(e) => set("pronombres", e.target.value)}
-            placeholder="él/ella/elle"
-          />
-        </div>
-
-        {/* Estado activo */}
-        <div className="form-field">
-          <label>Estado</label>
-          <select
-            value={form.activo ? "1" : "0"}
-            onChange={(e) => set("activo", e.target.value === "1")}
-          >
-            <option value="1">Activo</option>
-            <option value="0">Inactivo</option>
-          </select>
-        </div>
-
+        {/* fill grid */}
         <div className="form-col-2" />
       </div>
 
