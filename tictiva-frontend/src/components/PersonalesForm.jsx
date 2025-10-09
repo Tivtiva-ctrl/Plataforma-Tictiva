@@ -1,18 +1,22 @@
 // src/components/PersonalesForm.jsx
 // -------------------------------------------------------------
-// PersonalesForm - Versión completa con Región/Comuna corregidos
-// - Aislado: no rompe el resto de la ficha
-// - Usa supabase-js (evita construir URLs manuales)
-// - Convierte regionId a Number para coincidir con region_id (integer)
-// - Resetea comuna al cambiar región
+// Ficha > Personales (UI como la maqueta) + Región/Comuna OK
+// - Diseño: card redondeada, grid, labels arriba, inputs consistentes
+// - Lógica: consulta comunas filtradas por region_id (int) en Supabase
+// - API: usa supabase-js (evita armar URLs manuales)
+// - Props esperadas:
+//     empleado: objeto con datos iniciales
+//     onSave(form): callback al guardar
+//     onCancel(): callback al cancelar
+//     disabled?: deshabilitar inputs
 // -------------------------------------------------------------
 
 import React from "react";
 import { supabase } from "../lib/supabase";
 
-/* =======================
-   Subcomponente aislado
-   ======================= */
+/* ============================================================
+   Subcomponente: RegionComunaPicker (aislado + estilizado)
+   ============================================================ */
 function RegionComunaPicker({
   value = { regionId: "", comunaCodigo: "" },
   onChange,
@@ -24,7 +28,7 @@ function RegionComunaPicker({
     value.comunaCodigo ?? ""
   );
 
-  // IDs oficiales 1..16 (ajusta nombres si quieres)
+  // IDs oficiales 1..16
   const REGIONES = React.useMemo(
     () => [
       { id: 1, nombre: "Tarapacá" },
@@ -47,17 +51,17 @@ function RegionComunaPicker({
     []
   );
 
-  // Sincroniza valor entrante si cambia desde el padre (editar ficha existente)
+  // sincroniza cuando edites otra ficha
   React.useEffect(() => {
     setRegionId(value?.regionId ?? "");
     setComunaCodigo(value?.comunaCodigo ?? "");
   }, [value?.regionId, value?.comunaCodigo]);
 
-  // Carga comunas cuando cambia la región (filtro en DB)
+  // trae comunas filtradas por región
   React.useEffect(() => {
     let cancelled = false;
 
-    async function load() {
+    (async () => {
       const rid = Number(regionId);
       if (!Number.isFinite(rid)) {
         setComunas([]);
@@ -67,7 +71,7 @@ function RegionComunaPicker({
       }
 
       const { data, error } = await supabase
-        .from("import_cl_comunas") // usa "public.import_cl_comunas" si tu tabla no está en 'public'
+        .from("import_cl_comunas")
         .select("codigo,nombre,region_id")
         .eq("region_id", rid)
         .order("nombre", { ascending: true });
@@ -90,9 +94,8 @@ function RegionComunaPicker({
       setComunas(data ?? []);
       setComunaCodigo(""); // reset al cambiar región
       onChange?.({ regionId: rid, comunaCodigo: "" });
-    }
+    })();
 
-    load();
     return () => {
       cancelled = true;
     };
@@ -100,8 +103,8 @@ function RegionComunaPicker({
   }, [regionId]);
 
   const handleRegion = (e) => {
-    const v = e.target.value; // string del select
-    setRegionId(v === "" ? "" : Number(v)); // guarda Number, o "" si vacío
+    const v = e.target.value;
+    setRegionId(v === "" ? "" : Number(v));
   };
 
   const handleComuna = (e) => {
@@ -113,192 +116,298 @@ function RegionComunaPicker({
     });
   };
 
+  const baseInput =
+    "w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-[15px] outline-none " +
+    "focus:ring-4 focus:ring-violet-100 focus:border-violet-400 transition";
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {/* Región */}
-      <label className="flex flex-col gap-1">
-        <span className="text-sm text-gray-600">Región</span>
+    <div className="grid gap-4 md:grid-cols-2">
+      <div>
+        <label className="block text-sm text-slate-600 mb-1">Región</label>
         <select
           value={regionId === "" ? "" : Number(regionId)}
           onChange={handleRegion}
           disabled={disabled}
-          className="border rounded px-2 py-1"
+          className={baseInput}
         >
-          <option value="">Seleccione...</option>
+          <option value="">Selecciona región…</option>
           {REGIONES.map((r) => (
             <option key={r.id} value={r.id}>
               {r.nombre}
             </option>
           ))}
         </select>
-      </label>
+      </div>
 
-      {/* Comuna */}
-      <label className="flex flex-col gap-1">
-        <span className="text-sm text-gray-600">Comuna</span>
+      <div>
+        <label className="block text-sm text-slate-600 mb-1">Comuna</label>
         <select
           value={comunaCodigo}
           onChange={handleComuna}
           disabled={disabled || !comunas.length}
-          className="border rounded px-2 py-1"
+          className={baseInput}
         >
-          <option value="">Seleccione...</option>
+          <option value="">— Selecciona comuna —</option>
           {comunas.map((c) => (
             <option key={c.codigo} value={c.codigo}>
               {c.nombre}
             </option>
           ))}
         </select>
-      </label>
+      </div>
     </div>
   );
 }
 
-/* =======================
+/* ============================================================
    Form principal
-   ======================= */
+   ============================================================ */
 export default function PersonalesForm({
   empleado = {},
-  onChange, // callback opcional para “levantar” el estado al padre
+  onSave,
+  onCancel,
   disabled = false,
 }) {
-  // Estado único del formulario (agrega aquí todos tus campos reales)
+  // Estado del formulario (agrega o renombra campos según tu modelo)
   const [form, setForm] = React.useState({
-    // Identificación
-    rut: empleado?.rut ?? "",
+    // básicos
     nombres: empleado?.nombres ?? "",
     apellidos: empleado?.apellidos ?? "",
+    rut: empleado?.rut ?? "",
+    cargo: empleado?.cargo ?? "",
 
-    // Contacto / dirección
-    email: empleado?.email ?? "",
-    telefono: empleado?.telefono ?? "",
+    // contacto
+    telefonoMovil: empleado?.telefonoMovil ?? "",
+    telefonoFijo: empleado?.telefonoFijo ?? "",
+    emailPersonal: empleado?.emailPersonal ?? "",
+    emailCorporativo: empleado?.emailCorporativo ?? "",
     direccion: empleado?.direccion ?? "",
 
-    // Región / Comuna (los importantes aquí)
+    // ubic
     regionId: empleado?.regionId ?? "",
     comunaCodigo: empleado?.comunaCodigo ?? "",
+
+    // otros (demo para que se vea como tu captura)
+    nacionalidad: empleado?.nacionalidad ?? "Chile",
+    estadoCivil: empleado?.estadoCivil ?? "Soltero/a",
   });
 
-  // Si “empleado” cambia desde afuera (ej: cambiar de ficha), sincroniza
+  // si cambia de ficha, sincroniza
   React.useEffect(() => {
     setForm((prev) => ({
       ...prev,
-      rut: empleado?.rut ?? "",
       nombres: empleado?.nombres ?? "",
       apellidos: empleado?.apellidos ?? "",
-      email: empleado?.email ?? "",
-      telefono: empleado?.telefono ?? "",
+      rut: empleado?.rut ?? "",
+      cargo: empleado?.cargo ?? "",
+      telefonoMovil: empleado?.telefonoMovil ?? "",
+      telefonoFijo: empleado?.telefonoFijo ?? "",
+      emailPersonal: empleado?.emailPersonal ?? "",
+      emailCorporativo: empleado?.emailCorporativo ?? "",
       direccion: empleado?.direccion ?? "",
       regionId: empleado?.regionId ?? "",
       comunaCodigo: empleado?.comunaCodigo ?? "",
+      nacionalidad: empleado?.nacionalidad ?? "Chile",
+      estadoCivil: empleado?.estadoCivil ?? "Soltero/a",
     }));
-  }, [
-    empleado?.rut,
-    empleado?.nombres,
-    empleado?.apellidos,
-    empleado?.email,
-    empleado?.telefono,
-    empleado?.direccion,
-    empleado?.regionId,
-    empleado?.comunaCodigo,
-  ]);
+  }, [empleado]);
 
-  // Helper para actualizar campo + notificar al padre
-  const setField = (k, v) => {
-    const next = { ...form, [k]: v };
-    setForm(next);
-    onChange?.(next);
-  };
+  const setField = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+
+  const baseInput =
+    "w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-[15px] outline-none " +
+    "focus:ring-4 focus:ring-violet-100 focus:border-violet-400 transition";
 
   return (
-    <div className="grid gap-6">
-      {/* ====== Identificación ====== */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm text-gray-600">RUT</span>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSave?.(form);
+      }}
+      className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 md:p-6"
+    >
+      <h3 className="text-[18px] font-semibold text-slate-800 mb-4">
+        Editar Información Personal
+      </h3>
+
+      {/* Nombres / Apellidos */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">Nombres *</label>
           <input
-            type="text"
-            className="border rounded px-2 py-1"
+            className={baseInput}
+            value={form.nombres}
+            onChange={(e) => setField("nombres", e.target.value)}
+            disabled={disabled}
+            required
+            placeholder="Eva"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">Apellidos *</label>
+          <input
+            className={baseInput}
+            value={form.apellidos}
+            onChange={(e) => setField("apellidos", e.target.value)}
+            disabled={disabled}
+            required
+            placeholder="Green"
+          />
+        </div>
+      </div>
+
+      {/* RUT / Cargo */}
+      <div className="grid gap-4 md:grid-cols-2 mt-4">
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">RUT *</label>
+          <input
+            className={baseInput}
             value={form.rut}
             onChange={(e) => setField("rut", e.target.value)}
             disabled={disabled}
             placeholder="11.111.111-1"
           />
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-sm text-gray-600">Nombres</span>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">Cargo</label>
           <input
-            type="text"
-            className="border rounded px-2 py-1"
-            value={form.nombres}
-            onChange={(e) => setField("nombres", e.target.value)}
+            className={baseInput}
+            value={form.cargo}
+            onChange={(e) => setField("cargo", e.target.value)}
             disabled={disabled}
+            placeholder="Tester Lead"
           />
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-sm text-gray-600">Apellidos</span>
-          <input
-            type="text"
-            className="border rounded px-2 py-1"
-            value={form.apellidos}
-            onChange={(e) => setField("apellidos", e.target.value)}
-            disabled={disabled}
-          />
-        </label>
+        </div>
       </div>
 
-      {/* ====== Contacto ====== */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm text-gray-600">Email</span>
-          <input
-            type="email"
-            className="border rounded px-2 py-1"
-            value={form.email}
-            onChange={(e) => setField("email", e.target.value)}
-            disabled={disabled}
-            placeholder="correo@empresa.com"
-          />
-        </label>
+      {/* Región / Comuna */}
+      <div className="mt-4">
+        <RegionComunaPicker
+          value={{ regionId: form.regionId, comunaCodigo: form.comunaCodigo }}
+          onChange={({ regionId, comunaCodigo }) => {
+            setField("regionId", regionId);
+            setField("comunaCodigo", comunaCodigo);
+          }}
+          disabled={disabled}
+        />
+      </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-sm text-gray-600">Teléfono</span>
-          <input
-            type="tel"
-            className="border rounded px-2 py-1"
-            value={form.telefono}
-            onChange={(e) => setField("telefono", e.target.value)}
+      {/* Teléfonos */}
+      <div className="grid gap-4 md:grid-cols-2 mt-4">
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">
+            Teléfono móvil
+          </label>
+        <input
+            className={baseInput}
+            value={form.telefonoMovil}
+            onChange={(e) => setField("telefonoMovil", e.target.value)}
             disabled={disabled}
             placeholder="+56 9 1234 5678"
           />
-        </label>
-
-        <label className="flex flex-col gap-1 sm:col-span-1">
-          <span className="text-sm text-gray-600">Dirección</span>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">
+            Teléfono fijo
+          </label>
           <input
-            type="text"
-            className="border rounded px-2 py-1"
-            value={form.direccion}
-            onChange={(e) => setField("direccion", e.target.value)}
+            className={baseInput}
+            value={form.telefonoFijo}
+            onChange={(e) => setField("telefonoFijo", e.target.value)}
             disabled={disabled}
-            placeholder="Calle 123, depto 45"
+            placeholder=""
           />
-        </label>
+        </div>
       </div>
 
-      {/* ====== Región y Comuna (corregidos) ====== */}
-      <RegionComunaPicker
-        value={{ regionId: form.regionId, comunaCodigo: form.comunaCodigo }}
-        onChange={({ regionId, comunaCodigo }) => {
-          setField("regionId", regionId);
-          setField("comunaCodigo", comunaCodigo);
-        }}
-        disabled={disabled}
-      />
+      {/* Emails */}
+      <div className="grid gap-4 md:grid-cols-2 mt-4">
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">
+            Email personal
+          </label>
+          <input
+            className={baseInput}
+            type="email"
+            value={form.emailPersonal}
+            onChange={(e) => setField("emailPersonal", e.target.value)}
+            disabled={disabled}
+            placeholder="correo@ejemplo.com"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">
+            Email corporativo
+          </label>
+          <input
+            className={baseInput}
+            type="email"
+            value={form.emailCorporativo}
+            onChange={(e) => setField("emailCorporativo", e.target.value)}
+            disabled={disabled}
+            placeholder="nombre@empresa.com"
+          />
+        </div>
+      </div>
 
-      {/* Aquí puedes dejar el resto de secciones/inputs de tu ficha tal cual */}
-    </div>
+      {/* Dirección */}
+      <div className="mt-4">
+        <label className="block text-sm text-slate-600 mb-1">Dirección</label>
+        <input
+          className={baseInput}
+          value={form.direccion}
+          onChange={(e) => setField("direccion", e.target.value)}
+          disabled={disabled}
+          placeholder="Calle 123, depto 45"
+        />
+      </div>
+
+      {/* Nacionalidad / Estado civil (decorativos para el layout de tu captura) */}
+      <div className="grid gap-4 md:grid-cols-2 mt-4">
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">Nacionalidad</label>
+          <select
+            className={baseInput}
+            value={form.nacionalidad}
+            onChange={(e) => setField("nacionalidad", e.target.value)}
+            disabled={disabled}
+          >
+            {["Chile","Argentina","Uruguay","Perú","Colombia","Venezuela","Bolivia"].map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">Estado civil</label>
+          <select
+            className={baseInput}
+            value={form.estadoCivil}
+            onChange={(e) => setField("estadoCivil", e.target.value)}
+            disabled={disabled}
+          >
+            {["Soltero/a","Casado/a","Divorciado/a","Viudo/a","Conviviente"].map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Acciones */}
+      <div className="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => onCancel?.()}
+          className="h-10 px-4 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="h-10 px-5 rounded-lg bg-gradient-to-r from-violet-500 to-indigo-500 text-white font-medium shadow-sm hover:shadow transition"
+        >
+          Guardar
+        </button>
+      </div>
+    </form>
   );
 }
