@@ -180,7 +180,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       fecha_nacimiento: form.fecha_nacimiento || null,
       direccion: form.direccion?.trim() || null,
 
-      region_id: asInt(form.region_id),
+      // ⬇️ Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
+      region_id: (() => {
+        const rid = asInt(form.region_id);
+        return rid == null ? null : (FIX_REGION_ID[rid] ?? rid);
+      })(),
+
       comuna_id: asInt(form.comuna_id), // guardar INT
 
       telefono_movil: form.telefono_movil?.trim() || null,
