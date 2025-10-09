@@ -2,6 +2,26 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+/** Mapa: id de tu tabla cl_regiones -> id oficial usado por comunas */
+const FIX_REGION_ID = {
+  1: 15, // Arica y Parinacota
+  2: 1,  // Tarapacá
+  3: 2,  // Antofagasta
+  4: 3,  // Atacama
+  5: 4,  // Coquimbo
+  6: 5,  // Valparaíso
+  7: 13, // Metropolitana
+  8: 6,  // O'Higgins
+  9: 7,  // Maule
+  10: 8, // Biobío
+  11: 9, // La Araucanía
+  12: 10,// Los Lagos
+  13: 12,// Magallanes
+  14: 14,// Los Ríos
+  15: 11,// Aysén
+  16: 16,// Ñuble
+};
+
 const asInt = (v) => {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
@@ -25,7 +45,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
-  // columnas (por compatibilidad; defaults de la vista import_cl_comunas)
+  // columnas (compat con vista import_cl_comunas)
   const [regionCol, setRegionCol] = useState("region_id");
   const [comunaValCol, setComunaValCol] = useState("codigo");
   const [comunaLabelCol, setComunaLabelCol] = useState("nombre");
@@ -44,7 +64,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     direccion: employee?.direccion ?? "",
 
     region_id: asInt(employee?.region_id),
-    // comuna_id puede ser string si usamos "codigo"
+    // comuna_id puede ser string (usa "codigo" de la vista)
     comuna_id: employee?.comuna_id ?? null,
 
     telefono_movil: employee?.telefono_movil ?? "",
@@ -69,7 +89,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     (async () => {
       try {
         const [rRes, ecRes, nRes] = await Promise.all([
-          // ⬇️ regiones desde DB (ID real)
           supabase.from("cl_regiones").select("id,nombre").order("id", { ascending: true }),
           supabase.from("catalog_estado_civil").select("id,nombre").order("id", { ascending: true }),
           supabase.from("catalog_nacionalidades").select("id,nombre").order("nombre", { ascending: true }),
@@ -89,7 +108,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detecta columnas reales de import_cl_comunas leyendo 1 fila (fallback a defaults)
+  // Detecta columnas de la vista import_cl_comunas (fallback a defaults)
   const detectColumns = async () => {
     const defaults = { rCol: "region_id", vCol: "codigo", lCol: "nombre" };
     const { data: sample, error } = await supabase
@@ -98,7 +117,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       .limit(1);
 
     if (error || !sample || !sample[0]) {
-      // usa los defaults de la vista
       setRegionCol(defaults.rCol);
       setComunaValCol(defaults.vCol);
       setComunaLabelCol(defaults.lCol);
@@ -120,30 +138,27 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     return { rCol, vCol, lCol };
   };
 
-  // carga comunas para una región concreta (filtro numérico)
-  const loadComunas = async (regionId) => {
-    if (!regionId) {
-      setComunas([]);
-      return [];
-    }
-    try {
-      console.log("[PersonalesForm] cargando comunas para region_id =", regionId);
-      const { rCol, vCol, lCol } = await detectColumns();
+  // carga comunas para una región concreta (aplicando FIX_REGION_ID)
+  const loadComunas = async (regionIdRaw) => {
+    const regionId = Number(regionIdRaw);
+    if (!Number.isFinite(regionId)) { setComunas([]); return []; }
 
+    const regionIdFixed = FIX_REGION_ID[regionId] ?? regionId; // 👈 ajuste clave
+    console.log("[PersonalesForm] regionId DB =", regionId, "→ oficial =", regionIdFixed);
+
+    try {
+      const { rCol, vCol, lCol } = await detectColumns();
       const sel = `${vCol},${lCol},${rCol}`;
+
       const { data, error } = await supabase
         .from("import_cl_comunas")
         .select(sel)
-        .eq(rCol, Number(regionId))                // ⬅️ filtro NUMÉRICO correcto
+        .eq(rCol, regionIdFixed)                        // filtra con ID oficial
         .order(lCol || "nombre", { ascending: true });
 
       if (error) {
         console.error("Error fetch comunas:", {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          rCol, vCol, lCol,
+          message: error.message, details: error.details, hint: error.hint, code: error.code, rCol, vCol, lCol,
         });
         setComunas([]);
         return [];
@@ -158,7 +173,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     }
   };
 
-  // Cuando cambia form.region_id, carga comunas
+  // Cuando cambia form.region_id, carga comunas y valida selección
   useEffect(() => {
     let canceled = false;
     (async () => {
@@ -205,16 +220,21 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       genero: form.genero || "O",
       discapacidad: !!form.discapacidad,
       activo: !!form.activo,
+
       fecha_nacimiento: form.fecha_nacimiento || null,
       direccion: form.direccion?.trim() || null,
+
       region_id: asInt(form.region_id),
       comuna_id: form.comuna_id ?? null,
+
       telefono_movil: form.telefono_movil?.trim() || null,
       telefono_fijo: form.telefono_fijo?.trim() || null,
       email_personal: form.email_personal?.trim() || null,
       email_corporativo: form.email_corporativo?.trim() || null,
+
       estado_civil_id: asInt(form.estado_civil_id),
       nacionalidad_id: asInt(form.nacionalidad_id),
+
       pais_residencia: form.pais_residencia?.trim() || null,
       idioma_preferido: form.idioma_preferido?.trim() || null,
       pronombres: form.pronombres?.trim() || null,
