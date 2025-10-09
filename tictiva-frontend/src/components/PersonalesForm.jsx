@@ -25,7 +25,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
-  // columnas detectadas de import_cl_comunas
+  // columnas (por compatibilidad; defaults de la vista import_cl_comunas)
   const [regionCol, setRegionCol] = useState("region_id");
   const [comunaValCol, setComunaValCol] = useState("codigo");
   const [comunaLabelCol, setComunaLabelCol] = useState("nombre");
@@ -69,6 +69,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     (async () => {
       try {
         const [rRes, ecRes, nRes] = await Promise.all([
+          // ⬇️ regiones desde DB (ID real)
           supabase.from("cl_regiones").select("id,nombre").order("id", { ascending: true }),
           supabase.from("catalog_estado_civil").select("id,nombre").order("id", { ascending: true }),
           supabase.from("catalog_nacionalidades").select("id,nombre").order("nombre", { ascending: true }),
@@ -77,7 +78,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         setRegiones(rRes.data || []);
         setEstadosCivil(ecRes.data || []);
         setNacionalidades(nRes.data || []);
-        // Si employee tenía region_id, lanzamos la carga de comunas aquí (después de regiones cargadas)
         if (asInt(employee?.region_id)) {
           await loadComunas(asInt(employee.region_id));
         }
@@ -89,58 +89,38 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detecta columnas reales de import_cl_comunas leyendo 1 fila
+  // Detecta columnas reales de import_cl_comunas leyendo 1 fila (fallback a defaults)
   const detectColumns = async () => {
+    const defaults = { rCol: "region_id", vCol: "codigo", lCol: "nombre" };
     const { data: sample, error } = await supabase
       .from("import_cl_comunas")
       .select("*")
       .limit(1);
 
-    if (error) {
-      console.error("No se pudo leer esquema de import_cl_comunas:", error);
-      return { rCol: regionCol, vCol: comunaValCol, lCol: comunaLabelCol };
-    }
-    const row = sample?.[0] ?? {};
-    const keys = Object.keys(row);
-    if (!keys.length) {
-      // si no hay filas, mantenemos defaults
-      return { rCol: regionCol, vCol: comunaValCol, lCol: comunaLabelCol };
+    if (error || !sample || !sample[0]) {
+      // usa los defaults de la vista
+      setRegionCol(defaults.rCol);
+      setComunaValCol(defaults.vCol);
+      setComunaLabelCol(defaults.lCol);
+      return defaults;
     }
 
-    // util: busca primera coincidencia por candidatos (case-insensitive)
-    const pick = (candidates, fallbackRegex) => {
-      for (const cand of candidates) {
-        const hit = keys.find((k) => k.toLowerCase() === cand.toLowerCase());
-        if (hit) return hit;
-      }
-      if (fallbackRegex) {
-        const hit = keys.find((k) => fallbackRegex.test(k));
-        if (hit) return hit;
-      }
-      return null;
-    };
+    const row = sample[0];
+    const keys = Object.keys(row).map((k) => k.toLowerCase());
+    const has = (k) => keys.includes(k);
 
-    const rCol =
-      pick(["region_id", "id_region", "region", "regionid", "idregion"], /region/i) ||
-      regionCol;
-
-    const lCol =
-      pick(["nombre", "comuna", "name", "glosa", "descripcion", "desc"], /(nombre|comuna|name|desc)/i) ||
-      comunaLabelCol;
-
-    const vCol =
-      pick(["codigo", "id", "gid", "comuna_id", "id_comuna", "code"], /(codigo|code|id|gid)/i) ||
-      lCol || comunaValCol;
+    const rCol = has("region_id") ? "region_id" : defaults.rCol;
+    const lCol = has("nombre") ? "nombre" : defaults.lCol;
+    const vCol = has("codigo") ? "codigo" : (has("id") ? "id" : lCol);
 
     if (rCol !== regionCol) setRegionCol(rCol);
     if (lCol !== comunaLabelCol) setComunaLabelCol(lCol);
     if (vCol !== comunaValCol) setComunaValCol(vCol);
 
-    console.log("[PersonalesForm] columnas detectadas:", { rCol, vCol, lCol });
     return { rCol, vCol, lCol };
   };
 
-  // función para cargar comunas de una región concreta
+  // carga comunas para una región concreta (filtro numérico)
   const loadComunas = async (regionId) => {
     if (!regionId) {
       setComunas([]);
@@ -150,19 +130,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       console.log("[PersonalesForm] cargando comunas para region_id =", regionId);
       const { rCol, vCol, lCol } = await detectColumns();
 
-      // armamos el select dinámico asegurando incluir las columnas usadas por order/filtro
-      let sel = `${vCol},${lCol},${rCol}`;
-
-      let q = supabase
+      const sel = `${vCol},${lCol},${rCol}`;
+      const { data, error } = await supabase
         .from("import_cl_comunas")
         .select(sel)
-        // comparar como string evita 400 por tipos distintos
-        .eq(rCol, String(regionId));
-
-      // si existe columna de etiqueta, ordenamos por ella
-      if (lCol) q = q.order(lCol, { ascending: true });
-
-      const { data, error } = await q;
+        .eq(rCol, Number(regionId))                // ⬅️ filtro NUMÉRICO correcto
+        .order(lCol || "nombre", { ascending: true });
 
       if (error) {
         console.error("Error fetch comunas:", {
@@ -185,20 +158,18 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     }
   };
 
-  // Cuando cambia form.region_id, carga comunas (esto maneja el cambio por UI)
+  // Cuando cambia form.region_id, carga comunas
   useEffect(() => {
     let canceled = false;
     (async () => {
       const regionId = asInt(form.region_id);
       if (!regionId) {
         setComunas([]);
-        // limpiamos comuna si no hay región
         setForm((s) => ({ ...s, comuna_id: null }));
         return;
       }
       const data = await loadComunas(regionId);
       if (canceled) return;
-      // si la comuna actual no está en la lista (p. ej. fue de otra región), la limpiamos
       if (
         form.comuna_id &&
         Array.isArray(data) &&
@@ -220,7 +191,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     if (!form.nombre?.trim()) e.nombre = "Obligatorio";
     if (!form.apellido?.trim()) e.apellido = "Obligatorio";
     if (!form.rut?.trim()) e.rut = "Obligatorio";
-    // si hay comuna, debe haber region
     if (form.comuna_id && !form.region_id) e.region_id = "Selecciona región para esa comuna";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -235,31 +205,21 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       genero: form.genero || "O",
       discapacidad: !!form.discapacidad,
       activo: !!form.activo,
-
       fecha_nacimiento: form.fecha_nacimiento || null,
       direccion: form.direccion?.trim() || null,
-
       region_id: asInt(form.region_id),
-      // comuna_id puede ser string (p.ej. "codigo"). Lo dejamos tal cual.
       comuna_id: form.comuna_id ?? null,
-
       telefono_movil: form.telefono_movil?.trim() || null,
       telefono_fijo: form.telefono_fijo?.trim() || null,
       email_personal: form.email_personal?.trim() || null,
       email_corporativo: form.email_corporativo?.trim() || null,
-
       estado_civil_id: asInt(form.estado_civil_id),
       nacionalidad_id: asInt(form.nacionalidad_id),
-
       pais_residencia: form.pais_residencia?.trim() || null,
       idioma_preferido: form.idioma_preferido?.trim() || null,
       pronombres: form.pronombres?.trim() || null,
     };
-    return {
-      ...base,
-      nombres: base.nombre,
-      apellidos: base.apellido,
-    };
+    return { ...base, nombres: base.nombre, apellidos: base.apellido };
   }, [form]);
 
   const save = async (e) => {
@@ -323,8 +283,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             onChange={(e) => {
               const val = asInt(e.target.value);
               setField("region_id", val);
-              // reset comuna_id al cambiar de región
-              setField("comuna_id", null);
+              setField("comuna_id", null); // reset al cambiar de región
             }}
           >
             <option value="">— Selecciona región —</option>
@@ -395,7 +354,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           </select>
         </div>
 
-        {/* fill grid */}
         <div className="form-col-2" />
       </div>
 
