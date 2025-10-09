@@ -2,24 +2,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-/** Mapa: id de tu tabla cl_regiones -> id oficial usado por comunas */
+/** Mapa: id de tu cl_regiones -> id oficial usado por cl_comunas */
 const FIX_REGION_ID = {
-  1: 15, // Arica y Parinacota
-  2: 1,  // Tarapacá
-  3: 2,  // Antofagasta
-  4: 3,  // Atacama
-  5: 4,  // Coquimbo
-  6: 5,  // Valparaíso
-  7: 13, // Metropolitana
-  8: 6,  // O'Higgins
-  9: 7,  // Maule
-  10: 8, // Biobío
-  11: 9, // La Araucanía
-  12: 10,// Los Lagos
-  13: 12,// Magallanes
-  14: 14,// Los Ríos
-  15: 11,// Aysén
-  16: 16,// Ñuble
+  1: 15,  // Arica y Parinacota
+  2: 1,   // Tarapacá
+  3: 2,   // Antofagasta
+  4: 3,   // Atacama
+  5: 4,   // Coquimbo
+  6: 5,   // Valparaíso
+  7: 13,  // Metropolitana
+  8: 6,   // O'Higgins
+  9: 7,   // Maule
+  10: 8,  // Biobío
+  11: 9,  // La Araucanía
+  12: 10, // Los Lagos
+  13: 12, // Magallanes
+  14: 14, // Los Ríos
+  15: 11, // Aysén
+  16: 16, // Ñuble
 };
 
 const asInt = (v) => {
@@ -45,11 +45,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
-  // columnas (compat con vista import_cl_comunas)
-  const [regionCol, setRegionCol] = useState("region_id");
-  const [comunaValCol, setComunaValCol] = useState("codigo");
-  const [comunaLabelCol, setComunaLabelCol] = useState("nombre");
-
   // estado del form
   const [form, setForm] = useState(() => ({
     nombre: employee?.nombre ?? employee?.nombres ?? "",
@@ -64,8 +59,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     direccion: employee?.direccion ?? "",
 
     region_id: asInt(employee?.region_id),
-    // comuna_id puede ser string (usa "codigo" de la vista)
-    comuna_id: employee?.comuna_id ?? null,
+    comuna_id: asInt(employee?.comuna_id),
 
     telefono_movil: employee?.telefono_movil ?? "",
     telefono_fijo: employee?.telefono_fijo ?? "",
@@ -83,7 +77,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Carga regiones / estados / nacionalidades primero
+  // Carga catálogos base
   useEffect(() => {
     let canceled = false;
     (async () => {
@@ -97,9 +91,8 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         setRegiones(rRes.data || []);
         setEstadosCivil(ecRes.data || []);
         setNacionalidades(nRes.data || []);
-        if (asInt(employee?.region_id)) {
-          await loadComunas(asInt(employee.region_id));
-        }
+        const rid = asInt(employee?.region_id);
+        if (rid) await loadComunas(rid);
       } catch (err) {
         console.error("Error cargando catálogos:", err);
       }
@@ -108,62 +101,25 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detecta columnas de la vista import_cl_comunas (fallback a defaults)
-  const detectColumns = async () => {
-    const defaults = { rCol: "region_id", vCol: "codigo", lCol: "nombre" };
-    const { data: sample, error } = await supabase
-      .from("import_cl_comunas")
-      .select("*")
-      .limit(1);
-
-    if (error || !sample || !sample[0]) {
-      setRegionCol(defaults.rCol);
-      setComunaValCol(defaults.vCol);
-      setComunaLabelCol(defaults.lCol);
-      return defaults;
-    }
-
-    const row = sample[0];
-    const keys = Object.keys(row).map((k) => k.toLowerCase());
-    const has = (k) => keys.includes(k);
-
-    const rCol = has("region_id") ? "region_id" : defaults.rCol;
-    const lCol = has("nombre") ? "nombre" : defaults.lCol;
-    const vCol = has("codigo") ? "codigo" : (has("id") ? "id" : lCol);
-
-    if (rCol !== regionCol) setRegionCol(rCol);
-    if (lCol !== comunaLabelCol) setComunaLabelCol(lCol);
-    if (vCol !== comunaValCol) setComunaValCol(vCol);
-
-    return { rCol, vCol, lCol };
-  };
-
-  // carga comunas para una región concreta (aplicando FIX_REGION_ID)
+  // Cargar comunas por región (aplicando FIX_REGION_ID)
   const loadComunas = async (regionIdRaw) => {
     const regionId = Number(regionIdRaw);
-    if (!Number.isFinite(regionId)) { setComunas([]); return []; }
-
-    const regionIdFixed = FIX_REGION_ID[regionId] ?? regionId; // 👈 ajuste clave
-    console.log("[PersonalesForm] regionId DB =", regionId, "→ oficial =", regionIdFixed);
-
+    if (!Number.isFinite(regionId)) {
+      setComunas([]);
+      return [];
+    }
+    const regionIdFixed = FIX_REGION_ID[regionId] ?? regionId;
     try {
-      const { rCol, vCol, lCol } = await detectColumns();
-      const sel = `${vCol},${lCol},${rCol}`;
-
       const { data, error } = await supabase
-        .from("import_cl_comunas")
-        .select(sel)
-        .eq(rCol, regionIdFixed)                        // filtra con ID oficial
-        .order(lCol || "nombre", { ascending: true });
-
+        .from("cl_comunas")
+        .select("id,nombre,region_id")
+        .eq("region_id", regionIdFixed)
+        .order("nombre", { ascending: true });
       if (error) {
-        console.error("Error fetch comunas:", {
-          message: error.message, details: error.details, hint: error.hint, code: error.code, rCol, vCol, lCol,
-        });
+        console.error("Error fetch comunas:", error);
         setComunas([]);
         return [];
       }
-
       setComunas(data || []);
       return data || [];
     } catch (e) {
@@ -173,23 +129,23 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     }
   };
 
-  // Cuando cambia form.region_id, carga comunas y valida selección
+  // Recarga comunas cuando cambia la región
   useEffect(() => {
     let canceled = false;
     (async () => {
-      const regionId = asInt(form.region_id);
-      if (!regionId) {
+      const rid = asInt(form.region_id);
+      if (!rid) {
         setComunas([]);
         setForm((s) => ({ ...s, comuna_id: null }));
         return;
       }
-      const data = await loadComunas(regionId);
+      const data = await loadComunas(rid);
       if (canceled) return;
       if (
         form.comuna_id &&
         Array.isArray(data) &&
         data.length > 0 &&
-        !data.some((c) => c[comunaValCol] === form.comuna_id)
+        !data.some((c) => c.id === form.comuna_id)
       ) {
         setForm((s) => ({ ...s, comuna_id: null }));
       }
@@ -225,7 +181,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       direccion: form.direccion?.trim() || null,
 
       region_id: asInt(form.region_id),
-      comuna_id: form.comuna_id ?? null,
+      comuna_id: asInt(form.comuna_id), // guardar INT
 
       telefono_movil: form.telefono_movil?.trim() || null,
       telefono_fijo: form.telefono_fijo?.trim() || null,
@@ -250,7 +206,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       const { data, error } = await supabase
         .from("employees")
         .update(payload)
-        .eq("id", employee.id)
+        .eq("id", employee?.id) // protegido
         .select("*")
         .single();
       if (error) {
@@ -275,24 +231,38 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         {/* Nombre / Apellido */}
         <div className="form-field">
           <label>Nombres *</label>
-          <input value={form.nombre} onChange={(e) => setField("nombre", e.target.value)} />
+          <input
+            value={form.nombre}
+            onChange={(e) => setField("nombre", e.target.value)}
+          />
           {errors.nombre && <div className="form-error">{errors.nombre}</div>}
         </div>
+
         <div className="form-field">
           <label>Apellidos *</label>
-          <input value={form.apellido} onChange={(e) => setField("apellido", e.target.value)} />
+          <input
+            value={form.apellido}
+            onChange={(e) => setField("apellido", e.target.value)}
+          />
           {errors.apellido && <div className="form-error">{errors.apellido}</div>}
         </div>
 
         {/* RUT / Cargo */}
         <div className="form-field">
           <label>RUT *</label>
-          <input value={form.rut} onChange={(e) => setField("rut", e.target.value)} />
+          <input
+            value={form.rut}
+            onChange={(e) => setField("rut", e.target.value)}
+          />
           {errors.rut && <div className="form-error">{errors.rut}</div>}
         </div>
+
         <div className="form-field">
           <label>Cargo</label>
-          <input value={form.cargo} onChange={(e) => setField("cargo", e.target.value)} />
+          <input
+            value={form.cargo}
+            onChange={(e) => setField("cargo", e.target.value)}
+          />
         </div>
 
         {/* Región / Comuna */}
@@ -303,7 +273,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             onChange={(e) => {
               const val = asInt(e.target.value);
               setField("region_id", val);
-              setField("comuna_id", null); // reset al cambiar de región
+              setField("comuna_id", null); // reset al cambiar región
             }}
           >
             <option value="">— Selecciona región —</option>
@@ -320,40 +290,61 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Comuna</label>
           <select
             value={form.comuna_id ?? ""}
-            onChange={(e) => setField("comuna_id", e.target.value)}
+            onChange={(e) => setField("comuna_id", asInt(e.target.value))}
             disabled={!form.region_id || comunas.length === 0}
           >
-            <option value="">{form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}</option>
+            <option value="">
+              {form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}
+            </option>
             {comunas.map((c) => (
-              <option key={c[comunaValCol]} value={c[comunaValCol]}>
-                {c[comunaLabelCol] ?? String(c[comunaValCol])}
+              <option key={c.id} value={c.id}>
+                {c.nombre}
               </option>
             ))}
           </select>
         </div>
 
-        {/* resto de campos resumidos */}
+        {/* Otros campos */}
         <div className="form-field">
           <label>Teléfono móvil</label>
-          <input value={form.telefono_movil} onChange={(e) => setField("telefono_movil", e.target.value)} />
+          <input
+            value={form.telefono_movil}
+            onChange={(e) => setField("telefono_movil", e.target.value)}
+          />
         </div>
+
         <div className="form-field">
           <label>Teléfono fijo</label>
-          <input value={form.telefono_fijo} onChange={(e) => setField("telefono_fijo", e.target.value)} />
+          <input
+            value={form.telefono_fijo}
+            onChange={(e) => setField("telefono_fijo", e.target.value)}
+          />
         </div>
 
         <div className="form-field">
           <label>Email personal</label>
-          <input type="email" value={form.email_personal} onChange={(e) => setField("email_personal", e.target.value)} />
+          <input
+            type="email"
+            value={form.email_personal}
+            onChange={(e) => setField("email_personal", e.target.value)}
+          />
         </div>
+
         <div className="form-field">
           <label>Email corporativo</label>
-          <input type="email" value={form.email_corporativo} onChange={(e) => setField("email_corporativo", e.target.value)} />
+          <input
+            type="email"
+            value={form.email_corporativo}
+            onChange={(e) => setField("email_corporativo", e.target.value)}
+          />
         </div>
 
         <div className="form-field">
           <label>Nacionalidad</label>
-          <select value={form.nacionalidad_id ?? ""} onChange={(e) => setField("nacionalidad_id", asInt(e.target.value))}>
+          <select
+            value={form.nacionalidad_id ?? ""}
+            onChange={(e) => setField("nacionalidad_id", asInt(e.target.value))}
+          >
             <option value="">— Selecciona nacionalidad —</option>
             {nacionalidades.map((n) => (
               <option key={n.id} value={n.id}>
@@ -362,9 +353,13 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             ))}
           </select>
         </div>
+
         <div className="form-field">
           <label>Estado civil</label>
-          <select value={form.estado_civil_id ?? ""} onChange={(e) => setField("estado_civil_id", asInt(e.target.value))}>
+          <select
+            value={form.estado_civil_id ?? ""}
+            onChange={(e) => setField("estado_civil_id", asInt(e.target.value))}
+          >
             <option value="">— Selecciona estado civil —</option>
             {estadosCivil.map((ec) => (
               <option key={ec.id} value={ec.id}>
@@ -378,10 +373,19 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       </div>
 
       <div className="form-actions">
-        <button type="button" className="lf-btn lf-btn-ghost" onClick={onCancel} disabled={saving}>
+        <button
+          type="button"
+          className="lf-btn lf-btn-ghost"
+          onClick={onCancel}
+          disabled={saving}
+        >
           Cancelar
         </button>
-        <button type="submit" className="lf-btn lf-btn-primary" disabled={saving}>
+        <button
+          type="submit"
+          className="lf-btn lf-btn-primary"
+          disabled={saving}
+        >
           {saving ? "Guardando…" : "Guardar"}
         </button>
       </div>
