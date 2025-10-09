@@ -25,6 +25,10 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
+  // claves dinámicas detectadas para la tabla de comunas
+  const [regionCol, setRegionCol] = useState("region_id"); // se autoajusta si difiere
+  const [comunaValCol, setComunaValCol] = useState("codigo"); // id/codigo/gid/etc.
+
   // estado del form
   const [form, setForm] = useState(() => ({
     nombre: employee?.nombre ?? employee?.nombres ?? "",
@@ -39,7 +43,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     direccion: employee?.direccion ?? "",
 
     region_id: asInt(employee?.region_id),
-    comuna_id: asInt(employee?.comuna_id),
+    comuna_id: employee?.comuna_id ?? null, // puede ser string si usamos "codigo"
 
     telefono_movil: employee?.telefono_movil ?? "",
     telefono_fijo: employee?.telefono_fijo ?? "",
@@ -83,25 +87,77 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Detecta dinámicamente cómo se llaman las columnas:
+   * - columna de región: "region_id" | "id_region" | "region" | "regionId" | "idRegion"
+   * - columna de valor de comuna: "codigo" | "id" | "gid" | "comuna_id" | "id_comuna" | "code"
+   */
+  const detectColumns = async () => {
+    const regionCandidates = ["region_id", "id_region", "region", "regionId", "idRegion"];
+    const valueCandidates  = ["codigo", "id", "gid", "comuna_id", "id_comuna", "code"];
+
+    // Detectar columna de región probando filtros vacíos y sin ordenar
+    let detectedRegion = null;
+    for (const c of regionCandidates) {
+      const { error } = await supabase
+        .from("import_cl_comunas")
+        .select("nombre")
+        .limit(1)
+        .or(`${c}.is.null,${c}.not.is.null`); // fuerza a validar nombre de columna
+      if (!error) { detectedRegion = c; break; }
+    }
+    if (!detectedRegion) detectedRegion = "region_id";
+    if (regionCol !== detectedRegion) setRegionCol(detectedRegion);
+
+    // Detectar columna de valor obteniendo una fila
+    let detectedValue = null;
+    const { data: sample, error: eSample } = await supabase
+      .from("import_cl_comunas")
+      .select("*")
+      .limit(1);
+    if (!eSample && sample && sample.length) {
+      const row = sample[0];
+      for (const vc of valueCandidates) {
+        if (Object.prototype.hasOwnProperty.call(row, vc)) { detectedValue = vc; break; }
+      }
+    }
+    if (!detectedValue) detectedValue = "codigo";
+    if (comunaValCol !== detectedValue) setComunaValCol(detectedValue);
+
+    return { detectedRegion, detectedValue };
+  };
+
   // función para cargar comunas de una región concreta
   const loadComunas = async (regionId) => {
     if (!regionId) {
       setComunas([]);
-      return;
+      return [];
     }
     try {
       console.log("[PersonalesForm] cargando comunas para region_id =", regionId);
+      // aseguramos columnas válidas
+      const { detectedRegion, detectedValue } = await detectColumns();
+      // si la columna de región en BD es texto, comparar como string evita 400
+      const regionFilterValue = String(regionId);
+
       const { data, error } = await supabase
-        .from("import_cl_comunas")  // <-- tabla corregida
-        .select("codigo,nombre,region_id") // <-- columnas correctas
-        .eq("region_id", regionId)
+        .from("import_cl_comunas")
+        .select(`${detectedValue},nombre,${detectedRegion}`)
+        .eq(detectedRegion, regionFilterValue)
         .order("nombre", { ascending: true });
+
       if (error) {
-        console.error("Error fetch comunas:", error);
+        // Log detallado para ver causa exacta en consola
+        console.error("Error fetch comunas:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
         setComunas([]);
-        return;
+        return [];
       }
-      console.log("[PersonalesForm] comunas obtenidas:", (data || []).length);
+
       setComunas(data || []);
       return data || [];
     } catch (e) {
@@ -125,12 +181,18 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       const data = await loadComunas(regionId);
       if (canceled) return;
       // si la comuna actual no está en la lista (p. ej. fue de otra región), la limpiamos
-      if (form.comuna_id && Array.isArray(data) && !data.some((c) => c.codigo === form.comuna_id)) {
+      if (
+        form.comuna_id &&
+        Array.isArray(data) &&
+        data.length > 0 &&
+        !data.some((c) => c[comunaValCol] === form.comuna_id)
+      ) {
         setForm((s) => ({ ...s, comuna_id: null }));
       }
     })();
     return () => { canceled = true; };
-  }, [form.region_id]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.region_id]);
 
   const setField = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
@@ -160,7 +222,8 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       direccion: form.direccion?.trim() || null,
 
       region_id: asInt(form.region_id),
-      comuna_id: asInt(form.comuna_id),
+      // comuna_id puede ser string (ej. "codigo"). Lo dejamos tal cual.
+      comuna_id: form.comuna_id ?? null,
 
       telefono_movil: form.telefono_movil?.trim() || null,
       telefono_fijo: form.telefono_fijo?.trim() || null,
@@ -242,6 +305,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             onChange={(e) => {
               const val = asInt(e.target.value);
               setField("region_id", val);
+              // reset comuna_id al cambiar de región
               setField("comuna_id", null);
             }}
           >
@@ -259,12 +323,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Comuna</label>
           <select
             value={form.comuna_id ?? ""}
-            onChange={(e) => setField("comuna_id", e.target.value)} // usamos valor tal cual
+            onChange={(e) => setField("comuna_id", e.target.value)}
             disabled={!form.region_id || comunas.length === 0}
           >
             <option value="">{form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}</option>
             {comunas.map((c) => (
-              <option key={c.codigo} value={c.codigo}>
+              <option key={c[comunaValCol]} value={c[comunaValCol]}>
                 {c.nombre}
               </option>
             ))}
