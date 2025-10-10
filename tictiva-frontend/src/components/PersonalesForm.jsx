@@ -22,6 +22,12 @@ const FIX_REGION_ID = {
   16: 16, // Ñuble
 };
 
+/** Mapa inverso: id oficial -> id de tu cl_regiones (para mostrar correcto en el select) */
+const INV_FIX_REGION_ID = Object.entries(FIX_REGION_ID).reduce((acc, [localId, oficialId]) => {
+  acc[Number(oficialId)] = Number(localId);
+  return acc;
+}, {});
+
 const asInt = (v) => {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
@@ -46,33 +52,39 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   const [nacionalidades, setNacionalidades] = useState([]);
 
   // estado del form
-  const [form, setForm] = useState(() => ({
-    nombre: employee?.nombre ?? employee?.nombres ?? "",
-    apellido: employee?.apellido ?? employee?.apellidos ?? "",
-    rut: employee?.rut ?? "",
-    cargo: employee?.cargo ?? "",
-    genero: employee?.genero ?? "O",
-    discapacidad: !!employee?.discapacidad,
-    activo: employee?.activo ?? true,
+  const [form, setForm] = useState(() => {
+    // employee.region_id viene guardado con ID OFICIAL → convertir a ID LOCAL para el select
+    const oficialRid = asInt(employee?.region_id);
+    const localRid = oficialRid == null ? null : (INV_FIX_REGION_ID[oficialRid] ?? oficialRid);
 
-    fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
-    direccion: employee?.direccion ?? "",
+    return {
+      nombre: employee?.nombre ?? employee?.nombres ?? "",
+      apellido: employee?.apellido ?? employee?.apellidos ?? "",
+      rut: employee?.rut ?? "",
+      cargo: employee?.cargo ?? "",
+      genero: employee?.genero ?? "O",
+      discapacidad: !!employee?.discapacidad,
+      activo: employee?.activo ?? true,
 
-    region_id: asInt(employee?.region_id),
-    comuna_id: asInt(employee?.comuna_id),
+      fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
+      direccion: employee?.direccion ?? "",
 
-    telefono_movil: employee?.telefono_movil ?? "",
-    telefono_fijo: employee?.telefono_fijo ?? "",
-    email_personal: employee?.email_personal ?? "",
-    email_corporativo: employee?.email_corporativo ?? "",
+      region_id: localRid,                  // ← ahora el select muestra la región correcta
+      comuna_id: asInt(employee?.comuna_id),
 
-    estado_civil_id: asInt(employee?.estado_civil_id),
-    nacionalidad_id: asInt(employee?.nacionalidad_id),
+      telefono_movil: employee?.telefono_movil ?? "",
+      telefono_fijo: employee?.telefono_fijo ?? "",
+      email_personal: employee?.email_personal ?? "",
+      email_corporativo: employee?.email_corporativo ?? "",
 
-    pais_residencia: employee?.pais_residencia ?? "",
-    idioma_preferido: employee?.idioma_preferido ?? "",
-    pronombres: employee?.pronombres ?? "",
-  }));
+      estado_civil_id: asInt(employee?.estado_civil_id),
+      nacionalidad_id: asInt(employee?.nacionalidad_id),
+
+      pais_residencia: employee?.pais_residencia ?? "",
+      idioma_preferido: employee?.idioma_preferido ?? "",
+      pronombres: employee?.pronombres ?? "",
+    };
+  });
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -91,8 +103,10 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         setRegiones(rRes.data || []);
         setEstadosCivil(ecRes.data || []);
         setNacionalidades(nRes.data || []);
-        const rid = asInt(employee?.region_id);
-        if (rid) await loadComunas(rid);
+
+        // Cargar comunas con el ID LOCAL inicial (ya convertido arriba)
+        const ridLocal = asInt((employee && (INV_FIX_REGION_ID[asInt(employee.region_id)] ?? asInt(employee.region_id))) ?? form.region_id);
+        if (ridLocal) await loadComunas(ridLocal);
       } catch (err) {
         console.error("Error cargando catálogos:", err);
       }
@@ -108,7 +122,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       setComunas([]);
       return [];
     }
-    const regionIdFixed = FIX_REGION_ID[regionId] ?? regionId;
+    const regionIdFixed = FIX_REGION_ID[regionId] ?? regionId; // LOCAL -> OFICIAL
     try {
       const { data, error } = await supabase
         .from("cl_comunas")
@@ -129,17 +143,17 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     }
   };
 
-  // Recarga comunas cuando cambia la región
+  // Recarga comunas cuando cambia la región (desde el select: ID LOCAL)
   useEffect(() => {
     let canceled = false;
     (async () => {
-      const rid = asInt(form.region_id);
-      if (!rid) {
+      const ridLocal = asInt(form.region_id);
+      if (!ridLocal) {
         setComunas([]);
         setForm((s) => ({ ...s, comuna_id: null }));
         return;
       }
-      const data = await loadComunas(rid);
+      const data = await loadComunas(ridLocal);
       if (canceled) return;
       if (
         form.comuna_id &&
@@ -180,13 +194,13 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       fecha_nacimiento: form.fecha_nacimiento || null,
       direccion: form.direccion?.trim() || null,
 
-      // ⬇️ Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
+      // Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
       region_id: (() => {
-        const rid = asInt(form.region_id);
-        return rid == null ? null : (FIX_REGION_ID[rid] ?? rid);
+        const ridLocal = asInt(form.region_id);
+        return ridLocal == null ? null : (FIX_REGION_ID[ridLocal] ?? ridLocal);
       })(),
 
-      comuna_id: asInt(form.comuna_id), // guardar INT
+      comuna_id: asInt(form.comuna_id), // INT (id de cl_comunas)
 
       telefono_movil: form.telefono_movil?.trim() || null,
       telefono_fijo: form.telefono_fijo?.trim() || null,
@@ -211,7 +225,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       const { data, error } = await supabase
         .from("employees")
         .update(payload)
-        .eq("id", employee?.id) // protegido
+        .eq("id", employee?.id)
         .select("*")
         .single();
       if (error) {
@@ -278,7 +292,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             onChange={(e) => {
               const val = asInt(e.target.value);
               setField("region_id", val);
-              setField("comuna_id", null); // reset al cambiar región
+              setField("comuna_id", null);
             }}
           >
             <option value="">— Selecciona región —</option>
