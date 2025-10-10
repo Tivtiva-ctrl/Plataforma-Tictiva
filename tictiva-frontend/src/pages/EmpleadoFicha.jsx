@@ -3,9 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
-import PersonalesView from "../components/Personales"; // <-- tu componente de lectura
-
-// Solo dejamos tus importes reales
+import PersonalesView from "../components/Personales"; // lectura
 import PersonalesForm from "../components/PersonalesForm";
 import "./Personales.css";
 
@@ -26,6 +24,16 @@ const isUUID = (v = "") =>
 const likelyRut = (v = "") => v.includes("-") || v.includes(".");
 const fullName = (e) => `${e?.nombre ?? ""} ${e?.apellido ?? ""}`.trim();
 
+/** Mapa de IDs locales (cl_regiones) -> IDs oficiales (cl_comunas / guardado) */
+const FIX_REGION_ID = {
+  1: 15, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 13, 8: 6,
+  9: 7, 10: 8, 11: 9, 12: 10, 13: 12, 14: 14, 15: 11, 16: 16,
+};
+/** Inverso: ID oficial -> ID local (para mostrar el nombre correcto desde cl_regiones) */
+const INV_FIX_REGION_ID = Object.fromEntries(
+  Object.entries(FIX_REGION_ID).map(([local, oficial]) => [Number(oficial), Number(local)])
+);
+
 export default function EmpleadoFicha() {
   const navigate = useNavigate();
   const params = useParams();
@@ -37,6 +45,9 @@ export default function EmpleadoFicha() {
   const [emp, setEmp] = useState(null);
   const [tab, setTab] = useState("personales");
   const [editing, setEditing] = useState(false);
+
+  // Catálogo de regiones (locales)
+  const [regiones, setRegiones] = useState([]);
 
   // Carga empleado (por RUT o por ID)
   useEffect(() => {
@@ -71,11 +82,54 @@ export default function EmpleadoFicha() {
     return () => { cancel = true; };
   }, [ref]);
 
+  // Carga catálogo de regiones (IDs locales) para resolver el nombre correcto
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("cl_regiones")
+          .select("id,nombre")
+          .order("id", { ascending: true });
+        if (!cancel) {
+          if (error) console.error("Error cargando regiones:", error);
+          setRegiones(data || []);
+        }
+      } catch (e) {
+        if (!cancel) console.error("Excepción cargando regiones:", e);
+      }
+    })();
+    return () => { cancel = true; };
+  }, []);
+
   const initials = useMemo(() => {
     const n = emp?.nombre?.[0] ?? "E";
     const a = emp?.apellido?.[0] ?? "";
     return (n + a).toUpperCase();
   }, [emp]);
+
+  // Derivados para la vista de lectura:
+  // employee.region_id viene en ID OFICIAL (porque lo guardamos así).
+  const regionLocalId = useMemo(() => {
+    const oficial = Number(emp?.region_id);
+    if (!Number.isFinite(oficial)) return null;
+    return INV_FIX_REGION_ID[oficial] ?? oficial;
+  }, [emp?.region_id]);
+
+  const regionNombre = useMemo(() => {
+    if (!regionLocalId) return "—";
+    return regiones.find((r) => r.id === regionLocalId)?.nombre ?? "—";
+  }, [regiones, regionLocalId]);
+
+  // En lectura le pasamos a PersonalesView un "emp" enriquecido con el nombre correcto
+  const empForView = useMemo(() => {
+    if (!emp) return null;
+    return {
+      ...emp,
+      region_id_local: regionLocalId, // por si PersonalesView lo quiere usar
+      region_nombre: regionNombre,    // nombre correcto para mostrar
+    };
+  }, [emp, regionLocalId, regionNombre]);
 
   if (loading) {
     return (
@@ -158,23 +212,22 @@ export default function EmpleadoFicha() {
         {/* Layout principal */}
         <div className={`ef-layout ${sidebarHidden ? "full" : ""}`}>
           <div className="ef-main">
-            {/* PERSONALES: solo tu Form en modo edición; si no, no renderiza nada */}
+            {/* PERSONALES */}
             {tab === "personales" && (
               editing ? (
-               <PersonalesForm
-                 key={emp.id}
-                 employee={emp}
-                 onCancel={() => setEditing(false)}
-                 onSaved={(updated) => { setEmp(updated); setEditing(false); }}
-               />
-             ) : (
-               <PersonalesView emp={emp} />           // <-- SIEMPRE visible en lectura
-             )  
-            )}  
-  
+                <PersonalesForm
+                  key={emp.id}
+                  employee={emp} // ← el form sigue recibiendo el objeto original (region_id OFICIAL)
+                  onCancel={() => setEditing(false)}
+                  onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+                />
+              ) : (
+                // ← En lectura pasamos emp enriquecido con region_nombre correcto
+                <PersonalesView emp={empForView} />
+              )
+            )}
 
-
-            {/* El resto de pestañas no renderizan nada por ahora (evita cualquier “demo”) */}
+            {/* Resto de pestañas */}
             {tab === "contractuales" && null}
             {tab === "documentos" && null}
             {tab === "prevision" && null}
