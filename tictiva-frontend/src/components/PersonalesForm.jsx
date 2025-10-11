@@ -1,7 +1,7 @@
 // src/components/Personales.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
-import "./Personales.css";
+import "../styles/Personales.css";
 
 /** IDs locales (cl_regiones) -> IDs oficiales (guardado / cl_comunas) */
 const FIX_REGION_ID = {
