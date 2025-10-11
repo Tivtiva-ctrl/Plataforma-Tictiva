@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 import PersonalesView from "../components/Personales"; // lectura
 import PersonalesForm from "../components/PersonalesForm";
-import "../styles/personales.css"; // ← CORREGIDO (antes era "./styles/...")
+import "../styles/personales.css";
 
 /** Pestañas de la ficha */
 const TABS = [
@@ -78,7 +78,9 @@ export default function EmpleadoFicha() {
       }
     };
     load();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [ref]);
 
   // Carga regiones (IDs locales)
@@ -98,7 +100,9 @@ export default function EmpleadoFicha() {
         if (!cancel) console.error("Excepción cargando regiones:", e);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, []);
 
   const initials = useMemo(() => {
@@ -187,10 +191,13 @@ export default function EmpleadoFicha() {
           <div className="ef-head-actions">
             <button
               className="lf-btn lf-btn-primary"
-              onClick={() => { setTab("personales"); setEditing(true); }}
->
-            Editar Ficha
-           </button>
+              onClick={() => {
+                setTab("personales");
+                setEditing(true);
+              }}
+            >
+              Editar Ficha
+            </button>
           </div>
         </div>
 
@@ -200,7 +207,10 @@ export default function EmpleadoFicha() {
             <button
               key={t.key}
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
-              onClick={() => { setTab(t.key); if (t.key !== "personales") setEditing(false); }}
+              onClick={() => {
+                setTab(t.key);
+                if (t.key !== "personales") setEditing(false);
+              }}
             >
               {t.label}
             </button>
@@ -216,7 +226,10 @@ export default function EmpleadoFicha() {
                   key={emp.id}
                   employee={emp} // el form trabaja con ID OFICIAL
                   onCancel={() => setEditing(false)}
-                  onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+                  onSaved={(updated) => {
+                    setEmp(updated);
+                    setEditing(false);
+                  }}
                 />
               ) : (
                 <PersonalesView emp={empForView} />
@@ -240,31 +253,51 @@ export default function EmpleadoFicha() {
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M7 2v3M17 2v3M3 9h18M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
-                          stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round"/>
+                        <path
+                          d="M7 2v3M17 2v3M3 9h18M5 6h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
+                          stroke="#6b7280"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                        />
                       </svg>
                     </span>
-                    <span>Próximo cumpleaños: <strong>15 Abril</strong></span>
+                    <span>
+                      Próximo cumpleaños: <strong>15 Abril</strong>
+                    </span>
                   </li>
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 7v5l3 2" stroke="#6b7280" strokeWidth="1.6"
-                          strokeLinecap="round" strokeLinejoin="round"/>
-                        <circle cx="12" cy="12" r="9" stroke="#6b7280" strokeWidth="1.6"/>
+                        <path
+                          d="M12 7v5l3 2"
+                          stroke="#6b7280"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="12" cy="12" r="9" stroke="#6b7280" strokeWidth="1.6" />
                       </svg>
                     </span>
-                    <span>Horario: <strong>08:30 - 18:00</strong></span>
+                    <span>
+                      Horario: <strong>08:30 - 18:00</strong>
+                    </span>
                   </li>
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11Z"
-                          stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                        <circle cx="12" cy="10" r="2.5" stroke="#6b7280" strokeWidth="1.6"/>
+                        <path
+                          d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11Z"
+                          stroke="#6b7280"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="12" cy="10" r="2.5" stroke="#6b7280" strokeWidth="1.6" />
                       </svg>
                     </span>
-                    <span>Oficina: <strong>Santiago Centro</strong></span>
+                    <span>
+                      Oficina: <strong>Santiago Centro</strong>
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -275,17 +308,25 @@ export default function EmpleadoFicha() {
                   <span className="ef-metric-label">Productividad</span>
                   <span className="ef-metric-val blue">92%</span>
                 </div>
-                <div className="ef-meter"><span className="blue" style={{ width: "92%" }} /></div>
+                <div className="ef-meter">
+                  <span className="blue" style={{ width: "92%" }} />
+                </div>
+
                 <div className="ef-metric-row">
                   <span className="ef-metric-label">Puntualidad</span>
                   <span className="ef-metric-val green">96%</span>
                 </div>
-                <div className="ef-meter"><span className="green" style={{ width: "96%" }} /></div>
+                <div className="ef-meter">
+                  <span className="green" style={{ width: "96%" }} />
+                </div>
+
                 <div className="ef-metric-row">
                   <span className="ef-metric-label">Colaboración</span>
                   <span className="ef-metric-val purple">88%</span>
                 </div>
-                <div className="ef-meter"><span className="purple" style={{ width: "88%" }} /></div>
+                <div className="ef-meter">
+                  <span className="purple" style={{ width: "88%" }} />
+                </div>
               </div>
             </div>
           )}
