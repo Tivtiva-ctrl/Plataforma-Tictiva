@@ -1,7 +1,7 @@
 // src/components/Personales.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
-import "./styles/personales.css";
+import "../styles/personales.css";
 
 
 
