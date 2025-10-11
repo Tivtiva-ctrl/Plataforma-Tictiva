@@ -187,10 +187,10 @@ export default function EmpleadoFicha() {
           <div className="ef-head-actions">
             <button
               className="lf-btn lf-btn-primary"
-              onClick={() => setEditing(true)}
-            >
-              Editar Ficha
-            </button>
+              onClick={() => { setTab("personales"); setEditing(true); }}
+>
+            Editar Ficha
+           </button>
           </div>
         </div>
 
