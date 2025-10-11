@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 import PersonalesView from "../components/Personales"; // lectura
 import PersonalesForm from "../components/PersonalesForm";
-import "./Personales.css";
+import "./styles/personales.css";
 
 /** Pestañas de la ficha */
 const TABS = [
