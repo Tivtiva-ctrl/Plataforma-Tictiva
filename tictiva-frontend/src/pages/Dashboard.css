@@ -166,4 +166,34 @@
 @media (max-width: 720px) {
   .modulesGrid, .kpis { grid-template-columns: 1fr; }
   .sidePanel { width: 92vw; }
+}/* === Botón primario unificado azul→cian === */
+button.lf-btn.lf-btn-primary,
+a.lf-btn.lf-btn-primary,
+.lf-btn.lf-btn-primary {
+  background: none !important;
+  background-image: linear-gradient(90deg,
+    #2563EB 0%,   /* azul-600 */
+    #3B82F6 50%,  /* azul-500 */
+    #22D3EE 100%  /* cian-400 */
+  ) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  border-radius: 9999px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(59,130,246,.25) !important;
+  transition: transform .12s, box-shadow .12s, filter .12s;
 }
+.lf-btn.lf-btn-primary:hover { filter: brightness(1.04); box-shadow: 0 10px 24px rgba(34,211,238,.35) !important; }
+.lf-btn.lf-btn-primary:active { transform: translateY(1px); }
+.lf-btn.lf-btn-primary:disabled { opacity: .6; box-shadow: none !important; cursor: not-allowed; }
+
+/* (opcional) Ghost para Cancelar */
+.lf-btn-ghost{
+  color: #1f2937 !important; /* ink-700 */
+  background: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+.lf-btn-ghost:hover{ background:#f8fafc !important; }
+
