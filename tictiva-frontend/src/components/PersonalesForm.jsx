@@ -105,8 +105,8 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         setEstadosCivil(ecRes.data || []);
         setNacionalidades(nRes.data || []);
 
-        // Cargar comunas con el ID LOCAL inicial (ya convertido arriba)
-        const ridLocal = asInt((employee && (INV_FIX_REGION_ID[asInt(employee.region_id)] ?? asInt(employee.region_id))) ?? form.region_id);
+        // Si el form ya trae región, carga sus comunas (ID LOCAL)
+        const ridLocal = asInt(form.region_id);
         if (ridLocal) await loadComunas(ridLocal);
       } catch (err) {
         console.error("Error cargando catálogos:", err);
@@ -294,6 +294,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               const val = asInt(e.target.value);
               setField("region_id", val);
               setField("comuna_id", null);
+              if (val) loadComunas(val);        {/* ← AJUSTE #1: cargar comunas de inmediato */}
             }}
           >
             <option value="">— Selecciona región —</option>
