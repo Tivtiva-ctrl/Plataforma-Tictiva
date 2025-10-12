@@ -27,14 +27,16 @@ html,body,#root{background:var(--bg); color:var(--text);}
 /* 👇 Gradiente igual al ejemplo (borde blanco brillante + sombra suave) */
 .lf-btn-primary{
   color:#fff;
-  background: linear-gradient(135deg, #6EC1FF 0%, #6B86FF 50%, #6B53FF 100%);
-  box-shadow: 0 12px 28px rgba(107,83,255,.28);
+  /* CAMBIO DE COLOR: azul → cian */
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #22D3EE 100%);
+  box-shadow: 0 12px 28px rgba(59,130,246,.28);
 }
 .lf-btn-primary::before{
   content:""; position:absolute; inset:0; border-radius:18px;
   border:1px solid rgba(255,255,255,.55); pointer-events:none;
 }
-.lf-btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 16px 34px rgba(107,83,255,.34); }
+/* CAMBIO DE COLOR en hover (sombra acorde al cian) */
+.lf-btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 16px 34px rgba(34,211,238,.34); }
 .lf-btn-primary:active{ transform:none; }
 
 .lf-btn-sm{ height:34px; padding:0 12px; border-radius:14px; }
@@ -74,7 +76,8 @@ html,body,#root{background:var(--bg); color:var(--text);}
 .lf-badge-gray{ background:#f3f4f6; color:#374151; }
 
 .lf-text-right{text-align:right;}
-/* === Botón primario unificado azul→cian === */
+
+/* === Botón primario unificado azul→cian — refuerzo (por si hay overrides) === */
 button.lf-btn.lf-btn-primary,
 a.lf-btn.lf-btn-primary,
 .lf-btn.lf-btn-primary {
@@ -104,4 +107,3 @@ a.lf-btn.lf-btn-primary,
   font-weight: 600;
 }
 .lf-btn-ghost:hover{ background:#f8fafc !important; }
-

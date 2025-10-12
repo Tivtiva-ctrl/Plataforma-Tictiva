@@ -7,6 +7,7 @@
 .form-col-2{grid-column:span 2}
 .form-error{color:#dc2626;font-size:12px;margin-top:6px}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
 /* === Botón primario unificado azul→cian === */
 button.lf-btn.lf-btn-primary,
 a.lf-btn.lf-btn-primary,
@@ -24,7 +25,10 @@ a.lf-btn.lf-btn-primary,
   box-shadow: 0 8px 20px rgba(59,130,246,.25) !important;
   transition: transform .12s, box-shadow .12s, filter .12s;
 }
-.lf-btn.lf-btn-primary:hover { filter: brightness(1.04); box-shadow: 0 10px 24px rgba(34,211,238,.35) !important; }
+.lf-btn.lf-btn-primary:hover {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 24px rgba(34,211,238,.35) !important; /* sombra acorde al cian */
+}
 .lf-btn.lf-btn-primary:active { transform: translateY(1px); }
 .lf-btn.lf-btn-primary:disabled { opacity: .6; box-shadow: none !important; cursor: not-allowed; }
 

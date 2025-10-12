@@ -32,13 +32,15 @@ html,body,#root{background:var(--bg); color:var(--text);}
 }
 .lf-btn-primary{
   color:#fff;
-  background: linear-gradient(135deg, #6EC1FF 0%, #6B86FF 50%, #6B53FF 100%);
-  box-shadow: 0 12px 28px rgba(107,83,255,.28);
+  /* ⬇️ Cambiado a azul→cian */
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #22D3EE 100%);
+  box-shadow: 0 12px 28px rgba(59,130,246,.28);
 }
 .lf-btn-primary::before{
   content:""; position:absolute; inset:0; border-radius:18px; border:1px solid rgba(255,255,255,.55);
 }
-.lf-btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 16px 34px rgba(107,83,255,.34); }
+/* ⬇️ Sombra de hover en la misma paleta azul→cian */
+.lf-btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 16px 34px rgba(34,211,238,.34); }
 
 /* Tabs */
 .ef-tabs{display:flex; gap:22px; padding:18px 8px 8px; margin-top:10px; border-bottom:1px solid var(--border);}
@@ -128,15 +130,17 @@ html,body,#root{background:var(--bg); color:var(--text);}
 .ef-card textarea,
 .ef-card button {
   pointer-events: auto !important;
-}/* === Botón primario unificado azul→cian === */
+}
+
+/* === Botón primario unificado azul→cian (refuerzo) === */
 button.lf-btn.lf-btn-primary,
 a.lf-btn.lf-btn-primary,
 .lf-btn.lf-btn-primary {
   background: none !important;
   background-image: linear-gradient(90deg,
-    #2563EB 0%,   /* azul-600 */
-    #3B82F6 50%,  /* azul-500 */
-    #22D3EE 100%  /* cian-400 */
+    #2563EB 0%,
+    #3B82F6 50%,
+    #22D3EE 100%
   ) !important;
   color: #fff !important;
   border-color: transparent !important;
@@ -158,4 +162,3 @@ a.lf-btn.lf-btn-primary,
   font-weight: 600;
 }
 .lf-btn-ghost:hover{ background:#f8fafc !important; }
-
