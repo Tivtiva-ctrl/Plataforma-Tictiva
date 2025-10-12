@@ -5,22 +5,8 @@ import "../styles/personales.css";
 
 /** Mapa: id de tu cl_regiones -> id oficial usado por cl_comunas */
 const FIX_REGION_ID = {
-  1: 1,  // Arica y Parinacota
-  2: 2,   // Tarapacá
-  3: 3,   // Antofagasta
-  4: 4,   // Atacama
-  5: 5,   // Coquimbo
-  6: 6,   // Valparaíso
-  7: 7,   // Metropolitana
-  8: 8,   // O'Higgins
-  9: 9,   // Maule
-  10: 10,  // Biobío
-  11: 11,  // La Araucanía
-  12: 12, // Los Lagos
-  13: 13, // Magallanes
-  14: 14, // Los Ríos
-  15: 15, // Aysén
-  16: 16, // Ñuble
+  1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7,
+  8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14, 15: 15, 16: 16,
 };
 
 /** Mapa inverso: id oficial -> id de tu cl_regiones (para mostrar correcto en el select) */
@@ -54,7 +40,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
 
   // estado del form
   const [form, setForm] = useState(() => {
-    // employee.region_id viene guardado con ID OFICIAL → convertir a ID LOCAL para el select
     const oficialRid = asInt(employee?.region_id);
     const localRid = oficialRid == null ? null : (INV_FIX_REGION_ID[oficialRid] ?? oficialRid);
 
@@ -70,7 +55,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
       direccion: employee?.direccion ?? "",
 
-      region_id: localRid,                  // ← ahora el select muestra la región correcta
+      region_id: localRid,
       comuna_id: asInt(employee?.comuna_id),
 
       telefono_movil: employee?.telefono_movil ?? "",
@@ -105,7 +90,6 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         setEstadosCivil(ecRes.data || []);
         setNacionalidades(nRes.data || []);
 
-        // Si el form ya trae región, carga sus comunas (ID LOCAL)
         const ridLocal = asInt(form.region_id);
         if (ridLocal) await loadComunas(ridLocal);
       } catch (err) {
@@ -221,13 +205,12 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     if (!validate()) return;
     setSaving(true);
     try {
-      // --- Validación FK: solo enviar comuna_id si existe en la lista cargada ---
+      // Validación FK: solo enviar comuna_id si existe en la lista cargada
       const comunaOk =
         form.comuna_id && comunas.some((c) => c.id === form.comuna_id)
           ? form.comuna_id
           : null;
       const payloadFixed = { ...payload, comuna_id: asInt(comunaOk) };
-      // -------------------------------------------------------------------------
 
       const { data, error } = await supabase
         .from("employees")
@@ -291,6 +274,19 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           />
         </div>
 
+        {/* NUEVO: Género */}
+        <div className="form-field">
+          <label>Género</label>
+          <select
+            value={form.genero}
+            onChange={(e) => setField("genero", e.target.value)}
+          >
+            <option value="O">O</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
+          </select>
+        </div>
+
         {/* Región / Comuna */}
         <div className="form-field">
           <label>Región</label>
@@ -300,7 +296,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               const val = asInt(e.target.value);
               setField("region_id", val);
               setField("comuna_id", null);
-              if (val) loadComunas(val);        {/* cargar comunas de inmediato */}
+              if (val) loadComunas(val); // cargar comunas de inmediato
             }}
           >
             <option value="">— Selecciona región —</option>
@@ -331,7 +327,17 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           </select>
         </div>
 
-        {/* Otros campos */}
+        {/* NUEVO: Dirección */}
+        <div className="form-field" style={{ gridColumn: "span 2" }}>
+          <label>Dirección</label>
+          <input
+            value={form.direccion}
+            onChange={(e) => setField("direccion", e.target.value)}
+            placeholder="Calle, número, depto, etc."
+          />
+        </div>
+
+        {/* Teléfonos / Emails */}
         <div className="form-field">
           <label>Teléfono móvil</label>
           <input
@@ -366,6 +372,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           />
         </div>
 
+        {/* Nacionalidad / Estado civil */}
         <div className="form-field">
           <label>Nacionalidad</label>
           <select
