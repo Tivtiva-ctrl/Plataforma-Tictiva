@@ -5,21 +5,21 @@ import "../styles/personales.css";
 
 /** Mapa: id de tu cl_regiones -> id oficial usado por cl_comunas */
 const FIX_REGION_ID = {
-  1: 15,  // Arica y Parinacota
-  2: 1,   // Tarapacá
-  3: 2,   // Antofagasta
-  4: 3,   // Atacama
-  5: 4,   // Coquimbo
-  6: 5,   // Valparaíso
-  7: 13,  // Metropolitana
-  8: 6,   // O'Higgins
-  9: 7,   // Maule
-  10: 8,  // Biobío
-  11: 9,  // La Araucanía
-  12: 10, // Los Lagos
-  13: 12, // Magallanes
+  1: 1,  // Arica y Parinacota
+  2: 2,   // Tarapacá
+  3: 3,   // Antofagasta
+  4: 4,   // Atacama
+  5: 5,   // Coquimbo
+  6: 6,   // Valparaíso
+  7: 7,  // Metropolitana
+  8: 8,   // O'Higgins
+  9: 9,   // Maule
+  10: 10,  // Biobío
+  11: 11,  // La Araucanía
+  12: 12, // Los Lagos
+  13: 13, // Magallanes
   14: 14, // Los Ríos
-  15: 11, // Aysén
+  15: 15, // Aysén
   16: 16, // Ñuble
 };
 
