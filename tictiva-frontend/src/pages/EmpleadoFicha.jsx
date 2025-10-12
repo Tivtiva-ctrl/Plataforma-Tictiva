@@ -1,6 +1,6 @@
 // src/pages/EmpleadoFicha.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 import PersonalesView from "../components/Personales"; // lectura
@@ -37,13 +37,34 @@ const INV_FIX_REGION_ID = Object.fromEntries(
 export default function EmpleadoFicha() {
   const navigate = useNavigate();
   const params = useParams();
+  const location = useLocation();
+
+  // referencia (RUT o ID) desde la URL
   const refRaw = params.rut ?? params.id ?? params.ref ?? "";
   const ref = decodeURIComponent(String(refRaw || ""));
+
+  // lectura de ?edit=1 desde la URL para que el "modo edición" sobreviva a re-renders
+  const search = new URLSearchParams(location.search);
+  const urlEditing = search.get("edit") === "1";
 
   const [loading, setLoading] = useState(true);
   const [emp, setEmp] = useState(null);
   const [tab, setTab] = useState("personales");
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(urlEditing);
+
+  // si cambia la URL (por back/forward), sincroniza el estado
+  useEffect(() => {
+    setEditing(urlEditing);
+    if (urlEditing) setTab("personales");
+  }, [urlEditing]);
+
+  // helper para encender/apagar edición y reflejarlo en la URL
+  const setEditingInUrl = (on) => {
+    const s = new URLSearchParams(location.search);
+    if (on) s.set("edit", "1");
+    else s.delete("edit");
+    navigate({ search: s.toString() ? `?${s.toString()}` : "" }, { replace: true });
+  };
 
   // Catálogo de regiones (locales)
   const [regiones, setRegiones] = useState([]);
@@ -187,7 +208,11 @@ export default function EmpleadoFicha() {
           <div className="ef-head-actions">
             <button
               className="lf-btn lf-btn-primary"
-              onClick={() => { setTab("personales"); setEditing(true); }}
+              onClick={() => {
+                setTab("personales");
+                setEditingInUrl(true);    // ← fija ?edit=1 en la URL
+                setEditing(true);
+              }}
             >
               Editar Ficha
             </button>
@@ -202,7 +227,10 @@ export default function EmpleadoFicha() {
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
               onClick={() => {
                 setTab(t.key);
-                if (t.key !== "personales") setEditing(false);
+                if (t.key !== "personales") {
+                  setEditing(false);
+                  setEditingInUrl(false); // apagar edición si sales de Personales
+                }
               }}
             >
               {t.label}
@@ -213,18 +241,21 @@ export default function EmpleadoFicha() {
         {/* Layout principal */}
         <div className={`ef-layout ${sidebarHidden ? "full" : ""}`}>
           <div className="ef-main">
-            {/* PRIORIDAD: si editing = true, SIEMPRE mostrar el formulario */}
+            {/* Si editing = true, SIEMPRE mostrar el formulario */}
             {editing ? (
               <PersonalesForm
                 key={emp.id}
-                employee={emp} // el form trabaja con ID OFICIAL
-                onCancel={() => setEditing(false)}
-                onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+                employee={emp}
+                onCancel={() => { setEditing(false); setEditingInUrl(false); }}
+                onSaved={(updated) => {
+                  setEmp(updated);
+                  setEditing(false);
+                  setEditingInUrl(false);
+                }}
               />
             ) : (
               <>
                 {tab === "personales" && <PersonalesView emp={empForView} />}
-
                 {tab === "contractuales" && null}
                 {tab === "documentos" && null}
                 {tab === "prevision" && null}
