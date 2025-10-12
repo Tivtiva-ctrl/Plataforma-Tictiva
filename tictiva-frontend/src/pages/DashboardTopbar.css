@@ -121,8 +121,11 @@
 .moduleList{ margin:6px 0 0; padding:0 0 0 16px; color:#334155; }
 .moduleList li{ margin:4px 0; }
 
-.moduleOpen{ margin-top:6px; align-self:start; background:transparent; border:none; color:var(--tictiva-blue); font-weight:700; cursor:pointer; }
-.moduleOpen .arrow{ margin-left:4px; }
+/* ⬇️ SOLO CAMBIO DE COLOR: CTA con degradado azul→cian */
+.moduleOpen{
+  margin-top:6px; align-self:start; background:linear-gradient(90deg,#2563EB 0%, #3B82F6 50%, #22D3EE 100%); border:none; color:#fff; font-weight:700; cursor:pointer;
+}
+.moduleOpen .arrow{ margin-left:4px; color:#fff; }
 
 /* Responsive */
 @media (max-width:1100px){ .modulesGrid{ grid-template-columns:repeat(2,1fr); } }
@@ -132,7 +135,8 @@
   .topbarRight{ width:100%; }
   .modulesGrid{ grid-template-columns:1fr; }
   .sidePanel{ width:92vw; }
-}/* ===== Search dropdown ===== */
+}
+/* ===== Search dropdown ===== */
 .searchBox { position: relative; flex: 1; }
 
 .searchDropdown{
@@ -182,4 +186,3 @@
   font-size: 12px;
   color: #64748b;
 }
-
