@@ -11,7 +11,7 @@ const FIX_REGION_ID = {
   4: 4,   // Atacama
   5: 5,   // Coquimbo
   6: 6,   // Valparaíso
-  7: 7,  // Metropolitana
+  7: 7,   // Metropolitana
   8: 8,   // O'Higgins
   9: 9,   // Maule
   10: 10,  // Biobío
@@ -182,7 +182,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     return Object.keys(e).length === 0;
   };
 
-  // <<< ÚNICO CAMBIO: payload solo con columnas reales de employees >>>
+  // payload solo con columnas reales de employees
   const payload = useMemo(() => ({
     nombre: form.nombre?.trim() || null,
     apellido: form.apellido?.trim() || null,
@@ -221,9 +221,17 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     if (!validate()) return;
     setSaving(true);
     try {
+      // --- Validación FK: solo enviar comuna_id si existe en la lista cargada ---
+      const comunaOk =
+        form.comuna_id && comunas.some((c) => c.id === form.comuna_id)
+          ? form.comuna_id
+          : null;
+      const payloadFixed = { ...payload, comuna_id: asInt(comunaOk) };
+      // -------------------------------------------------------------------------
+
       const { data, error } = await supabase
         .from("employees")
-        .update(payload)
+        .update(payloadFixed)
         .eq("id", employee?.id)
         .select("*")
         .single();
@@ -292,7 +300,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               const val = asInt(e.target.value);
               setField("region_id", val);
               setField("comuna_id", null);
-              if (val) loadComunas(val);        {/* ← cargar comunas de inmediato */}
+              if (val) loadComunas(val);        {/* cargar comunas de inmediato */}
             }}
           >
             <option value="">— Selecciona región —</option>
