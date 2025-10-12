@@ -182,41 +182,39 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     return Object.keys(e).length === 0;
   };
 
-  const payload = useMemo(() => {
-    const base = {
-      nombre: form.nombre?.trim() || null,
-      apellido: form.apellido?.trim() || null,
-      rut: form.rut?.trim() || null,
-      cargo: form.cargo?.trim() || null,
-      genero: form.genero || "O",
-      discapacidad: !!form.discapacidad,
-      activo: !!form.activo,
+  // <<< ÚNICO CAMBIO: payload solo con columnas reales de employees >>>
+  const payload = useMemo(() => ({
+    nombre: form.nombre?.trim() || null,
+    apellido: form.apellido?.trim() || null,
+    rut: form.rut?.trim() || null,
+    cargo: form.cargo?.trim() || null,
+    genero: form.genero || "O",
+    discapacidad: !!form.discapacidad,
+    activo: !!form.activo,
 
-      fecha_nacimiento: form.fecha_nacimiento || null,
-      direccion: form.direccion?.trim() || null,
+    fecha_nacimiento: form.fecha_nacimiento || null,
+    direccion: form.direccion?.trim() || null,
 
-      // Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
-      region_id: (() => {
-        const ridLocal = asInt(form.region_id);
-        return ridLocal == null ? null : (FIX_REGION_ID[ridLocal] ?? ridLocal);
-      })(),
+    // Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
+    region_id: (() => {
+      const ridLocal = asInt(form.region_id);
+      return ridLocal == null ? null : (FIX_REGION_ID[ridLocal] ?? ridLocal);
+    })(),
 
-      comuna_id: asInt(form.comuna_id), // INT (id de cl_comunas)
+    comuna_id: asInt(form.comuna_id), // INT (id de cl_comunas)
 
-      telefono_movil: form.telefono_movil?.trim() || null,
-      telefono_fijo: form.telefono_fijo?.trim() || null,
-      email_personal: form.email_personal?.trim() || null,
-      email_corporativo: form.email_corporativo?.trim() || null,
+    telefono_movil: form.telefono_movil?.trim() || null,
+    telefono_fijo: form.telefono_fijo?.trim() || null,
+    email_personal: form.email_personal?.trim() || null,
+    email_corporativo: form.email_corporativo?.trim() || null,
 
-      estado_civil_id: asInt(form.estado_civil_id),
-      nacionalidad_id: asInt(form.nacionalidad_id),
+    estado_civil_id: asInt(form.estado_civil_id),
+    nacionalidad_id: asInt(form.nacionalidad_id),
 
-      pais_residencia: form.pais_residencia?.trim() || null,
-      idioma_preferido: form.idioma_preferido?.trim() || null,
-      pronombres: form.pronombres?.trim() || null,
-    };
-    return { ...base, nombres: base.nombre, apellidos: base.apellido };
-  }, [form]);
+    pais_residencia: form.pais_residencia?.trim() || null,
+    idioma_preferido: form.idioma_preferido?.trim() || null,
+    pronombres: form.pronombres?.trim() || null,
+  }), [form]);
 
   const save = async (e) => {
     e.preventDefault();
@@ -294,7 +292,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               const val = asInt(e.target.value);
               setField("region_id", val);
               setField("comuna_id", null);
-              if (val) loadComunas(val);        {/* ← AJUSTE #1: cargar comunas de inmediato */}
+              if (val) loadComunas(val);        {/* ← cargar comunas de inmediato */}
             }}
           >
             <option value="">— Selecciona región —</option>
