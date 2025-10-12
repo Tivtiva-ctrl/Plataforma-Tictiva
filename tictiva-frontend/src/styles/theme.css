@@ -1,0 +1,28 @@
+:root{
+  --btn-grad-start:#3B82F6;  /* azul */
+  --btn-grad-mid:#60A5FA;    /* azul claro */
+  --btn-grad-end:#22D3EE;    /* cian */
+  --btn-shadow:0 8px 20px rgba(59,130,246,.25);
+  --btn-shadow-hover:0 10px 24px rgba(34,211,238,.35);
+}
+
+/* base opcional */
+.lf-btn{
+  border:0;
+  border-radius:9999px;
+  font-weight:600;
+  transition:transform .12s, box-shadow .12s, filter .12s;
+}
+
+/* primario global */
+.lf-btn-primary{
+  color:#fff !important;
+  background:linear-gradient(90deg,
+    var(--btn-grad-start) 0%,
+    var(--btn-grad-mid) 50%,
+    var(--btn-grad-end) 100%) !important;
+  box-shadow:var(--btn-shadow) !important;
+}
+.lf-btn-primary:hover{ filter:brightness(1.03); box-shadow:var(--btn-shadow-hover) !important; }
+.lf-btn-primary:active{ transform:translateY(1px); filter:brightness(.98); }
+.lf-btn-primary:disabled{ opacity:.6; box-shadow:none !important; cursor:not-allowed; }
