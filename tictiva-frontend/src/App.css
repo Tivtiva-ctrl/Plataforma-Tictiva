@@ -120,3 +120,41 @@ a.drawer__item:visited{
 
 .card__list li .icon{ color: var(--ink-500); }
 .card__list li span{ color: var(--ink-700); }
+/* ===== Botones globales (mismo estilo que el de inicio de sesión) ===== */
+:root{
+  --btn-grad-start: #3B82F6; /* azul */
+  --btn-grad-mid:   #60A5FA; /* azul claro */
+  --btn-grad-end:   #22D3EE; /* cian */
+  --btn-shadow:       0 8px 20px rgba(59,130,246,.25);
+  --btn-shadow-hover: 0 10px 24px rgba(34,211,238,.35);
+}
+
+/* Base de botones */
+.lf-btn{
+  border: 0;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+
+/* Primario (el que quieres igual al login) */
+.lf-btn-primary{
+  color: #fff !important;
+  background: linear-gradient(90deg,
+    var(--btn-grad-start) 0%,
+    var(--btn-grad-mid)   50%,
+    var(--btn-grad-end)   100%) !important;
+  box-shadow: var(--btn-shadow);
+}
+.lf-btn-primary:hover{ filter: brightness(1.03); box-shadow: var(--btn-shadow-hover); }
+.lf-btn-primary:active{ transform: translateY(1px); filter: brightness(0.98); }
+.lf-btn-primary:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none; }
+
+/* (Opcional) Ghost / secundario para coherencia */
+.lf-btn-ghost{
+  color: var(--ink-700);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+.lf-btn-ghost:hover{ background:#f8fafc; }
+.lf-btn-ghost:active{ transform: translateY(1px); }
