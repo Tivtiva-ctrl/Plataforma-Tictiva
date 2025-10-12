@@ -1,6 +1,6 @@
 // src/pages/EmpleadoFicha.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./EmpleadoFicha.css";
 import PersonalesView from "../components/Personales"; // lectura
@@ -14,9 +14,9 @@ const TABS = [
   { key: "documentos", label: "Documentos" },
   { key: "prevision", label: "Previsión" },
   { key: "bancarios", label: "Bancarios" },
-  { key: "asistencia", label: "Asistencia" },
+  { key: "asistencia", label: "Asistencia" }, // pantalla completa
   { key: "hoja", label: "Hoja de Vida" },
-  { key: "historial", label: "Historial" },
+  { key: "historial", label: "Historial" },   // pantalla completa
 ];
 
 const isUUID = (v = "") =>
@@ -24,12 +24,12 @@ const isUUID = (v = "") =>
 const likelyRut = (v = "") => v.includes("-") || v.includes(".");
 const fullName = (e) => `${e?.nombre ?? ""} ${e?.apellido ?? ""}`.trim();
 
-/** Local (cl_regiones) -> Oficial (cl_comunas / guardado) */
+/** Mapa de IDs locales (cl_regiones) -> IDs oficiales (cl_comunas / guardado) */
 const FIX_REGION_ID = {
   1: 15, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 13, 8: 6,
   9: 7, 10: 8, 11: 9, 12: 10, 13: 12, 14: 14, 15: 11, 16: 16,
 };
-/** Oficial -> Local (para mostrar nombre correcto desde cl_regiones) */
+/** Inverso: ID oficial -> ID local (para mostrar el nombre correcto desde cl_regiones) */
 const INV_FIX_REGION_ID = Object.fromEntries(
   Object.entries(FIX_REGION_ID).map(([local, oficial]) => [Number(oficial), Number(local)])
 );
@@ -37,39 +37,19 @@ const INV_FIX_REGION_ID = Object.fromEntries(
 export default function EmpleadoFicha() {
   const navigate = useNavigate();
   const params = useParams();
-  const location = useLocation();
-
-  // referencia (RUT o ID) desde la URL
+  // Ruta recomendada: /rrhh/ficha/:rut  (pero también acepta :id)
   const refRaw = params.rut ?? params.id ?? params.ref ?? "";
   const ref = decodeURIComponent(String(refRaw || ""));
-
-  // lectura de ?edit=1 desde la URL para que el "modo edición" sobreviva a re-renders
-  const search = new URLSearchParams(location.search);
-  const urlEditing = search.get("edit") === "1";
 
   const [loading, setLoading] = useState(true);
   const [emp, setEmp] = useState(null);
   const [tab, setTab] = useState("personales");
-  const [editing, setEditing] = useState(urlEditing);
-
-  // si cambia la URL (por back/forward), sincroniza el estado
-  useEffect(() => {
-    setEditing(urlEditing);
-    if (urlEditing) setTab("personales");
-  }, [urlEditing]);
-
-  // helper para encender/apagar edición y reflejarlo en la URL
-  const setEditingInUrl = (on) => {
-    const s = new URLSearchParams(location.search);
-    if (on) s.set("edit", "1");
-    else s.delete("edit");
-    navigate({ search: s.toString() ? `?${s.toString()}` : "" }, { replace: true });
-  };
+  const [editing, setEditing] = useState(false);
 
   // Catálogo de regiones (locales)
   const [regiones, setRegiones] = useState([]);
 
-  // Carga empleado
+  // Carga empleado (por RUT o por ID)
   useEffect(() => {
     let cancel = false;
     const load = async () => {
@@ -102,7 +82,7 @@ export default function EmpleadoFicha() {
     return () => { cancel = true; };
   }, [ref]);
 
-  // Carga regiones (IDs locales)
+  // Carga catálogo de regiones (IDs locales) para resolver el nombre correcto
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -128,7 +108,8 @@ export default function EmpleadoFicha() {
     return (n + a).toUpperCase();
   }, [emp]);
 
-  // employee.region_id viene en ID OFICIAL
+  // Derivados para la vista de lectura:
+  // employee.region_id viene en ID OFICIAL (porque lo guardamos así).
   const regionLocalId = useMemo(() => {
     const oficial = Number(emp?.region_id);
     if (!Number.isFinite(oficial)) return null;
@@ -140,13 +121,13 @@ export default function EmpleadoFicha() {
     return regiones.find((r) => r.id === regionLocalId)?.nombre ?? "—";
   }, [regiones, regionLocalId]);
 
-  // Emp enriquecido para PersonalesView
+  // En lectura le pasamos a PersonalesView un "emp" enriquecido con el nombre correcto
   const empForView = useMemo(() => {
     if (!emp) return null;
     return {
       ...emp,
-      region_id_local: regionLocalId,
-      region_nombre: regionNombre,
+      region_id_local: regionLocalId, // por si PersonalesView lo quiere usar
+      region_nombre: regionNombre,    // nombre correcto para mostrar
     };
   }, [emp, regionLocalId, regionNombre]);
 
@@ -208,11 +189,7 @@ export default function EmpleadoFicha() {
           <div className="ef-head-actions">
             <button
               className="lf-btn lf-btn-primary"
-              onClick={() => {
-                setTab("personales");
-                setEditingInUrl(true);    // ← fija ?edit=1 en la URL
-                setEditing(true);
-              }}
+              onClick={() => setEditing(true)}
             >
               Editar Ficha
             </button>
@@ -225,13 +202,7 @@ export default function EmpleadoFicha() {
             <button
               key={t.key}
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
-              onClick={() => {
-                setTab(t.key);
-                if (t.key !== "personales") {
-                  setEditing(false);
-                  setEditingInUrl(false); // apagar edición si sales de Personales
-                }
-              }}
+              onClick={() => { setTab(t.key); if (t.key !== "personales") setEditing(false); }}
             >
               {t.label}
             </button>
@@ -241,34 +212,35 @@ export default function EmpleadoFicha() {
         {/* Layout principal */}
         <div className={`ef-layout ${sidebarHidden ? "full" : ""}`}>
           <div className="ef-main">
-            {/* Si editing = true, SIEMPRE mostrar el formulario */}
-            {editing ? (
-              <PersonalesForm
-                key={emp.id}
-                employee={emp}
-                onCancel={() => { setEditing(false); setEditingInUrl(false); }}
-                onSaved={(updated) => {
-                  setEmp(updated);
-                  setEditing(false);
-                  setEditingInUrl(false);
-                }}
-              />
-            ) : (
-              <>
-                {tab === "personales" && <PersonalesView emp={empForView} />}
-                {tab === "contractuales" && null}
-                {tab === "documentos" && null}
-                {tab === "prevision" && null}
-                {tab === "bancarios" && null}
-                {tab === "asistencia" && null}
-                {tab === "hoja" && null}
-                {tab === "historial" && null}
-              </>
+            {/* PERSONALES */}
+            {tab === "personales" && (
+              editing ? (
+                <PersonalesForm
+                  key={emp.id}
+                  employee={emp} // ← el form sigue recibiendo el objeto original (region_id OFICIAL)
+                  onCancel={() => setEditing(false)}
+                  onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+                />
+              ) : (
+                // ← En lectura pasamos emp enriquecido con region_nombre correcto
+                <PersonalesView emp={empForView} />
+              )
             )}
+
+            {/* Resto de pestañas */}
+            {tab === "contractuales" && null}
+            {tab === "documentos" && null}
+            {tab === "prevision" && null}
+            {tab === "bancarios" && null}
+            {tab === "asistencia" && null}
+            {tab === "hoja" && null}
+            {tab === "historial" && null}
           </div>
 
+          {/* Sidebar: oculto para Asistencia e Historial */}
           {!sidebarHidden && (
             <div className="ef-side">
+              {/* Información Rápida */}
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
@@ -304,8 +276,10 @@ export default function EmpleadoFicha() {
                 </ul>
               </div>
 
+              {/* Rendimiento */}
               <div className="ef-card p16 ef-perf">
                 <h3 className="ef-side-title">Rendimiento</h3>
+
                 <div className="ef-metric-row">
                   <span className="ef-metric-label">Productividad</span>
                   <span className="ef-metric-val blue">92%</span>
