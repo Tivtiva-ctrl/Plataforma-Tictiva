@@ -49,33 +49,38 @@ export default function EmpleadoFicha() {
   // Catálogo de regiones (locales)
   const [regiones, setRegiones] = useState([]);
 
-  // ---------- Estado para edición rápida (Horario / Oficina) ----------
-  const [quickEdit, setQuickEdit] = useState(false);
+  // --------- Estado ligado a la edición de Información Rápida ----------
   const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
   useEffect(() => {
     setQuickForm({ office: emp?.office ?? "", horario: emp?.horario ?? "" });
   }, [emp?.office, emp?.horario]);
 
-  const saveQuickInfo = async () => {
-    const payload = {
-      office: (quickForm.office || "").trim() || null,
-      horario: (quickForm.horario || "").trim() || null,
-    };
+  const updateQuickAfterMainSave = async (base) => {
+    const office = (quickForm.office || "").trim() || null;
+    const horario = (quickForm.horario || "").trim() || null;
+
+    const changed =
+      (base.office ?? null) !== office || (base.horario ?? null) !== horario;
+
+    if (!changed) return base;
+
     const { data, error } = await supabase
       .from("employees")
-      .update(payload)
-      .eq("id", emp.id)
+      .update({ office, horario })
+      .eq("id", base.id)
       .select("*")
       .single();
 
     if (error) {
-      alert(error.message || "No se pudo guardar la Información rápida.");
-      return;
+      // No rompemos el guardado principal si falla este paso;
+      // sólo informamos y devolvemos la versión base.
+      console.error("Error guardando Información Rápida:", error);
+      alert(error.message || "No se pudo guardar Horario/Oficina.");
+      return base;
     }
-    setEmp(data);
-    setQuickEdit(false);
+    return data || base;
   };
-  // -------------------------------------------------------------------
+  // --------------------------------------------------------------------
 
   // Carga empleado (por RUT o por ID)
   useEffect(() => {
@@ -137,7 +142,6 @@ export default function EmpleadoFicha() {
   }, [emp]);
 
   // Derivados para la vista de lectura:
-  // employee.region_id viene en ID OFICIAL (porque lo guardamos así).
   const regionLocalId = useMemo(() => {
     const oficial = Number(emp?.region_id);
     if (!Number.isFinite(oficial)) return null;
@@ -149,13 +153,13 @@ export default function EmpleadoFicha() {
     return regiones.find((r) => r.id === regionLocalId)?.nombre ?? "—";
   }, [regiones, regionLocalId]);
 
-  // En lectura le pasamos a PersonalesView un "emp" enriquecido con el nombre correcto
+  // En lectura pasamos emp enriquecido con el nombre correcto
   const empForView = useMemo(() => {
     if (!emp) return null;
     return {
       ...emp,
-      region_id_local: regionLocalId, // por si PersonalesView lo quiere usar
-      region_nombre: regionNombre,    // nombre correcto para mostrar
+      region_id_local: regionLocalId,
+      region_nombre: regionNombre,
     };
   }, [emp, regionLocalId, regionNombre]);
 
@@ -190,6 +194,13 @@ export default function EmpleadoFicha() {
   }
 
   const sidebarHidden = tab === "asistencia" || tab === "historial";
+
+  // Handler luego del guardado del form principal:
+  const handleSaved = async (updated) => {
+    const withQuick = await updateQuickAfterMainSave(updated);
+    setEmp(withQuick);
+    setEditing(false);
+  };
 
   return (
     <div className="ef-page">
@@ -245,12 +256,11 @@ export default function EmpleadoFicha() {
               editing ? (
                 <PersonalesForm
                   key={emp.id}
-                  employee={emp} // ← el form sigue recibiendo el objeto original (region_id OFICIAL)
+                  employee={emp} // el form recibe el objeto original (region_id OFICIAL)
                   onCancel={() => setEditing(false)}
-                  onSaved={(updated) => { setEmp(updated); setEditing(false); }}
+                  onSaved={handleSaved} // guardamos también Horario/Oficina
                 />
               ) : (
-                // ← En lectura pasamos emp enriquecido con region_nombre correcto
                 <PersonalesView emp={empForView} />
               )
             )}
@@ -268,7 +278,7 @@ export default function EmpleadoFicha() {
           {/* Sidebar: oculto para Asistencia e Historial */}
           {!sidebarHidden && (
             <div className="ef-side">
-              {/* Información Rápida (editable inline) */}
+              {/* Información Rápida (sin botones propios; se edita con "Editar Ficha") */}
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
@@ -292,7 +302,7 @@ export default function EmpleadoFicha() {
                       </svg>
                     </span>
                     <span style={{ flex: 1 }}>
-                      {quickEdit ? (
+                      {editing ? (
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <label style={{ color: "#374151" }}>Horario:</label>
                           <input
@@ -326,7 +336,7 @@ export default function EmpleadoFicha() {
                       </svg>
                     </span>
                     <span style={{ flex: 1 }}>
-                      {quickEdit ? (
+                      {editing ? (
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <label style={{ color: "#374151" }}>Oficina:</label>
                           <input
@@ -350,39 +360,6 @@ export default function EmpleadoFicha() {
                     </span>
                   </li>
                 </ul>
-
-                {/* Acciones de la tarjeta */}
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                  {quickEdit ? (
-                    <>
-                      <button
-                        className="lf-btn lf-btn-ghost"
-                        type="button"
-                        onClick={() => {
-                          setQuickForm({ office: emp?.office ?? "", horario: emp?.horario ?? "" });
-                          setQuickEdit(false);
-                        }}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        className="lf-btn lf-btn-primary"
-                        type="button"
-                        onClick={saveQuickInfo}
-                      >
-                        Guardar
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="lf-btn lf-btn-primary"
-                      type="button"
-                      onClick={() => setQuickEdit(true)}
-                    >
-                      Editar
-                    </button>
-                  )}
-                </div>
               </div>
 
               {/* Rendimiento */}
