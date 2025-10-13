@@ -1,59 +1,118 @@
 // src/pages/EmpleadoFicha.jsx
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import PersonalesView from "../components/Personales";     // lectura
 import PersonalesForm from "../components/PersonalesForm"; // edición
 import { calcNextBirthdayLabel } from "../utils/birthday";
 import "../styles/personales.css";
 
+function useEmployeeId() {
+  const params = useParams();
+  const location = useLocation();
+
+  // Soporte para diferentes nombres de parámetro en la ruta
+  let id =
+    params?.id ??
+    params?.empId ??
+    params?.empleadoId ??
+    null;
+
+  // Fallback: ?id=123 en querystring
+  if (!id) {
+    const qs = new URLSearchParams(location.search);
+    const qid = qs.get("id");
+    if (qid) id = qid;
+  }
+
+  // Normaliza: si es numérico, a número; si no, deja string (por si usas UUID)
+  if (id && /^\d+$/.test(String(id))) {
+    return Number(id);
+  }
+  return id; // podría ser string/uuid
+}
+
 export default function EmpleadoFicha() {
-  const { id } = useParams();
+  const employeeId = useEmployeeId();
   const [empleado, setEmpleado] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
+    // Evita consultar si no tenemos un ID válido
+    if (!employeeId) {
+      setLoading(false);
+      setLoadError("Falta el parámetro :id en la ruta (o ?id=).");
+      return;
+    }
+
+    let canceled = false;
     (async () => {
       setLoading(true);
+      setLoadError(null);
       const { data, error } = await supabase
         .from("employees")
         .select(`
           id, first_name, last_name, rut, role, region_id, comuna_id,
           mobile_phone, phone, email_personal, email_corporate,
-          office, schedule,
-          birth_date   -- 👈 traemos la fecha de nacimiento
+          office, schedule, birth_date
         `)
-        .eq("id", id)
-        .single();
-      if (!error) setEmpleado(data);
+        .eq("id", employeeId)
+        .maybeSingle(); // evita tirar error si no hay registros
+
+      if (canceled) return;
+
+      if (error) {
+        console.error(error);
+        setLoadError(error.message || "Error cargando empleado");
+        setEmpleado(null);
+      } else {
+        setEmpleado(data || null);
+      }
       setLoading(false);
     })();
-  }, [id]);
+
+    return () => {
+      canceled = true;
+    };
+  }, [employeeId]);
 
   const proxCumple = useMemo(() => {
     return calcNextBirthdayLabel(empleado?.birth_date)?.label ?? "—";
   }, [empleado?.birth_date]);
 
-  if (loading) return <div>Cargando…</div>;
-  if (!empleado) return <div>No encontrado</div>;
-
   async function handleSavePersonales(payload) {
-    // payload incluye birth_date
+    if (!empleado?.id) return;
+
     const { data, error } = await supabase
       .from("employees")
       .update(payload)
       .eq("id", empleado.id)
       .select()
-      .single();
-    if (!error) {
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      alert(error.message || "Error al guardar");
+    } else {
       setEmpleado(data);
       setIsEditing(false);
-    } else {
-      console.error(error);
-      alert("Error al guardar");
     }
   }
+
+  // UI de estados
+  if (loading) return <div>Cargando…</div>;
+  if (!employeeId) {
+    return (
+      <div style={{ padding: 16 }}>
+        <h3>No se pudo abrir la ficha</h3>
+        <p>Falta el parámetro <code>:id</code> en la ruta o <code>?id=</code> en la URL.</p>
+        <p>Ejemplo de ruta: <code>/empleados/123</code> o <code>/empleado?id=123</code></p>
+      </div>
+    );
+  }
+  if (loadError) return <div style={{ color: "crimson" }}>{loadError}</div>;
+  if (!empleado) return <div>No encontrado</div>;
 
   return (
     <div className="ficha-wrap">
@@ -87,7 +146,6 @@ export default function EmpleadoFicha() {
 
             <div className="info-item">
               <span className="info-label">Nacimiento:</span>
-              {/* aquí puedes mostrar solo el valor (no editable) */}
               <span className="info-value">
                 {empleado.birth_date
                   ? new Date(empleado.birth_date).toLocaleDateString("es-CL")
@@ -107,7 +165,6 @@ export default function EmpleadoFicha() {
 
             <div className="info-item">
               <span className="info-label">Próx. cumple:</span>
-              {/* 👇 Solo lectura, calculado */}
               <span className="info-value">{proxCumple}</span>
             </div>
           </div>
