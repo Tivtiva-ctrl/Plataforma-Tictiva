@@ -5,8 +5,8 @@ import "../styles/personales.css";
 
 /** Mapa: id de tu cl_regiones -> id oficial usado por cl_comunas */
 const FIX_REGION_ID = {
-  1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7,
-  8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14, 15: 15, 16: 16,
+  1: 1,  2: 2,  3: 3,  4: 4,  5: 5,  6: 6,  7: 7,  8: 8,
+  9: 9, 10:10, 11:11, 12:12, 13:13, 14:14, 15:15, 16:16,
 };
 
 /** Mapa inverso: id oficial -> id de tu cl_regiones (para mostrar correcto en el select) */
@@ -40,6 +40,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
 
   // estado del form
   const [form, setForm] = useState(() => {
+    // employee.region_id viene guardado con ID OFICIAL → convertir a ID LOCAL para el select
     const oficialRid = asInt(employee?.region_id);
     const localRid = oficialRid == null ? null : (INV_FIX_REGION_ID[oficialRid] ?? oficialRid);
 
@@ -55,7 +56,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
       direccion: employee?.direccion ?? "",
 
-      region_id: localRid,
+      region_id: localRid,                  // ← select usa ID LOCAL
       comuna_id: asInt(employee?.comuna_id),
 
       telefono_movil: employee?.telefono_movil ?? "",
@@ -90,6 +91,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         setEstadosCivil(ecRes.data || []);
         setNacionalidades(nRes.data || []);
 
+        // Si el form ya trae región, carga sus comunas (ID LOCAL)
         const ridLocal = asInt(form.region_id);
         if (ridLocal) await loadComunas(ridLocal);
       } catch (err) {
@@ -185,7 +187,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       return ridLocal == null ? null : (FIX_REGION_ID[ridLocal] ?? ridLocal);
     })(),
 
-    comuna_id: asInt(form.comuna_id), // INT (id de cl_comunas)
+    comuna_id: asInt(form.comuna_id),
 
     telefono_movil: form.telefono_movil?.trim() || null,
     telefono_fijo: form.telefono_fijo?.trim() || null,
@@ -205,16 +207,9 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     if (!validate()) return;
     setSaving(true);
     try {
-      // Validación FK: solo enviar comuna_id si existe en la lista cargada
-      const comunaOk =
-        form.comuna_id && comunas.some((c) => c.id === form.comuna_id)
-          ? form.comuna_id
-          : null;
-      const payloadFixed = { ...payload, comuna_id: asInt(comunaOk) };
-
       const { data, error } = await supabase
         .from("employees")
-        .update(payloadFixed)
+        .update(payload)
         .eq("id", employee?.id)
         .select("*")
         .single();
@@ -274,20 +269,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           />
         </div>
 
-        {/* NUEVO: Género */}
-        <div className="form-field">
-          <label>Género</label>
-          <select
-            value={form.genero}
-            onChange={(e) => setField("genero", e.target.value)}
-          >
-            <option value="O">O</option>
-            <option value="M">M</option>
-            <option value="F">F</option>
-          </select>
-        </div>
-
-        {/* Región / Comuna */}
+        {/* Región / Comuna — quedan juntas en la misma fila */}
         <div className="form-field">
           <label>Región</label>
           <select
@@ -296,7 +278,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               const val = asInt(e.target.value);
               setField("region_id", val);
               setField("comuna_id", null);
-              if (val) loadComunas(val); // cargar comunas de inmediato
+              if (val) loadComunas(val);
             }}
           >
             <option value="">— Selecciona región —</option>
@@ -327,17 +309,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           </select>
         </div>
 
-        {/* NUEVO: Dirección */}
-        <div className="form-field" style={{ gridColumn: "span 2" }}>
-          <label>Dirección</label>
-          <input
-            value={form.direccion}
-            onChange={(e) => setField("direccion", e.target.value)}
-            placeholder="Calle, número, depto, etc."
-          />
-        </div>
-
-        {/* Teléfonos / Emails */}
+        {/* Teléfonos */}
         <div className="form-field">
           <label>Teléfono móvil</label>
           <input
@@ -354,6 +326,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           />
         </div>
 
+        {/* Emails */}
         <div className="form-field">
           <label>Email personal</label>
           <input
@@ -401,6 +374,33 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Estado (Activo/Inactivo) / Discapacidad */}
+        <div className="form-field">
+          <label>Estado</label>
+          <select
+            value={form.activo ? "1" : "0"}
+            onChange={(e) => setField("activo", e.target.value === "1")}
+          >
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+
+        <div className="form-field">
+          <label>Discapacidad</label>
+          <div style={{display:"flex",alignItems:"center",gap:8,height:38}}>
+            <input
+              id="chk-discapacidad"
+              type="checkbox"
+              checked={!!form.discapacidad}
+              onChange={(e) => setField("discapacidad", e.target.checked)}
+            />
+            <label htmlFor="chk-discapacidad" style={{margin:0, color:"#374151"}}>
+              {form.discapacidad ? "Sí" : "No"}
+            </label>
+          </div>
         </div>
 
         <div className="form-col-2" />
