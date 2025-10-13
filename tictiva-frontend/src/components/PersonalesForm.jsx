@@ -70,6 +70,10 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
       pais_residencia: employee?.pais_residencia ?? "",
       idioma_preferido: employee?.idioma_preferido ?? "",
       pronombres: employee?.pronombres ?? "",
+
+      // 👇 NUEVO: campos para Info Rápida
+      office:  employee?.office  ?? "",
+      horario: employee?.horario ?? "",
     };
   });
 
@@ -200,6 +204,10 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
     pais_residencia: form.pais_residencia?.trim() || null,
     idioma_preferido: form.idioma_preferido?.trim() || null,
     pronombres: form.pronombres?.trim() || null,
+
+    // 👇 NUEVO: guardar Oficina y Horario
+    office:  form.office?.trim()  || null,
+    horario: form.horario?.trim() || null,
   }), [form]);
 
   const save = async (e) => {
@@ -401,6 +409,25 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               {form.discapacidad ? "Sí" : "No"}
             </label>
           </div>
+        </div>
+
+        {/* 👇 NUEVOS: Oficina / Horario */}
+        <div className="form-field">
+          <label>Oficina</label>
+          <input
+            value={form.office}
+            onChange={(e) => setField("office", e.target.value)}
+            placeholder="Ej: Santiago Centro"
+          />
+        </div>
+
+        <div className="form-field">
+          <label>Horario</label>
+          <input
+            value={form.horario}
+            onChange={(e) => setField("horario", e.target.value)}
+            placeholder="Ej: 08:30 - 18:00"
+          />
         </div>
 
         <div className="form-col-2" />

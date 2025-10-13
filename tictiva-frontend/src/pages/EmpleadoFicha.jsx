@@ -261,7 +261,7 @@ export default function EmpleadoFicha() {
                         <circle cx="12" cy="12" r="9" stroke="#6b7280" strokeWidth="1.6"/>
                       </svg>
                     </span>
-                    <span>Horario: <strong>08:30 - 18:00</strong></span>
+                    <span>Horario: <strong>{emp.horario || "—"}</strong></span>
                   </li>
                   <li>
                     <span className="ef-ico">
@@ -271,7 +271,7 @@ export default function EmpleadoFicha() {
                         <circle cx="12" cy="10" r="2.5" stroke="#6b7280" strokeWidth="1.6"/>
                       </svg>
                     </span>
-                    <span>Oficina: <strong>Santiago Centro</strong></span>
+                    <span>Oficina: <strong>{emp.office || "—"}</strong></span>
                   </li>
                 </ul>
               </div>
