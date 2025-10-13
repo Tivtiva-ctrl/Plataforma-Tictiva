@@ -14,9 +14,9 @@ const TABS = [
   { key: "documentos", label: "Documentos" },
   { key: "prevision", label: "Previsión" },
   { key: "bancarios", label: "Bancarios" },
-  { key: "asistencia", label: "Asistencia" }, // pantalla completa
+  { key: "asistencia", label: "Asistencia" },
   { key: "hoja", label: "Hoja de Vida" },
-  { key: "historial", label: "Historial" },   // pantalla completa
+  { key: "historial", label: "Historial" },
 ];
 
 const isUUID = (v = "") =>
@@ -33,6 +33,33 @@ const FIX_REGION_ID = {
 const INV_FIX_REGION_ID = Object.fromEntries(
   Object.entries(FIX_REGION_ID).map(([local, oficial]) => [Number(oficial), Number(local)])
 );
+
+/** Utilidades de fechas (cumpleaños) */
+function safeDate(v) {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function formatDayMonth(date) {
+  try {
+    return date.toLocaleDateString("es-CL", { day: "2-digit", month: "long" });
+  } catch {
+    // fallback
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    return `${d}/${m}`;
+  }
+}
+function nextBirthdayFrom(dobStr) {
+  const dob = safeDate(dobStr);
+  if (!dob) return null;
+  const now = new Date();
+  const year = now.getFullYear();
+  const candidate = new Date(year, dob.getMonth(), dob.getDate());
+  return candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    ? new Date(year + 1, dob.getMonth(), dob.getDate())
+    : candidate;
+}
 
 export default function EmpleadoFicha() {
   const navigate = useNavigate();
@@ -72,8 +99,6 @@ export default function EmpleadoFicha() {
       .single();
 
     if (error) {
-      // No rompemos el guardado principal si falla este paso;
-      // sólo informamos y devolvemos la versión base.
       console.error("Error guardando Información Rápida:", error);
       alert(error.message || "No se pudo guardar Horario/Oficina.");
       return base;
@@ -153,13 +178,24 @@ export default function EmpleadoFicha() {
     return regiones.find((r) => r.id === regionLocalId)?.nombre ?? "—";
   }, [regiones, regionLocalId]);
 
-  // En lectura pasamos emp enriquecido con el nombre correcto
+  // Próximo cumpleaños (mini card)
+  const proxCumpleTexto = useMemo(() => {
+    const nb = nextBirthdayFrom(emp?.fecha_nacimiento);
+    return nb ? formatDayMonth(nb) : "—";
+  }, [emp?.fecha_nacimiento]);
+
+  // En lectura pasamos emp enriquecido con nombre de región y fecha formateada
   const empForView = useMemo(() => {
     if (!emp) return null;
+    const dob = safeDate(emp.fecha_nacimiento);
+    const fecha_nacimiento_fmt = dob
+      ? dob.toLocaleDateString("es-CL", { year: "numeric", month: "long", day: "2-digit" })
+      : "—";
     return {
       ...emp,
       region_id_local: regionLocalId,
       region_nombre: regionNombre,
+      fecha_nacimiento_fmt,
     };
   }, [emp, regionLocalId, regionNombre]);
 
@@ -256,9 +292,9 @@ export default function EmpleadoFicha() {
               editing ? (
                 <PersonalesForm
                   key={emp.id}
-                  employee={emp} // el form recibe el objeto original (region_id OFICIAL)
+                  employee={emp}
                   onCancel={() => setEditing(false)}
-                  onSaved={handleSaved} // guardamos también Horario/Oficina
+                  onSaved={handleSaved}
                 />
               ) : (
                 <PersonalesView emp={empForView} />
@@ -275,10 +311,10 @@ export default function EmpleadoFicha() {
             {tab === "historial" && null}
           </div>
 
-          {/* Sidebar: oculto para Asistencia e Historial */}
+          {/* Sidebar */}
           {!sidebarHidden && (
             <div className="ef-side">
-              {/* Información Rápida (sin botones propios; se edita con "Editar Ficha") */}
+              {/* Información Rápida */}
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
@@ -289,7 +325,9 @@ export default function EmpleadoFicha() {
                           stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round"/>
                       </svg>
                     </span>
-                    <span>Próximo cumpleaños: <strong>15 Abril</strong></span>
+                    <span>
+                      Próximo cumpleaños: <strong>{proxCumpleTexto}</strong>
+                    </span>
                   </li>
 
                   {/* Horario */}
