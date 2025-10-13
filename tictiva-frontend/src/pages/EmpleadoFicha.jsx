@@ -49,6 +49,34 @@ export default function EmpleadoFicha() {
   // Catálogo de regiones (locales)
   const [regiones, setRegiones] = useState([]);
 
+  // ---------- Estado para edición rápida (Horario / Oficina) ----------
+  const [quickEdit, setQuickEdit] = useState(false);
+  const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
+  useEffect(() => {
+    setQuickForm({ office: emp?.office ?? "", horario: emp?.horario ?? "" });
+  }, [emp?.office, emp?.horario]);
+
+  const saveQuickInfo = async () => {
+    const payload = {
+      office: (quickForm.office || "").trim() || null,
+      horario: (quickForm.horario || "").trim() || null,
+    };
+    const { data, error } = await supabase
+      .from("employees")
+      .update(payload)
+      .eq("id", emp.id)
+      .select("*")
+      .single();
+
+    if (error) {
+      alert(error.message || "No se pudo guardar la Información rápida.");
+      return;
+    }
+    setEmp(data);
+    setQuickEdit(false);
+  };
+  // -------------------------------------------------------------------
+
   // Carga empleado (por RUT o por ID)
   useEffect(() => {
     let cancel = false;
@@ -240,7 +268,7 @@ export default function EmpleadoFicha() {
           {/* Sidebar: oculto para Asistencia e Historial */}
           {!sidebarHidden && (
             <div className="ef-side">
-              {/* Información Rápida */}
+              {/* Información Rápida (editable inline) */}
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
@@ -253,6 +281,8 @@ export default function EmpleadoFicha() {
                     </span>
                     <span>Próximo cumpleaños: <strong>15 Abril</strong></span>
                   </li>
+
+                  {/* Horario */}
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -261,8 +291,32 @@ export default function EmpleadoFicha() {
                         <circle cx="12" cy="12" r="9" stroke="#6b7280" strokeWidth="1.6"/>
                       </svg>
                     </span>
-                    <span>Horario: <strong>{emp.horario || "—"}</strong></span>
+                    <span style={{ flex: 1 }}>
+                      {quickEdit ? (
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <label style={{ color: "#374151" }}>Horario:</label>
+                          <input
+                            value={quickForm.horario}
+                            onChange={(e) =>
+                              setQuickForm((s) => ({ ...s, horario: e.target.value }))
+                            }
+                            placeholder="Ej: 08:30 - 18:00"
+                            style={{
+                              height: 34,
+                              border: "1px solid #e5e7eb",
+                              borderRadius: 8,
+                              padding: "0 10px",
+                              flex: 1,
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <>Horario: <strong>{emp.horario || "—"}</strong></>
+                      )}
+                    </span>
                   </li>
+
+                  {/* Oficina */}
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -271,9 +325,64 @@ export default function EmpleadoFicha() {
                         <circle cx="12" cy="10" r="2.5" stroke="#6b7280" strokeWidth="1.6"/>
                       </svg>
                     </span>
-                    <span>Oficina: <strong>{emp.office || "—"}</strong></span>
+                    <span style={{ flex: 1 }}>
+                      {quickEdit ? (
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <label style={{ color: "#374151" }}>Oficina:</label>
+                          <input
+                            value={quickForm.office}
+                            onChange={(e) =>
+                              setQuickForm((s) => ({ ...s, office: e.target.value }))
+                            }
+                            placeholder="Ej: Santiago Centro"
+                            style={{
+                              height: 34,
+                              border: "1px solid #e5e7eb",
+                              borderRadius: 8,
+                              padding: "0 10px",
+                              flex: 1,
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <>Oficina: <strong>{emp.office || "—"}</strong></>
+                      )}
+                    </span>
                   </li>
                 </ul>
+
+                {/* Acciones de la tarjeta */}
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  {quickEdit ? (
+                    <>
+                      <button
+                        className="lf-btn lf-btn-ghost"
+                        type="button"
+                        onClick={() => {
+                          setQuickForm({ office: emp?.office ?? "", horario: emp?.horario ?? "" });
+                          setQuickEdit(false);
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        className="lf-btn lf-btn-primary"
+                        type="button"
+                        onClick={saveQuickInfo}
+                      >
+                        Guardar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="lf-btn lf-btn-primary"
+                      type="button"
+                      onClick={() => setQuickEdit(true)}
+                    >
+                      Editar
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Rendimiento */}
