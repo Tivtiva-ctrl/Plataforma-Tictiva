@@ -31,54 +31,79 @@ function toYMD(d) {
   return `${y}-${m}-${da}`;
 }
 
-export default function PersonalesForm({ employee, onCancel, onSaved }) {
+/**
+ * Props esperadas POR EmpleadoFicha.jsx:
+ * - initialValues: objeto employees (first_name, last_name, rut, role, region_id, comuna_id, mobile_phone, phone, email_personal, email_corporate, office, schedule, birth_date)
+ * - isEditing: boolean → habilita/deshabilita inputs
+ * - onSubmit: (payload) => void  (se invoca al submit del form)
+ */
+export default function PersonalesForm({ initialValues, isEditing, onSubmit }) {
   // catálogos
   const [regiones, setRegiones] = useState([]);
   const [comunas, setComunas] = useState([]);
   const [estadosCivil, setEstadosCivil] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
 
-  // estado del form
+  // estado del form (usa nombres de columnas reales de employees)
   const [form, setForm] = useState(() => {
-    // employee.region_id viene guardado con ID OFICIAL → convertir a ID LOCAL para el select
-    const oficialRid = asInt(employee?.region_id);
+    // initialValues.region_id viene guardado con ID OFICIAL → convertir a ID LOCAL para el select
+    const oficialRid = asInt(initialValues?.region_id);
     const localRid = oficialRid == null ? null : (INV_FIX_REGION_ID[oficialRid] ?? oficialRid);
 
     return {
-      nombre: employee?.nombre ?? employee?.nombres ?? "",
-      apellido: employee?.apellido ?? employee?.apellidos ?? "",
-      rut: employee?.rut ?? "",
-      cargo: employee?.cargo ?? "",
-      genero: employee?.genero ?? "O",
-      discapacidad: !!employee?.discapacidad,
-      activo: employee?.activo ?? true,
+      first_name: initialValues?.first_name ?? "",
+      last_name: initialValues?.last_name ?? "",
+      rut: initialValues?.rut ?? "",
+      role: initialValues?.role ?? "",
 
-      fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
-      direccion: employee?.direccion ?? "",
+      birth_date: toYMD(initialValues?.birth_date) || "",
+      address: initialValues?.address ?? "", // por si existiera en tu tabla (no se guarda si no la usas)
 
-      region_id: localRid,                  // ← select usa ID LOCAL
-      comuna_id: asInt(employee?.comuna_id),
+      region_id: localRid,                       // ← select usa ID LOCAL
+      comuna_id: asInt(initialValues?.comuna_id),
 
-      telefono_movil: employee?.telefono_movil ?? "",
-      telefono_fijo: employee?.telefono_fijo ?? "",
-      email_personal: employee?.email_personal ?? "",
-      email_corporativo: employee?.email_corporativo ?? "",
+      mobile_phone: initialValues?.mobile_phone ?? "",
+      phone: initialValues?.phone ?? "",
+      email_personal: initialValues?.email_personal ?? "",
+      email_corporate: initialValues?.email_corporate ?? "",
 
-      estado_civil_id: asInt(employee?.estado_civil_id),
-      nacionalidad_id: asInt(employee?.nacionalidad_id),
+      // catálogos opcionales (si tu tabla employees no los tiene, no se enviarán)
+      estado_civil_id: asInt(initialValues?.estado_civil_id),
+      nacionalidad_id: asInt(initialValues?.nacionalidad_id),
 
-      pais_residencia: employee?.pais_residencia ?? "",
-      idioma_preferido: employee?.idioma_preferido ?? "",
-      pronombres: employee?.pronombres ?? "",
-
-      // 👇 NUEVO: campos para Info Rápida
-      office:  employee?.office  ?? "",
-      horario: employee?.horario ?? "",
+      // Info rápida
+      office: initialValues?.office ?? "",
+      schedule: initialValues?.schedule ?? "",
     };
   });
 
-  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Si cambian los initialValues (p. ej. tras guardar), rehidrata el form
+  useEffect(() => {
+    if (!initialValues) return;
+    const oficialRid = asInt(initialValues.region_id);
+    const localRid = oficialRid == null ? null : (INV_FIX_REGION_ID[oficialRid] ?? oficialRid);
+    setForm((prev) => ({
+      ...prev,
+      first_name: initialValues.first_name ?? "",
+      last_name: initialValues.last_name ?? "",
+      rut: initialValues.rut ?? "",
+      role: initialValues.role ?? "",
+      birth_date: toYMD(initialValues.birth_date) || "",
+      region_id: localRid,
+      comuna_id: asInt(initialValues.comuna_id),
+      mobile_phone: initialValues.mobile_phone ?? "",
+      phone: initialValues.phone ?? "",
+      email_personal: initialValues.email_personal ?? "",
+      email_corporate: initialValues.email_corporate ?? "",
+      estado_civil_id: asInt(initialValues.estado_civil_id),
+      nacionalidad_id: asInt(initialValues.nacionalidad_id),
+      office: initialValues.office ?? "",
+      schedule: initialValues.schedule ?? "",
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValues?.id]);
 
   // Carga catálogos base
   useEffect(() => {
@@ -164,99 +189,78 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
   // validación mínima
   const validate = () => {
     const e = {};
-    if (!form.nombre?.trim()) e.nombre = "Obligatorio";
-    if (!form.apellido?.trim()) e.apellido = "Obligatorio";
+    if (!form.first_name?.trim()) e.first_name = "Obligatorio";
+    if (!form.last_name?.trim()) e.last_name = "Obligatorio";
     if (!form.rut?.trim()) e.rut = "Obligatorio";
     if (form.comuna_id && !form.region_id) e.region_id = "Selecciona región para esa comuna";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // payload solo con columnas reales de employees
-  const payload = useMemo(() => ({
-    nombre: form.nombre?.trim() || null,
-    apellido: form.apellido?.trim() || null,
-    rut: form.rut?.trim() || null,
-    cargo: form.cargo?.trim() || null,
-    genero: form.genero || "O",
-    discapacidad: !!form.discapacidad,
-    activo: !!form.activo,
+  // payload con columnas reales de employees (guardando region_id en ID OFICIAL)
+  const payload = useMemo(
+    () => ({
+      first_name: form.first_name?.trim() || null,
+      last_name: form.last_name?.trim() || null,
+      rut: form.rut?.trim() || null,
+      role: form.role?.trim() || null,
 
-    fecha_nacimiento: form.fecha_nacimiento || null,
-    direccion: form.direccion?.trim() || null,
+      birth_date: form.birth_date || null,
 
-    // Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
-    region_id: (() => {
-      const ridLocal = asInt(form.region_id);
-      return ridLocal == null ? null : (FIX_REGION_ID[ridLocal] ?? ridLocal);
-    })(),
+      // Guardar con ID OFICIAL (alineado a cl_comunas.region_id)
+      region_id: (() => {
+        const ridLocal = asInt(form.region_id);
+        return ridLocal == null ? null : (FIX_REGION_ID[ridLocal] ?? ridLocal);
+      })(),
 
-    comuna_id: asInt(form.comuna_id),
+      comuna_id: asInt(form.comuna_id),
 
-    telefono_movil: form.telefono_movil?.trim() || null,
-    telefono_fijo: form.telefono_fijo?.trim() || null,
-    email_personal: form.email_personal?.trim() || null,
-    email_corporativo: form.email_corporativo?.trim() || null,
+      mobile_phone: form.mobile_phone?.trim() || null,
+      phone: form.phone?.trim() || null,
+      email_personal: form.email_personal?.trim() || null,
+      email_corporate: form.email_corporate?.trim() || null,
 
-    estado_civil_id: asInt(form.estado_civil_id),
-    nacionalidad_id: asInt(form.nacionalidad_id),
+      // Estos dos son los que muestra la card de Info Rápida
+      office: form.office?.trim() || null,
+      schedule: form.schedule?.trim() || null,
 
-    pais_residencia: form.pais_residencia?.trim() || null,
-    idioma_preferido: form.idioma_preferido?.trim() || null,
-    pronombres: form.pronombres?.trim() || null,
+      // Campos opcionales (solo si existen en tu schema; si no, supabase ignorará)
+      estado_civil_id: asInt(form.estado_civil_id),
+      nacionalidad_id: asInt(form.nacionalidad_id),
+    }),
+    [form]
+  );
 
-    // 👇 NUEVO: guardar Oficina y Horario
-    office:  form.office?.trim()  || null,
-    horario: form.horario?.trim() || null,
-  }), [form]);
-
-  const save = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
-    setSaving(true);
-    try {
-      const { data, error } = await supabase
-        .from("employees")
-        .update(payload)
-        .eq("id", employee?.id)
-        .select("*")
-        .single();
-      if (error) {
-        console.error("Save error:", error);
-        alert(error.message || "No se pudo guardar.");
-      } else {
-        onSaved?.(data);
-      }
-    } catch (err) {
-      console.error("Excepción guardar:", err);
-      alert("Error inesperado guardando.");
-    } finally {
-      setSaving(false);
-    }
+    onSubmit?.(payload);
   };
 
   return (
-    <form onSubmit={save} className="ef-card p20" style={{ marginTop: 12 }}>
-      <h3 className="ef-block-title">Editar Información Personal</h3>
+    <form id="personales-form" onSubmit={handleSubmit} className="card grandes" style={{ marginTop: 12 }}>
+      <h2>Editar Información Personal</h2>
 
       <div className="form-grid">
-        {/* Nombre / Apellido */}
+        {/* Nombres / Apellidos */}
         <div className="form-field">
           <label>Nombres *</label>
           <input
-            value={form.nombre}
-            onChange={(e) => setField("nombre", e.target.value)}
+            value={form.first_name}
+            onChange={(e) => setField("first_name", e.target.value)}
+            disabled={!isEditing}
           />
-          {errors.nombre && <div className="form-error">{errors.nombre}</div>}
+          {errors.first_name && <div className="form-error">{errors.first_name}</div>}
         </div>
 
         <div className="form-field">
           <label>Apellidos *</label>
           <input
-            value={form.apellido}
-            onChange={(e) => setField("apellido", e.target.value)}
+            value={form.last_name}
+            onChange={(e) => setField("last_name", e.target.value)}
+            disabled={!isEditing}
           />
-          {errors.apellido && <div className="form-error">{errors.apellido}</div>}
+          {errors.last_name && <div className="form-error">{errors.last_name}</div>}
         </div>
 
         {/* RUT / Cargo */}
@@ -265,6 +269,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <input
             value={form.rut}
             onChange={(e) => setField("rut", e.target.value)}
+            disabled={!isEditing}
           />
           {errors.rut && <div className="form-error">{errors.rut}</div>}
         </div>
@@ -272,12 +277,28 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         <div className="form-field">
           <label>Cargo</label>
           <input
-            value={form.cargo}
-            onChange={(e) => setField("cargo", e.target.value)}
+            value={form.role}
+            onChange={(e) => setField("role", e.target.value)}
+            disabled={!isEditing}
           />
         </div>
 
-        {/* Región / Comuna — quedan juntas en la misma fila */}
+        {/* Fecha de nacimiento */}
+        <div className="form-field">
+          <label>Fecha de nacimiento</label>
+          <input
+            type="date"
+            value={form.birth_date || ""}
+            onChange={(e) => setField("birth_date", e.target.value)}
+            disabled={!isEditing}
+            placeholder="aaaa-mm-dd"
+          />
+          <small className="field-hint">
+            Obligatorio para DT. Se usa para calcular “Próx. cumple”.
+          </small>
+        </div>
+
+        {/* Región / Comuna */}
         <div className="form-field">
           <label>Región</label>
           <select
@@ -288,6 +309,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
               setField("comuna_id", null);
               if (val) loadComunas(val);
             }}
+            disabled={!isEditing}
           >
             <option value="">— Selecciona región —</option>
             {regiones.map((r) => (
@@ -304,7 +326,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <select
             value={form.comuna_id ?? ""}
             onChange={(e) => setField("comuna_id", asInt(e.target.value))}
-            disabled={!form.region_id || comunas.length === 0}
+            disabled={!isEditing || !form.region_id || comunas.length === 0}
           >
             <option value="">
               {form.region_id ? "— Selecciona comuna —" : "Selecciona región primero"}
@@ -321,16 +343,18 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
         <div className="form-field">
           <label>Teléfono móvil</label>
           <input
-            value={form.telefono_movil}
-            onChange={(e) => setField("telefono_movil", e.target.value)}
+            value={form.mobile_phone}
+            onChange={(e) => setField("mobile_phone", e.target.value)}
+            disabled={!isEditing}
           />
         </div>
 
         <div className="form-field">
           <label>Teléfono fijo</label>
           <input
-            value={form.telefono_fijo}
-            onChange={(e) => setField("telefono_fijo", e.target.value)}
+            value={form.phone}
+            onChange={(e) => setField("phone", e.target.value)}
+            disabled={!isEditing}
           />
         </div>
 
@@ -341,6 +365,7 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
             type="email"
             value={form.email_personal}
             onChange={(e) => setField("email_personal", e.target.value)}
+            disabled={!isEditing}
           />
         </div>
 
@@ -348,108 +373,36 @@ export default function PersonalesForm({ employee, onCancel, onSaved }) {
           <label>Email corporativo</label>
           <input
             type="email"
-            value={form.email_corporativo}
-            onChange={(e) => setField("email_corporativo", e.target.value)}
+            value={form.email_corporate}
+            onChange={(e) => setField("email_corporate", e.target.value)}
+            disabled={!isEditing}
           />
         </div>
 
-        {/* Nacionalidad / Estado civil */}
-        <div className="form-field">
-          <label>Nacionalidad</label>
-          <select
-            value={form.nacionalidad_id ?? ""}
-            onChange={(e) => setField("nacionalidad_id", asInt(e.target.value))}
-          >
-            <option value="">— Selecciona nacionalidad —</option>
-            {nacionalidades.map((n) => (
-              <option key={n.id} value={n.id}>
-                {n.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-field">
-          <label>Estado civil</label>
-          <select
-            value={form.estado_civil_id ?? ""}
-            onChange={(e) => setField("estado_civil_id", asInt(e.target.value))}
-          >
-            <option value="">— Selecciona estado civil —</option>
-            {estadosCivil.map((ec) => (
-              <option key={ec.id} value={ec.id}>
-                {ec.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Estado (Activo/Inactivo) / Discapacidad */}
-        <div className="form-field">
-          <label>Estado</label>
-          <select
-            value={form.activo ? "1" : "0"}
-            onChange={(e) => setField("activo", e.target.value === "1")}
-          >
-            <option value="1">Activo</option>
-            <option value="0">Inactivo</option>
-          </select>
-        </div>
-
-        <div className="form-field">
-          <label>Discapacidad</label>
-          <div style={{display:"flex",alignItems:"center",gap:8,height:38}}>
-            <input
-              id="chk-discapacidad"
-              type="checkbox"
-              checked={!!form.discapacidad}
-              onChange={(e) => setField("discapacidad", e.target.checked)}
-            />
-            <label htmlFor="chk-discapacidad" style={{margin:0, color:"#374151"}}>
-              {form.discapacidad ? "Sí" : "No"}
-            </label>
-          </div>
-        </div>
-
-        {/* 👇 NUEVOS: Oficina / Horario */}
+        {/* Oficina / Horario (Info rápida) */}
         <div className="form-field">
           <label>Oficina</label>
           <input
             value={form.office}
             onChange={(e) => setField("office", e.target.value)}
             placeholder="Ej: Santiago Centro"
+            disabled={!isEditing}
           />
         </div>
 
         <div className="form-field">
           <label>Horario</label>
           <input
-            value={form.horario}
-            onChange={(e) => setField("horario", e.target.value)}
+            value={form.schedule}
+            onChange={(e) => setField("schedule", e.target.value)}
             placeholder="Ej: 08:30 - 18:00"
+            disabled={!isEditing}
           />
         </div>
 
         <div className="form-col-2" />
       </div>
-
-      <div className="form-actions">
-        <button
-          type="button"
-          className="lf-btn lf-btn-ghost"
-          onClick={onCancel}
-          disabled={saving}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="lf-btn lf-btn-primary"
-          disabled={saving}
-        >
-          {saving ? "Guardando…" : "Guardar"}
-        </button>
-      </div>
+      {/* Sin botones internos: los maneja EmpleadoFicha con el único botón de Guardar */}
     </form>
   );
 }
