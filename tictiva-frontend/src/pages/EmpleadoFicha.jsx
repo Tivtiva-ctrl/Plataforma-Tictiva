@@ -14,9 +14,9 @@ const TABS = [
   { key: "documentos", label: "Documentos" },
   { key: "prevision", label: "Previsión" },
   { key: "bancarios", label: "Bancarios" },
-  { key: "asistencia", label: "Asistencia" },
+  { key: "asistencia", label: "Asistencia" }, // pantalla completa
   { key: "hoja", label: "Hoja de Vida" },
-  { key: "historial", label: "Historial" },
+  { key: "historial", label: "Historial" },   // pantalla completa
 ];
 
 const isUUID = (v = "") =>
@@ -34,17 +34,24 @@ const INV_FIX_REGION_ID = Object.fromEntries(
   Object.entries(FIX_REGION_ID).map(([local, oficial]) => [Number(oficial), Number(local)])
 );
 
-/** Utilidades de fechas (cumpleaños) */
+/* ---------- Utilidades fecha ---------- */
 function safeDate(v) {
   if (!v) return null;
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+function toYMD(d) {
+  const dt = safeDate(d);
+  if (!dt) return "";
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const da = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${da}`;
+}
 function formatDayMonth(date) {
   try {
     return date.toLocaleDateString("es-CL", { day: "2-digit", month: "long" });
   } catch {
-    // fallback
     const d = String(date.getDate()).padStart(2, "0");
     const m = String(date.getMonth() + 1).padStart(2, "0");
     return `${d}/${m}`;
@@ -53,18 +60,17 @@ function formatDayMonth(date) {
 function nextBirthdayFrom(dobStr) {
   const dob = safeDate(dobStr);
   if (!dob) return null;
-  const now = new Date();
-  const year = now.getFullYear();
-  const candidate = new Date(year, dob.getMonth(), dob.getDate());
-  return candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    ? new Date(year + 1, dob.getMonth(), dob.getDate())
-    : candidate;
+  const today = new Date();
+  const y = today.getFullYear();
+  const nb = new Date(y, dob.getMonth(), dob.getDate());
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return nb < todayMid ? new Date(y + 1, dob.getMonth(), dob.getDate()) : nb;
 }
+/* ------------------------------------- */
 
 export default function EmpleadoFicha() {
   const navigate = useNavigate();
   const params = useParams();
-  // Ruta recomendada: /rrhh/ficha/:rut  (pero también acepta :id)
   const refRaw = params.rut ?? params.id ?? params.ref ?? "";
   const ref = decodeURIComponent(String(refRaw || ""));
 
@@ -76,38 +82,47 @@ export default function EmpleadoFicha() {
   // Catálogo de regiones (locales)
   const [regiones, setRegiones] = useState([]);
 
-  // --------- Estado ligado a la edición de Información Rápida ----------
-  const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
-  useEffect(() => {
-    setQuickForm({ office: emp?.office ?? "", horario: emp?.horario ?? "" });
-  }, [emp?.office, emp?.horario]);
+  // --------- Estado para “Información Rápida” (edición unificada) ----------
+  const [quickForm, setQuickForm] = useState({ office: "", horario: "", fecha_nacimiento: "" });
 
+  useEffect(() => {
+    setQuickForm({
+      office: emp?.office ?? "",
+      horario: emp?.horario ?? "",
+      fecha_nacimiento: toYMD(emp?.fecha_nacimiento) ?? "",
+    });
+  }, [emp?.office, emp?.horario, emp?.fecha_nacimiento]);
+
+  // Se llama después de guardar el formulario principal: persiste Horario/Oficina/DOB si cambiaron
   const updateQuickAfterMainSave = async (base) => {
     const office = (quickForm.office || "").trim() || null;
     const horario = (quickForm.horario || "").trim() || null;
+    const fecha_nacimiento = quickForm.fecha_nacimiento || null; // “YYYY-MM-DD” o null
 
     const changed =
-      (base.office ?? null) !== office || (base.horario ?? null) !== horario;
+      (base.office ?? null) !== office ||
+      (base.horario ?? null) !== horario ||
+      (base.fecha_nacimiento ?? null) !== fecha_nacimiento;
 
     if (!changed) return base;
 
     const { data, error } = await supabase
       .from("employees")
-      .update({ office, horario })
+      .update({ office, horario, fecha_nacimiento })
       .eq("id", base.id)
       .select("*")
       .single();
 
     if (error) {
       console.error("Error guardando Información Rápida:", error);
-      alert(error.message || "No se pudo guardar Horario/Oficina.");
+      alert(error.message || "No se pudo guardar Horario/Oficina/Fecha.");
       return base;
     }
     return data || base;
   };
-  // --------------------------------------------------------------------
+  // -------------------------------------------------------------------------
 
-  // Carga empleado (por RUT o por ID)
+  // Carga empleado
   useEffect(() => {
     let cancel = false;
     const load = async () => {
@@ -117,10 +132,8 @@ export default function EmpleadoFicha() {
         if (likelyRut(ref)) q = q.eq("rut", ref);
         else if (isUUID(ref)) q = q.eq("id", ref);
         else q = q.or(`rut.eq.${ref},id.eq.${ref}`);
-
         const { data, error } = await q.single();
         if (cancel) return;
-
         if (error) {
           console.error("Error cargando ficha:", error);
           setEmp(null);
@@ -140,7 +153,7 @@ export default function EmpleadoFicha() {
     return () => { cancel = true; };
   }, [ref]);
 
-  // Carga catálogo de regiones (IDs locales) para resolver el nombre correcto
+  // Carga catálogo de regiones
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -166,7 +179,7 @@ export default function EmpleadoFicha() {
     return (n + a).toUpperCase();
   }, [emp]);
 
-  // Derivados para la vista de lectura:
+  // Derivados para lectura
   const regionLocalId = useMemo(() => {
     const oficial = Number(emp?.region_id);
     if (!Number.isFinite(oficial)) return null;
@@ -178,13 +191,14 @@ export default function EmpleadoFicha() {
     return regiones.find((r) => r.id === regionLocalId)?.nombre ?? "—";
   }, [regiones, regionLocalId]);
 
-  // Próximo cumpleaños (mini card)
+  // Próximo cumpleaños (si estamos editando, usar lo que hay en el input)
   const proxCumpleTexto = useMemo(() => {
-    const nb = nextBirthdayFrom(emp?.fecha_nacimiento);
+    const fuente = editing ? quickForm.fecha_nacimiento : emp?.fecha_nacimiento;
+    const nb = nextBirthdayFrom(fuente);
     return nb ? formatDayMonth(nb) : "—";
-  }, [emp?.fecha_nacimiento]);
+  }, [editing, quickForm.fecha_nacimiento, emp?.fecha_nacimiento]);
 
-  // En lectura pasamos emp enriquecido con nombre de región y fecha formateada
+  // Objeto enriquecido para PersonalesView (muestra DOB formateado)
   const empForView = useMemo(() => {
     if (!emp) return null;
     const dob = safeDate(emp.fecha_nacimiento);
@@ -231,7 +245,7 @@ export default function EmpleadoFicha() {
 
   const sidebarHidden = tab === "asistencia" || tab === "historial";
 
-  // Handler luego del guardado del form principal:
+  // Al guardar el form principal: también persiste rápido (horario/oficina/fecha)
   const handleSaved = async (updated) => {
     const withQuick = await updateQuickAfterMainSave(updated);
     setEmp(withQuick);
@@ -311,13 +325,13 @@ export default function EmpleadoFicha() {
             {tab === "historial" && null}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar: Información Rápida */}
           {!sidebarHidden && (
             <div className="ef-side">
-              {/* Información Rápida */}
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
+                  {/* Fecha de nacimiento -> Próximo cumpleaños */}
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -325,8 +339,32 @@ export default function EmpleadoFicha() {
                           stroke="#6b7280" strokeWidth="1.6" strokeLinecap="round"/>
                       </svg>
                     </span>
-                    <span>
-                      Próximo cumpleaños: <strong>{proxCumpleTexto}</strong>
+                    <span style={{ flex: 1 }}>
+                      {editing ? (
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <label style={{ color: "#374151" }}>Nacimiento:</label>
+                          <input
+                            type="date"
+                            value={quickForm.fecha_nacimiento || ""}
+                            onChange={(e) =>
+                              setQuickForm((s) => ({ ...s, fecha_nacimiento: e.target.value }))
+                            }
+                            style={{
+                              height: 34,
+                              border: "1px solid #e5e7eb",
+                              borderRadius: 8,
+                              padding: "0 10px",
+                            }}
+                          />
+                          <span style={{ color: "#374151" }}>
+                            Próx. cumple: <strong>{proxCumpleTexto}</strong>
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          Próximo cumpleaños: <strong>{proxCumpleTexto}</strong>
+                        </>
+                      )}
                     </span>
                   </li>
 
@@ -403,7 +441,6 @@ export default function EmpleadoFicha() {
               {/* Rendimiento */}
               <div className="ef-card p16 ef-perf">
                 <h3 className="ef-side-title">Rendimiento</h3>
-
                 <div className="ef-metric-row">
                   <span className="ef-metric-label">Productividad</span>
                   <span className="ef-metric-val blue">92%</span>
