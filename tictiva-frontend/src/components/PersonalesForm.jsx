@@ -143,16 +143,20 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
           <input value={form.cargo} onChange={(e)=>setField("cargo", e.target.value)} disabled={!isEditing} />
         </div>
 
-        {/* Fecha de nacimiento / Teléfono móvil */}
-        <div className="form-field">
-          <label>Fecha de nacimiento</label>
-          <input
-            type="date"
-            value={form.fecha_nacimiento || ""}
-            onChange={(e)=>setField("fecha_nacimiento", e.target.value)}
-            disabled={!isEditing}
-          />
-        </div>
+        {/* Fecha de nacimiento (siempre visible) */}
+<div className="form-field">
+  <label>Fecha de nacimiento:</label>
+  <div className="read-value">
+    {emp?.fecha_nacimiento
+      ? new Date(emp.fecha_nacimiento).toLocaleDateString("es-CL", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })
+      : "—"}
+  </div>
+</div>
+
         <div className="form-field">
           <label>Teléfono móvil</label>
           <input value={form.telefono_movil} onChange={(e)=>setField("telefono_movil", e.target.value)} disabled={!isEditing} />
