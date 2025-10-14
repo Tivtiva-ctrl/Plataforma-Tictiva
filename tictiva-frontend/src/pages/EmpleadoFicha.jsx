@@ -222,18 +222,7 @@ export default function EmpleadoFicha() {
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
-                  {/* Nacimiento (fecha fija) */}
-                  <li>
-                    <span className="ef-ico" aria-hidden>📅</span>
-                    <span style={{ flex: 1 }}>
-                      Nacimiento:{" "}
-                      <strong>
-                        {emp.fecha_nacimiento
-                          ? new Date(emp.fecha_nacimiento).toLocaleDateString("es-CL")
-                          : "—"}
-                      </strong>
-                    </span>
-                  </li>
+                  
 
                   {/* Próximo cumple (solo lectura) */}
                   <li>
