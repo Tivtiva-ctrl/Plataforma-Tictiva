@@ -54,6 +54,7 @@ export default function Personales({ emp }) {
       <Row label="Género:" value={emp?.genero} />
       <Row label="Discapacidad:" value={emp?.discapacidad ? "Sí" : "No"} />
       <Row label="Estado:" value={emp?.activo ? "ACTIVO" : "INACTIVO"} />
+      <Row label="Fecha de nacimiento:" value={emp?.fecha_nacimiento} />
       <Row label="Región:" value={regionNombre || (emp?.region_id ?? "—")} />
       <Row label="Comuna:" value={comunaNombre || (emp?.comuna_id ?? "—")} />
       <Row label="Estado civil:" value={estadoCivilNombre} />
