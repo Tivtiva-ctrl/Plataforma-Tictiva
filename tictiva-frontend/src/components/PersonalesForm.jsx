@@ -7,7 +7,15 @@ const FIX_REGION_ID = { 1:15,2:1,3:2,4:3,5:4,6:5,7:13,8:6,9:7,10:8,11:9,12:10,13
 const INV_FIX_REGION_ID = Object.fromEntries(Object.entries(FIX_REGION_ID).map(([l,o]) => [Number(o),Number(l)]));
 
 const asInt = (v) => { if (v===null||v===undefined||v==="") return null; const n=Number(v); return Number.isNaN(n)?null:n; };
-const toYMD = (d) => { if(!d) return ""; const dt=typeof d==="string"?new Date(d):d; if(Number.isNaN(dt.getTime())) return ""; const y=dt.getFullYear(); const m=String(dt.getMonth()+1).padStart(2,"0"); const da=String(dt.getDate()).padStart(2,"0"); return `${y}-${m}-${da}`; };
+const toYMD = (d) => {
+  if(!d) return "";
+  const dt = typeof d==="string" ? new Date(d) : d;
+  if(Number.isNaN(dt.getTime())) return "";
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,"0");
+  const da = String(dt.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+};
 
 export default function PersonalesForm({ id, employee, isEditing, onSaved, onCancel }) {
   const [regiones, setRegiones] = useState([]);
@@ -93,6 +101,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       apellido: form.apellido?.trim() || null,
       rut: form.rut?.trim() || null,
       cargo: form.cargo?.trim() || null,
+      // ya viene en YYYY-MM-DD
       fecha_nacimiento: form.fecha_nacimiento || null,
       region_id: (() => {
         const ridLocal = asInt(form.region_id);
@@ -143,19 +152,16 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
           <input value={form.cargo} onChange={(e)=>setField("cargo", e.target.value)} disabled={!isEditing} />
         </div>
 
-        {/* Fecha de nacimiento (siempre visible) */}
-<div className="form-field">
-  <label>Fecha de nacimiento:</label>
-  <div className="read-value">
-    {emp?.fecha_nacimiento
-      ? new Date(emp.fecha_nacimiento).toLocaleDateString("es-CL", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        })
-      : "—"}
-  </div>
-</div>
+        {/* ✅ Fecha de nacimiento — editable y enlazada al estado */}
+        <div className="form-field">
+          <label>Fecha de nacimiento</label>
+          <input
+            type="date"
+            value={form.fecha_nacimiento}
+            onChange={(e)=>setField("fecha_nacimiento", e.target.value)}
+            disabled={!isEditing}
+          />
+        </div>
 
         <div className="form-field">
           <label>Teléfono móvil</label>
