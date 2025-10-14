@@ -7,6 +7,10 @@ import PersonalesView from "../components/Personales";
 import PersonalesForm from "../components/PersonalesForm";
 import "../styles/personales.css";
 
+// ✅ nuevos imports
+import ContractualesView from "../components/Contractuales";
+import ContractualesForm from "../components/ContractualesForm";
+
 const TABS = [
   { key: "personales", label: "Personales" },
   { key: "contractuales", label: "Contractuales" },
@@ -153,9 +157,13 @@ export default function EmpleadoFicha() {
     setEditing(false);
   };
 
-  const submitPersonales = () => {
-    const form = document.getElementById("personales-form");
-    if (form) form.requestSubmit();
+  // ✅ ahora guarda el formulario del TAB activo (personales o contractuales)
+  const submitActive = () => {
+    const formId =
+      tab === "personales" ? "personales-form" :
+      tab === "contractuales" ? "contractuales-form" :
+      null;
+    if (formId) document.getElementById(formId)?.requestSubmit();
   };
 
   return (
@@ -181,7 +189,8 @@ export default function EmpleadoFicha() {
               <button className="lf-btn lf-btn-primary" onClick={() => setEditing(true)}>Editar Ficha</button>
             ) : (
               <>
-                <button className="lf-btn lf-btn-primary" onClick={submitPersonales}>Guardar</button>
+                {/* ✅ usa submitActive en vez de submitPersonales */}
+                <button className="lf-btn lf-btn-primary" onClick={submitActive}>Guardar</button>
                 <button className="lf-btn lf-btn-ghost" onClick={() => setEditing(false)}>Cancelar</button>
               </>
             )}
@@ -191,8 +200,15 @@ export default function EmpleadoFicha() {
         {/* Tabs */}
         <div className="ef-tabs">
           {TABS.map((t) => (
-            <button key={t.key} className={`ef-tab ${tab === t.key ? "active" : ""}`}
-              onClick={() => { setTab(t.key); if (t.key !== "personales") setEditing(false); }}>
+            <button
+              key={t.key}
+              className={`ef-tab ${tab === t.key ? "active" : ""}`}
+              onClick={() => {
+                setTab(t.key);
+                // ✅ permitir edición también en contractuales
+                if (!["personales","contractuales"].includes(t.key)) setEditing(false);
+              }}
+            >
               {t.label}
             </button>
           ))}
@@ -214,6 +230,23 @@ export default function EmpleadoFicha() {
                 <PersonalesView emp={empForView} />
               )
             )}
+
+            {/* ✅ sección Contractuales con el mismo patrón */}
+            {tab === "contractuales" && (
+              editing ? (
+                <ContractualesForm
+                  id="contractuales-form"
+                  employee={emp}
+                  isEditing={true}
+                  onSaved={() => setEditing(false)}
+                />
+              ) : (
+                <ContractualesView
+                  employee={emp}
+                  pin={emp.pin_marcacion}
+                />
+              )
+            )}
           </div>
 
           {/* Sidebar: Información Rápida con EMOJIS y DOB visible */}
@@ -222,8 +255,6 @@ export default function EmpleadoFicha() {
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
-                  
-
                   {/* Próximo cumple (solo lectura) */}
                   <li>
                     <span className="ef-ico" aria-hidden>🎈</span>
