@@ -7,7 +7,7 @@ import PersonalesView from "../components/Personales";
 import PersonalesForm from "../components/PersonalesForm";
 import "../styles/personales.css";
 
-// ✅ nuevos imports
+// 👇 asegúrate de tener estos dos archivos creados (Form y View)
 import ContractualesView from "../components/Contractuales";
 import ContractualesForm from "../components/ContractualesForm";
 
@@ -23,7 +23,8 @@ const TABS = [
 ];
 
 const isUUID = (v = "") =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[12][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v) ||
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v); // tolerante
 const likelyRut = (v = "") => v.includes("-") || v.includes(".");
 const fullName = (e) => `${e?.nombre ?? ""} ${e?.apellido ?? ""}`.trim();
 
@@ -58,6 +59,9 @@ export default function EmpleadoFicha() {
 
   const [regiones, setRegiones] = useState([]);
   const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
+
+  // 👇 NUEVO: estado para los datos contractuales (vista)
+  const [contract, setContract] = useState(null);
 
   useEffect(() => {
     setQuickForm({
@@ -138,6 +142,28 @@ export default function EmpleadoFicha() {
     return { ...emp, region_id_local: regionLocalId, region_nombre: regionNombre, fecha_nacimiento_fmt };
   }, [emp, regionLocalId, regionNombre]);
 
+  // 👇 NUEVO: función para traer el contrato vigente del empleado
+  const fetchContract = async () => {
+    if (!emp?.id) return;
+    const { data, error } = await supabase
+      .from("employee_contracts")
+      .select("*")
+      .eq("employee_id", emp.id)
+      .eq("estado", "vigente")
+      .maybeSingle();
+    if (error) {
+      console.error("Error cargando contractuales:", error);
+      setContract(null);
+      return;
+    }
+    setContract(data || null);
+  };
+
+  // 👇 NUEVO: carga contractuales al entrar al tab o cambiar de empleado
+  useEffect(() => {
+    if (tab === "contractuales" && emp?.id) fetchContract();
+  }, [tab, emp?.id]);
+
   if (loading) return <div className="ef-page"><div className="ef-wrap"><div className="ef-card p20">Cargando ficha…</div></div></div>;
   if (!emp) return (
     <div className="ef-page"><div className="ef-wrap">
@@ -153,11 +179,17 @@ export default function EmpleadoFicha() {
   const handleSaved = async (updated) => {
     // updated viene con fecha_nacimiento persistida desde el formulario principal
     const withQuick = await updateQuickAfterMainSave(updated);
-    setEmp(withQuick);      // 👈 asegura que la ficha muestre DOB actualizado
+    setEmp(withQuick);      // asegura que la ficha muestre DOB actualizado
     setEditing(false);
   };
 
-  // ✅ ahora guarda el formulario del TAB activo (personales o contractuales)
+  // 👇 NUEVO: después de guardar Contractuales, refrescamos y salimos de edición
+  const handleSavedContract = async () => {
+    await fetchContract();
+    setEditing(false);
+  };
+
+  // guarda el formulario del TAB activo (personales o contractuales)
   const submitActive = () => {
     const formId =
       tab === "personales" ? "personales-form" :
@@ -189,7 +221,6 @@ export default function EmpleadoFicha() {
               <button className="lf-btn lf-btn-primary" onClick={() => setEditing(true)}>Editar Ficha</button>
             ) : (
               <>
-                {/* ✅ usa submitActive en vez de submitPersonales */}
                 <button className="lf-btn lf-btn-primary" onClick={submitActive}>Guardar</button>
                 <button className="lf-btn lf-btn-ghost" onClick={() => setEditing(false)}>Cancelar</button>
               </>
@@ -205,7 +236,7 @@ export default function EmpleadoFicha() {
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
               onClick={() => {
                 setTab(t.key);
-                // ✅ permitir edición también en contractuales
+                // permitir edición en personales y contractuales; en el resto desactivar
                 if (!["personales","contractuales"].includes(t.key)) setEditing(false);
               }}
             >
@@ -231,39 +262,35 @@ export default function EmpleadoFicha() {
               )
             )}
 
-            {/* ✅ sección Contractuales con el mismo patrón */}
             {tab === "contractuales" && (
               editing ? (
                 <ContractualesForm
                   id="contractuales-form"
                   employee={emp}
                   isEditing={true}
-                  onSaved={() => setEditing(false)}
+                  onSaved={handleSavedContract}
                 />
               ) : (
                 <ContractualesView
-                  employee={emp}
+                  data={contract}                 // 👈 ahora recibe datos reales
                   pin={emp.pin_marcacion}
                 />
               )
             )}
           </div>
 
-          {/* Sidebar: Información Rápida con EMOJIS y DOB visible */}
+          {/* Sidebar */}
           {!sidebarHidden && (
             <div className="ef-side">
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
-                  {/* Próximo cumple (solo lectura) */}
                   <li>
                     <span className="ef-ico" aria-hidden>🎈</span>
                     <span style={{ flex: 1 }}>
                       Próx. cumple: <strong>{proxCumpleTexto}</strong>
                     </span>
                   </li>
-
-                  {/* Horario (editable en modo edición) */}
                   <li>
                     <span className="ef-ico" aria-hidden>⏰</span>
                     <span style={{ flex: 1 }}>
@@ -282,8 +309,6 @@ export default function EmpleadoFicha() {
                       )}
                     </span>
                   </li>
-
-                  {/* Oficina (editable en modo edición) */}
                   <li>
                     <span className="ef-ico" aria-hidden>🏢</span>
                     <span style={{ flex: 1 }}>
@@ -305,7 +330,6 @@ export default function EmpleadoFicha() {
                 </ul>
               </div>
 
-              {/* (Rendimiento mock) */}
               <div className="ef-card p16 ef-perf">
                 <h3 className="ef-side-title">Rendimiento</h3>
                 <div className="ef-metric-row"><span className="ef-metric-label">Productividad</span><span className="ef-metric-val blue">92%</span></div>
