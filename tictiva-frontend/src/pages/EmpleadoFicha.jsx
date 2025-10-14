@@ -2,47 +2,34 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import PersonalesForm from "../components/PersonalesForm"; // edición
+import PersonalesForm from "../components/PersonalesForm";
 import { calcNextBirthdayLabel } from "../utils/birthday";
 import "../styles/personales.css";
 
-// Normaliza RUT: quita puntos y guion, mayúsculas (ajústalo si tu BD guarda con guion)
-const normalizeRut = (r) =>
-  (r || "").toString().replace(/\./g, "").toUpperCase();
+// Normaliza RUT (sin puntos, mantiene guion)
+const normalizeRut = (r) => (r || "").toString().replace(/\./g, "").toUpperCase();
 
-/** Lee id o rut desde params, query o location.state */
+/** Toma id o rut desde params, query o location.state */
 function useEmployeeLookup() {
   const params = useParams();
   const location = useLocation();
 
-  // 1) params
-  let id =
-    params?.id ??
-    params?.empId ??
-    params?.empleadoId ??
-    null;
+  let id = params?.id ?? params?.empId ?? params?.empleadoId ?? null;
   let rut = params?.rut ?? null;
 
-  // 2) query
   if (!id || !rut) {
     const qs = new URLSearchParams(location.search);
     id = id ?? qs.get("id");
     rut = rut ?? qs.get("rut");
   }
 
-  // 3) location.state
   if ((!id || !rut) && location.state) {
     id = id ?? (location.state.id ?? location.state.employeeId ?? location.state.empleadoId);
     rut = rut ?? (location.state.rut ?? location.state.employeeRut);
   }
 
-  if (id) {
-    if (/^\d+$/.test(String(id))) return { by: "id", value: Number(id) };
-    return { by: "id", value: String(id) }; // UUID u otro string
-  }
-  if (rut) {
-    return { by: "rut", value: normalizeRut(rut) };
-  }
+  if (id) return { by: "id", value: /^\d+$/.test(String(id)) ? Number(id) : String(id) };
+  if (rut) return { by: "rut", value: normalizeRut(rut) };
   return null;
 }
 
@@ -65,20 +52,34 @@ export default function EmpleadoFicha() {
       setLoading(true);
       setLoadError(null);
 
+      // 👇 OJO: columnas reales en español
       let query = supabase
         .from("employees")
         .select(`
-          id, first_name, last_name, rut, role, region_id, comuna_id,
-          mobile_phone, phone, email_personal, email_corporate,
-          office, schedule, birth_date
+          id,
+          nombre, nombres,           -- puede existir una u otra
+          apellido, apellidos,       -- puede existir una u otra
+          rut,
+          cargo,
+          genero,
+          discapacidad,
+          activo,
+          direccion,
+          region_id,
+          comuna_id,
+          telefono_movil,
+          telefono_fijo,
+          email_personal,
+          email_corporativo,         -- (antes pedíamos email_corporate)
+          office,
+          horario,                   -- (antes pedíamos schedule)
+          fecha_nacimiento,          -- (antes pedíamos birth_date)
+          estado_civil_id,
+          nacionalidad_id
         `);
 
-      if (lookup.by === "id") {
-        query = query.eq("id", lookup.value);
-      } else {
-        // IMPORTANTE: si en tu BD el RUT se guarda con guion, puedes quitar normalizeRut
-        query = query.eq("rut", lookup.value);
-      }
+      if (lookup.by === "id") query = query.eq("id", lookup.value);
+      else query = query.eq("rut", lookup.value);
 
       const { data, error } = await query.maybeSingle();
 
@@ -94,17 +95,17 @@ export default function EmpleadoFicha() {
       setLoading(false);
     })();
 
-    return () => {
-      canceled = true;
-    };
+    return () => { canceled = true; };
   }, [lookup]);
 
   const proxCumple = useMemo(() => {
-    return calcNextBirthdayLabel(empleado?.birth_date)?.label ?? "—";
-  }, [empleado?.birth_date]);
+    return calcNextBirthdayLabel(empleado?.fecha_nacimiento)?.label ?? "—";
+  }, [empleado?.fecha_nacimiento]);
 
   async function handleSavePersonales(payload) {
     if (!empleado?.id) return;
+
+    // payload viene desde PersonalesForm con nombres en español
     const { data, error } = await supabase
       .from("employees")
       .update(payload)
@@ -121,13 +122,13 @@ export default function EmpleadoFicha() {
     }
   }
 
-  // UI de estados
+  // Estados UI
   if (loading) return <div>Cargando…</div>;
   if (!lookup) {
     return (
       <div style={{ padding: 16 }}>
         <h3>No se pudo abrir la ficha</h3>
-        <p>Falta el parámetro <code>:id</code> o <code>:rut</code> en la ruta, o <code>?id=</code>/<code>?rut=</code> en la URL.</p>
+        <p>Falta el parámetro <code>:id</code> o <code>:rut</code> en la ruta, o <code>?id=</code>/<code>?rut=</code>.</p>
         <p>Ejemplos: <code>/empleados/123</code> · <code>/empleado?id=123</code> · <code>/rrhh/ficha/16.238.789-8</code></p>
       </div>
     );
@@ -151,7 +152,6 @@ export default function EmpleadoFicha() {
 
       <div className="ficha-grid">
         <div className="ficha-col">
-          {/* PERSONALES: un solo formulario controla todo */}
           <PersonalesForm
             key={empleado.id}
             initialValues={empleado}
@@ -161,22 +161,21 @@ export default function EmpleadoFicha() {
         </div>
 
         <aside className="ficha-aside">
-          {/* Información Rápida */}
           <div className="card info-rapida">
             <h3>Información Rápida</h3>
 
             <div className="info-item">
               <span className="info-label">Nacimiento:</span>
               <span className="info-value">
-                {empleado.birth_date
-                  ? new Date(empleado.birth_date).toLocaleDateString("es-CL")
+                {empleado.fecha_nacimiento
+                  ? new Date(empleado.fecha_nacimiento).toLocaleDateString("es-CL")
                   : "—"}
               </span>
             </div>
 
             <div className="info-item">
               <span className="info-label">Horario:</span>
-              <span className="info-value">{empleado.schedule || "—"}</span>
+              <span className="info-value">{empleado.horario || "—"}</span>
             </div>
 
             <div className="info-item">
