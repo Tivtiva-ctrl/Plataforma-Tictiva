@@ -65,8 +65,9 @@ export default function ContractualesView({ data, pin }) {
 function Row({ label, value }) {
   return (
     <div className="ficha-row">
-      <div className="ficha-label">{label}:</div>
-      <div className="ficha-value">{value}</div>
+      {/* mismas clases que Personales */}
+      <div className="ficha-label text-gray-500">{label}:</div>
+      <div className="ficha-value font-semibold text-gray-900">{value}</div>
     </div>
   );
 }
