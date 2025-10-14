@@ -14,9 +14,9 @@ const TABS = [
   { key: "documentos", label: "Documentos" },
   { key: "prevision", label: "Previsión" },
   { key: "bancarios", label: "Bancarios" },
-  { key: "asistencia", label: "Asistencia" }, // pantalla completa
+  { key: "asistencia", label: "Asistencia" },
   { key: "hoja", label: "Hoja de Vida" },
-  { key: "historial", label: "Historial" },   // pantalla completa
+  { key: "historial", label: "Historial" },
 ];
 
 const isUUID = (v = "") =>
@@ -29,7 +29,6 @@ const FIX_REGION_ID = {
   1: 15, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 13, 8: 6,
   9: 7, 10: 8, 11: 9, 12: 10, 13: 12, 14: 14, 15: 11, 16: 16,
 };
-/** Inverso: ID oficial -> ID local (para mostrar el nombre correcto desde cl_regiones) */
 const INV_FIX_REGION_ID = Object.fromEntries(
   Object.entries(FIX_REGION_ID).map(([local, oficial]) => [Number(oficial), Number(local)])
 );
@@ -39,14 +38,6 @@ function safeDate(v) {
   if (!v) return null;
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
-}
-function toYMD(d) {
-  const dt = safeDate(d);
-  if (!dt) return "";
-  const y = dt.getFullYear();
-  const m = String(dt.getMonth() + 1).padStart(2, "0");
-  const da = String(dt.getDate()).padStart(2, "0");
-  return `${y}-${m}-${da}`;
 }
 function formatDayMonth(date) {
   try {
@@ -82,40 +73,37 @@ export default function EmpleadoFicha() {
   // Catálogo de regiones (locales)
   const [regiones, setRegiones] = useState([]);
 
-  // --------- Estado para “Información Rápida” (edición unificada) ----------
-  const [quickForm, setQuickForm] = useState({ office: "", horario: "", fecha_nacimiento: "" });
+  // --------- Estado para “Información Rápida” (solo Oficina/Horario) ----------
+  const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
 
   useEffect(() => {
     setQuickForm({
       office: emp?.office ?? "",
       horario: emp?.horario ?? "",
-      fecha_nacimiento: toYMD(emp?.fecha_nacimiento) ?? "",
     });
-  }, [emp?.office, emp?.horario, emp?.fecha_nacimiento]);
+  }, [emp?.office, emp?.horario]);
 
-  // Se llama después de guardar el formulario principal: persiste Horario/Oficina/DOB si cambiaron
+  // Persiste Oficina/Horario si cambiaron (DOB ya no se toca aquí)
   const updateQuickAfterMainSave = async (base) => {
     const office = (quickForm.office || "").trim() || null;
     const horario = (quickForm.horario || "").trim() || null;
-    const fecha_nacimiento = quickForm.fecha_nacimiento || null; // “YYYY-MM-DD” o null
 
     const changed =
       (base.office ?? null) !== office ||
-      (base.horario ?? null) !== horario ||
-      (base.fecha_nacimiento ?? null) !== fecha_nacimiento;
+      (base.horario ?? null) !== horario;
 
     if (!changed) return base;
 
     const { data, error } = await supabase
       .from("employees")
-      .update({ office, horario, fecha_nacimiento })
+      .update({ office, horario })
       .eq("id", base.id)
       .select("*")
       .single();
 
     if (error) {
       console.error("Error guardando Información Rápida:", error);
-      alert(error.message || "No se pudo guardar Horario/Oficina/Fecha.");
+      alert(error.message || "No se pudo guardar Horario/Oficina.");
       return base;
     }
     return data || base;
@@ -191,14 +179,13 @@ export default function EmpleadoFicha() {
     return regiones.find((r) => r.id === regionLocalId)?.nombre ?? "—";
   }, [regiones, regionLocalId]);
 
-  // Próximo cumpleaños (si estamos editando, usar lo que hay en el input)
+  // Próximo cumpleaños (si no hay fecha: “—”)
   const proxCumpleTexto = useMemo(() => {
-    const fuente = editing ? quickForm.fecha_nacimiento : emp?.fecha_nacimiento;
-    const nb = nextBirthdayFrom(fuente);
+    const nb = nextBirthdayFrom(emp?.fecha_nacimiento);
     return nb ? formatDayMonth(nb) : "—";
-  }, [editing, quickForm.fecha_nacimiento, emp?.fecha_nacimiento]);
+  }, [emp?.fecha_nacimiento]);
 
-  // Objeto enriquecido para PersonalesView (muestra DOB formateado)
+  // Objeto enriquecido para PersonalesView
   const empForView = useMemo(() => {
     if (!emp) return null;
     const dob = safeDate(emp.fecha_nacimiento);
@@ -245,11 +232,17 @@ export default function EmpleadoFicha() {
 
   const sidebarHidden = tab === "asistencia" || tab === "historial";
 
-  // Al guardar el form principal: también persiste rápido (horario/oficina/fecha)
+  // Después de guardar el form principal
   const handleSaved = async (updated) => {
     const withQuick = await updateQuickAfterMainSave(updated);
     setEmp(withQuick);
     setEditing(false);
+  };
+
+  // Dispara submit del form Personales desde el botón del header
+  const submitPersonales = () => {
+    const form = document.getElementById("personales-form");
+    if (form) form.requestSubmit();
   };
 
   return (
@@ -276,12 +269,20 @@ export default function EmpleadoFicha() {
             </div>
           </div>
           <div className="ef-head-actions">
-            <button
-              className="lf-btn lf-btn-primary"
-              onClick={() => setEditing(true)}
-            >
-              Editar Ficha
-            </button>
+            {!editing ? (
+              <button className="lf-btn lf-btn-primary" onClick={() => setEditing(true)}>
+                Editar Ficha
+              </button>
+            ) : (
+              <>
+                <button className="lf-btn lf-btn-primary" onClick={submitPersonales}>
+                  Guardar
+                </button>
+                <button className="lf-btn lf-btn-ghost" onClick={() => setEditing(false)}>
+                  Cancelar
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -305,6 +306,7 @@ export default function EmpleadoFicha() {
             {tab === "personales" && (
               editing ? (
                 <PersonalesForm
+                  id="personales-form"         // importante para requestSubmit()
                   key={emp.id}
                   employee={emp}
                   onCancel={() => setEditing(false)}
@@ -315,7 +317,7 @@ export default function EmpleadoFicha() {
               )
             )}
 
-            {/* Resto de pestañas */}
+            {/* Otras pestañas (placeholder) */}
             {tab === "contractuales" && null}
             {tab === "documentos" && null}
             {tab === "prevision" && null}
@@ -331,7 +333,7 @@ export default function EmpleadoFicha() {
               <div className="ef-card p16 ef-quick">
                 <h3 className="ef-side-title">Información Rápida</h3>
                 <ul className="ef-quick-list">
-                  {/* Fecha de nacimiento -> Próximo cumpleaños */}
+                  {/* Nacimiento / Próximo cumple — SIEMPRE solo lectura aquí */}
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -340,35 +342,11 @@ export default function EmpleadoFicha() {
                       </svg>
                     </span>
                     <span style={{ flex: 1 }}>
-                      {editing ? (
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <label style={{ color: "#374151" }}>Nacimiento:</label>
-                          <input
-                            type="date"
-                            value={quickForm.fecha_nacimiento || ""}
-                            onChange={(e) =>
-                              setQuickForm((s) => ({ ...s, fecha_nacimiento: e.target.value }))
-                            }
-                            style={{
-                              height: 34,
-                              border: "1px solid #e5e7eb",
-                              borderRadius: 8,
-                              padding: "0 10px",
-                            }}
-                          />
-                          <span style={{ color: "#374151" }}>
-                            Próx. cumple: <strong>{proxCumpleTexto}</strong>
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          Próximo cumpleaños: <strong>{proxCumpleTexto}</strong>
-                        </>
-                      )}
+                      Próximo cumpleaños: <strong>{proxCumpleTexto}</strong>
                     </span>
                   </li>
 
-                  {/* Horario */}
+                  {/* Horario (editable en modo edición) */}
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -402,7 +380,7 @@ export default function EmpleadoFicha() {
                     </span>
                   </li>
 
-                  {/* Oficina */}
+                  {/* Oficina (editable en modo edición) */}
                   <li>
                     <span className="ef-ico">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -438,7 +416,7 @@ export default function EmpleadoFicha() {
                 </ul>
               </div>
 
-              {/* Rendimiento */}
+              {/* Rendimiento (mock UI) */}
               <div className="ef-card p16 ef-perf">
                 <h3 className="ef-side-title">Rendimiento</h3>
                 <div className="ef-metric-row">
