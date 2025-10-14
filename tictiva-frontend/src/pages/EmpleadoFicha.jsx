@@ -2,48 +2,47 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import PersonalesForm from "../components/PersonalesForm";
+import PersonalesForm from "../components/PersonalesForm"; // edición
 import { calcNextBirthdayLabel } from "../utils/birthday";
 import "../styles/personales.css";
 
-// Normaliza RUT (sin puntos, mantiene guion)
-const normalizeRut = (r) => (r || "").toString().replace(/\./g, "").toUpperCase();
-
-/** Toma id o rut desde params, query o location.state */
-function useEmployeeLookup() {
+function useEmployeeId() {
   const params = useParams();
   const location = useLocation();
 
-  let id = params?.id ?? params?.empId ?? params?.empleadoId ?? null;
-  let rut = params?.rut ?? null;
+  // Soporte para diferentes nombres de parámetro en la ruta
+  let id =
+    params?.id ??
+    params?.empId ??
+    params?.empleadoId ??
+    null;
 
-  if (!id || !rut) {
+  // Fallback: ?id=123 en querystring
+  if (!id) {
     const qs = new URLSearchParams(location.search);
-    id = id ?? qs.get("id");
-    rut = rut ?? qs.get("rut");
+    const qid = qs.get("id");
+    if (qid) id = qid;
   }
 
-  if ((!id || !rut) && location.state) {
-    id = id ?? (location.state.id ?? location.state.employeeId ?? location.state.empleadoId);
-    rut = rut ?? (location.state.rut ?? location.state.employeeRut);
+  // Normaliza: si es numérico, a número; si no, deja string (por si usas UUID)
+  if (id && /^\d+$/.test(String(id))) {
+    return Number(id);
   }
-
-  if (id) return { by: "id", value: /^\d+$/.test(String(id)) ? Number(id) : String(id) };
-  if (rut) return { by: "rut", value: normalizeRut(rut) };
-  return null;
+  return id; // podría ser string/uuid
 }
 
 export default function EmpleadoFicha() {
-  const lookup = useEmployeeLookup();
+  const employeeId = useEmployeeId();
   const [empleado, setEmpleado] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    if (!lookup) {
+    // Evita consultar si no tenemos un ID válido
+    if (!employeeId) {
       setLoading(false);
-      setLoadError("Falta el parámetro :id o :rut en la ruta (o ?id= / ?rut=).");
+      setLoadError("Falta el parámetro :id en la ruta (o ?id=).");
       return;
     }
 
@@ -51,37 +50,15 @@ export default function EmpleadoFicha() {
     (async () => {
       setLoading(true);
       setLoadError(null);
-
-      // 👇 OJO: columnas reales en español
-      let query = supabase
+      const { data, error } = await supabase
         .from("employees")
         .select(`
-          id,
-          nombre, nombres,           -- puede existir una u otra
-          apellido, apellidos,       -- puede existir una u otra
-          rut,
-          cargo,
-          genero,
-          discapacidad,
-          activo,
-          direccion,
-          region_id,
-          comuna_id,
-          telefono_movil,
-          telefono_fijo,
-          email_personal,
-          email_corporativo,         -- (antes pedíamos email_corporate)
-          office,
-          horario,                   -- (antes pedíamos schedule)
-          fecha_nacimiento,          -- (antes pedíamos birth_date)
-          estado_civil_id,
-          nacionalidad_id
-        `);
-
-      if (lookup.by === "id") query = query.eq("id", lookup.value);
-      else query = query.eq("rut", lookup.value);
-
-      const { data, error } = await query.maybeSingle();
+          id, first_name, last_name, rut, role, region_id, comuna_id,
+          mobile_phone, phone, email_personal, email_corporate,
+          office, schedule, birth_date
+        `)
+        .eq("id", employeeId)
+        .maybeSingle(); // evita tirar error si no hay registros
 
       if (canceled) return;
 
@@ -95,17 +72,18 @@ export default function EmpleadoFicha() {
       setLoading(false);
     })();
 
-    return () => { canceled = true; };
-  }, [lookup]);
+    return () => {
+      canceled = true;
+    };
+  }, [employeeId]);
 
   const proxCumple = useMemo(() => {
-    return calcNextBirthdayLabel(empleado?.fecha_nacimiento)?.label ?? "—";
-  }, [empleado?.fecha_nacimiento]);
+    return calcNextBirthdayLabel(empleado?.birth_date)?.label ?? "—";
+  }, [empleado?.birth_date]);
 
   async function handleSavePersonales(payload) {
     if (!empleado?.id) return;
 
-    // payload viene desde PersonalesForm con nombres en español
     const { data, error } = await supabase
       .from("employees")
       .update(payload)
@@ -122,18 +100,18 @@ export default function EmpleadoFicha() {
     }
   }
 
-  // Estados UI
+  // UI de estados
   if (loading) return <div>Cargando…</div>;
-  if (!lookup) {
+  if (!employeeId) {
     return (
       <div style={{ padding: 16 }}>
         <h3>No se pudo abrir la ficha</h3>
-        <p>Falta el parámetro <code>:id</code> o <code>:rut</code> en la ruta, o <code>?id=</code>/<code>?rut=</code>.</p>
-        <p>Ejemplos: <code>/empleados/123</code> · <code>/empleado?id=123</code> · <code>/rrhh/ficha/16.238.789-8</code></p>
+        <p>Falta el parámetro <code>:id</code> en la ruta o <code>?id=</code> en la URL.</p>
+        <p>Ejemplo de ruta: <code>/empleados/123</code> o <code>/empleado?id=123</code></p>
       </div>
     );
   }
-  if (loadError) return <div style={{ color: "crimson", padding: 12 }}>{loadError}</div>;
+  if (loadError) return <div style={{ color: "crimson" }}>{loadError}</div>;
   if (!empleado) return <div>No encontrado</div>;
 
   return (
@@ -152,6 +130,7 @@ export default function EmpleadoFicha() {
 
       <div className="ficha-grid">
         <div className="ficha-col">
+          {/* PERSONALES: un solo formulario controla todo */}
           <PersonalesForm
             key={empleado.id}
             initialValues={empleado}
@@ -161,21 +140,22 @@ export default function EmpleadoFicha() {
         </div>
 
         <aside className="ficha-aside">
+          {/* Información Rápida */}
           <div className="card info-rapida">
             <h3>Información Rápida</h3>
 
             <div className="info-item">
               <span className="info-label">Nacimiento:</span>
               <span className="info-value">
-                {empleado.fecha_nacimiento
-                  ? new Date(empleado.fecha_nacimiento).toLocaleDateString("es-CL")
+                {empleado.birth_date
+                  ? new Date(empleado.birth_date).toLocaleDateString("es-CL")
                   : "—"}
               </span>
             </div>
 
             <div className="info-item">
               <span className="info-label">Horario:</span>
-              <span className="info-value">{empleado.horario || "—"}</span>
+              <span className="info-value">{empleado.schedule || "—"}</span>
             </div>
 
             <div className="info-item">
