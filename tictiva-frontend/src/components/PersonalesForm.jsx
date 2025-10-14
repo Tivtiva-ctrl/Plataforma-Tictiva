@@ -42,7 +42,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       apellido: employee?.apellido ?? employee?.apellidos ?? "",
       rut: employee?.rut ?? "",
       cargo: employee?.cargo ?? "",
-      fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
+      fecha_nacimiento: employee?.fecha_nacimiento ?? "",
       region_id: localRid,
       comuna_id: asInt(employee?.comuna_id),
       telefono_movil: employee?.telefono_movil ?? "",
