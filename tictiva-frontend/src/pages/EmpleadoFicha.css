@@ -162,3 +162,62 @@ a.lf-btn.lf-btn-primary,
   font-weight: 600;
 }
 .lf-btn-ghost:hover{ background:#f8fafc !important; }
+/* ===== Contractuales: calcado al layout de Personales ===== */
+.ef-main .ef-card.contract-view .ficha-grid {
+  display: block;
+}
+
+/* si tu view NO usa .ficha-grid/.ficha-row, este bloque igual te corrige,
+   pq matchea a cada "fila" genérica dentro del card */
+.ef-main .ef-card.contract-view .ficha-row,
+.ef-main .ef-card.contract-view > .divide-y > div,
+.ef-main .ef-card.contract-view > div > .divide-y > div,
+.ef-main .ef-card.contract-view > div > .ficha-row {
+  display: grid;
+  grid-template-columns: 40% 60%; /* copia la misma proporción que Personales */
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.ef-main .ef-card.contract-view .ficha-row:first-child,
+.ef-main .ef-card.contract-view > .divide-y > div:first-child,
+.ef-main .ef-card.contract-view > div > .divide-y > div:first-child {
+  border-top: 0;
+}
+
+.ef-main .ef-card.contract-view .ficha-label,
+.ef-main .ef-card.contract-view .col-span-5,
+.ef-main .ef-card.contract-view .md\\:col-span-4 {
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ef-main .ef-card.contract-view .ficha-value,
+.ef-main .ef-card.contract-view .col-span-7,
+.ef-main .ef-card.contract-view .md\\:col-span-8 {
+  color: #111827;
+  font-weight: 600; /* semibold como Personales */
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* fechas en una línea (opcional) */
+.ef-main .ef-card.contract-view .ficha-value time,
+.ef-main .ef-card.contract-view .ficha-value .date {
+  white-space: nowrap;
+}
+
+/* responsive igual a Personales */
+@media (max-width: 768px) {
+  .ef-main .ef-card.contract-view .ficha-row,
+  .ef-main .ef-card.contract-view > .divide-y > div,
+  .ef-main .ef-card.contract-view > div > .divide-y > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
