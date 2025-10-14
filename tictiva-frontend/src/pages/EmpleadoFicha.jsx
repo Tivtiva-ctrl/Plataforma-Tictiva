@@ -6,43 +6,57 @@ import PersonalesForm from "../components/PersonalesForm"; // edición
 import { calcNextBirthdayLabel } from "../utils/birthday";
 import "../styles/personales.css";
 
-function useEmployeeId() {
+// Normaliza RUT: quita puntos y guion, mayúsculas (ajústalo si tu BD guarda con guion)
+const normalizeRut = (r) =>
+  (r || "").toString().replace(/\./g, "").toUpperCase();
+
+/** Lee id o rut desde params, query o location.state */
+function useEmployeeLookup() {
   const params = useParams();
   const location = useLocation();
 
-  // Soporte para diferentes nombres de parámetro en la ruta
+  // 1) params
   let id =
     params?.id ??
     params?.empId ??
     params?.empleadoId ??
     null;
+  let rut = params?.rut ?? null;
 
-  // Fallback: ?id=123 en querystring
-  if (!id) {
+  // 2) query
+  if (!id || !rut) {
     const qs = new URLSearchParams(location.search);
-    const qid = qs.get("id");
-    if (qid) id = qid;
+    id = id ?? qs.get("id");
+    rut = rut ?? qs.get("rut");
   }
 
-  // Normaliza: si es numérico, a número; si no, deja string (por si usas UUID)
-  if (id && /^\d+$/.test(String(id))) {
-    return Number(id);
+  // 3) location.state
+  if ((!id || !rut) && location.state) {
+    id = id ?? (location.state.id ?? location.state.employeeId ?? location.state.empleadoId);
+    rut = rut ?? (location.state.rut ?? location.state.employeeRut);
   }
-  return id; // podría ser string/uuid
+
+  if (id) {
+    if (/^\d+$/.test(String(id))) return { by: "id", value: Number(id) };
+    return { by: "id", value: String(id) }; // UUID u otro string
+  }
+  if (rut) {
+    return { by: "rut", value: normalizeRut(rut) };
+  }
+  return null;
 }
 
 export default function EmpleadoFicha() {
-  const employeeId = useEmployeeId();
+  const lookup = useEmployeeLookup();
   const [empleado, setEmpleado] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
-    // Evita consultar si no tenemos un ID válido
-    if (!employeeId) {
+    if (!lookup) {
       setLoading(false);
-      setLoadError("Falta el parámetro :id en la ruta (o ?id=).");
+      setLoadError("Falta el parámetro :id o :rut en la ruta (o ?id= / ?rut=).");
       return;
     }
 
@@ -50,15 +64,23 @@ export default function EmpleadoFicha() {
     (async () => {
       setLoading(true);
       setLoadError(null);
-      const { data, error } = await supabase
+
+      let query = supabase
         .from("employees")
         .select(`
           id, first_name, last_name, rut, role, region_id, comuna_id,
           mobile_phone, phone, email_personal, email_corporate,
           office, schedule, birth_date
-        `)
-        .eq("id", employeeId)
-        .maybeSingle(); // evita tirar error si no hay registros
+        `);
+
+      if (lookup.by === "id") {
+        query = query.eq("id", lookup.value);
+      } else {
+        // IMPORTANTE: si en tu BD el RUT se guarda con guion, puedes quitar normalizeRut
+        query = query.eq("rut", lookup.value);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (canceled) return;
 
@@ -75,7 +97,7 @@ export default function EmpleadoFicha() {
     return () => {
       canceled = true;
     };
-  }, [employeeId]);
+  }, [lookup]);
 
   const proxCumple = useMemo(() => {
     return calcNextBirthdayLabel(empleado?.birth_date)?.label ?? "—";
@@ -83,7 +105,6 @@ export default function EmpleadoFicha() {
 
   async function handleSavePersonales(payload) {
     if (!empleado?.id) return;
-
     const { data, error } = await supabase
       .from("employees")
       .update(payload)
@@ -102,16 +123,16 @@ export default function EmpleadoFicha() {
 
   // UI de estados
   if (loading) return <div>Cargando…</div>;
-  if (!employeeId) {
+  if (!lookup) {
     return (
       <div style={{ padding: 16 }}>
         <h3>No se pudo abrir la ficha</h3>
-        <p>Falta el parámetro <code>:id</code> en la ruta o <code>?id=</code> en la URL.</p>
-        <p>Ejemplo de ruta: <code>/empleados/123</code> o <code>/empleado?id=123</code></p>
+        <p>Falta el parámetro <code>:id</code> o <code>:rut</code> en la ruta, o <code>?id=</code>/<code>?rut=</code> en la URL.</p>
+        <p>Ejemplos: <code>/empleados/123</code> · <code>/empleado?id=123</code> · <code>/rrhh/ficha/16.238.789-8</code></p>
       </div>
     );
   }
-  if (loadError) return <div style={{ color: "crimson" }}>{loadError}</div>;
+  if (loadError) return <div style={{ color: "crimson", padding: 12 }}>{loadError}</div>;
   if (!empleado) return <div>No encontrado</div>;
 
   return (
