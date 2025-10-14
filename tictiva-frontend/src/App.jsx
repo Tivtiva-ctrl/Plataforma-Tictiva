@@ -76,10 +76,15 @@ function AppRoutes({ isLoggedIn, onLoginSuccess, onLogout }) {
 
           {/* RRHH */}
           <Route path={ROUTES.rrhh.listadoFichas} element={<ListadoFichas />} />
+
+          {/* Rutas históricas (las dejo para compatibilidad) */}
           <Route path="/rrhh/ficha/:rut" element={<EmpleadoFicha />} />
-          {/* NUEVAS rutas alineadas con ListadoFichas */}
           <Route path="/rrhh/empleado/fichas/:id" element={<EmpleadoFicha />} />
           <Route path="/rrhh/empleado/fichas/rut/:rut" element={<EmpleadoFicha />} />
+
+          {/* NUEVAS rutas recomendadas (por ID y por query) */}
+          <Route path="/empleados/:id" element={<EmpleadoFicha />} />
+          <Route path="/empleado" element={<EmpleadoFicha />} />
 
           {/* Catch-all privado */}
           <Route path={ROUTES.notFound} element={<Navigate to={ROUTES.dashboard} replace />} />
