@@ -21,7 +21,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       apellido: employee?.apellido ?? employee?.apellidos ?? "",
       rut: employee?.rut ?? "",
       cargo: employee?.cargo ?? "",
-      // 👇 Normalizado a YYYY-MM-DD para <input type="date">
+      // Normalizado a YYYY-MM-DD para <input type="date">
       fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
       region_id: localRid,
       comuna_id: asInt(employee?.comuna_id),
@@ -43,7 +43,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       apellido: employee?.apellido ?? employee?.apellidos ?? "",
       rut: employee?.rut ?? "",
       cargo: employee?.cargo ?? "",
-      // 👇 Normalizado a YYYY-MM-DD al rehidratar
+      // Normalizado a YYYY-MM-DD al rehidratar
       fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
       region_id: localRid,
       comuna_id: asInt(employee?.comuna_id),
@@ -129,7 +129,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
           <input value={form.cargo} onChange={(e)=>setField("cargo", e.target.value)} disabled={!isEditing} />
         </div>
 
-        {/* Fecha de nacimiento (sin hint) / Teléfono móvil */}
+        {/* Fecha de nacimiento / Teléfono móvil */}
         <div className="form-field">
           <label>Fecha de nacimiento</label>
           <input
@@ -144,7 +144,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
           <input value={form.telefono_movil} onChange={(e)=>setField("telefono_movil", e.target.value)} disabled={!isEditing} />
         </div>
 
-        {/* Región y Comuna — JUNTAS en la misma fila */}
+        {/* Región y Comuna — JUNTAS */}
         <div className="form-field">
           <label>Región</label>
           <select
@@ -188,7 +188,7 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
           <input value={form.office} onChange={(e)=>setField("office", e.target.value)} disabled={!isEditing} placeholder="Ej: Santiago Centro" />
         </div>
 
-        {/* Horario (queda en el form también por consistencia) / relleno */}
+        {/* Horario / relleno */}
         <div className="form-field">
           <label>Horario</label>
           <input value={form.horario} onChange={(e)=>setField("horario", e.target.value)} disabled={!isEditing} placeholder="Ej: 08:30 - 18:00" />
