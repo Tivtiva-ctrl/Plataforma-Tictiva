@@ -21,7 +21,8 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       apellido: employee?.apellido ?? employee?.apellidos ?? "",
       rut: employee?.rut ?? "",
       cargo: employee?.cargo ?? "",
-      fecha_nacimiento: employee?.fecha_nacimiento ?? "",
+      // 👇 Normalizado a YYYY-MM-DD para <input type="date">
+      fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
       region_id: localRid,
       comuna_id: asInt(employee?.comuna_id),
       telefono_movil: employee?.telefono_movil ?? "",
@@ -42,7 +43,8 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       apellido: employee?.apellido ?? employee?.apellidos ?? "",
       rut: employee?.rut ?? "",
       cargo: employee?.cargo ?? "",
-      fecha_nacimiento: employee?.fecha_nacimiento ?? "",
+      // 👇 Normalizado a YYYY-MM-DD al rehidratar
+      fecha_nacimiento: toYMD(employee?.fecha_nacimiento) || "",
       region_id: localRid,
       comuna_id: asInt(employee?.comuna_id),
       telefono_movil: employee?.telefono_movil ?? "",
@@ -130,7 +132,12 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
         {/* Fecha de nacimiento (sin hint) / Teléfono móvil */}
         <div className="form-field">
           <label>Fecha de nacimiento</label>
-          <input type="date" value={form.fecha_nacimiento || ""} onChange={(e)=>setField("fecha_nacimiento", e.target.value)} disabled={!isEditing} />
+          <input
+            type="date"
+            value={form.fecha_nacimiento || ""}
+            onChange={(e)=>setField("fecha_nacimiento", e.target.value)}
+            disabled={!isEditing}
+          />
         </div>
         <div className="form-field">
           <label>Teléfono móvil</label>
