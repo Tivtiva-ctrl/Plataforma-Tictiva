@@ -58,12 +58,20 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
 
   // catálogos
   useEffect(() => {
-    supabase.from("cl_regiones").select("id,nombre").order("id",{ascending:true}).then(({data})=>setRegiones(data||[]));
+    supabase
+      .from("cl_regiones")
+      .select("id,nombre")
+      .order("id",{ascending:true})
+      .then(({data})=>setRegiones(data||[]));
   }, []);
 
   const loadComunas = async (regionLocalId) => {
     const regionIdFixed = FIX_REGION_ID[regionLocalId] ?? regionLocalId;
-    const { data, error } = await supabase.from("cl_comunas").select("id,nombre,region_id").eq("region_id", regionIdFixed).order("nombre",{ascending:true});
+    const { data, error } = await supabase
+      .from("cl_comunas")
+      .select("id,nombre,region_id")
+      .eq("region_id", regionIdFixed)
+      .order("nombre",{ascending:true});
     if (error) { console.error(error); setComunas([]); return; }
     setComunas(data||[]);
   };
@@ -99,7 +107,13 @@ export default function PersonalesForm({ id, employee, isEditing, onSaved, onCan
       horario: form.horario?.trim() || null,
     };
 
-    const { data, error } = await supabase.from("employees").update(payload).eq("id", employee.id).select("*").single();
+    const { data, error } = await supabase
+      .from("employees")
+      .update(payload)
+      .eq("id", employee.id)
+      .select("*")
+      .single();
+
     if (error) { console.error(error); alert(error.message || "No se pudo guardar"); return; }
     onSaved?.(data);
   };
