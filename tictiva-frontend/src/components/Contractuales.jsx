@@ -9,18 +9,18 @@ const fmt = (d) => {
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const yyyy = date.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return `${dd}-${mm}-${yyyy}`;
 };
 
 export default function ContractualesView({ data, pin }) {
   return (
-    <div className="card bg-white/70 rounded-2xl p-4 md:p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-4">Datos Contractuales</h3>
+    <div className="ef-card p20" style={{ marginTop: 12 }}>
+      <h3 className="ef-title-sm">Datos Contractuales</h3>
 
       {!data ? (
         <div className="text-gray-500">Sin datos contractuales</div>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="ficha-grid">
           <Row label="Cargo Actual" value={show(data.cargo_actual)} />
           <Row label="Tipo de Contrato" value={show(data.tipo_contrato)} />
           <Row label="Fecha de Ingreso" value={fmt(data.fecha_ingreso)} />
@@ -64,9 +64,9 @@ export default function ContractualesView({ data, pin }) {
 
 function Row({ label, value }) {
   return (
-    <div className="py-3 grid grid-cols-12 items-center">
-      <div className="col-span-5 md:col-span-4 text-gray-500">{label}:</div>
-      <div className="col-span-7 md:col-span-8 font-medium">{value}</div>
+    <div className="ficha-row">
+      <div className="ficha-label">{label}:</div>
+      <div className="ficha-value">{value}</div>
     </div>
   );
 }
