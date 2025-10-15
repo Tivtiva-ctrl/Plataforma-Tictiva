@@ -25,7 +25,7 @@ const TABS = [
 
 const isUUID = (v = "") =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[12][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v) ||
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v); // tolerante
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 const likelyRut = (v = "") => v.includes("-") || v.includes(".");
 const fullName = (e) => `${e?.nombre ?? ""} ${e?.apellido ?? ""}`.trim();
 
@@ -45,7 +45,7 @@ function nextBirthdayFrom(dobStr) {
   const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return nb < todayMid ? new Date(y + 1, dob.getMonth(), dob.getDate()) : nb;
 }
-/* —— NUEVOS HELPERS: Fecha larga + Antigüedad —— */
+/* —— Fecha larga + Antigüedad —— */
 function fmtFechaLarga(v) {
   const d = safeDate(v); if (!d) return "—";
   return d.toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
@@ -82,7 +82,7 @@ export default function EmpleadoFicha() {
   const [regiones, setRegiones] = useState([]);
   const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
 
-  // 👇 NUEVO: estado para los datos contractuales (vista)
+  // estado para los datos contractuales (vista)
   const [contract, setContract] = useState(null);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export default function EmpleadoFicha() {
     return { ...emp, region_id_local: regionLocalId, region_nombre: regionNombre, fecha_nacimiento_fmt };
   }, [emp, regionLocalId, regionNombre]);
 
-  // 👇 NUEVO: función para traer el contrato vigente del empleado
+  // Traer contrato vigente del empleado (para tener fecha de ingreso real)
   const fetchContract = async () => {
     if (!emp?.id) return;
     const { data, error } = await supabase
@@ -181,10 +181,9 @@ export default function EmpleadoFicha() {
     setContract(data || null);
   };
 
-  // 👇 NUEVO: carga contractuales al entrar al tab o cambiar de empleado
-  useEffect(() => {
-    if (tab === "contractuales" && emp?.id) fetchContract();
-  }, [tab, emp?.id]);
+  // Cargar contractuales al cambiar de empleado (SIEMPRE) y además al entrar al tab
+  useEffect(() => { if (emp?.id) fetchContract(); }, [emp?.id]);
+  useEffect(() => { if (tab === "contractuales" && emp?.id) fetchContract(); }, [tab, emp?.id]);
 
   if (loading) return <div className="ef-page"><div className="ef-wrap"><div className="ef-card p20">Cargando ficha…</div></div></div>;
   if (!emp) return (
@@ -199,19 +198,16 @@ export default function EmpleadoFicha() {
   const sidebarHidden = tab === "asistencia" || tab === "historial";
 
   const handleSaved = async (updated) => {
-    // updated viene con fecha_nacimiento persistida desde el formulario principal
     const withQuick = await updateQuickAfterMainSave(updated);
-    setEmp(withQuick);      // asegura que la ficha muestre DOB actualizado
+    setEmp(withQuick);
     setEditing(false);
   };
 
-  // 👇 NUEVO: después de guardar Contractuales, refrescamos y salimos de edición
   const handleSavedContract = async () => {
-    await fetchContract();
+    await fetchContract();   // refresca header inmediatamente
     setEditing(false);
   };
 
-  // guarda el formulario del TAB activo (personales o contractuales)
   const submitActive = () => {
     const formId =
       tab === "personales" ? "personales-form" :
@@ -220,8 +216,14 @@ export default function EmpleadoFicha() {
     if (formId) document.getElementById(formId)?.requestSubmit();
   };
 
-  // —— NUEVO: fecha de ingreso (fallbacks) y antigüedad ——
-  const hireDate = emp?.fecha_ingreso || emp?.hire_date || emp?.created_at;
+  // Fecha de Ingreso que verá el header:
+  // 1) la del contrato vigente (contract.fecha_ingreso)
+  // 2) o la del empleado, si no hay contrato
+  const hireDate =
+    contract?.fecha_ingreso ||
+    emp?.fecha_ingreso ||
+    emp?.hire_date ||
+    emp?.created_at;
 
   return (
     <div className="ef-page">
@@ -237,7 +239,7 @@ export default function EmpleadoFicha() {
               </span>
             </div>
             <div className="ef-role">{emp.cargo || "—"}</div>
-            {/* Reemplazo: antes decía 'Miembro desde ...' */}
+            {/* Header sincronizado con Contractuales */}
             <div className="ef-meta">
               Ingreso: {fmtFechaLarga(hireDate)}{" "}
               <span className="text-gray-400">
@@ -265,7 +267,6 @@ export default function EmpleadoFicha() {
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
               onClick={() => {
                 setTab(t.key);
-                // permitir edición en personales y contractuales; en el resto desactivar
                 if (!["personales","contractuales"].includes(t.key)) setEditing(false);
               }}
             >
@@ -301,7 +302,7 @@ export default function EmpleadoFicha() {
                 />
               ) : (
                 <ContractualesView
-                  data={contract}                 // 👈 ahora recibe datos reales
+                  data={contract}
                   pin={emp.pin_marcacion}
                 />
               )
