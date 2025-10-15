@@ -2,9 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-/** ==========================
- *  Utilidades
- *  ========================== */
+/* ------------------- Utils ------------------- */
 const fmtFecha = (v) => {
   if (!v) return "—";
   const d = new Date(v);
@@ -13,7 +11,7 @@ const fmtFecha = (v) => {
 };
 
 const iconFor = (mime = "", name = "") => {
-  const n = name.toLowerCase();
+  const n = (name || "").toLowerCase();
   if (mime.includes("pdf") || n.endsWith(".pdf")) return "📄";
   if (mime.includes("image/") || /\.(png|jpg|jpeg|gif|webp|heic)$/.test(n)) return "🖼️";
   if (/\.(doc|docx)$/.test(n)) return "📝";
@@ -36,9 +34,7 @@ const guessCategory = (name = "") => {
 const normalizeTitle = (s = "") =>
   s.trim().replace(/\.[a-z0-9]+$/i, "").replace(/\s+/g, " ").toLowerCase();
 
-/** ==========================
- *  Componentes auxiliares
- *  ========================== */
+/* ------------------- UI helpers ------------------- */
 function Kebab({ onOpen }) {
   return (
     <button
@@ -53,16 +49,32 @@ function Kebab({ onOpen }) {
   );
 }
 
+/* Menú de tres puntos: SOLO texto sobre fondo blanco */
 function Menu({ anchorRef, onClose, onView, onEdit, onDownload }) {
   const ref = useRef(null);
   useEffect(() => {
     const close = (e) => {
-      if (!ref.current || ref.current.contains(e.target) || anchorRef.current?.contains(e.target)) return;
+      if (!ref.current) return;
+      if (ref.current.contains(e.target)) return;
+      if (anchorRef.current?.contains(e.target)) return;
       onClose?.();
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [onClose, anchorRef]);
+
+  const itemStyle = {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "8px 12px",
+    background: "transparent",
+    border: "none",
+    outline: "none",
+    color: "#111827",
+    fontSize: 14,
+    cursor: "pointer",
+  };
 
   return (
     <div
@@ -71,29 +83,18 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload }) {
         position: "absolute",
         marginTop: 6,
         right: 0,
-        background: "white",
+        background: "#FFFFFF",
         border: "1px solid #E5E7EB",
         borderRadius: 10,
         boxShadow: "0 8px 30px rgba(0,0,0,.08)",
-        minWidth: 160,
+        minWidth: 140,
         zIndex: 30,
-        overflow: "hidden",
+        padding: 6,
       }}
     >
-      {[
-        { label: "Ver", cb: onView },
-        { label: "Editar", cb: onEdit },
-        { label: "Descargar", cb: onDownload },
-      ].map((it) => (
-        <button
-          key={it.label}
-          onClick={() => { it.cb?.(); onClose?.(); }}
-          style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px" }}
-          className="hover:bg-gray-50"
-        >
-          {it.label}
-        </button>
-      ))}
+      <button onClick={() => { onView?.(); onClose?.(); }} style={itemStyle}>Ver</button>
+      <button onClick={() => { onEdit?.(); onClose?.(); }} style={itemStyle}>Editar</button>
+      <button onClick={() => { onDownload?.(); onClose?.(); }} style={itemStyle}>Descargar</button>
     </div>
   );
 }
@@ -123,9 +124,7 @@ function Modal({ open, title, onClose, children, wide = false }) {
   );
 }
 
-/** ==========================
- *  Vista principal
- *  ========================== */
+/* ------------------- Main ------------------- */
 export default function DocumentosTab({ employee }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -178,16 +177,15 @@ export default function DocumentosTab({ employee }) {
       await uploadOne(file);
     }
     await loadDocs();
-    e.target.value = ""; // reset input
+    e.target.value = ""; // reset
   };
 
   const uploadOne = async (file) => {
-    // 1) detectar título y categoría
     const origName = file.name;
     const titleBase = normalizeTitle(origName);
     const categoria_detectada = guessCategory(origName);
 
-    // 2) calcular version (max + 1 por título normalizado)
+    // pick next version
     const { data: existing } = await supabase
       .from("employee_documents")
       .select("id,version,title_norm")
@@ -197,17 +195,15 @@ export default function DocumentosTab({ employee }) {
       .limit(1);
     const nextVersion = existing && existing.length ? (existing[0].version || 1) + 1 : 1;
 
-    // 3) subir a storage
+    // upload to storage (private bucket)
     const storagePath = `${employee.tenant_id ?? "default"}/${employee.id}/${Date.now()}_${origName}`;
     const up = await supabase.storage.from("employee-docs").upload(storagePath, file, { upsert: false });
-    if (up.error) {
-      alert(up.error.message || "No se pudo subir");
-      return;
-    }
+    if (up.error) { alert(up.error.message || "No se pudo subir"); return; }
 
-    // 4) guardar fila
+    // insert row
     const payload = {
       employee_id: employee.id,
+      tenant_id: employee.tenant_id ?? null,
       title: origName.replace(/\.[a-z0-9]+$/i, ""),
       title_norm: titleBase,
       categoria_detectada,
@@ -215,19 +211,17 @@ export default function DocumentosTab({ employee }) {
       mime_type: file.type || null,
       size_bytes: file.size || null,
       version: nextVersion,
-      visibility: "empleado_rrhh", // por defecto visible para ambos
+      visibility: "empleado_rrhh",
       uploaded_at: new Date().toISOString(),
     };
     const ins = await supabase.from("employee_documents").insert(payload).select("*").single();
     if (ins.error) {
-      // rollback de archivo si falla
-      await supabase.storage.from("employee-docs").remove([storagePath]);
+      await supabase.storage.from("employee-docs").remove([storagePath]); // rollback file
       alert(ins.error.message || "No se pudo registrar el documento");
     }
   };
 
   const openView = async (row) => {
-    // URL firmada (1h)
     const { data, error } = await supabase.storage.from("employee-docs").createSignedUrl(row.storage_path, 60 * 60);
     if (error) { alert(error.message); return; }
     setViewer({ open: true, url: data.signedUrl, name: row.title || row.name });
@@ -300,10 +294,7 @@ export default function DocumentosTab({ employee }) {
                           <strong style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 420 }}>
                             {d.title || "Documento"}
                           </strong>
-                          <span style={{
-                            fontSize: 12, padding: "2px 8px", borderRadius: 999,
-                            background: "#EEF2FF", color: "#4F46E5"
-                          }}>
+                          <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 999, background: "#EEF2FF", color: "#4F46E5" }}>
                             v{d.version ?? 1}
                           </span>
                           {d.categoria_detectada && (
@@ -365,9 +356,7 @@ export default function DocumentosTab({ employee }) {
   );
 }
 
-/** ==========================
- *  Modal de Edición
- *  ========================== */
+/* ------------------- Modal de Edición ------------------- */
 function EditDocModal({ open, row, onClose, onSave }) {
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState("empleado_rrhh");
