@@ -10,6 +10,7 @@ import "../styles/personales.css";
 // 👇 asegúrate de tener estos dos archivos creados (Form y View)
 import ContractualesView from "../components/Contractuales";
 import ContractualesForm from "../components/ContractualesForm";
+import DocumentosTab from "../components/DocumentosTab";
 
 const TABS = [
   { key: "personales", label: "Personales" },
@@ -277,6 +278,10 @@ export default function EmpleadoFicha() {
                 />
               )
             )}
+
+            {tab === "documentos" && (
+              <DocumentosTab employee={emp} />
+  )}
           </div>
 
           {/* Sidebar */}
