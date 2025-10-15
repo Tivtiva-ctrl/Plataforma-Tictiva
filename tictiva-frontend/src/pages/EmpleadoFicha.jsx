@@ -45,6 +45,27 @@ function nextBirthdayFrom(dobStr) {
   const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return nb < todayMid ? new Date(y + 1, dob.getMonth(), dob.getDate()) : nb;
 }
+/* —— NUEVOS HELPERS: Fecha larga + Antigüedad —— */
+function fmtFechaLarga(v) {
+  const d = safeDate(v); if (!d) return "—";
+  return d.toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
+}
+function fmtAntiguedad(start, now = new Date()) {
+  const s = safeDate(start); if (!s) return "—";
+  let months = (now.getFullYear() - s.getFullYear()) * 12 + (now.getMonth() - s.getMonth());
+  if (now.getDate() < s.getDate()) months -= 1;
+  if (months < 0) months = 0;
+  const years = Math.floor(months / 12);
+  const remMonths = months % 12;
+  const parts = [];
+  if (years > 0) parts.push(`${years} año${years === 1 ? "" : "s"}`);
+  if (remMonths > 0) parts.push(`${remMonths} mes${remMonths === 1 ? "" : "es"}`);
+  if (parts.length === 0) {
+    const days = Math.max(0, Math.floor((now - s) / (24 * 60 * 60 * 1000)));
+    return days === 0 ? "hoy" : `${days} día${days === 1 ? "" : "s"}`;
+  }
+  return parts.join(" y ");
+}
 /* ------------------------------------- */
 
 export default function EmpleadoFicha() {
@@ -199,6 +220,9 @@ export default function EmpleadoFicha() {
     if (formId) document.getElementById(formId)?.requestSubmit();
   };
 
+  // —— NUEVO: fecha de ingreso (fallbacks) y antigüedad ——
+  const hireDate = emp?.fecha_ingreso || emp?.hire_date || emp?.created_at;
+
   return (
     <div className="ef-page">
       <div className="ef-wrap">
@@ -213,8 +237,12 @@ export default function EmpleadoFicha() {
               </span>
             </div>
             <div className="ef-role">{emp.cargo || "—"}</div>
+            {/* Reemplazo: antes decía 'Miembro desde ...' */}
             <div className="ef-meta">
-              Miembro desde el {new Date(emp.created_at).toLocaleDateString("es-CL",{day:"2-digit",month:"long",year:"numeric"})}
+              Ingreso: {fmtFechaLarga(hireDate)}{" "}
+              <span className="text-gray-400">
+                (Antigüedad: {fmtAntiguedad(hireDate)})
+              </span>
             </div>
           </div>
           <div className="ef-head-actions">
@@ -281,7 +309,7 @@ export default function EmpleadoFicha() {
 
             {tab === "documentos" && (
               <DocumentosTab employee={emp} />
-  )}
+            )}
           </div>
 
           {/* Sidebar */}
