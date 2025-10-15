@@ -1,5 +1,6 @@
 // src/components/DocumentosTab.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 
 /* ------------------- Utils ------------------- */
@@ -81,14 +82,14 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload, onDelete }) {
       ref={ref}
       style={{
         position: "absolute",
-        top: 38,                 // bajo el botón ⋯
+        top: 38,
         right: 0,
         background: "#FFFFFF",
         border: "1px solid #E5E7EB",
         borderRadius: 10,
         boxShadow: "0 12px 40px rgba(0,0,0,.12)",
         minWidth: 160,
-        zIndex: 1000,           // debajo del modal (que va en 20000)
+        zIndex: 1000, // el modal va mucho más arriba
         padding: 6,
       }}
     >
@@ -101,14 +102,20 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload, onDelete }) {
   );
 }
 
+/* Modal con Portal al <body> para evitar stacking contexts padres */
 function Modal({ open, title, onClose, children, wide = false }) {
   if (!open) return null;
-  return (
+
+  const modalNode = (
     <div
       style={{
-        position: "fixed", inset: 0, background: "rgba(0,0,0,.35)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        zIndex: 20000, // <-- elevamos el modal por sobre cualquier card flotante
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,.35)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 2147483000, // super alto (por sobre cualquier card)
       }}
       onMouseDown={onClose}
     >
@@ -125,6 +132,8 @@ function Modal({ open, title, onClose, children, wide = false }) {
       </div>
     </div>
   );
+
+  return createPortal(modalNode, document.body);
 }
 
 /* ------------------- Main ------------------- */
@@ -304,9 +313,9 @@ export default function DocumentosTab({ employee }) {
                     padding: 14,
                     border: "1px solid #E5E7EB",
                     borderRadius: 14,
-                    position: "relative",          // anclaje del menú
-                    overflow: "visible",            // que el menú pueda sobresalir
-                    zIndex: menuFor === d.id ? 50 : 1, // elevar la card activa
+                    position: "relative",
+                    overflow: "visible",
+                    zIndex: menuFor === d.id ? 50 : 1,
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
