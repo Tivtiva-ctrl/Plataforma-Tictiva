@@ -88,7 +88,7 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload, onDelete }) {
         borderRadius: 10,
         boxShadow: "0 12px 40px rgba(0,0,0,.12)",
         minWidth: 160,
-        zIndex: 1000,           // por encima de otras cards
+        zIndex: 1000,           // debajo del modal (que va en 20000)
         padding: 6,
       }}
     >
@@ -107,7 +107,8 @@ function Modal({ open, title, onClose, children, wide = false }) {
     <div
       style={{
         position: "fixed", inset: 0, background: "rgba(0,0,0,.35)",
-        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 20000, // <-- elevamos el modal por sobre cualquier card flotante
       }}
       onMouseDown={onClose}
     >
