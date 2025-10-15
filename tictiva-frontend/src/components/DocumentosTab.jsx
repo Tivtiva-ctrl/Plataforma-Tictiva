@@ -49,9 +49,10 @@ function Kebab({ onOpen }) {
   );
 }
 
-/* Menú de tres puntos: SOLO texto sobre fondo blanco */
-function Menu({ anchorRef, onClose, onView, onEdit, onDownload }) {
+/* Menú ⋯: texto puro, flotante, sin empujar la card */
+function Menu({ anchorRef, onClose, onView, onEdit, onDownload, onDelete }) {
   const ref = useRef(null);
+
   useEffect(() => {
     const close = (e) => {
       if (!ref.current) return;
@@ -63,7 +64,7 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload }) {
     return () => document.removeEventListener("mousedown", close);
   }, [onClose, anchorRef]);
 
-  const itemStyle = {
+  const itemBase = {
     display: "block",
     width: "100%",
     textAlign: "left",
@@ -71,7 +72,6 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload }) {
     background: "transparent",
     border: "none",
     outline: "none",
-    color: "#111827",
     fontSize: 14,
     cursor: "pointer",
   };
@@ -81,20 +81,22 @@ function Menu({ anchorRef, onClose, onView, onEdit, onDownload }) {
       ref={ref}
       style={{
         position: "absolute",
-        marginTop: 6,
+        top: 38,                 // bajo el botón ⋯
         right: 0,
         background: "#FFFFFF",
         border: "1px solid #E5E7EB",
         borderRadius: 10,
-        boxShadow: "0 8px 30px rgba(0,0,0,.08)",
-        minWidth: 140,
-        zIndex: 30,
+        boxShadow: "0 12px 40px rgba(0,0,0,.12)",
+        minWidth: 160,
+        zIndex: 1000,           // por encima de otras cards
         padding: 6,
       }}
     >
-      <button onClick={() => { onView?.(); onClose?.(); }} style={itemStyle}>Ver</button>
-      <button onClick={() => { onEdit?.(); onClose?.(); }} style={itemStyle}>Editar</button>
-      <button onClick={() => { onDownload?.(); onClose?.(); }} style={itemStyle}>Descargar</button>
+      <button onClick={() => { onView?.(); onClose?.(); }} style={{ ...itemBase, color: "#111827" }}>Ver</button>
+      <button onClick={() => { onEdit?.(); onClose?.(); }} style={{ ...itemBase, color: "#111827" }}>Editar</button>
+      <button onClick={() => { onDownload?.(); onClose?.(); }} style={{ ...itemBase, color: "#111827" }}>Descargar</button>
+      <div style={{ height: 6 }} />
+      <button onClick={() => { onDelete?.(); onClose?.(); }} style={{ ...itemBase, color: "#B91C1C" }}>Eliminar</button>
     </div>
   );
 }
@@ -185,7 +187,7 @@ export default function DocumentosTab({ employee }) {
     const titleBase = normalizeTitle(origName);
     const categoria_detectada = guessCategory(origName);
 
-    // pick next version
+    // next version
     const { data: existing } = await supabase
       .from("employee_documents")
       .select("id,version,title_norm")
@@ -195,7 +197,7 @@ export default function DocumentosTab({ employee }) {
       .limit(1);
     const nextVersion = existing && existing.length ? (existing[0].version || 1) + 1 : 1;
 
-    // upload to storage (private bucket)
+    // upload storage
     const storagePath = `${employee.tenant_id ?? "default"}/${employee.id}/${Date.now()}_${origName}`;
     const up = await supabase.storage.from("employee-docs").upload(storagePath, file, { upsert: false });
     if (up.error) { alert(up.error.message || "No se pudo subir"); return; }
@@ -236,6 +238,15 @@ export default function DocumentosTab({ employee }) {
     document.body.appendChild(a);
     a.click();
     a.remove();
+  };
+
+  const removeDoc = async (row) => {
+    const ok = confirm(`¿Eliminar "${row.title}"? Esta acción no se puede deshacer.`);
+    if (!ok) return;
+    await supabase.storage.from("employee-docs").remove([row.storage_path]); // ignorar error si no existe
+    const del = await supabase.from("employee_documents").delete().eq("id", row.id);
+    if (del.error) { alert(del.error.message || "No se pudo eliminar"); return; }
+    await loadDocs();
   };
 
   const openEdit = (row) => setEditor({ open: true, row });
@@ -285,7 +296,18 @@ export default function DocumentosTab({ employee }) {
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
               {filtered.map((d) => (
-                <li key={d.id} className="ef-card" style={{ padding: 14, border: "1px solid #E5E7EB", borderRadius: 14 }}>
+                <li
+                  key={d.id}
+                  className="ef-card"
+                  style={{
+                    padding: 14,
+                    border: "1px solid #E5E7EB",
+                    borderRadius: 14,
+                    position: "relative",          // anclaje del menú
+                    overflow: "visible",            // que el menú pueda sobresalir
+                    zIndex: menuFor === d.id ? 50 : 1, // elevar la card activa
+                  }}
+                >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                     <div style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
                       <div style={{ fontSize: 22 }}>{iconFor(d.mime_type, d.title)}</div>
@@ -325,6 +347,7 @@ export default function DocumentosTab({ employee }) {
                           onView={() => openView(d)}
                           onEdit={() => openEdit(d)}
                           onDownload={() => download(d)}
+                          onDelete={() => removeDoc(d)}
                         />
                       )}
                     </div>
