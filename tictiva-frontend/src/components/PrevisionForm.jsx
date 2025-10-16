@@ -70,26 +70,30 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
   }, []);
 
   const submit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      ...form,
-      tenant_id: employee.tenant_id,
-      employee_id: employee.id,
-      // limpieza según elección
-      isapre_id: form.salud_tipo === "isapre" ? form.isapre_id : null,
-      fonasa_tramo: form.salud_tipo === "fonasa" ? form.fonasa_tramo : null,
-      afp_id: form.pension_sistema === "afp" ? form.afp_id : null,
-    };
-
-    const { data, error } = await supabase
-      .from("employee_prevision")
-      .insert(payload)
-      .select("*")
-      .single();
-
-    if (error) return alert(error.message);
-    onSaved?.(data);
+  e.preventDefault();
+  const payload = {
+    ...form,
+    // ❌ no mandamos tenant_id; lo completa el trigger en la BD
+    employee_id: employee.id,
+    // limpieza según elección
+    isapre_id: form.salud_tipo === "isapre" ? form.isapre_id : null,
+    fonasa_tramo: form.salud_tipo === "fonasa" ? form.fonasa_tramo : null,
+    afp_id: form.pension_sistema === "afp" ? form.afp_id : null,
   };
+
+  const { data, error } = await supabase
+    .from("employee_prevision")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+  onSaved?.(data);
+};
+
 
   return (
     <form id={id} onSubmit={submit} className="ef-card p20">
