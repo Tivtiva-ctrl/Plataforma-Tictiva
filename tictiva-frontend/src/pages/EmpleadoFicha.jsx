@@ -7,10 +7,14 @@ import PersonalesView from "../components/Personales";
 import PersonalesForm from "../components/PersonalesForm";
 import "../styles/personales.css";
 
-// 👇 asegúrate de tener estos dos archivos creados (Form y View)
+// 👇 asegúrate de tener estos archivos
 import ContractualesView from "../components/Contractuales";
 import ContractualesForm from "../components/ContractualesForm";
 import DocumentosTab from "../components/DocumentosTab";
+
+// 👇 nuevos: previsión
+import PrevisionView from "../components/PrevisionView";
+import PrevisionForm from "../components/PrevisionForm";
 
 const TABS = [
   { key: "personales", label: "Personales" },
@@ -82,8 +86,10 @@ export default function EmpleadoFicha() {
   const [regiones, setRegiones] = useState([]);
   const [quickForm, setQuickForm] = useState({ office: "", horario: "" });
 
-  // estado para los datos contractuales (vista)
+  // vistas
   const [contract, setContract] = useState(null);
+  const [prevision, setPrevision] = useState(null);
+  const [prevCat, setPrevCat] = useState({ afp: [], isapre: [], cajas: [], mutual: [] });
 
   useEffect(() => {
     setQuickForm({
@@ -138,6 +144,24 @@ export default function EmpleadoFicha() {
     supabase.from("cl_regiones").select("id,nombre").order("id",{ascending:true}).then(({data})=>setRegiones(data||[]));
   }, []);
 
+  // Catálogos previsionales
+  useEffect(() => {
+    (async () => {
+      const [afp, isapre, cajas, mutual] = await Promise.all([
+        supabase.from("afp_catalog").select("id,nombre").order("nombre"),
+        supabase.from("isapre_catalog").select("id,nombre").order("nombre"),
+        supabase.from("caja_compensacion_catalog").select("id,nombre").order("nombre"),
+        supabase.from("mutual_catalog").select("id,nombre").order("nombre"),
+      ]);
+      setPrevCat({
+        afp: afp.data || [],
+        isapre: isapre.data || [],
+        cajas: cajas.data || [],
+        mutual: mutual.data || [],
+      });
+    })();
+  }, []);
+
   const initials = useMemo(() => ((emp?.nombre?.[0] ?? "E") + (emp?.apellido?.[0] ?? "")).toUpperCase(), [emp]);
 
   const regionLocalId = useMemo(() => {
@@ -181,9 +205,27 @@ export default function EmpleadoFicha() {
     setContract(data || null);
   };
 
-  // Cargar contractuales al cambiar de empleado (SIEMPRE) y además al entrar al tab
-  useEffect(() => { if (emp?.id) fetchContract(); }, [emp?.id]);
+  // Traer previsión vigente
+  const fetchPrevision = async () => {
+    if (!emp?.id) return;
+    const { data, error } = await supabase
+      .from("employee_prevision")
+      .select("*")
+      .eq("employee_id", emp.id)
+      .is("fecha_vigencia_hasta", null) // vigente
+      .maybeSingle();
+    if (error) {
+      console.error("Error cargando previsión:", error);
+      setPrevision(null);
+      return;
+    }
+    setPrevision(data || null);
+  };
+
+  // Cargar contractuales/previsión al cambiar de empleado y al entrar a sus tabs
+  useEffect(() => { if (emp?.id) { fetchContract(); fetchPrevision(); } }, [emp?.id]);
   useEffect(() => { if (tab === "contractuales" && emp?.id) fetchContract(); }, [tab, emp?.id]);
+  useEffect(() => { if (tab === "prevision" && emp?.id) fetchPrevision(); }, [tab, emp?.id]);
 
   if (loading) return <div className="ef-page"><div className="ef-wrap"><div className="ef-card p20">Cargando ficha…</div></div></div>;
   if (!emp) return (
@@ -208,17 +250,21 @@ export default function EmpleadoFicha() {
     setEditing(false);
   };
 
+  const handleSavedPrevision = async () => {
+    await fetchPrevision();
+    setEditing(false);
+  };
+
   const submitActive = () => {
     const formId =
       tab === "personales" ? "personales-form" :
       tab === "contractuales" ? "contractuales-form" :
+      tab === "prevision" ? "prevision-form" :
       null;
     if (formId) document.getElementById(formId)?.requestSubmit();
   };
 
-  // Fecha de Ingreso que verá el header:
-  // 1) la del contrato vigente (contract.fecha_ingreso)
-  // 2) o la del empleado, si no hay contrato
+  // Fecha de Ingreso del header (desde contrato vigente; si no, fallbacks)
   const hireDate =
     contract?.fecha_ingreso ||
     emp?.fecha_ingreso ||
@@ -267,7 +313,7 @@ export default function EmpleadoFicha() {
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
               onClick={() => {
                 setTab(t.key);
-                if (!["personales","contractuales"].includes(t.key)) setEditing(false);
+                if (!["personales","contractuales","prevision"].includes(t.key)) setEditing(false);
               }}
             >
               {t.label}
@@ -310,6 +356,18 @@ export default function EmpleadoFicha() {
 
             {tab === "documentos" && (
               <DocumentosTab employee={emp} />
+            )}
+
+            {tab === "prevision" && (
+              editing ? (
+                <PrevisionForm
+                  id="prevision-form"
+                  employee={emp}
+                  onSaved={handleSavedPrevision}
+                />
+              ) : (
+                <PrevisionView data={prevision} catalogs={prevCat} />
+              )
             )}
           </div>
 
