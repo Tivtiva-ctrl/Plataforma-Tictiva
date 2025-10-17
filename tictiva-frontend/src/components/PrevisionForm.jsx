@@ -1,465 +1,88 @@
-// src/components/PrevisionForm.jsx
-import React, { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import React from "react";
 
-const Row = ({ label, children }) => (
-  <div className="ef-row">
-    <div className="ef-col-label">{label}</div>
-    <div className="ef-col-field">{children}</div>
-  </div>
-);
+const label = { color: "#6B7280" };
+const dash = (v) => (v === null || v === undefined || v === "" ? "—" : v);
+const pct = (v) => (v === null || v === undefined || v === "" ? "—" : `${v}%`);
 
-export default function PrevisionForm({ id = "prevision-form", employee, onSaved }) {
-  const [cat, setCat] = useState({ afp: [], isapre: [], cajas: [], mutual: [] });
+function Row({ k, v }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-1">
+      <span style={label}>{k}</span>
+      <strong className="text-gray-900">{v}</strong>
+    </div>
+  );
+}
 
-  const [form, setForm] = useState({
-    salud_tipo: "fonasa",
-    fonasa_tramo: "A",
-    isapre_id: null,
-    isapre_plan_tipo: "UF",
-    isapre_plan_valor: null,
+export default function PrevisionView({ data, catalogs = {} }) {
+  if (!data) return <div className="ef-card p20">Sin datos previsionales.</div>;
 
-    pension_sistema: "afp",
-    afp_id: null,
-    cot_obligatoria_pct: 10.0,
-    sis_pct: null,
+  const afp = catalogs.afp?.find(a => a.id === data.afp_id)?.nombre || "—";
+  const isapre = catalogs.isapre?.find(a => a.id === data.isapre_id)?.nombre || "—";
+  const caja = catalogs.cajas?.find(a => a.id === data.caja_id)?.nombre || "—";
+  const mutual = catalogs.mutual?.find(a => a.id === data.mutual_id)?.nombre || "—";
 
-    contrato_tipo: "indefinido",
-    afc_afiliado: true,
-    afc_exento: false,
+  const planDesc =
+    data.salud_tipo === "isapre"
+      ? `${dash(data.isapre_plan_tipo)} ${dash(data.isapre_plan_valor)}`.trim()
+      : `Fonasa (Tramo ${dash(data.fonasa_tramo)})`;
 
-    caja_id: null,
-    tramo_asignacion: "A",
-    cargas_familiares: 0,
-
-    mutual_id: null,
-    tasa_accidente_pct: null,
-    adicional_diferenciada_pct: null,
-
-    trabajo_pesado: false,
-    trabajo_pesado_adic_pct: null,
-
-    apv_regimen: null,
-    apv_monto: null,
-    apv_periodicidad: "mensual",
-    deposito_convenido_monto: null,
-
-    fecha_vigencia_desde: new Date().toISOString().slice(0, 10),
-    fecha_vigencia_hasta: null,
-    observaciones: "",
-  });
-
-  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
-
-  // Cargar catálogos
-  useEffect(() => {
-    (async () => {
-      const [afp, isapre, cajas, mutual] = await Promise.all([
-        supabase.from("afp_catalog").select("id,nombre").order("nombre"),
-        supabase.from("isapre_catalog").select("id,nombre").order("nombre"),
-        supabase.from("caja_compensacion_catalog").select("id,nombre").order("nombre"),
-        supabase.from("mutual_catalog").select("id,nombre").order("nombre"),
-      ]);
-      setCat({
-        afp: afp.data || [],
-        isapre: isapre.data || [],
-        cajas: cajas.data || [],
-        mutual: mutual.data || [],
-      });
-    })();
-  }, []);
-
-  const submit = async (e) => {
-  e.preventDefault();
-  const payload = {
-    ...form,
-    // ❌ no mandamos tenant_id; lo completa el trigger en la BD
-    employee_id: employee.id,
-    // limpieza según elección
-    isapre_id: form.salud_tipo === "isapre" ? form.isapre_id : null,
-    fonasa_tramo: form.salud_tipo === "fonasa" ? form.fonasa_tramo : null,
-    afp_id: form.pension_sistema === "afp" ? form.afp_id : null,
-  };
-
-  const { data, error } = await supabase
-    .from("employee_prevision")
-    .insert(payload)
-    .select("*")
-    .single();
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-  onSaved?.(data);
-};
-
+  const pensionSistema = data.pension_sistema
+    ? String(data.pension_sistema).toUpperCase()
+    : "—";
 
   return (
-    <form id={id} onSubmit={submit} className="ef-card p20">
-      <h3 className="ef-title-sm">Previsión</h3>
+    <div className="ef-card p20">
+      <h3 className="ef-title-sm">Datos Previsionales</h3>
 
-      {/* GRID 2 COLS COMO CONTRACTUALES */}
-      <div className="ef-grid-2 mt12">
-        {/* Columna izquierda */}
-        <div className="ef-form">
-          <Row label="Salud">
-            <select
-              className="ef-input"
-              value={form.salud_tipo}
-              onChange={(e) => set("salud_tipo", e.target.value)}
-            >
-              <option value="fonasa">Fonasa</option>
-              <option value="isapre">Isapre</option>
-            </select>
-          </Row>
-
-          {form.salud_tipo === "fonasa" ? (
-            <Row label="Fonasa · Tramo">
-              <select
-                className="ef-input"
-                value={form.fonasa_tramo}
-                onChange={(e) => set("fonasa_tramo", e.target.value)}
-              >
-                <option>A</option>
-                <option>B</option>
-                <option>C</option>
-                <option>D</option>
-              </select>
-            </Row>
-          ) : (
-            <>
-              <Row label="Isapre">
-                <select
-                  className="ef-input"
-                  value={form.isapre_id || ""}
-                  onChange={(e) => set("isapre_id", e.target.value || null)}
-                >
-                  <option value="">—</option>
-                  {cat.isapre.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.nombre}
-                    </option>
-                  ))}
-                </select>
-              </Row>
-              <Row label="Plan (Tipo / Valor)">
-                <div className="flex gap-2">
-                  <select
-                    className="ef-input"
-                    style={{ flex: 1 }}
-                    value={form.isapre_plan_tipo}
-                    onChange={(e) => set("isapre_plan_tipo", e.target.value)}
-                  >
-                    <option>UF</option>
-                    <option>%</option>
-                    <option>MONTO</option>
-                  </select>
-                  <input
-                    className="ef-input"
-                    style={{ flex: 1 }}
-                    type="number"
-                    step="0.01"
-                    value={form.isapre_plan_valor ?? ""}
-                    onChange={(e) =>
-                      set("isapre_plan_valor", e.target.value ? Number(e.target.value) : null)
-                    }
-                  />
-                </div>
-              </Row>
-            </>
-          )}
-
-          <div className="ef-sep" />
-
-          <Row label="Caja de Compensación">
-            <select
-              className="ef-input"
-              value={form.caja_id || ""}
-              onChange={(e) => set("caja_id", e.target.value || null)}
-            >
-              <option value="">—</option>
-              {cat.cajas.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.nombre}
-                </option>
-              ))}
-            </select>
-          </Row>
-
-          <Row label="Asignación Familiar · Tramo">
-            <select
-              className="ef-input"
-              value={form.tramo_asignacion || ""}
-              onChange={(e) => set("tramo_asignacion", e.target.value || null)}
-            >
-              <option>A</option>
-              <option>B</option>
-              <option>C</option>
-              <option>D</option>
-            </select>
-          </Row>
-
-          <Row label="Cargas Familiares">
-            <input
-              className="ef-input"
-              type="number"
-              min="0"
-              value={form.cargas_familiares}
-              onChange={(e) => set("cargas_familiares", Number(e.target.value || 0))}
-            />
-          </Row>
+      {/* Igual a Contractuales: grid 2 columnas, filas homogéneas */}
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-[15px] leading-6">
+        {/* Columna 1 */}
+        <div className="space-y-1.5">
+          <Row
+            k="Salud:"
+            v={data.salud_tipo === "isapre" ? `Isapre ${isapre}` : "Fonasa"}
+          />
+          <Row k="Plan / Tramo:" v={planDesc} />
+          <Row k="Caja Compensación:" v={dash(caja)} />
+          <Row
+            k="Asignación Familiar:"
+            v={`Tramo ${dash(data.tramo_asignacion)} · ${data.cargas_familiares ?? 0} carga(s)`}
+          />
+          <Row k="Sistema Pensión:" v={pensionSistema} />
+          <Row k="AFP:" v={data.pension_sistema === "afp" ? afp : "—"} />
+          <Row k="Cotización obligatoria:" v={pct(data.cot_obligatoria_pct)} />
+          <Row k="SIS:" v={pct(data.sis_pct)} />
         </div>
 
-        {/* Columna derecha */}
-        <div className="ef-form">
-          <Row label="Sistema Pensión">
-            <select
-              className="ef-input"
-              value={form.pension_sistema}
-              onChange={(e) => set("pension_sistema", e.target.value)}
-            >
-              <option value="afp">AFP</option>
-              <option value="ips">IPS</option>
-              <option value="capredena">CAPREDENA</option>
-              <option value="dipreca">DIPRECA</option>
-            </select>
-          </Row>
-
-          {form.pension_sistema === "afp" && (
-            <Row label="AFP">
-              <select
-                className="ef-input"
-                value={form.afp_id || ""}
-                onChange={(e) => set("afp_id", e.target.value || null)}
-              >
-                <option value="">—</option>
-                {cat.afp.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.nombre}
-                  </option>
-                ))}
-              </select>
-            </Row>
-          )}
-
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Row label="Cotización Obligatoria %">
-                <input
-                  className="ef-input"
-                  type="number"
-                  step="0.01"
-                  value={form.cot_obligatoria_pct ?? ""}
-                  onChange={(e) =>
-                    set("cot_obligatoria_pct", e.target.value ? Number(e.target.value) : null)
-                  }
-                />
-              </Row>
-            </div>
-            <div className="flex-1">
-              <Row label="SIS %">
-                <input
-                  className="ef-input"
-                  type="number"
-                  step="0.01"
-                  value={form.sis_pct ?? ""}
-                  onChange={(e) => set("sis_pct", e.target.value ? Number(e.target.value) : null)}
-                />
-              </Row>
-            </div>
-          </div>
-
-          <Row label="Contrato">
-            <select
-              className="ef-input"
-              value={form.contrato_tipo}
-              onChange={(e) => set("contrato_tipo", e.target.value)}
-            >
-              <option value="indefinido">Indefinido</option>
-              <option value="plazo_fijo">Plazo fijo</option>
-              <option value="obra_servicio">Obra o faena</option>
-            </select>
-          </Row>
-
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Row label="AFC afiliado">
-                <select
-                  className="ef-input"
-                  value={String(form.afc_afiliado)}
-                  onChange={(e) => set("afc_afiliado", e.target.value === "true")}
-                >
-                  <option value="true">Sí</option>
-                  <option value="false">No</option>
-                </select>
-              </Row>
-            </div>
-            <div className="flex-1">
-              <Row label="AFC exento">
-                <select
-                  className="ef-input"
-                  value={String(form.afc_exento)}
-                  onChange={(e) => set("afc_exento", e.target.value === "true")}
-                >
-                  <option value="false">No</option>
-                  <option value="true">Sí</option>
-                </select>
-              </Row>
-            </div>
-          </div>
-
-          <div className="ef-sep" />
-
-          <Row label="Mutual">
-            <select
-              className="ef-input"
-              value={form.mutual_id || ""}
-              onChange={(e) => set("mutual_id", e.target.value || null)}
-            >
-              <option value="">—</option>
-              {cat.mutual.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.nombre}
-                </option>
-              ))}
-            </select>
-          </Row>
-
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Row label="Tasa Accidente %">
-                <input
-                  className="ef-input"
-                  type="number"
-                  step="0.01"
-                  value={form.tasa_accidente_pct ?? ""}
-                  onChange={(e) =>
-                    set("tasa_accidente_pct", e.target.value ? Number(e.target.value) : null)
-                  }
-                />
-              </Row>
-            </div>
-            <div className="flex-1">
-              <Row label="Adicional Diferenciada %">
-                <input
-                  className="ef-input"
-                  type="number"
-                  step="0.01"
-                  value={form.adicional_diferenciada_pct ?? ""}
-                  onChange={(e) =>
-                    set("adicional_diferenciada_pct", e.target.value ? Number(e.target.value) : null)
-                  }
-                />
-              </Row>
-            </div>
-          </div>
-
-          <Row label="Trabajo Pesado">
-            <select
-              className="ef-input"
-              value={String(form.trabajo_pesado)}
-              onChange={(e) => set("trabajo_pesado", e.target.value === "true")}
-            >
-              <option value="false">No</option>
-              <option value="true">Sí</option>
-            </select>
-          </Row>
-
-          {form.trabajo_pesado && (
-            <Row label="Adic. Trabajo Pesado %">
-              <input
-                className="ef-input"
-                type="number"
-                step="0.01"
-                value={form.trabajo_pesado_adic_pct ?? ""}
-                onChange={(e) =>
-                  set("trabajo_pesado_adic_pct", e.target.value ? Number(e.target.value) : null)
-                }
-              />
-            </Row>
-          )}
-
-          <div className="ef-sep" />
-
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Row label="APV · Régimen">
-                <select
-                  className="ef-input"
-                  value={form.apv_regimen || ""}
-                  onChange={(e) => set("apv_regimen", e.target.value || null)}
-                >
-                  <option value="">—</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                </select>
-              </Row>
-            </div>
-            <div className="flex-1">
-              <Row label="APV · Monto">
-                <input
-                  className="ef-input"
-                  type="number"
-                  step="0.01"
-                  value={form.apv_monto ?? ""}
-                  onChange={(e) => set("apv_monto", e.target.value ? Number(e.target.value) : null)}
-                />
-              </Row>
-            </div>
-            <div className="flex-1">
-              <Row label="Depósito Convenido">
-                <input
-                  className="ef-input"
-                  type="number"
-                  step="0.01"
-                  value={form.deposito_convenido_monto ?? ""}
-                  onChange={(e) =>
-                    set(
-                      "deposito_convenido_monto",
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                />
-              </Row>
-            </div>
-          </div>
-
-          <div className="ef-sep" />
-
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Row label="Vigencia · Desde">
-                <input
-                  className="ef-input"
-                  type="date"
-                  value={form.fecha_vigencia_desde}
-                  onChange={(e) => set("fecha_vigencia_desde", e.target.value)}
-                />
-              </Row>
-            </div>
-            <div className="flex-1">
-              <Row label="Vigencia · Hasta">
-                <input
-                  className="ef-input"
-                  type="date"
-                  value={form.fecha_vigencia_hasta || ""}
-                  onChange={(e) => set("fecha_vigencia_hasta", e.target.value || null)}
-                />
-              </Row>
-            </div>
-          </div>
-
-          <Row label="Observaciones">
-            <textarea
-              className="ef-input"
-              rows={3}
-              value={form.observaciones}
-              onChange={(e) => set("observaciones", e.target.value)}
-            />
-          </Row>
+        {/* Columna 2 */}
+        <div className="space-y-1.5">
+          <Row k="Contrato:" v={dash(data.contrato_tipo)} />
+          <Row k="AFC afiliado:" v={data.afc_afiliado ? "Sí" : "No"} />
+          <Row k="AFC exento:" v={data.afc_exento ? "Sí" : "No"} />
+          <Row k="Mutual:" v={dash(mutual)} />
+          <Row k="Tasa Accidente:" v={pct(data.tasa_accidente_pct)} />
+          <Row k="Adicional Diferenciada:" v={pct(data.adicional_diferenciada_pct)} />
+          <Row k="Trabajo Pesado:" v={data.trabajo_pesado ? "Sí" : "No"} />
+          <Row k="Adic. Trabajo Pesado:" v={pct(data.trabajo_pesado_adic_pct)} />
+          <Row
+            k="APV:"
+            v={data.apv_regimen ? `Régimen ${data.apv_regimen}` : "—"}
+          />
+          <Row k="APV Monto:" v={dash(data.apv_monto)} />
+          <Row k="Dep. Convenido:" v={dash(data.deposito_convenido_monto)} />
         </div>
       </div>
-    </form>
+
+      <div className="mt-4 text-gray-500">
+        Vigencia: <strong>{dash(data.fecha_vigencia_desde)}</strong>
+        {data.fecha_vigencia_hasta ? ` a ${data.fecha_vigencia_hasta}` : " (vigente)"}
+      </div>
+
+      {data.observaciones && (
+        <div className="mt-2">
+          <span style={label}>Observaciones:</span> {data.observaciones}
+        </div>
+      )}
+    </div>
   );
 }
