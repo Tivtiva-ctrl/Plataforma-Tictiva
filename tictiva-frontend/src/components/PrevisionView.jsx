@@ -6,9 +6,9 @@ const pct  = (v) => (v === null || v === undefined || v === "" ? "—" : `${v}%`
 
 function Row({ k, v }) {
   return (
-    <div className="flex items-start justify-between gap-3 py-2 border-b border-gray-100 last:border-b-0">
-      <span className="text-gray-500">{k}</span>
-      <strong className="text-gray-900">{v}</strong>
+    <div className="pv-row">
+      <div className="pv-k">{k}</div>
+      <div className="pv-v"><strong>{v}</strong></div>
     </div>
   );
 }
@@ -29,20 +29,16 @@ export default function PrevisionView({ data = {}, catalogs = {} }) {
     : "—";
 
   return (
-    <div className="ef-card p20">
+    <div className="ef-card p20 pv-view">
       <h3 className="ef-title-sm">Datos Previsionales</h3>
 
-      {/* igual a Contractuales: 2 columnas, filas homogéneas */}
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-8 text-[15px] leading-6">
+      <div className="pv-grid">
         {/* Columna izquierda */}
         <div>
           <Row k="Salud:" v={data.salud_tipo === "isapre" ? `Isapre ${isapre}` : "Fonasa"} />
           <Row k="Plan / Tramo:" v={planDesc} />
           <Row k="Caja Compensación:" v={dash(caja)} />
-          <Row
-            k="Asignación Familiar:"
-            v={`Tramo ${dash(data.tramo_asignacion)} · ${data.cargas_familiares ?? 0} carga(s)`}
-          />
+          <Row k="Asignación Familiar:" v={`Tramo ${dash(data.tramo_asignacion)} · ${data.cargas_familiares ?? 0} carga(s)`} />
           <Row k="Sistema Pensión:" v={pensionSistema} />
           <Row k="AFP:" v={data.pension_sistema === "afp" ? afp : "—"} />
           <Row k="Cotización obligatoria:" v={pct(data.cot_obligatoria_pct)} />
@@ -65,16 +61,57 @@ export default function PrevisionView({ data = {}, catalogs = {} }) {
         </div>
       </div>
 
-      <div className="mt-4 text-gray-500">
+      <div className="pv-foot">
         Vigencia: <strong>{dash(data.fecha_vigencia_desde)}</strong>
         {data.fecha_vigencia_hasta ? ` a ${data.fecha_vigencia_hasta}` : " (vigente)"}
       </div>
 
       {data.observaciones && (
-        <div className="mt-2 text-gray-700">
-          <span className="text-gray-500">Observaciones:</span> {data.observaciones}
+        <div className="pv-obs">
+          <span className="pv-k">Observaciones:</span> {data.observaciones}
         </div>
       )}
+
+      {/* estilos locales (scoped) para que se vea EXACTO como Contractuales */}
+      <style>{`
+        .pv-view { /* card ya viene de ef-card; acá solo tipografía/espaciado */
+          font-size: 15px;
+          line-height: 1.6;
+        }
+        .pv-grid{
+          display:grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+          margin-top: 12px;
+        }
+        @media (min-width: 768px){
+          .pv-grid{ grid-template-columns: 1fr 1fr; }
+        }
+        .pv-row{
+          display:grid;
+          grid-template-columns: 52% 48%;
+          align-items:start;
+          padding: 8px 0;
+          border-bottom: 1px solid #f1f5f9; /* igual al divisor suave de Contractuales */
+        }
+        .pv-row:last-child{ border-bottom:none; }
+        .pv-k{
+          color:#6b7280;   /* gris label */
+          padding-right: 12px;
+        }
+        .pv-v{
+          color:#111827;   /* texto principal */
+          text-align:left;
+        }
+        .pv-foot{
+          margin-top: 12px;
+          color:#6b7280;
+        }
+        .pv-obs{
+          margin-top: 8px;
+          color:#374151;
+        }
+      `}</style>
     </div>
   );
 }
