@@ -1,4 +1,3 @@
-// src/components/PrevisionForm.jsx
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -9,7 +8,7 @@ const Row = ({ label, children }) => (
   </div>
 );
 
-// util: convierte "" a null, mantiene 0
+// "" -> null (conserva 0)
 const toNullableNumber = (v) => {
   if (v === "" || v === null || v === undefined) return null;
   const n = Number(v);
@@ -33,15 +32,12 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     cot_obligatoria_pct: 10.0,
     sis_pct: null,
 
-    // Contrato / AFC
-    contrato_tipo: "indefinido",
-    afc_afiliado: true,
-    afc_exento: false,
-
-    // Caja / Asignación
+    // Caja / Asignación / AFC
     caja_id: null,
     tramo_asignacion: "A",
     cargas_familiares: 0,
+    afc_afiliado: true,
+    afc_exento: false,
 
     // Mutual
     mutual_id: null,
@@ -58,15 +54,13 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     apv_periodicidad: "mensual",
     deposito_convenido_monto: null,
 
-    // Vigencia / Obs
-    fecha_vigencia_desde: new Date().toISOString().slice(0, 10),
-    fecha_vigencia_hasta: null,
+    // Observaciones
     observaciones: "",
   });
 
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
-  /* ===================== CATÁLOGOS ===================== */
+  /* ====== Catálogos ====== */
   useEffect(() => {
     (async () => {
       const [afp, isapre, cajas, mutual] = await Promise.all([
@@ -84,7 +78,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     })();
   }, []);
 
-  /* ================== PREFILL (si existe) ================== */
+  /* ====== Prefill (si existe) ====== */
   useEffect(() => {
     if (!employee?.id) return;
     (async () => {
@@ -94,21 +88,11 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
         .eq("employee_id", employee.id)
         .maybeSingle();
 
-      if (error) {
-        console.error(error);
-        return;
-      }
+      if (error) { console.error(error); return; }
       if (data) {
         setForm((s) => ({
           ...s,
           ...data,
-          // normalizaciones mínimas
-          fecha_vigencia_desde: data.fecha_vigencia_desde
-            ? String(data.fecha_vigencia_desde).slice(0, 10)
-            : s.fecha_vigencia_desde,
-          fecha_vigencia_hasta: data.fecha_vigencia_hasta
-            ? String(data.fecha_vigencia_hasta).slice(0, 10)
-            : null,
           isapre_plan_tipo: data.isapre_plan_tipo ?? s.isapre_plan_tipo,
           apv_periodicidad: data.apv_periodicidad ?? s.apv_periodicidad,
         }));
@@ -116,7 +100,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     })();
   }, [employee?.id]);
 
-  /* ======================= GUARDAR ======================= */
+  /* ====== Guardar (upsert) ====== */
   const submit = async (e) => {
     e.preventDefault();
 
@@ -138,15 +122,12 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
       cot_obligatoria_pct: toNullableNumber(form.cot_obligatoria_pct),
       sis_pct: toNullableNumber(form.sis_pct),
 
-      // Contrato / AFC
-      contrato_tipo: form.contrato_tipo,
-      afc_afiliado: !!form.afc_afiliado,
-      afc_exento: !!form.afc_exento,
-
-      // Caja / Asignación
+      // Caja / Asig. / AFC
       caja_id: form.caja_id || null,
       tramo_asignacion: form.tramo_asignacion || null,
       cargas_familiares: Number(form.cargas_familiares || 0),
+      afc_afiliado: !!form.afc_afiliado,
+      afc_exento: !!form.afc_exento,
 
       // Mutual
       mutual_id: form.mutual_id || null,
@@ -165,9 +146,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
       apv_periodicidad: form.apv_periodicidad || null,
       deposito_convenido_monto: toNullableNumber(form.deposito_convenido_monto),
 
-      // Vigencia / Obs
-      fecha_vigencia_desde: form.fecha_vigencia_desde || null,
-      fecha_vigencia_hasta: form.fecha_vigencia_hasta || null,
+      // Observaciones
       observaciones: form.observaciones || "",
     };
 
@@ -177,14 +156,12 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
       .select("*")
       .single();
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) { alert(error.message); return; }
     onSaved?.(data);
   };
 
-  /* ============== UI (alineado a Contractuales) ============== */
+  /* ====== UI (dos columnas, limpio) ====== */
+
   const IsapreFields = form.salud_tipo === "isapre" && (
     <>
       <Row label="Isapre">
@@ -228,7 +205,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     <form id={id} onSubmit={submit} className="ef-card p20">
       <h3 className="ef-title-sm">Previsión</h3>
 
-      {/* Grid 2 columnas como Contractuales */}
       <div className="ef-grid-2 mt12">
         {/* ===== Columna izquierda ===== */}
         <div className="ef-form">
@@ -244,15 +220,17 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
           </Row>
 
           {form.salud_tipo === "fonasa" ? (
-            <Row label="Fonasa · Tramo">
-              <select
-                className="ef-input"
-                value={form.fonasa_tramo}
-                onChange={(e) => set("fonasa_tramo", e.target.value)}
-              >
-                <option>A</option><option>B</option><option>C</option><option>D</option>
-              </select>
-            </Row>
+            <>
+              <Row label="Fonasa · Tramo">
+                <select
+                  className="ef-input"
+                  value={form.fonasa_tramo}
+                  onChange={(e) => set("fonasa_tramo", e.target.value)}
+                >
+                  <option>A</option><option>B</option><option>C</option><option>D</option>
+                </select>
+              </Row>
+            </>
           ) : IsapreFields}
 
           <div className="ef-sep" />
@@ -287,35 +265,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               min="0"
               value={form.cargas_familiares}
               onChange={(e) => set("cargas_familiares", Number(e.target.value || 0))}
-            />
-          </Row>
-
-          <div className="ef-sep" />
-
-          <Row label="Vigencia · Desde">
-            <input
-              className="ef-input"
-              type="date"
-              value={form.fecha_vigencia_desde || ""}
-              onChange={(e) => set("fecha_vigencia_desde", e.target.value)}
-            />
-          </Row>
-
-          <Row label="Vigencia · Hasta">
-            <input
-              className="ef-input"
-              type="date"
-              value={form.fecha_vigencia_hasta || ""}
-              onChange={(e) => set("fecha_vigencia_hasta", e.target.value || null)}
-            />
-          </Row>
-
-          <Row label="Observaciones">
-            <textarea
-              className="ef-input"
-              rows={3}
-              value={form.observaciones}
-              onChange={(e) => set("observaciones", e.target.value)}
             />
           </Row>
         </div>
@@ -370,18 +319,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
           </Row>
 
           <div className="ef-sep" />
-
-          <Row label="Contrato">
-            <select
-              className="ef-input"
-              value={form.contrato_tipo}
-              onChange={(e) => set("contrato_tipo", e.target.value)}
-            >
-              <option value="indefinido">Indefinido</option>
-              <option value="plazo_fijo">Plazo fijo</option>
-              <option value="obra_servicio">Obra o faena</option>
-            </select>
-          </Row>
 
           <Row label="AFC afiliado">
             <select
@@ -496,6 +433,17 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               step="0.01"
               value={form.deposito_convenido_monto ?? ""}
               onChange={(e) => set("deposito_convenido_monto", e.target.value)}
+            />
+          </Row>
+
+          {/* Observaciones al final de la COLUMNA DERECHA */}
+          <div className="ef-sep" />
+          <Row label="Observaciones">
+            <textarea
+              className="ef-input"
+              rows={3}
+              value={form.observaciones}
+              onChange={(e) => set("observaciones", e.target.value)}
             />
           </Row>
         </div>

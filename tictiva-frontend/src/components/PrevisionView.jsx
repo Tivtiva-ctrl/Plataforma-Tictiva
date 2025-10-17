@@ -19,9 +19,11 @@ export default function PrevisionView({ data = {}, catalogs = {} }) {
   const caja   = catalogs.cajas?.find(a => a.id === data.caja_id)?.nombre || "—";
   const mutual = catalogs.mutual?.find(a => a.id === data.mutual_id)?.nombre || "—";
 
+  // Mostrar símbolo según tipo de plan (UF / % / $)
+  const tipoSimbolo = { UF: "UF", PORCENTAJE: "%", PESOS: "$" }[data.isapre_plan_tipo] || data.isapre_plan_tipo;
   const planDesc =
     data.salud_tipo === "isapre"
-      ? `${dash(data.isapre_plan_tipo)} ${dash(data.isapre_plan_valor)}`.trim()
+      ? `${dash(tipoSimbolo)} ${dash(data.isapre_plan_valor)}`.trim()
       : `Fonasa (Tramo ${dash(data.fonasa_tramo)})`;
 
   const pensionSistema = data.pension_sistema
@@ -47,7 +49,7 @@ export default function PrevisionView({ data = {}, catalogs = {} }) {
 
         {/* Columna derecha */}
         <div>
-          <Row k="Contrato:" v={dash(data.contrato_tipo)} />
+          {/* 🔻 Eliminado: Contrato */}
           <Row k="AFC afiliado:" v={data.afc_afiliado ? "Sí" : "No"} />
           <Row k="AFC exento:" v={data.afc_exento ? "Sí" : "No"} />
           <Row k="Mutual:" v={dash(mutual)} />
@@ -58,23 +60,15 @@ export default function PrevisionView({ data = {}, catalogs = {} }) {
           <Row k="APV:" v={data.apv_regimen ? `Régimen ${data.apv_regimen}` : "—"} />
           <Row k="APV Monto:" v={dash(data.apv_monto)} />
           <Row k="Dep. Convenido:" v={dash(data.deposito_convenido_monto)} />
+          {/* Observaciones al final de la 2ª columna */}
+          {data.observaciones ? <Row k="Observaciones:" v={data.observaciones} /> : null}
         </div>
       </div>
 
-      <div className="pv-foot">
-        Vigencia: <strong>{dash(data.fecha_vigencia_desde)}</strong>
-        {data.fecha_vigencia_hasta ? ` a ${data.fecha_vigencia_hasta}` : " (vigente)"}
-      </div>
+      {/* 🔻 Eliminado: bloque 'Vigencia ...' y pv-obs suelto */}
 
-      {data.observaciones && (
-        <div className="pv-obs">
-          <span className="pv-k">Observaciones:</span> {data.observaciones}
-        </div>
-      )}
-
-      {/* estilos locales (scoped) para que se vea EXACTO como Contractuales */}
       <style>{`
-        .pv-view { /* card ya viene de ef-card; acá solo tipografía/espaciado */
+        .pv-view {
           font-size: 15px;
           line-height: 1.6;
         }
@@ -92,24 +86,16 @@ export default function PrevisionView({ data = {}, catalogs = {} }) {
           grid-template-columns: 52% 48%;
           align-items:start;
           padding: 8px 0;
-          border-bottom: 1px solid #f1f5f9; /* igual al divisor suave de Contractuales */
+          border-bottom: 1px solid #f1f5f9;
         }
         .pv-row:last-child{ border-bottom:none; }
         .pv-k{
-          color:#6b7280;   /* gris label */
+          color:#6b7280;
           padding-right: 12px;
         }
         .pv-v{
-          color:#111827;   /* texto principal */
+          color:#111827;
           text-align:left;
-        }
-        .pv-foot{
-          margin-top: 12px;
-          color:#6b7280;
-        }
-        .pv-obs{
-          margin-top: 8px;
-          color:#374151;
         }
       `}</style>
     </div>
