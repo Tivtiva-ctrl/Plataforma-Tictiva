@@ -9,41 +9,56 @@ const Row = ({ label, children }) => (
   </div>
 );
 
+// util: convierte "" a null, mantiene 0
+const toNullableNumber = (v) => {
+  if (v === "" || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
 export default function PrevisionForm({ id = "prevision-form", employee, onSaved }) {
   const [cat, setCat] = useState({ afp: [], isapre: [], cajas: [], mutual: [] });
 
   const [form, setForm] = useState({
+    // Salud
     salud_tipo: "fonasa",
     fonasa_tramo: "A",
     isapre_id: null,
-    isapre_plan_tipo: "UF",
+    isapre_plan_tipo: "UF",           // 'UF' | 'PORCENTAJE' | 'PESOS'
     isapre_plan_valor: null,
 
+    // Pensión
     pension_sistema: "afp",
     afp_id: null,
     cot_obligatoria_pct: 10.0,
     sis_pct: null,
 
+    // Contrato/AFC
     contrato_tipo: "indefinido",
     afc_afiliado: true,
     afc_exento: false,
 
+    // Caja / Asignación
     caja_id: null,
     tramo_asignacion: "A",
     cargas_familiares: 0,
 
+    // Mutual
     mutual_id: null,
     tasa_accidente_pct: null,
     adicional_diferenciada_pct: null,
 
+    // Trabajo pesado
     trabajo_pesado: false,
     trabajo_pesado_adic_pct: null,
 
+    // APV
     apv_regimen: null,
     apv_monto: null,
     apv_periodicidad: "mensual",
     deposito_convenido_monto: null,
 
+    // Vigencia / Obs
     fecha_vigencia_desde: new Date().toISOString().slice(0, 10),
     fecha_vigencia_hasta: null,
     observaciones: "",
@@ -69,25 +84,109 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     })();
   }, []);
 
+  // Prefill: cargar employee_prevision (si existe) para este empleado
+  useEffect(() => {
+    if (!employee?.id) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("employee_prevision")
+        .select("*")
+        .eq("employee_id", employee.id)
+        .maybeSingle(); // no error si no existe
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+      if (data) {
+        // normalización mínima a tu forma
+        setForm((s) => ({
+          ...s,
+          ...data,
+          // fallback seguros
+          salud_tipo: data.salud_tipo ?? s.salud_tipo,
+          pension_sistema: data.pension_sistema ?? s.pension_sistema,
+          contrato_tipo: data.contrato_tipo ?? s.contrato_tipo,
+          tramo_asignacion: data.tramo_asignacion ?? s.tramo_asignacion,
+          isapre_plan_tipo: data.isapre_plan_tipo ?? s.isapre_plan_tipo,
+          apv_periodicidad: data.apv_periodicidad ?? s.apv_periodicidad,
+          fecha_vigencia_desde: data.fecha_vigencia_desde
+            ? String(data.fecha_vigencia_desde).slice(0, 10)
+            : s.fecha_vigencia_desde,
+          fecha_vigencia_hasta: data.fecha_vigencia_hasta
+            ? String(data.fecha_vigencia_hasta).slice(0, 10)
+            : null,
+        }));
+      }
+    })();
+  }, [employee?.id]);
+
   const submit = async (e) => {
     e.preventDefault();
+
+    // limpieza según elección + tipos
     const payload = {
-      ...form,
-      tenant_id: employee.tenant_id,
-      employee_id: employee.id,
-      // limpieza según elección
-      isapre_id: form.salud_tipo === "isapre" ? form.isapre_id : null,
+      tenant_id: employee?.tenant_id ?? null,
+      employee_id: employee?.id,
+
+      // Salud
+      salud_tipo: form.salud_tipo,
       fonasa_tramo: form.salud_tipo === "fonasa" ? form.fonasa_tramo : null,
+      isapre_id: form.salud_tipo === "isapre" ? form.isapre_id : null,
+      isapre_plan_tipo: form.salud_tipo === "isapre" ? form.isapre_plan_tipo : null, // 'UF'|'PORCENTAJE'|'PESOS'
+      isapre_plan_valor:
+        form.salud_tipo === "isapre" ? toNullableNumber(form.isapre_plan_valor) : null,
+
+      // Pensión
+      pension_sistema: form.pension_sistema, // 'afp'|'ips'|...
       afp_id: form.pension_sistema === "afp" ? form.afp_id : null,
+      cot_obligatoria_pct: toNullableNumber(form.cot_obligatoria_pct),
+      sis_pct: toNullableNumber(form.sis_pct),
+
+      // Contrato / AFC
+      contrato_tipo: form.contrato_tipo,
+      afc_afiliado: !!form.afc_afiliado,
+      afc_exento: !!form.afc_exento,
+
+      // Caja / Asignación
+      caja_id: form.caja_id || null,
+      tramo_asignacion: form.tramo_asignacion || null,
+      cargas_familiares: Number(form.cargas_familiares || 0),
+
+      // Mutual
+      mutual_id: form.mutual_id || null,
+      tasa_accidente_pct: toNullableNumber(form.tasa_accidente_pct),
+      adicional_diferenciada_pct: toNullableNumber(form.adicional_diferenciada_pct),
+
+      // Trabajo pesado
+      trabajo_pesado: !!form.trabajo_pesado,
+      trabajo_pesado_adic_pct: form.trabajo_pesado
+        ? toNullableNumber(form.trabajo_pesado_adic_pct)
+        : null,
+
+      // APV
+      apv_regimen: form.apv_regimen || null,
+      apv_monto: toNullableNumber(form.apv_monto),
+      apv_periodicidad: form.apv_periodicidad || null,
+      deposito_convenido_monto: toNullableNumber(form.deposito_convenido_monto),
+
+      // Vigencia / Obs
+      fecha_vigencia_desde: form.fecha_vigencia_desde || null,
+      fecha_vigencia_hasta: form.fecha_vigencia_hasta || null,
+      observaciones: form.observaciones || "",
     };
 
+    // UPSERT por employee_id (crea si no existe, actualiza si ya hay)
     const { data, error } = await supabase
       .from("employee_prevision")
-      .insert(payload)
+      .upsert(payload, { onConflict: "employee_id" })
       .select("*")
       .single();
 
-    if (error) return alert(error.message);
+    if (error) {
+      alert(error.message);
+      return;
+    }
     onSaved?.(data);
   };
 
@@ -117,10 +216,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                 value={form.fonasa_tramo}
                 onChange={(e) => set("fonasa_tramo", e.target.value)}
               >
-                <option>A</option>
-                <option>B</option>
-                <option>C</option>
-                <option>D</option>
+                <option>A</option><option>B</option><option>C</option><option>D</option>
               </select>
             </Row>
           ) : (
@@ -133,9 +229,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                 >
                   <option value="">—</option>
                   {cat.isapre.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.nombre}
-                    </option>
+                    <option key={i.id} value={i.id}>{i.nombre}</option>
                   ))}
                 </select>
               </Row>
@@ -147,9 +241,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                     value={form.isapre_plan_tipo}
                     onChange={(e) => set("isapre_plan_tipo", e.target.value)}
                   >
-                    <option>UF</option>
-                    <option>%</option>
-                    <option>MONTO</option>
+                    <option value="UF">UF</option>
+                    <option value="PORCENTAJE">Porcentaje</option>
+                    <option value="PESOS">Pesos</option>
                   </select>
                   <input
                     className="ef-input"
@@ -157,9 +251,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                     type="number"
                     step="0.01"
                     value={form.isapre_plan_valor ?? ""}
-                    onChange={(e) =>
-                      set("isapre_plan_valor", e.target.value ? Number(e.target.value) : null)
-                    }
+                    onChange={(e) => set("isapre_plan_valor", e.target.value)}
                   />
                 </div>
               </Row>
@@ -176,9 +268,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             >
               <option value="">—</option>
               {cat.cajas.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.nombre}
-                </option>
+                <option key={i.id} value={i.id}>{i.nombre}</option>
               ))}
             </select>
           </Row>
@@ -189,10 +279,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               value={form.tramo_asignacion || ""}
               onChange={(e) => set("tramo_asignacion", e.target.value || null)}
             >
-              <option>A</option>
-              <option>B</option>
-              <option>C</option>
-              <option>D</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
             </select>
           </Row>
 
@@ -231,9 +318,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               >
                 <option value="">—</option>
                 {cat.afp.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.nombre}
-                  </option>
+                  <option key={i.id} value={i.id}>{i.nombre}</option>
                 ))}
               </select>
             </Row>
@@ -247,9 +332,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                   type="number"
                   step="0.01"
                   value={form.cot_obligatoria_pct ?? ""}
-                  onChange={(e) =>
-                    set("cot_obligatoria_pct", e.target.value ? Number(e.target.value) : null)
-                  }
+                  onChange={(e) => set("cot_obligatoria_pct", e.target.value)}
                 />
               </Row>
             </div>
@@ -260,7 +343,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                   type="number"
                   step="0.01"
                   value={form.sis_pct ?? ""}
-                  onChange={(e) => set("sis_pct", e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) => set("sis_pct", e.target.value)}
                 />
               </Row>
             </div>
@@ -315,9 +398,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             >
               <option value="">—</option>
               {cat.mutual.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.nombre}
-                </option>
+                <option key={i.id} value={i.id}>{i.nombre}</option>
               ))}
             </select>
           </Row>
@@ -330,9 +411,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                   type="number"
                   step="0.01"
                   value={form.tasa_accidente_pct ?? ""}
-                  onChange={(e) =>
-                    set("tasa_accidente_pct", e.target.value ? Number(e.target.value) : null)
-                  }
+                  onChange={(e) => set("tasa_accidente_pct", e.target.value)}
                 />
               </Row>
             </div>
@@ -343,9 +422,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                   type="number"
                   step="0.01"
                   value={form.adicional_diferenciada_pct ?? ""}
-                  onChange={(e) =>
-                    set("adicional_diferenciada_pct", e.target.value ? Number(e.target.value) : null)
-                  }
+                  onChange={(e) => set("adicional_diferenciada_pct", e.target.value)}
                 />
               </Row>
             </div>
@@ -369,9 +446,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                 type="number"
                 step="0.01"
                 value={form.trabajo_pesado_adic_pct ?? ""}
-                onChange={(e) =>
-                  set("trabajo_pesado_adic_pct", e.target.value ? Number(e.target.value) : null)
-                }
+                onChange={(e) => set("trabajo_pesado_adic_pct", e.target.value)}
               />
             </Row>
           )}
@@ -399,7 +474,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                   type="number"
                   step="0.01"
                   value={form.apv_monto ?? ""}
-                  onChange={(e) => set("apv_monto", e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) => set("apv_monto", e.target.value)}
                 />
               </Row>
             </div>
@@ -410,12 +485,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                   type="number"
                   step="0.01"
                   value={form.deposito_convenido_monto ?? ""}
-                  onChange={(e) =>
-                    set(
-                      "deposito_convenido_monto",
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
+                  onChange={(e) => set("deposito_convenido_monto", e.target.value)}
                 />
               </Row>
             </div>
@@ -429,7 +499,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                 <input
                   className="ef-input"
                   type="date"
-                  value={form.fecha_vigencia_desde}
+                  value={form.fecha_vigencia_desde || ""}
                   onChange={(e) => set("fecha_vigencia_desde", e.target.value)}
                 />
               </Row>

@@ -12,7 +12,7 @@ import ContractualesView from "../components/Contractuales";
 import ContractualesForm from "../components/ContractualesForm";
 import DocumentosTab from "../components/DocumentosTab";
 
-// 👇 nuevos: previsión
+// 👇 previsión
 import PrevisionView from "../components/PrevisionView";
 import PrevisionForm from "../components/PrevisionForm";
 
@@ -366,7 +366,8 @@ export default function EmpleadoFicha() {
                   onSaved={handleSavedPrevision}
                 />
               ) : (
-                <PrevisionView data={prevision} catalogs={prevCat} />
+                // 👇 clave: mostrar tabla aunque no haya registro (usa “—”)
+                <PrevisionView data={prevision ?? {}} catalogs={prevCat} />
               )
             )}
           </div>
