@@ -52,7 +52,7 @@ function nextBirthdayFrom(dobStr) {
   const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return nb < todayMid ? new Date(y + 1, dob.getMonth(), dob.getDate()) : nb;
 }
-/* —— Fecha larga + Antigüedad —— */
+/* —— Fecha larga + Antiguedad —— */
 function fmtFechaLarga(v) {
   const d = safeDate(v); if (!d) return "—";
   return d.toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" });
@@ -292,7 +292,7 @@ export default function EmpleadoFicha() {
             <div className="ef-meta">
               Ingreso: {fmtFechaLarga(hireDate)}{" "}
               <span className="text-gray-400">
-                (Antigüedad: {fmtAntigüedad(hireDate)})
+                (Antiguedad: {fmtAntiguedad(hireDate)})
               </span>
             </div>
           </div>
