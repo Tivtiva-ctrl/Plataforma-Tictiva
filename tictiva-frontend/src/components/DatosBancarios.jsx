@@ -64,7 +64,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Form inline (no drawer)
+  // Form inline
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -113,14 +113,11 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
     return banks.map((b) => ({ code: b.code || b.bank_code, name: b.name || b.bank_name }));
   }, [banks]);
 
-  /** Catálogo de bancos (opcional) */
+  /** Catálogo bancos (opcional) */
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("bank_catalog")
-        .select("code, name")
-        .order("name", { ascending: true });
+      const { data } = await supabase.from("bank_catalog").select("code, name").order("name", { ascending: true });
       if (!cancelled && data) setBanks(data);
     })();
     return () => { cancelled = true; };
@@ -189,10 +186,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
       favorite: !!row.favorite,
       verification_status: row.verification_status || "pending",
       verification_notes: row.verification_notes || "",
-      metadata: {
-        iban: row.metadata?.iban || "",
-        bic: row.metadata?.bic || "",
-      },
+      metadata: { iban: row.metadata?.iban || "", bic: row.metadata?.bic || "" },
     });
     setErrors({});
     setShowForm(true);
@@ -265,8 +259,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
       return;
     }
     if (payload.favorite) {
-      await supabase
-        .from("employee_bank_accounts")
+      await supabase.from("employee_bank_accounts")
         .update({ favorite: false })
         .eq("employee_id", Number(employee.id))
         .neq("id", resp.data.id);
@@ -279,8 +272,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
   const setFavorite = async (row) => {
     if (!canEdit) return;
     await supabase.from("employee_bank_accounts").update({ favorite: true }).eq("id", row.id);
-    await supabase
-      .from("employee_bank_accounts")
+    await supabase.from("employee_bank_accounts")
       .update({ favorite: false })
       .eq("employee_id", Number(employee.id))
       .neq("id", row.id);
@@ -290,8 +282,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
   const softDelete = async (row) => {
     if (!canEdit) return;
     if (!confirm("¿Inactivar esta cuenta bancaria?")) return;
-    await supabase
-      .from("employee_bank_accounts")
+    await supabase.from("employee_bank_accounts")
       .update({ verification_status: "inactive", favorite: false })
       .eq("id", row.id);
     await refreshList();
@@ -299,8 +290,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
 
   const askVerify = async (row) => {
     if (!canEdit) return;
-    await supabase
-      .from("employee_bank_accounts")
+    await supabase.from("employee_bank_accounts")
       .update({ verification_status: "pending", verification_notes: null })
       .eq("id", row.id);
     await refreshList();
@@ -309,8 +299,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
   const quickReject = async (row) => {
     if (!canEdit) return;
     const motivo = prompt("Motivo de rechazo:");
-    await supabase
-      .from("employee_bank_accounts")
+    await supabase.from("employee_bank_accounts")
       .update({ verification_status: "rejected", verification_notes: motivo || null })
       .eq("id", row.id);
     await refreshList();
@@ -322,6 +311,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
     return found ? found.name : row.bank_code || "Banco";
   };
 
+  /** UI */
   return (
     <div className="ef-card">
       <div className="ef-card-header flex items-center justify-between">
@@ -332,19 +322,15 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           </p>
         </div>
 
-        {/* Acciones: sin "Generar informe DT" */}
-        <div className="flex gap-2">
-          {canEdit ? (
+        {/* Acciones: SIN “Generar informe DT” y sin botón si no está en edición */}
+        {canEdit && (
+          <div className="flex gap-2">
             <button className="btn-secondary" onClick={openCreate}>+ Agregar cuenta</button>
-          ) : (
-            <button className="btn-secondary" disabled title="Activa 'Editar Ficha' para agregar">
-              + Agregar cuenta
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Formulario inline (aparece sólo cuando se abre) */}
+      {/* Formulario inline (solo en modo edición) */}
       {canEdit && showForm && (
         <div className="ef-item p-3 rounded-md border bg-white mb-3">
           <div className="ef-title" style={{ marginBottom: 6 }}>
@@ -356,23 +342,12 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
             <div className="ef-col-label">Banco</div>
             <div className="ef-col-field">
               <div className="flex gap-2">
-                <select
-                  className="ef-input"
-                  value={form.bank_code}
-                  onChange={(e) => onChange("bank_code", e.target.value)}
-                >
+                <select className="ef-input" value={form.bank_code} onChange={(e) => onChange("bank_code", e.target.value)}>
                   <option value="">Selecciona banco…</option>
-                  {bankOptions.map((b) => (
-                    <option key={b.code} value={b.code}>{b.name}</option>
-                  ))}
+                  {bankOptions.map((b) => (<option key={b.code} value={b.code}>{b.name}</option>))}
                 </select>
                 {form.bank_code === "999" && (
-                  <input
-                    className="ef-input flex-1"
-                    placeholder="Nombre banco (internacional / otro)"
-                    value={form.bank_name}
-                    onChange={(e) => onChange("bank_name", e.target.value)}
-                  />
+                  <input className="ef-input flex-1" placeholder="Nombre banco (internacional / otro)" value={form.bank_name} onChange={(e) => onChange("bank_name", e.target.value)} />
                 )}
               </div>
               {errors.bank_code && <div className="ef-error">{errors.bank_code}</div>}
@@ -383,26 +358,12 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           <div className="ef-row">
             <div className="ef-col-label">Tipo / Moneda</div>
             <div className="ef-col-field flex gap-2">
-              <select
-                className="ef-input"
-                value={form.account_type}
-                onChange={(e) => onChange("account_type", e.target.value)}
-              >
+              <select className="ef-input" value={form.account_type} onChange={(e) => onChange("account_type", e.target.value)}>
                 <option value="">Tipo de cuenta…</option>
-                <option>Corriente</option>
-                <option>Vista</option>
-                <option>Ahorro</option>
-                <option>Cuenta RUT</option>
-                <option>Chequera</option>
+                <option>Corriente</option><option>Vista</option><option>Ahorro</option><option>Cuenta RUT</option><option>Chequera</option>
               </select>
-              <select
-                className="ef-input"
-                value={form.account_currency}
-                onChange={(e) => onChange("account_currency", e.target.value)}
-              >
-                <option value="CLP">CLP</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
+              <select className="ef-input" value={form.account_currency} onChange={(e) => onChange("account_currency", e.target.value)}>
+                <option value="CLP">CLP</option><option value="USD">USD</option><option value="EUR">EUR</option>
               </select>
               {errors.account_type && <div className="ef-error">{errors.account_type}</div>}
             </div>
@@ -412,13 +373,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           <div className="ef-row">
             <div className="ef-col-label">Número de cuenta</div>
             <div className="ef-col-field">
-              <input
-                className="ef-input"
-                placeholder="Sólo dígitos"
-                value={form.account_number}
-                onChange={(e) => onChange("account_number", onlyDigits(e.target.value))}
-                inputMode="numeric"
-              />
+              <input className="ef-input" placeholder="Sólo dígitos" value={form.account_number} onChange={(e) => onChange("account_number", onlyDigits(e.target.value))} inputMode="numeric" />
               {errors.account_number && <div className="ef-error">{errors.account_number}</div>}
             </div>
           </div>
@@ -427,18 +382,8 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           <div className="ef-row">
             <div className="ef-col-label">Titular</div>
             <div className="ef-col-field grid grid-cols-2 gap-2">
-              <input
-                className="ef-input"
-                placeholder="Nombre del titular"
-                value={form.holder_name}
-                onChange={(e) => onChange("holder_name", e.target.value)}
-              />
-              <input
-                className="ef-input"
-                placeholder="RUT (12345678-9)"
-                value={form.holder_rut}
-                onChange={(e) => onChange("holder_rut", e.target.value)}
-              />
+              <input className="ef-input" placeholder="Nombre del titular" value={form.holder_name} onChange={(e) => onChange("holder_name", e.target.value)} />
+              <input className="ef-input" placeholder="RUT (12345678-9)" value={form.holder_rut} onChange={(e) => onChange("holder_rut", e.target.value)} />
               {errors.holder_name && <div className="ef-error col-span-2">{errors.holder_name}</div>}
               {errors.holder_rut && <div className="ef-error col-span-2">{errors.holder_rut}</div>}
             </div>
@@ -449,21 +394,12 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
             <div className="ef-col-label">Cuenta de tercero</div>
             <div className="ef-col-field">
               <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.is_third_party}
-                  onChange={(e) => onChange("is_third_party", e.target.checked)}
-                />
+                <input type="checkbox" checked={form.is_third_party} onChange={(e) => onChange("is_third_party", e.target.checked)} />
                 <span>El titular no es el trabajador</span>
               </label>
               {form.is_third_party && (
                 <div className="mt-2">
-                  <input
-                    className="ef-input"
-                    placeholder="Relación (cónyuge, representante, etc.)"
-                    value={form.third_party_relation}
-                    onChange={(e) => onChange("third_party_relation", e.target.value)}
-                  />
+                  <input className="ef-input" placeholder="Relación (cónyuge, representante, etc.)" value={form.third_party_relation} onChange={(e) => onChange("third_party_relation", e.target.value)} />
                   {errors.third_party_relation && <div className="ef-error">{errors.third_party_relation}</div>}
                 </div>
               )}
@@ -476,24 +412,14 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
               <div className="ef-row">
                 <div className="ef-col-label">IBAN</div>
                 <div className="ef-col-field">
-                  <input
-                    className="ef-input"
-                    placeholder="IBAN"
-                    value={form.metadata?.iban || ""}
-                    onChange={(e) => onChange("metadata", { ...form.metadata, iban: e.target.value })}
-                  />
+                  <input className="ef-input" placeholder="IBAN" value={form.metadata?.iban || ""} onChange={(e) => onChange("metadata", { ...form.metadata, iban: e.target.value })} />
                   {errors.iban && <div className="ef-error">{errors.iban}</div>}
                 </div>
               </div>
               <div className="ef-row">
                 <div className="ef-col-label">BIC/SWIFT</div>
                 <div className="ef-col-field">
-                  <input
-                    className="ef-input"
-                    placeholder="BIC/SWIFT"
-                    value={form.metadata?.bic || ""}
-                    onChange={(e) => onChange("metadata", { ...form.metadata, bic: e.target.value })}
-                  />
+                  <input className="ef-input" placeholder="BIC/SWIFT" value={form.metadata?.bic || ""} onChange={(e) => onChange("metadata", { ...form.metadata, bic: e.target.value })} />
                   {errors.bic && <div className="ef-error">{errors.bic}</div>}
                 </div>
               </div>
@@ -505,20 +431,10 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
             <div className="ef-col-label">Consentimiento</div>
             <div className="ef-col-field">
               <label className="inline-flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.consent_signed}
-                  onChange={(e) => onChange("consent_signed", e.target.checked)}
-                />
-                <span>
-                  Autorizo a la empresa a realizar transferencias a esta cuenta para efectos de remuneraciones y reembolsos.
-                </span>
+                <input type="checkbox" checked={form.consent_signed} onChange={(e) => onChange("consent_signed", e.target.checked)} />
+                <span>Autorizo a la empresa a realizar transferencias a esta cuenta para efectos de remuneraciones y reembolsos.</span>
               </label>
-              {form.consent_signed && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Se registrará fecha/hora del consentimiento al guardar.
-                </div>
-              )}
+              {form.consent_signed && <div className="text-xs text-gray-500 mt-1">Se registrará fecha/hora del consentimiento al guardar.</div>}
               {errors.consent_signed_at && <div className="ef-error">{errors.consent_signed_at}</div>}
             </div>
           </div>
@@ -527,24 +443,10 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           <div className="ef-row">
             <div className="ef-col-label">Vigencia / Preferencia</div>
             <div className="ef-col-field grid grid-cols-2 gap-2">
-              <input
-                type="date"
-                className="ef-input"
-                value={form.valid_from || ""}
-                onChange={(e) => onChange("valid_from", e.target.value)}
-              />
-              <input
-                type="date"
-                className="ef-input"
-                value={form.valid_to || ""}
-                onChange={(e) => onChange("valid_to", e.target.value)}
-              />
+              <input type="date" className="ef-input" value={form.valid_from || ""} onChange={(e) => onChange("valid_from", e.target.value)} />
+              <input type="date" className="ef-input" value={form.valid_to || ""} onChange={(e) => onChange("valid_to", e.target.value)} />
               <label className="inline-flex items-center gap-2 col-span-2 mt-1">
-                <input
-                  type="checkbox"
-                  checked={form.favorite}
-                  onChange={(e) => onChange("favorite", e.target.checked)}
-                />
+                <input type="checkbox" checked={form.favorite} onChange={(e) => onChange("favorite", e.target.checked)} />
                 <span>Marcar como cuenta favorita para pago de sueldo</span>
               </label>
             </div>
@@ -554,22 +456,13 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           <div className="ef-row">
             <div className="ef-col-label">Estado verificación</div>
             <div className="ef-col-field flex gap-2">
-              <select
-                className="ef-input"
-                value={form.verification_status}
-                onChange={(e) => onChange("verification_status", e.target.value)}
-              >
+              <select className="ef-input" value={form.verification_status} onChange={(e) => onChange("verification_status", e.target.value)}>
                 <option value="pending">Pendiente</option>
                 <option value="verified">Verificada</option>
                 <option value="rejected">Rechazada</option>
                 <option value="inactive">Inactiva</option>
               </select>
-              <input
-                className="ef-input flex-1"
-                placeholder="Notas de verificación (opcional)"
-                value={form.verification_notes}
-                onChange={(e) => onChange("verification_notes", e.target.value)}
-              />
+              <input className="ef-input flex-1" placeholder="Notas de verificación (opcional)" value={form.verification_notes} onChange={(e) => onChange("verification_notes", e.target.value)} />
             </div>
           </div>
 
@@ -581,12 +474,12 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
         </div>
       )}
 
-      {/* Listado */}
+      {/* Listado: si no hay datos y NO está en edición → queda en blanco */}
       <div className="ef-list space-y-3">
         {loading ? (
           <div className="ef-empty">Cargando cuentas…</div>
         ) : items.length === 0 ? (
-          <div className="ef-empty">Sin cuentas registradas.</div>
+          canEdit ? <div className="ef-empty">No hay cuentas. Usa “Agregar cuenta”.</div> : null
         ) : (
           items.map((row) => (
             <div key={row.id} className="ef-item flex items-start justify-between p-3 rounded-md border bg-white">
@@ -610,7 +503,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
                 </div>
               </div>
 
-              {/* Acciones (solo en modo edición) */}
+              {/* Acciones (solo en edición) */}
               {canEdit ? (
                 <div className="flex gap-2">
                   <button className="btn-sm" onClick={() => openEdit(row)}>Editar</button>
