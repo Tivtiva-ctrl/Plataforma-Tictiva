@@ -16,6 +16,9 @@ import DocumentosTab from "../components/DocumentosTab";
 import PrevisionView from "../components/PrevisionView";
 import PrevisionForm from "../components/PrevisionForm";
 
+// 👇 bancarios (nuevo import)
+import DatosBancarios from "../components/DatosBancarios";
+
 const TABS = [
   { key: "personales", label: "Personales" },
   { key: "contractuales", label: "Contractuales" },
@@ -289,7 +292,7 @@ export default function EmpleadoFicha() {
             <div className="ef-meta">
               Ingreso: {fmtFechaLarga(hireDate)}{" "}
               <span className="text-gray-400">
-                (Antigüedad: {fmtAntiguedad(hireDate)})
+                (Antigüedad: {fmtAntigüedad(hireDate)})
               </span>
             </div>
           </div>
@@ -369,6 +372,20 @@ export default function EmpleadoFicha() {
                 // 👇 clave: mostrar tabla aunque no haya registro (usa “—”)
                 <PrevisionView data={prevision ?? {}} catalogs={prevCat} />
               )
+            )}
+
+            {/* 👉 NUEVO: pestaña Bancarios */}
+            {tab === "bancarios" && (
+              <section id="datos-bancarios" className="mt-4">
+                <DatosBancarios
+                  employee={{
+                    id: Number(emp.id),        // BIGINT requerido para FK
+                    rut: emp.rut,
+                    nombre: fullName(emp),
+                  }}
+                  onSaved={() => console.log("Datos bancarios guardados")}
+                />
+              </section>
             )}
           </div>
 
