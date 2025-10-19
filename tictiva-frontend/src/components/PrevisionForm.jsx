@@ -22,6 +22,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
   const [afpComision, setAfpComision] = useState(null);
 
   const [form, setForm] = useState({
+    // *** Requisito NOT NULL en DB ***
+    contrato_tipo: "indefinido",
+
     // Salud
     salud_tipo: "fonasa",
     fonasa_tramo: "A",
@@ -97,6 +100,8 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
         setForm((s) => ({
           ...s,
           ...data,
+          // conservar defaults cuando vienen null
+          contrato_tipo: data.contrato_tipo ?? s.contrato_tipo,
           isapre_plan_tipo: data.isapre_plan_tipo ?? s.isapre_plan_tipo,
           apv_periodicidad: data.apv_periodicidad ?? s.apv_periodicidad,
         }));
@@ -119,6 +124,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     const payload = {
       tenant_id: employee?.tenant_id ?? null,
       employee_id: employee?.id,
+
+      // *** NOT NULL obligatorio en DB ***
+      contrato_tipo: form.contrato_tipo || "indefinido",
 
       // Salud
       salud_tipo: form.salud_tipo,
@@ -388,13 +396,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
                     Comisión AFP: <strong>{Number(afpComision).toFixed(2)}%</strong>
                     {" · "}
                     Tasa previsional total:{" "}
-                    <strong>
-                      {(
-                        Number(form.cot_obligatoria_pct || 0) +
-                        Number(afpComision || 0) +
-                        Number(form.sis_pct || 0)
-                      ).toFixed(2)}%
-                    </strong>
+                    <strong>{tasaTotal.toFixed(2)}%</strong>
                   </>
                 ) : (
                   <span>Seleccioná una AFP para ver comisión y tasa total.</span>
