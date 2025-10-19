@@ -23,11 +23,11 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     salud_tipo: "fonasa",
     fonasa_tramo: "A",
     isapre_id: null,
-    isapre_plan_tipo: "UF", // 'UF' | 'PORCENTAJE' | 'PESOS'
+    isapre_plan_tipo: "UF",          // 'UF' | 'PORCENTAJE' | 'PESOS'
     isapre_plan_valor: null,
 
     // Pensión
-    pension_sistema: "afp", // 'afp' | 'ips' | 'capredena' | 'dipreca'
+    pension_sistema: "afp",          // 'afp' | 'ips' | 'capredena' | 'dipreca'
     afp_id: null,
     cot_obligatoria_pct: 10.0,
     sis_pct: null,
@@ -49,7 +49,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     trabajo_pesado_adic_pct: null,
 
     // APV
-    apv_regimen: null, // 'A' | 'B' | null
+    apv_regimen: null,               // 'A' | 'B' | null
     apv_monto: null,
     apv_periodicidad: "mensual",
     deposito_convenido_monto: null,
@@ -136,9 +136,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
 
       // Trabajo pesado
       trabajo_pesado: !!form.trabajo_pesado,
-      trabajo_pesado_adic_pct: form.trabajo_pesado
-        ? toNullableNumber(form.trabajo_pesado_adic_pct)
-        : null,
+      trabajo_pesado_adic_pct: toNullableNumber(
+        form.trabajo_pesado ? form.trabajo_pesado_adic_pct : null
+      ),
 
       // APV
       apv_regimen: form.apv_regimen || null,
@@ -160,7 +160,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     onSaved?.(data);
   };
 
-  // ======= UI (dos columnas con separadores alineados) =======
+  // Campos de Isapre (cuando corresponde)
   const IsapreFields = form.salud_tipo === "isapre" && (
     <>
       <Row label="Isapre">
@@ -205,9 +205,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
       <h3 className="ef-title-sm">Previsión</h3>
 
       <div className="ef-grid-2 mt12">
-        {/* ===== Columna izquierda ===== */}
+        {/* ===================== Columna Izquierda ===================== */}
         <div className="ef-form">
-          {/* Sección 1 (5 filas) */}
+          {/* BLOQUE A (5 filas) */}
           <Row label="Salud">
             <select
               className="ef-input"
@@ -264,17 +264,70 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             />
           </Row>
 
-          {/* ---- SEP 1: coincide con la derecha después de 5 filas ---- */}
           <div className="ef-sep" />
 
-          {/* Sección 2 (4 filas en cada columna) */}
-          {/* (Nada aquí en izquierda; mantenemos simetría con 4 filas en derecha) */}
-          {/* Para mantener visual limpio, no agregamos filas vacías */}
+          {/* BLOQUE B (4 filas) */}
+          <Row label="AFC afiliado">
+            <select
+              className="ef-input"
+              value={String(form.afc_afiliado)}
+              onChange={(e) => set("afc_afiliado", e.target.value === "true")}
+            >
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+          </Row>
+
+          <Row label="AFC exento">
+            <select
+              className="ef-input"
+              value={String(form.afc_exento)}
+              onChange={(e) => set("afc_exento", e.target.value === "true")}
+            >
+              <option value="false">No</option>
+              <option value="true">Sí</option>
+            </select>
+          </Row>
+
+          <Row label="Trabajo Pesado">
+            <select
+              className="ef-input"
+              value={String(form.trabajo_pesado)}
+              onChange={(e) => set("trabajo_pesado", e.target.value === "true")}
+            >
+              <option value="false">No</option>
+              <option value="true">Sí</option>
+            </select>
+          </Row>
+
+          <Row label="Adic. Trabajo Pesado %">
+            <input
+              className="ef-input"
+              type="number"
+              step="0.01"
+              value={form.trabajo_pesado_adic_pct ?? ""}
+              onChange={(e) => set("trabajo_pesado_adic_pct", e.target.value)}
+              disabled={!form.trabajo_pesado}
+            />
+          </Row>
+
+          <div className="ef-sep" />
+
+          {/* BLOQUE C (1 fila) */}
+          <Row label="Depósito Convenido">
+            <input
+              className="ef-input"
+              type="number"
+              step="0.01"
+              value={form.deposito_convenido_monto ?? ""}
+              onChange={(e) => set("deposito_convenido_monto", e.target.value)}
+            />
+          </Row>
         </div>
 
-        {/* ===== Columna derecha ===== */}
+        {/* ===================== Columna Derecha ===================== */}
         <div className="ef-form">
-          {/* Sección 1 (5 filas) */}
+          {/* BLOQUE A (5 filas) */}
           <Row label="Sistema Pensión">
             <select
               className="ef-input"
@@ -322,32 +375,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             />
           </Row>
 
-          <Row label="AFC afiliado">
-            <select
-              className="ef-input"
-              value={String(form.afc_afiliado)}
-              onChange={(e) => set("afc_afiliado", e.target.value === "true")}
-            >
-              <option value="true">Sí</option>
-              <option value="false">No</option>
-            </select>
-          </Row>
-
-          {/* ---- SEP 1: coincide con la izquierda después de 5 filas ---- */}
-          <div className="ef-sep" />
-
-          {/* Sección 2 (4 filas en cada columna) */}
-          <Row label="AFC exento">
-            <select
-              className="ef-input"
-              value={String(form.afc_exento)}
-              onChange={(e) => set("afc_exento", e.target.value === "true")}
-            >
-              <option value="false">No</option>
-              <option value="true">Sí</option>
-            </select>
-          </Row>
-
           <Row label="Mutual">
             <select
               className="ef-input"
@@ -361,6 +388,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             </select>
           </Row>
 
+          <div className="ef-sep" />
+
+          {/* BLOQUE B (4 filas) */}
           <Row label="Tasa Accidente %">
             <input
               className="ef-input"
@@ -380,33 +410,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               onChange={(e) => set("adicional_diferenciada_pct", e.target.value)}
             />
           </Row>
-
-          {/* ---- SEP 2: coincide con la izquierda (sección 2 completada) ---- */}
-          <div className="ef-sep" />
-
-          {/* Sección 3 (1 fila izquierda / 1 fila derecha + obs) */}
-          <Row label="Trabajo Pesado">
-            <select
-              className="ef-input"
-              value={String(form.trabajo_pesado)}
-              onChange={(e) => set("trabajo_pesado", e.target.value === "true")}
-            >
-              <option value="false">No</option>
-              <option value="true">Sí</option>
-            </select>
-          </Row>
-
-          {form.trabajo_pesado && (
-            <Row label="Adic. Trabajo Pesado %">
-              <input
-                className="ef-input"
-                type="number"
-                step="0.01"
-                value={form.trabajo_pesado_adic_pct ?? ""}
-                onChange={(e) => set("trabajo_pesado_adic_pct", e.target.value)}
-              />
-            </Row>
-          )}
 
           <Row label="APV · Régimen">
             <select
@@ -430,17 +433,9 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             />
           </Row>
 
-          <Row label="Depósito Convenido">
-            <input
-              className="ef-input"
-              type="number"
-              step="0.01"
-              value={form.deposito_convenido_monto ?? ""}
-              onChange={(e) => set("deposito_convenido_monto", e.target.value)}
-            />
-          </Row>
+          <div className="ef-sep" />
 
-          {/* Observaciones SIEMPRE al final */}
+          {/* BLOQUE C (1 fila) */}
           <Row label="Observaciones">
             <textarea
               className="ef-input"
