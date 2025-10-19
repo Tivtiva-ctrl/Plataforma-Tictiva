@@ -1,3 +1,4 @@
+// src/components/PrevisionForm.jsx
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -8,7 +9,6 @@ const Row = ({ label, children }) => (
   </div>
 );
 
-// "" -> null (conserva 0)
 const toNullableNumber = (v) => {
   if (v === "" || v === null || v === undefined) return null;
   const n = Number(v);
@@ -20,14 +20,14 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
 
   const [form, setForm] = useState({
     // Salud
-    salud_tipo: "fonasa",        // 'fonasa' | 'isapre'
+    salud_tipo: "fonasa",
     fonasa_tramo: "A",
     isapre_id: null,
-    isapre_plan_tipo: "UF",       // 'UF' | 'PORCENTAJE' | 'PESOS'
+    isapre_plan_tipo: "UF", // 'UF' | 'PORCENTAJE' | 'PESOS'
     isapre_plan_valor: null,
 
     // Pensión
-    pension_sistema: "afp",       // 'afp' | 'ips' | 'capredena' | 'dipreca'
+    pension_sistema: "afp", // 'afp' | 'ips' | 'capredena' | 'dipreca'
     afp_id: null,
     cot_obligatoria_pct: 10.0,
     sis_pct: null,
@@ -49,7 +49,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     trabajo_pesado_adic_pct: null,
 
     // APV
-    apv_regimen: null,            // 'A' | 'B' | null
+    apv_regimen: null, // 'A' | 'B' | null
     apv_monto: null,
     apv_periodicidad: "mensual",
     deposito_convenido_monto: null,
@@ -60,7 +60,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
 
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
-  /* ====== Catálogos ====== */
+  // Catálogos
   useEffect(() => {
     (async () => {
       const [afp, isapre, cajas, mutual] = await Promise.all([
@@ -78,7 +78,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     })();
   }, []);
 
-  /* ====== Prefill (si existe) ====== */
+  // Prefill
   useEffect(() => {
     if (!employee?.id) return;
     (async () => {
@@ -100,7 +100,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     })();
   }, [employee?.id]);
 
-  /* ====== Guardar (upsert) ====== */
+  // Guardar
   const submit = async (e) => {
     e.preventDefault();
 
@@ -160,8 +160,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
     onSaved?.(data);
   };
 
-  /* ====== UI (dos columnas, limpio) ====== */
-
+  // ======= UI (dos columnas con separadores alineados) =======
   const IsapreFields = form.salud_tipo === "isapre" && (
     <>
       <Row label="Isapre">
@@ -208,6 +207,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
       <div className="ef-grid-2 mt12">
         {/* ===== Columna izquierda ===== */}
         <div className="ef-form">
+          {/* Sección 1 (5 filas) */}
           <Row label="Salud">
             <select
               className="ef-input"
@@ -220,20 +220,16 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
           </Row>
 
           {form.salud_tipo === "fonasa" ? (
-            <>
-              <Row label="Fonasa · Tramo">
-                <select
-                  className="ef-input"
-                  value={form.fonasa_tramo}
-                  onChange={(e) => set("fonasa_tramo", e.target.value)}
-                >
-                  <option>A</option><option>B</option><option>C</option><option>D</option>
-                </select>
-              </Row>
-            </>
+            <Row label="Fonasa · Tramo">
+              <select
+                className="ef-input"
+                value={form.fonasa_tramo}
+                onChange={(e) => set("fonasa_tramo", e.target.value)}
+              >
+                <option>A</option><option>B</option><option>C</option><option>D</option>
+              </select>
+            </Row>
           ) : IsapreFields}
-
-          <div className="ef-sep" />
 
           <Row label="Caja de Compensación">
             <select
@@ -267,10 +263,18 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               onChange={(e) => set("cargas_familiares", Number(e.target.value || 0))}
             />
           </Row>
+
+          {/* ---- SEP 1: coincide con la derecha después de 5 filas ---- */}
+          <div className="ef-sep" />
+
+          {/* Sección 2 (4 filas en cada columna) */}
+          {/* (Nada aquí en izquierda; mantenemos simetría con 4 filas en derecha) */}
+          {/* Para mantener visual limpio, no agregamos filas vacías */}
         </div>
 
         {/* ===== Columna derecha ===== */}
         <div className="ef-form">
+          {/* Sección 1 (5 filas) */}
           <Row label="Sistema Pensión">
             <select
               className="ef-input"
@@ -318,8 +322,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             />
           </Row>
 
-          <div className="ef-sep" />
-
           <Row label="AFC afiliado">
             <select
               className="ef-input"
@@ -331,6 +333,10 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             </select>
           </Row>
 
+          {/* ---- SEP 1: coincide con la izquierda después de 5 filas ---- */}
+          <div className="ef-sep" />
+
+          {/* Sección 2 (4 filas en cada columna) */}
           <Row label="AFC exento">
             <select
               className="ef-input"
@@ -341,8 +347,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               <option value="true">Sí</option>
             </select>
           </Row>
-
-          <div className="ef-sep" />
 
           <Row label="Mutual">
             <select
@@ -377,8 +381,10 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             />
           </Row>
 
+          {/* ---- SEP 2: coincide con la izquierda (sección 2 completada) ---- */}
           <div className="ef-sep" />
 
+          {/* Sección 3 (1 fila izquierda / 1 fila derecha + obs) */}
           <Row label="Trabajo Pesado">
             <select
               className="ef-input"
@@ -401,8 +407,6 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
               />
             </Row>
           )}
-
-          <div className="ef-sep" />
 
           <Row label="APV · Régimen">
             <select
@@ -436,8 +440,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
             />
           </Row>
 
-          {/* Observaciones al final de la COLUMNA DERECHA */}
-          <div className="ef-sep" />
+          {/* Observaciones SIEMPRE al final */}
           <Row label="Observaciones">
             <textarea
               className="ef-input"
