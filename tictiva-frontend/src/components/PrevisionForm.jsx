@@ -164,7 +164,7 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
 
     const { data, error } = await supabase
       .from("employee_prevision")
-      .upsert(payload, { onConflict: "employee_id" })
+      .upsert(payload, { onConflict: "tenant_id,employee_id" })
       .select("*")
       .single();
 
