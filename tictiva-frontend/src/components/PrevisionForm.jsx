@@ -18,6 +18,9 @@ const toNullableNumber = (v) => {
 export default function PrevisionForm({ id = "prevision-form", employee, onSaved }) {
   const [cat, setCat] = useState({ afp: [], isapre: [], cajas: [], mutual: [] });
 
+  // Comisión AFP (solo UI)
+  const [afpComision, setAfpComision] = useState(null);
+
   const [form, setForm] = useState({
     // Salud
     salud_tipo: "fonasa",
@@ -64,7 +67,8 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
   useEffect(() => {
     (async () => {
       const [afp, isapre, cajas, mutual] = await Promise.all([
-        supabase.from("afp_catalog").select("id,nombre").order("nombre"),
+        // 👇 Traemos también la comisión AFP
+        supabase.from("afp_catalog").select("id,nombre,comision_pct").order("nombre"),
         supabase.from("isapre_catalog").select("id,nombre").order("nombre"),
         supabase.from("caja_compensacion_catalog").select("id,nombre").order("nombre"),
         supabase.from("mutual_catalog").select("id,nombre").order("nombre"),
@@ -99,6 +103,14 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
       }
     })();
   }, [employee?.id]);
+
+  // Sincroniza comisión si hay AFP pre-cargada y ya tenemos cat.afp
+  useEffect(() => {
+    if (form.afp_id && cat.afp?.length) {
+      const sel = cat.afp.find(x => String(x.id) === String(form.afp_id));
+      setAfpComision(sel?.comision_pct ?? null);
+    }
+  }, [form.afp_id, cat.afp]);
 
   // Guardar
   const submit = async (e) => {
@@ -198,6 +210,13 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
         </div>
       </Row>
     </>
+  );
+
+  // Cálculo de “tasa previsional total” (solo para mostrar)
+  const tasaTotal = (
+    Number(form.cot_obligatoria_pct || 0) +
+    Number(afpComision || 0) +
+    Number(form.sis_pct || 0)
   );
 
   return (
@@ -342,17 +361,46 @@ export default function PrevisionForm({ id = "prevision-form", employee, onSaved
           </Row>
 
           <Row label="AFP">
-            <select
-              className="ef-input"
-              value={form.afp_id || ""}
-              onChange={(e) => set("afp_id", e.target.value || null)}
-              disabled={form.pension_sistema !== "afp"}
-            >
-              <option value="">—</option>
-              {cat.afp.map((i) => (
-                <option key={i.id} value={i.id}>{i.nombre}</option>
-              ))}
-            </select>
+            <div>
+              <select
+                className="ef-input"
+                value={form.afp_id || ""}
+                onChange={(e) => {
+                  const val = e.target.value || null;
+                  set("afp_id", val);
+                  const sel = cat.afp.find(x => String(x.id) === String(val));
+                  setAfpComision(sel?.comision_pct ?? null);
+                }}
+                disabled={form.pension_sistema !== "afp"}
+              >
+                <option value="">—</option>
+                {cat.afp.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.nombre}
+                  </option>
+                ))}
+              </select>
+
+              {/* Info auxiliar: NO suma filas, mantiene alineación */}
+              <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+                {afpComision != null ? (
+                  <>
+                    Comisión AFP: <strong>{Number(afpComision).toFixed(2)}%</strong>
+                    {" · "}
+                    Tasa previsional total:{" "}
+                    <strong>
+                      {(
+                        Number(form.cot_obligatoria_pct || 0) +
+                        Number(afpComision || 0) +
+                        Number(form.sis_pct || 0)
+                      ).toFixed(2)}%
+                    </strong>
+                  </>
+                ) : (
+                  <span>Seleccioná una AFP para ver comisión y tasa total.</span>
+                )}
+              </div>
+            </div>
           </Row>
 
           <Row label="Cotización Obligatoria %">
