@@ -202,7 +202,6 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
     if (!form.holder_name?.trim()) e.holder_name = "Titular obligatorio.";
     if (!validateRUT(form.holder_rut)) e.holder_rut = "RUT del titular inválido.";
     if (form.is_third_party && !form.third_party_relation?.trim()) e.third_party_relation = "Indica relación si es cuenta de tercero.";
-    // Nota: no exigimos consent_signed_at, se asigna automáticamente al guardar si corresponde.
     if (form.bank_code === "999") {
       if (!form.metadata?.iban?.trim()) e.iban = "IBAN es requerido para cuenta internacional.";
       if (!form.metadata?.bic?.trim()) e.bic = "BIC/SWIFT es requerido.";
@@ -226,14 +225,12 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
     if (!canEdit) return;
     if (!validate()) return;
 
-    const resolvedBankName =
-      (form.bank_code && bankOptions.find((b) => b.code === form.bank_code)?.name) ||
-      toNullable(form.bank_name);
-
     const payload = {
       employee_id: Number(employee.id),
       bank_code: form.bank_code || null,
-      bank_name: resolvedBankName,
+      bank_name:
+        (form.bank_code && bankOptions.find((b) => b.code === form.bank_code)?.name) ||
+        toNullable(form.bank_name),
       account_type: toNullable(form.account_type),
       account_number: onlyDigits(form.account_number),
       account_currency: toNullable(form.account_currency) || "CLP",
@@ -242,7 +239,6 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
       is_third_party: !!form.is_third_party,
       third_party_relation: toNullable(form.third_party_relation),
       consent_signed: !!form.consent_signed,
-      // Si ya venía una fecha (edición), se respeta; si no, se setea ahora al guardar.
       consent_signed_at: form.consent_signed ? (form.consent_signed_at || new Date().toISOString()) : null,
       valid_from: toNullable(form.valid_from),
       valid_to: toNullable(form.valid_to),
@@ -327,7 +323,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           </p>
         </div>
 
-        {/* Acciones: SIN “Generar informe DT” y sin botón si no está en edición */}
+        {/* Acciones */}
         {canEdit && (
           <div className="flex gap-2">
             <button className="btn-secondary" onClick={openCreate}>+ Agregar cuenta</button>
@@ -335,7 +331,7 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
         )}
       </div>
 
-      {/* Formulario inline (solo en modo edición) */}
+      {/* Formulario inline (sin botones de footer) */}
       {canEdit && showForm && (
         <div className="ef-item p-3 rounded-md border bg-white mb-3">
           <div className="ef-title" style={{ marginBottom: 6 }}>
@@ -440,7 +436,6 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
                 <span>Autorizo a la empresa a realizar transferencias a esta cuenta para efectos de remuneraciones y reembolsos.</span>
               </label>
               {form.consent_signed && <div className="text-xs text-gray-500 mt-1">Se registrará fecha/hora del consentimiento al guardar.</div>}
-              {/* Nota: ya no mostramos error de consent_signed_at */}
             </div>
           </div>
 
@@ -471,15 +466,11 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
             </div>
           </div>
 
-          {/* Footer inline */}
-          <div className="flex justify-end gap-2 mt-3">
-            <button className="btn-outline" onClick={closeForm}>Cancelar</button>
-            <button className="btn-primary" onClick={save}>{editingId ? "Guardar cambios" : "Guardar"}</button>
-          </div>
+          {/* << Botones de footer eliminados >> */}
         </div>
       )}
 
-      {/* Listado: si no hay datos y NO está en edición → queda en blanco */}
+      {/* Listado */}
       <div className="ef-list space-y-3">
         {loading ? (
           <div className="ef-empty">Cargando cuentas…</div>
@@ -508,7 +499,6 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
                 </div>
               </div>
 
-              {/* Acciones (solo en edición) */}
               {canEdit ? (
                 <div className="flex gap-2">
                   <button className="btn-sm" onClick={() => openEdit(row)}>Editar</button>
