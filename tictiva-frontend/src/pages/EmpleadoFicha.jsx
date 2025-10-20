@@ -263,6 +263,7 @@ export default function EmpleadoFicha() {
       tab === "personales" ? "personales-form" :
       tab === "contractuales" ? "contractuales-form" :
       tab === "prevision" ? "prevision-form" :
+      tab === "bancarios" ? "bancarios-form" :
       null;
     if (formId) document.getElementById(formId)?.requestSubmit();
   };
