@@ -316,7 +316,8 @@ export default function EmpleadoFicha() {
               className={`ef-tab ${tab === t.key ? "active" : ""}`}
               onClick={() => {
                 setTab(t.key);
-                if (!["personales","contractuales","prevision"].includes(t.key)) setEditing(false);
+                // ✅ permitir edición también en "bancarios"
+                if (!["personales","contractuales","prevision","bancarios"].includes(t.key)) setEditing(false);
               }}
             >
               {t.label}
@@ -378,8 +379,9 @@ export default function EmpleadoFicha() {
             {tab === "bancarios" && (
               <section id="datos-bancarios" className="mt-4">
                 <DatosBancarios
+                  allowEdit={editing}                 
                   employee={{
-                    id: Number(emp.id),        // BIGINT requerido para FK
+                    id: Number(emp.id),                // BIGINT requerido para FK
                     rut: emp.rut,
                     nombre: fullName(emp),
                   }}
