@@ -333,6 +333,70 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
   /** UI */
   return (
     <div className="ef-card">
+      {/* estilos embebidos para asegurar look Tictiva aunque no cargue el CSS global */}
+      <style id="tictiva-banks-css">{`
+        #datos-bancarios .ef-card {
+          border-radius: 18px; border: 1px solid #eceef4; background:#fff;
+          box-shadow: 0 6px 18px rgba(34,40,64,.06); position:relative; overflow:hidden;
+        }
+        #datos-bancarios .ef-card::before {
+          content:""; position:absolute; inset:0 0 auto 0; height:4px;
+          background: linear-gradient(90deg,#6c5ce7,#7c3aed,#22c1c3); opacity:.85;
+        }
+        #datos-bancarios .ef-card-header { padding:14px 16px 6px 16px; }
+        #datos-bancarios .ef-title { font-weight:700; letter-spacing:.2px; display:flex; gap:8px; align-items:center; }
+        #datos-bancarios .ef-title::before { content:"🏦"; font-size:18px; line-height:1; }
+        #datos-bancarios .ef-subtitle { margin-top:2px; color:#6b7280; }
+
+        /* Botón + Agregar cuenta azul Tictiva */
+        #datos-bancarios .btn-secondary {
+          background:#2563eb; color:#fff; border:none; border-radius:999px;
+          padding:8px 14px; font-weight:600; letter-spacing:.2px;
+          box-shadow:0 2px 6px rgba(37,99,235,.25); transition:all .2s ease;
+        }
+        #datos-bancarios .btn-secondary:hover {
+          background:#1d4ed8; transform:translateY(-1px);
+          box-shadow:0 6px 14px rgba(37,99,235,.35);
+        }
+
+        /* Listado / ítems */
+        #datos-bancarios .ef-list { margin-top:6px; }
+        #datos-bancarios .ef-item {
+          border-radius:16px; border:1px solid #eef1f6; padding:14px; background:#fff;
+          transition:border-color .2s, box-shadow .2s, transform .06s;
+        }
+        #datos-bancarios .ef-item:hover {
+          border-color:#e7e9f4; box-shadow:0 8px 22px rgba(34,40,64,.06); transform:translateY(-1px);
+        }
+        #datos-bancarios .ef-item .font-medium { font-weight:700; color:#1f2937; }
+        #datos-bancarios .ef-item .text-sm { color:#374151; font-weight:500; }
+        #datos-bancarios .text-xs.text-gray-500 { color:#6b7280; font-weight:500; }
+
+        /* Badges/chips de estado */
+        #datos-bancarios .inline-block.rounded.text-xs.font-medium {
+          border-radius:999px !important; padding:4px 8px !important;
+          font-weight:700 !important; letter-spacing:.2px;
+        }
+        #datos-bancarios .bg-green-100 { background:#e8fbef !important; color:#0e9f6e !important; }
+        #datos-bancarios .bg-yellow-100 { background:#fff7e6 !important; color:#b7791f !important; }
+        #datos-bancarios .bg-red-100 { background:#ffecec !important; color:#e11d48 !important; }
+        #datos-bancarios .bg-blue-100 { background:#eef2ff !important; color:#4338ca !important; }
+        #datos-bancarios .bg-gray-200 { background:#f3f4f6 !important; color:#374151 !important; }
+        #datos-bancarios .bg-green-100.text-green-700::before { content:"✓ "; font-weight:900; }
+
+        /* Botones de acción como chips */
+        #datos-bancarios .btn-sm {
+          border:1px solid #e9eaf3; background:#fff; color:#4b5563;
+          padding:6px 10px; border-radius:999px; font-weight:600; transition:all .2s;
+        }
+        #datos-bancarios .btn-sm:hover {
+          border-color:#cfd4e6; box-shadow:0 6px 14px rgba(34,40,64,.08); transform:translateY(-1px);
+        }
+        #datos-bancarios .btn-sm.btn-danger { border-color:#ffe1e1; color:#b91c1c; background:#fff; }
+        #datos-bancarios .btn-sm.btn-danger:hover { background:#fff5f5; border-color:#ffc9c9; }
+        #datos-bancarios .btn-sm.btn-outline { border-style:dashed; }
+      `}</style>
+
       <div className="ef-card-header flex items-center justify-between">
         <div>
           <h3 className="ef-title">Datos bancarios</h3>
