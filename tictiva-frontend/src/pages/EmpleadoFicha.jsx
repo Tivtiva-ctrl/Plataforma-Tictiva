@@ -268,6 +268,16 @@ export default function EmpleadoFicha() {
     if (formId) document.getElementById(formId)?.requestSubmit();
   };
 
+  // 👉 Handlers que disparan eventos globales para subformularios (p.ej., Bancarios)
+  const onGuardar = () => {
+    window.dispatchEvent(new Event("ficha:save"));   // <-- permite que Bancarios guarde si su form está abierto
+    submitActive();                                  // mantiene tu flujo actual para tabs con <form id=...>
+  };
+  const onCancelar = () => {
+    window.dispatchEvent(new Event("ficha:cancel")); // <-- permite que Bancarios cierre si está abierto
+    setEditing(false);
+  };
+
   // Fecha de Ingreso del header (desde contrato vigente; si no, fallbacks)
   const hireDate =
     contract?.fecha_ingreso ||
@@ -302,8 +312,8 @@ export default function EmpleadoFicha() {
               <button className="lf-btn lf-btn-primary" onClick={() => setEditing(true)}>Editar Ficha</button>
             ) : (
               <>
-                <button className="lf-btn lf-btn-primary" onClick={submitActive}>Guardar</button>
-                <button className="lf-btn lf-btn-ghost" onClick={() => setEditing(false)}>Cancelar</button>
+                <button className="lf-btn lf-btn-primary" onClick={onGuardar}>Guardar</button>
+                <button className="lf-btn lf-btn-ghost" onClick={onCancelar}>Cancelar</button>
               </>
             )}
           </div>
