@@ -270,6 +270,24 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
     if (onSaved) onSaved(resp.data);
   };
 
+  /* ===== Enganche con botones globales (agregado) ===== */
+  useEffect(() => {
+    const handlerSave = async () => { if (showForm) await save(); };
+    const handlerCancel = () => { if (showForm) closeForm(); };
+
+    const saveEvents = ["tictiva:save", "ficha:save", "global:save", "form:save"];
+    const cancelEvents = ["tictiva:cancel", "ficha:cancel", "global:cancel", "form:cancel"];
+
+    saveEvents.forEach(evt => window.addEventListener(evt, handlerSave));
+    cancelEvents.forEach(evt => window.addEventListener(evt, handlerCancel));
+
+    return () => {
+      saveEvents.forEach(evt => window.removeEventListener(evt, handlerSave));
+      cancelEvents.forEach(evt => window.removeEventListener(evt, handlerCancel));
+    };
+  }, [showForm, save, closeForm]);
+  /* ===== Fin enganche ===== */
+
   const setFavorite = async (row) => {
     if (!canEdit) return;
     await supabase.from("employee_bank_accounts").update({ favorite: true }).eq("id", row.id);
