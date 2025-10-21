@@ -31,7 +31,7 @@ function prettyRUT(rutInput = "") {
   return `${Number(body).toLocaleString("es-CL")}-${dv}`;
 }
 
-/** Badges */
+/** Badges (se dejan por si se usan en otros lados) */
 const Badge = ({ variant = "default", children }) => {
   const map = {
     default: "bg-gray-200 text-gray-800",
@@ -46,15 +46,6 @@ const Badge = ({ variant = "default", children }) => {
     </span>
   );
 };
-function statusBadge(status) {
-  switch (status) {
-    case "verified": return <Badge variant="success">Verificada</Badge>;
-    case "pending": return <Badge variant="warning">Pendiente</Badge>;
-    case "rejected": return <Badge variant="danger">Rechazada</Badge>;
-    case "inactive": return <Badge>Inactiva</Badge>;
-    default: return <Badge variant="info">{status || "—"}</Badge>;
-  }
-}
 
 /** Principal */
 export default function DatosBancarios({ employee, onSaved, allowEdit = false }) {
@@ -329,11 +320,16 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
     const found = bankOptions.find((b) => b.code === row.bank_code);
     return found ? found.name : row.bank_code || "Banco";
   };
+  const statusText = (s) =>
+    s === "verified" ? "Verificada" :
+    s === "pending" ? "Pendiente" :
+    s === "rejected" ? "Rechazada" :
+    s === "inactive" ? "Inactiva" : (s || "—");
 
   /** UI */
   return (
     <div className="ef-card">
-      {/* estilos embebidos para asegurar look Tictiva aunque no cargue el CSS global */}
+      {/* CSS embebido (ajustado a tu pedido) */}
       <style id="tictiva-banks-css">{`
         #datos-bancarios .ef-card {
           border-radius: 18px; border: 1px solid #eceef4; background:#fff;
@@ -345,7 +341,8 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
         }
         #datos-bancarios .ef-card-header { padding:14px 16px 6px 16px; }
         #datos-bancarios .ef-title { font-weight:700; letter-spacing:.2px; display:flex; gap:8px; align-items:center; }
-        #datos-bancarios .ef-title::before { content:"🏦"; font-size:18px; line-height:1; }
+        /* 🚫 Sin icono/emoji en el título */
+        #datos-bancarios .ef-title::before { content:none !important; }
         #datos-bancarios .ef-subtitle { margin-top:2px; color:#6b7280; }
 
         /* Botón + Agregar cuenta azul Tictiva */
@@ -369,22 +366,24 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
           border-color:#e7e9f4; box-shadow:0 8px 22px rgba(34,40,64,.06); transform:translateY(-1px);
         }
         #datos-bancarios .ef-item .font-medium { font-weight:700; color:#1f2937; }
-        #datos-bancarios .ef-item .text-sm { color:#374151; font-weight:500; }
-        #datos-bancarios .text-xs.text-gray-500 { color:#6b7280; font-weight:500; }
 
-        /* Badges/chips de estado */
-        #datos-bancarios .inline-block.rounded.text-xs.font-medium {
-          border-radius:999px !important; padding:4px 8px !important;
-          font-weight:700 !important; letter-spacing:.2px;
+        /* Cabecera banco + dot de estado (sin chips) */
+        #datos-bancarios .bank-header { align-items:center; gap:8px; }
+        #datos-bancarios .status-dot {
+          display:inline-block; width:18px; height:18px; border-radius:50%;
+          position:relative; top:1px; background:#d1fae5; border:1px solid #86efac;
         }
-        #datos-bancarios .bg-green-100 { background:#e8fbef !important; color:#0e9f6e !important; }
-        #datos-bancarios .bg-yellow-100 { background:#fff7e6 !important; color:#b7791f !important; }
-        #datos-bancarios .bg-red-100 { background:#ffecec !important; color:#e11d48 !important; }
-        #datos-bancarios .bg-blue-100 { background:#eef2ff !important; color:#4338ca !important; }
-        #datos-bancarios .bg-gray-200 { background:#f3f4f6 !important; color:#374151 !important; }
-        #datos-bancarios .bg-green-100.text-green-700::before { content:"✓ "; font-weight:900; }
+        #datos-bancarios .status-dot.verified::after {
+          content:""; position:absolute; left:5px; top:2px; width:5px; height:9px;
+          border:2px solid #10b981; border-top:0; border-left:0; transform:rotate(45deg);
+        }
+        #datos-bancarios .status-dot.pending { background:#fff7e6; border-color:#facc15; }
+        #datos-bancarios .status-dot.rejected { background:#ffecec; border-color:#f87171; }
+        #datos-bancarios .status-dot.inactive { background:#f3f4f6; border-color:#d1d5db; }
 
-        /* Botones de acción como chips */
+        #datos-bancarios .status-line { font-size:13px; color:#6b7280; margin-top:2px; }
+
+        /* Botones acción */
         #datos-bancarios .btn-sm {
           border:1px solid #e9eaf3; background:#fff; color:#4b5563;
           padding:6px 10px; border-radius:999px; font-weight:600; transition:all .2s;
@@ -561,13 +560,13 @@ export default function DatosBancarios({ employee, onSaved, allowEdit = false })
         ) : (
           items.map((row) => (
             <div key={row.id} className="ef-item flex items-start justify-between p-3 rounded-md border bg-white">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-1" style={{ minWidth: 0 }}>
+                <div className="bank-header flex">
                   <div className="font-medium">{prettyBank(row)}</div>
-                  {statusBadge(row.verification_status)}
-                  {row.favorite && <Badge variant="info">Favorita ⭐</Badge>}
-                  {row.is_third_party && <Badge variant="warning">Cuenta de tercero</Badge>}
+                  <span className={`status-dot ${row.verification_status}`}></span>
                 </div>
+                <div className="status-line">{statusText(row.verification_status)}</div>
+
                 <div className="text-sm text-gray-700">
                   <span className="mr-3">{row.account_type || "—"}</span>
                   <span className="mr-3">{maskAccount(row.account_number)}</span>
