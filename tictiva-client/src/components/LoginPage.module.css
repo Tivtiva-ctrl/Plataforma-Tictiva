@@ -143,18 +143,10 @@
   margin-left: -80px; /* Truco para superponer la curva */
 }
 
-.brandContent {
-  color: var(--azul-tictiva);
-  text-align: center;
-}
-
-.brandContent h2 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-}
-
-.brandContent p {
-  font-size: 1.1rem;
-  opacity: 0.8;
+/* 3. Estilos para tu imagen PNG */
+.brandImage {
+  width: 100%; /* La imagen ocupa todo el ancho de su contenedor */
+  max-width: 400px; /* Un tamaño máximo para que no sea gigante */
+  height: auto; /* Mantiene la proporción */
+  object-fit: contain; /* Asegura que la imagen se vea completa */
 }

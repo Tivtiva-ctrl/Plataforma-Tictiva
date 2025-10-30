@@ -1,6 +1,7 @@
-// Importamos nuestros estilos locales
 import styles from './LoginPage.module.css';
-// Importaremos el logo de Tictiva aquí cuando lo tengamos
+// 1. Importa tu imagen. 
+// Asegúrate de que el nombre 'tictiva-brand-image.png' coincida con el nombre de tu archivo.
+import brandImage from '../assets/tictiva-brand-image.png'; 
 
 function LoginPage() {
   return (
@@ -44,13 +45,12 @@ function LoginPage() {
 
         {/* === Columna Derecha: Diseño de Marca === */}
         <div className={styles.brandSection}>
-          <div className={styles.brandContent}>
-            <h2>Más que marcar horarios, potenciamos personas.</h2>
-            <p>
-              Porque cuidar a las personas también es productividad.
-            </p>
-            {/* Aquí iría el gráfico abstracto adaptado de la Imagen 3 */}
-          </div>
+          {/* 2. Aquí está la imagen en lugar del texto */}
+          <img 
+            src={brandImage} 
+            alt="Branding Tictiva" 
+            className={styles.brandImage}
+          />
         </div>
 
       </div>
