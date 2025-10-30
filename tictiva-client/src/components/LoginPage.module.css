@@ -1,0 +1,160 @@
+/* Usaremos las variables de color que definimos en index.css */
+
+.loginPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f4f7f6; /* Un gris muy claro, casi blanco */
+  padding: 2rem;
+}
+
+.loginCard {
+  display: flex;
+  width: 100%;
+  max-width: 1000px; /* Ancho máximo de la tarjeta */
+  background: var(--blanco);
+  border-radius: 24px; /* Bordes redondeados como en Imagen 1 y 2 */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden; /* Para que las columnas internas respeten el borde redondeado */
+}
+
+/* === Columna Izquierda: Formulario === */
+.formSection {
+  flex: 1; /* Ocupa la mitad del espacio */
+  padding: 3rem; /* Espacio interno amplio */
+}
+
+.title {
+  font-family: var(--font-principal);
+  font-weight: 800; /* ExtraBold */
+  font-size: 2rem;
+  color: var(--azul-tictiva);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--gris-azulado);
+  margin-top: 0.25rem;
+}
+
+.tagline {
+  font-size: 1rem;
+  color: var(--azul-tictiva);
+  font-weight: 600; /* SemiBold */
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+  border-left: 3px solid var(--verde-claro);
+  padding-left: 1rem;
+}
+
+.form label {
+  display: block;
+  font-weight: 600;
+  color: var(--azul-tictiva);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form input[type="email"],
+.form input[type="password"] {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d0dbe4;
+  border-radius: 8px;
+  font-family: var(--font-principal);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form input::placeholder {
+  color: #99a4b0;
+}
+
+.formRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.formCheck {
+  display: flex;
+  align-items: center;
+}
+
+.formCheck input {
+  margin-right: 0.5rem;
+}
+
+.link {
+  color: var(--azul-tictiva);
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover {
+  text-decoration: underline;
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btnPrimary:hover {
+  background-color: var(--gris-azulado);
+}
+
+.registerLink {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+}
+
+.registerLink a {
+  color: var(--azul-tictiva);
+  font-weight: 600;
+}
+
+
+/* === Columna Derecha: Diseño de Marca === */
+.brandSection {
+  flex: 1; /* Ocupa la otra mitad */
+  background: var(--verde-menta); /* Usamos el verde menta de fondo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  
+  /* Esto adapta el diseño de la Imagen 1 (curva) */
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
+  margin-left: -80px; /* Truco para superponer la curva */
+}
+
+.brandContent {
+  color: var(--azul-tictiva);
+  text-align: center;
+}
+
+.brandContent h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.brandContent p {
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
