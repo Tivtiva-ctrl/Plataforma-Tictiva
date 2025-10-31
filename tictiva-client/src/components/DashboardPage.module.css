@@ -1,0 +1,243 @@
+/* Usamos las variables de color de Tictiva que están en index.css */
+
+.dashboardContainer {
+  background-color: #f4f7f6; /* Fondo gris claro */
+  min-height: 100vh;
+}
+
+/* === 1. Barra de Navegación Superior === */
+.topNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--blanco);
+  padding: 0 2rem;
+  height: 65px;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.navLeft, .navRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--azul-tictiva);
+}
+
+/* Selector de Empresa (Estilo Lirmi) */
+.companySelector {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background-color: #f4f7f6;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: var(--azul-tictiva);
+  font-weight: 600;
+}
+
+.companySelector select {
+  -webkit-appearance: none; /* Oculta flecha por defecto en Chrome/Safari */
+  -moz-appearance: none; /* Oculta flecha por defecto en Firefox */
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--azul-tictiva);
+  padding-left: 0.5rem;
+  padding-right: 1.5rem; /* Espacio para nuestra flecha */
+  cursor: pointer;
+}
+
+.companySelector select:focus {
+  outline: none;
+}
+
+.selectArrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none; /* Deja pasar el clic al <select> */
+}
+
+/* Resto de la Nav Derecha */
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: #f4f7f6;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  min-width: 300px;
+}
+
+.searchBar input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-principal);
+  padding-left: 0.5rem;
+  width: 100%;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--gris-azulado);
+  position: relative;
+  padding: 0;
+}
+
+.notificationDot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: #E53935; /* Rojo de notificación */
+  border-radius: 50%;
+  border: 1px solid var(--blanco);
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--azul-tictiva);
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+/* === 2. Contenido Principal === */
+.mainContent {
+  padding: 2rem;
+}
+
+.dashboardHeader {
+  margin-bottom: 2rem;
+}
+
+.dashboardHeader h1 {
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--azul-tictiva);
+}
+
+.dashboardHeader p {
+  font-size: 1rem;
+  color: var(--gris-azulado);
+  margin-top: 0.25rem;
+}
+
+/* Tarjetas de Estadísticas */
+.statCards {
+  display: grid;
+  /* 3 columnas, pero se adaptan si no hay espacio */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background-color: var(--blanco);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.statCard h3 {
+  font-weight: 600;
+  color: var(--gris-azulado);
+}
+
+.statNumber {
+  font-weight: 800;
+  font-size: 2.5rem;
+  color: var(--azul-tictiva);
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* Grilla de Módulos (Estilo Tictiva) */
+.moduleGrid {
+  display: grid;
+  /* 3 columnas, pero se adaptan */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.moduleCard {
+  background-color: var(--blanco);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.moduleIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.moduleTitle {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--azul-tictiva);
+}
+
+.moduleDesc {
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  flex-grow: 1; /* Esto empuja el link hacia abajo */
+}
+
+.moduleFeatures {
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  padding-left: 1.2rem; /* Espacio para el check */
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.moduleFeatures li {
+  list-style-type: '✓'; /* Usamos un check simple */
+  padding-left: 0.5rem;
+}
+
+.moduleLink {
+  font-weight: 600;
+  color: var(--azul-tictiva);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.moduleLink:hover {
+  text-decoration: underline;
+}

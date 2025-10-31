@@ -1,10 +1,16 @@
-// 1. Importa tu nuevo componente
-import LoginPage from './components/LoginPage';
+// 1. Hemos "comentado" (desactivado) la importación de LoginPage
+// import LoginPage from './components/LoginPage';
+
+// 2. Hemos "importado" (activado) tu nuevo DashboardPage
+import DashboardPage from './components/DashboardPage';
 
 function App() {
+  
+  // 3. Estamos devolviendo el componente DashboardPage
   return (
-    // 2. Usa el componente en lugar del h1
-    <LoginPage />
+    <DashboardPage />
+    
+    // <LoginPage /> // La página de login está desactivada temporalmente
   )
 }
 
