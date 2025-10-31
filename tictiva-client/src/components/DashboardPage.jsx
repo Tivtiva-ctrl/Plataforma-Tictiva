@@ -58,7 +58,7 @@ function DashboardPage() {
       title: "Asistencia", 
       description: "Control preciso, en tiempo real", 
       // (Este lo corregiremos después)
-      actions: ["Supervisión", "Mapa"], 
+      actions: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"], 
       color: "#4CAF50"
     },
     { 
@@ -66,7 +66,7 @@ function DashboardPage() {
       title: "Comunicaciones", 
       description: "Bienestar con IA integrada",
       // (Este lo corregiremos después)
-      actions: ["Dashboards", "Informes"],
+      actions: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Canal de denuncias", "Dashboard"],
       color: "#2196F3"
     },
     { 
@@ -74,7 +74,7 @@ function DashboardPage() {
       title: "Reportería", 
       description: "Datos que cuentan historias", 
       // (Este lo corregiremos después)
-      actions: ["Informes", "Dashboards", "Documentos"],
+      actions: ["Informes gerenciales", "Dashboards y presentaciones", "Gestión de documentos", "Integraciones"],
       color: "#FF9800"
     },
     { 
@@ -82,7 +82,7 @@ function DashboardPage() {
       title: "Tictiva Cuida", 
       description: "Bienestar con ADIA integrado", 
       // (Este lo corregiremos después)
-      actions: ["Ir a ADIA", "Tests", "Resultados"],
+      actions: ["Adia (IA central)", "Tests psicológicos", "Dashboard de bienestar", "+ Integrado con RRHH"],
       color: "var(--verde-menta)"
     },
     { 
@@ -90,7 +90,7 @@ function DashboardPage() {
       title: "Bodega & EPP", 
       description: "Inventario al servicio del equipo", 
       // (Este lo corregiremos después)
-      actions: ["Inventario", "Asignaciones", "Alertas"],
+      actions: ["Inventario", "Colaboradores", "Operaciones", "Alertas"],
       color: "var(--gris-azulado)"
     },
   ];
