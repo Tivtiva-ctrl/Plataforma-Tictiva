@@ -2,31 +2,38 @@ import { useState } from 'react';
 import styles from './DashboardPage.module.css';
 import { 
   FiBell, FiHelpCircle, FiSettings, FiSearch, FiChevronDown, 
-  FiUsers, FiClock, FiMessageSquare, FiArchive, FiShield, FiBarChart2 
 } from 'react-icons/fi';
 import { IoBusiness } from 'react-icons/io5';
 
-// =======================================================
-// === ¡AQUÍ ESTÁ EL CAMBIO! El Card con BOTONES ===
-// =======================================================
-function ModuleCard({ icon, title, description, actions, color }) {
-  const iconStyle = {
-    backgroundColor: color,
-    color: '#FFFFFF'
-  };
+// Importamos tus imágenes
+import iconRrhh from '../assets/icon-rrhh.png'; 
+import iconAsistencia from '../assets/icon-asistencia.png';
+import iconComunicaciones from '../assets/icon-comunicaciones.png';
+import iconReporteria from '../assets/icon-reporteria.png';
+import iconCuida from '../assets/icon-cuida.png';
+import iconBodega from '../assets/icon-bodega.png';
+
+
+// --- Componente Interno (AQUÍ ESTÁ EL CAMBIO) ---
+function ModuleCard({ icon, title, description, actions }) {
+  
+  // 1. ¡HEMOS ELIMINADO 'iconStyle' y 'color'!
+  //    Ya no le pasamos el color de fondo.
 
   return (
     <div className={styles.moduleCard}>
       <div className={styles.moduleHeader}>
-        <div className={styles.moduleIcon} style={iconStyle}>
-          {icon}
+        
+        {/* 2. El <div> ya no tiene el 'style={iconStyle}' */}
+        <div className={styles.moduleIcon}>
+          {icon} 
         </div>
+        
         <div>
           <h3 className={styles.moduleTitle}>{title}</h3>
           <p className={styles.moduleDesc}>{description}</p>
         </div>
       </div>
-      {/* Usamos los botones (Lirmi-style) */}
       <div className={styles.moduleActions}>
         {actions.map((action, index) => (
           <button key={index} className={styles.moduleButton}>
@@ -34,7 +41,6 @@ function ModuleCard({ icon, title, description, actions, color }) {
           </button>
         ))}
       </div>
-      {/* ¡NO hay enlace "Abrir módulo"! */}
     </div>
   );
 }
@@ -45,49 +51,43 @@ function DashboardPage() {
 
   // ... (código de handleCompanyChange) ...
 
-  // Tus datos de módulos (perfectos)
   const modules = [
     { 
-      icon: <FiUsers size={20} />, 
+      icon: <img src={iconRrhh} alt="RRHH" />, 
       title: "RRHH", 
       description: "Gestión humana, clara y cercana", 
       actions: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"],
-      color: "var(--azul-tictiva)"
+      // 3. Ya no necesitamos pasar el 'color'
     },
     { 
-      icon: <FiClock size={20} />, 
+      icon: <img src={iconAsistencia} alt="Asistencia" />, 
       title: "Asistencia", 
       description: "Control preciso, en tiempo real", 
       actions: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"], 
-      color: "#4CAF50"
     },
     { 
-      icon: <FiMessageSquare size={20} />, 
+      icon: <img src={iconComunicaciones} alt="Comunicaciones" />, 
       title: "Comunicaciones", 
-      description: "Mensajes y encuestas sin fricción", // (Texto original)
+      description: "Mensajes y encuestas sin fricción",
       actions: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Canal de denuncias", "Dashboard"],
-      color: "#2196F3"
     },
     { 
-      icon: <FiBarChart2 size={20} />, 
+      icon: <img src={iconReporteria} alt="Reportería" />, 
       title: "Reportería", 
       description: "Datos que cuentan historias", 
       actions: ["Informes gerenciales", "Dashboards y presentaciones", "Gestión de documentos", "Integraciones"],
-      color: "#FF9800"
     },
     { 
-      icon: <FiShield size={20} />, 
+      icon: <img src={iconCuida} alt="Tictiva Cuida" />, 
       title: "Tictiva Cuida", 
       description: "Bienestar con ADIA integrado", 
       actions: ["Adia (IA central)", "Tests psicológicos", "Dashboard de bienestar", "+ Integrado con RRHH"],
-      color: "var(--verde-menta)"
     },
     { 
-      icon: <FiArchive size={20} />, 
+      icon: <img src={iconBodega} alt="Bodega & EPP" />, 
       title: "Bodega & EPP", 
       description: "Inventario al servicio del equipo", 
       actions: ["Inventario", "Colaboradores", "Operaciones", "Alertas"],
-      color: "var(--gris-azulado)"
     },
   ];
 
@@ -96,7 +96,6 @@ function DashboardPage() {
       
       {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR (Se mantiene igual) === */}
       <nav className={styles.topNav}>
-        {/* ... (tu código de nav) ... */}
         <div className={styles.navLeft}>
           <div className={styles.logo}>Tictiva</div>
           <div className={styles.companySelector}>
@@ -126,18 +125,14 @@ function DashboardPage() {
         </div>
       </nav>
 
-      {/* === 2. CONTENIDO PRINCIPAL === */}
+      {/* === 2. CONTENIDO PRINCIPAL (Se mantiene igual) === */}
       <main className={styles.mainContent}>
         
-        {/* Saludo */}
         <header className={styles.dashboardHeader}>
           <h1>Buenas noches, Verónica 💚</h1>
           <p>Humanizamos la gestión. Digitalizamos tu tranquilidad.</p>
         </header>
 
-        {/* =============================================== */}
-        {/* === ¡AQUÍ ESTÁ EL CAMBIO! Volvemos a las 3 stats === */}
-        {/* =============================================== */}
         <section className={styles.statCards}>
           <div className={styles.statCard}>
             <h3>Mensajes</h3>
@@ -153,7 +148,6 @@ function DashboardPage() {
           </div>
         </section>
 
-        {/* === GRILLA DE MÓDULOS (Orden 3x2) === */}
         <section className={styles.moduleGrid}>
           {modules.map((mod) => (
             <ModuleCard 
@@ -161,8 +155,7 @@ function DashboardPage() {
               icon={mod.icon}
               title={mod.title}
               description={mod.description}
-              actions={mod.actions} // Pasamos 'actions'
-              color={mod.color}
+              actions={mod.actions}
             />
           ))}
         </section>
