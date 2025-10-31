@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import styles from './DashboardPage.module.css';
-// Importamos los íconos que usaremos
 import { 
-  FiBell, FiHelpCircle, FiSettings, FiSearch, FiChevronDown, FiArrowRight,
+  FiBell, FiHelpCircle, FiSettings, FiSearch, FiChevronDown, 
   FiUsers, FiClock, FiMessageSquare, FiArchive, FiShield, FiBarChart2 
 } from 'react-icons/fi';
 import { IoBusiness } from 'react-icons/io5';
 
-// --- Componente Interno para las Tarjetas de Módulo ---
-// Esto hace que el código principal sea más limpio
-function ModuleCard({ icon, title, description, features, color }) {
-  // Usamos 'style' para poder pasar el color de la marca como variable
+// --- Componente Interno (NUEVO ESTILO CON BOTONES) ---
+function ModuleCard({ icon, title, description, actions, color }) {
   const iconStyle = {
     backgroundColor: color,
     color: '#FFFFFF'
@@ -18,98 +15,95 @@ function ModuleCard({ icon, title, description, features, color }) {
 
   return (
     <div className={styles.moduleCard}>
-      <div className={styles.moduleIcon} style={iconStyle}>
-        {icon}
+      <div className={styles.moduleHeader}>
+        <div className={styles.moduleIcon} style={iconStyle}>
+          {icon}
+        </div>
+        <div>
+          <h3 className={styles.moduleTitle}>{title}</h3>
+          <p className={styles.moduleDesc}>{description}</p>
+        </div>
       </div>
-      <h3 className={styles.moduleTitle}>{title}</h3>
-      <p className={styles.moduleDesc}>{description}</p>
-      <ul className={styles.moduleFeatures}>
-        {features.map((feature, index) => (
-          <li key={index}>{feature}</li>
+      <div className={styles.moduleActions}>
+        {actions.map((action, index) => (
+          <button key={index} className={styles.moduleButton}>
+            {action}
+          </button>
         ))}
-      </ul>
-      <a href="#" className={styles.moduleLink}>
-        Abrir módulo <FiArrowRight size={14} />
-      </a>
+      </div>
     </div>
   );
 }
 
-// --- Componente Principal de la Página ---
+// --- Componente Principal ---
 function DashboardPage() {
   const [selectedCompany, setSelectedCompany] = useState('tictiva');
 
-  const handleCompanyChange = (event) => {
-    setSelectedCompany(event.target.value);
-    console.log("Cambiando a empresa:", event.target.value);
-  };
+  // ... (código de handleCompanyChange) ...
 
-  // Datos de ejemplo para los módulos (basados en tu captura)
+  // === DATOS DE MÓDULOS ACTUALIZADOS (AHORA CON 'actions') ===
   const modules = [
     { 
       icon: <FiUsers size={20} />, 
       title: "RRHH", 
       description: "Gestión humana, clara y cercana", 
-      features: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"],
-      color: "var(--azul-tictiva)" // Azul Tictiva
+      actions: ["Supervisión", "Manracs", "Menajes", "Encuestas"],
+      color: "var(--azul-tictiva)"
     },
     { 
       icon: <FiClock size={20} />, 
       title: "Asistencia", 
       description: "Control preciso, en tiempo real", 
-      features: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"],
-      color: "#4CAF50" // Un verde (puedes cambiarlo)
+      actions: ["Supervisión", "Mapa"],
+      color: "#4CAF50" // (Color complementario verde)
     },
     { 
       icon: <FiMessageSquare size={20} />, 
       title: "Comunicaciones", 
-      description: "Mensajes y encuestas sin fricción", 
-      features: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Dashboard"],
-      color: "#2196F3" // Un azul claro (puedes cambiarlo)
+      description: "Bienestar con IA integrada", // (Cambié esto según tu foto)
+      actions: ["Dashboards", "Informes"],
+      color: "#2196F3" // (Color complementario azul)
     },
     { 
       icon: <FiBarChart2 size={20} />, 
       title: "Reportería", 
       description: "Datos que cuentan historias", 
-      features: ["Informes gerenciales", "Dashboards y presentaciones", "Gestión de documentos", "Integraciones"],
-      color: "#FF9800" // Un naranja (puedes cambiarlo)
+      actions: ["Informes", "Dashboards", "Documentos"],
+      color: "#FF9800" // (Color complementario naranja)
     },
     { 
       icon: <FiShield size={20} />, 
       title: "Tictiva Cuida", 
       description: "Bienestar con ADIA integrado", 
-      features: ["ADIA (IA central)", "Test psicológicos", "Dashboard de bienestar", "+ Integrado con RRHH"],
-      color: "var(--verde-menta)" // Verde Menta Tictiva
+      actions: ["Ir a ADIA", "Tests", "Resultados"],
+      color: "var(--verde-menta)"
     },
     { 
       icon: <FiArchive size={20} />, 
       title: "Bodega & EPP", 
       description: "Inventario al servicio del equipo", 
-      features: ["Inventario", "Colaboradores", "Operaciones", "Alertas"],
-      color: "var(--gris-azulado)" // Gris Azulado Tictiva
+      actions: ["Inventario", "Asignaciones", "Alertas"],
+      color: "var(--gris-azulado)"
     },
   ];
 
   return (
     <div className={styles.dashboardContainer}>
       
-      {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR (Inspirada en Lirmi) === */}
+      {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR === */}
       <nav className={styles.topNav}>
+        {/* ... (código de topNav se mantiene igual) ... */}
         <div className={styles.navLeft}>
-          <div className={styles.logo}>Tictiva</div> {/* Puedes poner tu logo aquí */}
-          
-          {/* El Selector de Empresa Multi-empresa */}
+          <div className={styles.logo}>Tictiva</div>
           <div className={styles.companySelector}>
             <IoBusiness />
-            <select value={selectedCompany} onChange={handleCompanyChange}>
+            <select value={selectedCompany} onChange={() => {}}>
               <option value="tictiva">Tictiva (Empresa Principal)</option>
               <option value="otra-empresa">Otra Empresa S.A.</option>
-              <option value="cliente-demo">Cliente Demo Ltda.</option>
             </select>
             <FiChevronDown className={styles.selectArrow} />
           </div>
         </div>
-
         <div className={styles.navRight}>
           <div className={styles.searchBar}>
             <FiSearch />
@@ -131,29 +125,36 @@ function DashboardPage() {
       {/* === 2. CONTENIDO PRINCIPAL === */}
       <main className={styles.mainContent}>
         
-        {/* Saludo */}
+        {/* Saludo (Con emoji de Tictiva 💚) */}
         <header className={styles.dashboardHeader}>
-          <h1>Buenas noches, Verónica Mateo</h1>
-          <p>"Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve."</p>
+          <h1>Buenas noches, Verónica 💚</h1>
+          <p>Humanizamos la gestión. Digitalizamos tu tranquilidad.</p>
         </header>
 
-        {/* Tarjetas de Estadísticas (de tu diseño Tictiva) */}
-        <section className={styles.statCards}>
-          <div className={styles.statCard}>
-            <h3>Mensajes</h3>
+        {/* === TARJETA ÚNICA DE ESTADÍSTICAS (NUEVO) === */}
+        <section className={styles.statCardWide}>
+          <div className={styles.statItem}>
+            <h4>Humanizamos la gestión.</h4>
+            <p>Digitalizamos tu tranquilidad</p>
+          </div>
+          <div className={styles.statDivider}></div>
+          <div className={styles.statItem}>
+            <span>Mensajes</span>
             <span className={styles.statNumber}>3</span>
           </div>
-          <div className={styles.statCard}>
-            <h3>Marcas hoy</h3>
+          <div className={styles.statDivider}></div>
+          <div className={styles.statItem}>
+            <span>Marcas hoy</span>
             <span className={styles.statNumber}>128</span>
           </div>
-          <div className={styles.statCard}>
-            <h3>Dispositivos activos</h3>
+          <div className={styles.statDivider}></div>
+          <div className={styles.statItem}>
+            <span>Dispositivos activos</span>
             <span className={styles.statNumber}>5</span>
           </div>
         </section>
 
-        {/* Grilla de Módulos (Estilo Tictiva) */}
+        {/* === GRILLA DE MÓDULOS (NUEVO ESTILO) === */}
         <section className={styles.moduleGrid}>
           {modules.map((mod) => (
             <ModuleCard 
@@ -161,7 +162,7 @@ function DashboardPage() {
               icon={mod.icon}
               title={mod.title}
               description={mod.description}
-              features={mod.features}
+              actions={mod.actions}
               color={mod.color}
             />
           ))}
