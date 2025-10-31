@@ -1,7 +1,5 @@
 import styles from './LoginPage.module.css';
-// 1. Importa tu imagen. 
-// Asegúrate de que el nombre 'tictiva-brand-image.png' coincida con el nombre de tu archivo.
-import brandImage from '../assets/tictiva-brand-image.png'; 
+// Ya no importamos la imagen aquí, se llama desde el CSS.
 
 function LoginPage() {
   return (
@@ -10,7 +8,6 @@ function LoginPage() {
         
         {/* === Columna Izquierda: Formulario === */}
         <div className={styles.formSection}>
-          {/* <img src={logoTictiva} alt="Logo Tictiva" className={styles.logo} /> */}
           <h1 className={styles.title}>Bienvenido de nuevo</h1>
           <p className={styles.subtitle}>a tu plataforma de gestión</p>
           
@@ -41,16 +38,23 @@ function LoginPage() {
           <p className={styles.registerLink}>
             ¿No tienes cuenta? <a href="#">Regístrate</a>
           </p>
+
+          {/* === Sección de Acceso Fiscalización DT (AÑADIDA) === */}
+          <div className={styles.fiscalizacionSection}>
+            <a href="#" className={styles.fiscalizacionLink}>
+              Acceso para Fiscalización DT 
+              <span className={styles.arrowIcon}>→</span>
+            </a>
+            <p className={styles.fiscalizacionInfo}>
+              Acceso temporal para fiscalizadores según normativa legal
+            </p>
+          </div>
         </div>
 
         {/* === Columna Derecha: Diseño de Marca === */}
+        {/* Esta sección está vacía a propósito. 
+            El CSS le aplica la forma y la imagen de fondo. */}
         <div className={styles.brandSection}>
-          {/* 2. Aquí está la imagen en lugar del texto */}
-          <img 
-            src={brandImage} 
-            alt="Branding Tictiva" 
-            className={styles.brandImage}
-          />
         </div>
 
       </div>

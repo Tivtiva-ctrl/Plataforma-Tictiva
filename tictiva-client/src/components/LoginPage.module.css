@@ -14,20 +14,20 @@
   width: 100%;
   max-width: 1000px; /* Ancho máximo de la tarjeta */
   background: var(--blanco);
-  border-radius: 24px; /* Bordes redondeados como en Imagen 1 y 2 */
+  border-radius: 24px; /* Bordes redondeados */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  overflow: hidden; /* Para que las columnas internas respeten el borde redondeado */
+  overflow: hidden;
 }
 
 /* === Columna Izquierda: Formulario === */
 .formSection {
-  flex: 1; /* Ocupa la mitad del espacio */
-  padding: 3rem; /* Espacio interno amplio */
+  flex: 1;
+  padding: 3rem;
 }
 
 .title {
   font-family: var(--font-principal);
-  font-weight: 800; /* ExtraBold */
+  font-weight: 800;
   font-size: 2rem;
   color: var(--azul-tictiva);
 }
@@ -41,7 +41,7 @@
 .tagline {
   font-size: 1rem;
   color: var(--azul-tictiva);
-  font-weight: 600; /* SemiBold */
+  font-weight: 600;
   margin-top: 1.5rem;
   margin-bottom: 2rem;
   border-left: 3px solid var(--verde-claro);
@@ -128,25 +128,57 @@
 }
 
 
-/* === Columna Derecha: Diseño de Marca === */
+/* === Columna Derecha: Diseño de Marca (MODIFICADA) === */
 .brandSection {
-  flex: 1; /* Ocupa la otra mitad */
-  background: var(--verde-menta); /* Usamos el verde menta de fondo */
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
   
-  /* Esto adapta el diseño de la Imagen 1 (curva) */
+  /* 1. Ponemos tu imagen como fondo */
+  /* Revisa que el nombre 'tictiva-brand-image.png' sea correcto */
+  background-image: url('../assets/tictiva-brand-image.png');
+  
+  /* 2. Configuramos cómo se muestra el fondo */
+  background-size: cover;   /* Rellena el espacio */
+  background-position: center; /* Se centra (puedes cambiar a 'top center' si prefieres) */
+  background-repeat: no-repeat; /* No se repite */
+
+  /* 3. Mantenemos la forma ondulada */
   border-top-left-radius: 100px;
   border-bottom-left-radius: 100px;
-  margin-left: -80px; /* Truco para superponer la curva */
+  margin-left: -80px;
 }
 
-/* 3. Estilos para tu imagen PNG */
-.brandImage {
-  width: 100%; /* La imagen ocupa todo el ancho de su contenedor */
-  max-width: 400px; /* Un tamaño máximo para que no sea gigante */
-  height: auto; /* Mantiene la proporción */
-  object-fit: contain; /* Asegura que la imagen se vea completa */
+
+/* === Estilos para la sección de Fiscalización DT (AÑADIDOS) === */
+.fiscalizacionSection {
+  margin-top: 2rem; /* Espacio superior */
+  border-top: 1px solid #e0e0e0; /* Una línea divisoria sutil */
+  padding-top: 1.5rem;
+  text-align: center;
+}
+
+.fiscalizacionLink {
+  display: inline-flex; /* Para que la flecha esté al lado */
+  align-items: center;
+  color: var(--azul-tictiva);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.fiscalizacionLink:hover {
+  color: var(--gris-azulado); /* Un ligero cambio al pasar el mouse */
+}
+
+.arrowIcon {
+  margin-left: 0.5rem;
+  font-size: 1.2rem; /* Flecha un poco más grande */
+}
+
+.fiscalizacionInfo {
+  font-size: 0.8rem;
+  color: var(--gris-azulado);
+  margin-top: 0.5rem;
+  line-height: 1.4; /* Espaciado entre líneas */
 }
