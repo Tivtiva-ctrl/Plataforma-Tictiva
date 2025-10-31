@@ -1,18 +1,9 @@
-/* ... (Estilos de .dashboardContainer, .topNav, .navLeft, .navRight, etc. se mantienen igual) ... */
+/* ... (Todos los estilos de .dashboardContainer, .topNav, .mainContent, .statCardWide, etc. se mantienen igual) ... */
 .dashboardContainer {
   background-color: #f4f7f6;
   min-height: 100vh;
 }
-
-.topNav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--blanco);
-  padding: 0 2rem;
-  height: 65px;
-  border-bottom: 1px solid #e0e6ed;
-}
+.topNav { display: flex; justify-content: space-between; align-items: center; background-color: var(--blanco); padding: 0 2rem; height: 65px; border-bottom: 1px solid #e0e6ed; }
 .navLeft, .navRight { display: flex; align-items: center; gap: 1.5rem; }
 .logo { font-weight: 800; font-size: 1.5rem; color: var(--azul-tictiva); }
 .companySelector { display: flex; align-items: center; position: relative; background-color: #f4f7f6; padding: 0.5rem 1rem; border-radius: 8px; color: var(--azul-tictiva); font-weight: 600; }
@@ -26,75 +17,41 @@
 .userProfile { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--azul-tictiva); }
 .userAvatar { width: 36px; height: 36px; border-radius: 50%; background-color: var(--azul-tictiva); color: var(--blanco); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
 .mainContent { padding: 2rem; }
+.dashboardHeader { margin-bottom: 2rem; }
+.dashboardHeader h1 { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); }
+.dashboardHeader p { font-size: 1.1rem; color: var(--gris-azulado); margin-top: 0.25rem; }
+.statCardWide { display: flex; align-items: stretch; background-color: var(--blanco); padding: 1rem 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); margin-bottom: 2rem; gap: 1.5rem; }
+.statItem { display: flex; flex-direction: column; }
+.statItem h4 { font-weight: 600; color: var(--azul-tictiva); }
+.statItem p { font-size: 0.9rem; color: var(--gris-azulado); }
+.statItem span:first-child { font-size: 0.9rem; font-weight: 600; color: var(--gris-azulado); margin-bottom: 0.25rem; }
+.statNumber { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); }
+.statDivider { width: 1px; background-color: #e0e6ed; }
 
-/* === Saludo (ACTUALIZADO) === */
-.dashboardHeader {
-  margin-bottom: 2rem;
-}
+/* =============================================== */
+/* === ¡AQUÍ ESTÁ EL CAMBIO DE CSS! === */
+/* =============================================== */
 
-.dashboardHeader h1 {
-  font-weight: 800;
-  font-size: 2.2rem; /* Más grande */
-  color: var(--azul-tictiva);
-}
-
-.dashboardHeader p {
-  font-size: 1.1rem; /* Más grande */
-  color: var(--gris-azulado);
-  margin-top: 0.25rem;
-}
-
-/* === Tarjeta Única de Estadísticas (NUEVO) === */
-.statCardWide {
-  display: flex;
-  align-items: stretch;
-  background-color: var(--blanco);
-  padding: 1rem 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  margin-bottom: 2rem;
+/* 1. Reemplazamos .moduleGrid por .moduleContainer */
+.moduleContainer {
+  display: grid;
+  /* Creamos 2 columnas de igual tamaño */
+  grid-template-columns: 1fr 1fr; 
   gap: 1.5rem;
+  /* Esto evita que las tarjetas se estiren si una columna es más larga */
+  align-items: start; 
 }
 
-.statItem {
+/* 2. Añadimos .moduleColumn */
+.moduleColumn {
   display: flex;
   flex-direction: column;
+  /* Este es el espacio ENTRE las tarjetas de una misma columna */
+  gap: 1.5rem; 
 }
 
-.statItem h4 {
-  font-weight: 600;
-  color: var(--azul-tictiva);
-}
-.statItem p {
-  font-size: 0.9rem;
-  color: var(--gris-azulado);
-}
 
-.statItem span:first-child { /* "Mensajes", "Marcas hoy", etc. */
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--gris-azulado);
-  margin-bottom: 0.25rem;
-}
-
-.statNumber {
-  font-weight: 800;
-  font-size: 2.2rem;
-  color: var(--azul-tictiva);
-}
-
-.statDivider {
-  width: 1px;
-  background-color: #e0e6ed; /* Divisor sutil */
-}
-
-/* === Grilla de Módulos (NUEVO ESTILO) === */
-.moduleGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
+/* ... (Los estilos de .moduleCard, .moduleHeader, .moduleIcon, etc. se mantienen igual) ... */
 .moduleCard {
   background-color: var(--blanco);
   padding: 1.5rem;
@@ -103,61 +60,50 @@
   display: flex;
   flex-direction: column;
 }
+.moduleHeader { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
+.moduleIcon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.moduleTitle { font-weight: 800; font-size: 1.2rem; color: var(--azul-tictiva); }
+.moduleDesc { font-size: 0.9rem; color: var(--gris-azulado); margin-top: 0.25rem; }
+.moduleActions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: auto; padding-top: 1rem; }
+.moduleButton { background-color: var(--blanco); border: 1px solid var(--azul-tictiva); color: var(--azul-tictiva); padding: 0.75rem 1rem; border-radius: 8px; font-family: var(--font-principal); font-weight: 600; font-size: 0.9rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+.moduleButton:hover { background-color: var(--azul-tictiva); color: var(--blanco); }
 
-.moduleHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+
+/* =============================================== */
+/* === ¡AQUÍ ESTÁN LOS CAMBIOS RESPONSIVOS! === */
+/* =============================================== */
+@media (max-width: 950px) {
+  /* Hacemos que la tarjeta de stats se apile */
+  .statCardWide {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .statDivider {
+    display: none; /* Ocultamos los divisores */
+  }
+
+  /* Hacemos que las 2 columnas de módulos se apilen en 1 */
+  .moduleContainer {
+    grid-template-columns: 1fr;
+  }
 }
 
-.moduleIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px; /* Ligeramente cuadrado, más moderno */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0; /* Evita que se encoja */
-}
+@media (max-width: 500px) {
+  .mainContent {
+    padding: 1rem; /* Menos padding en teléfonos */
+  }
+  
+  .dashboardHeader h1 {
+    font-size: 1.8rem; /* Título más pequeño */
+  }
 
-.moduleTitle {
-  font-weight: 800;
-  font-size: 1.2rem;
-  color: var(--azul-tictiva);
-}
+  .statCardWide {
+    padding: 1rem;
+  }
 
-.moduleDesc {
-  font-size: 0.9rem;
-  color: var(--gris-azulado);
-  margin-top: 0.25rem;
-}
-
-.moduleActions {
-  display: grid;
-  /* Crea columnas de botones que se ajustan */
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.75rem;
-  margin-top: auto; /* Empuja los botones al fondo */
-  padding-top: 1rem;
-}
-
-/* === EL BOTÓN ESTILO LIRMI (PERO CON COLORES TICTIVA) === */
-.moduleButton {
-  background-color: var(--blanco);
-  border: 1px solid var(--azul-tictiva); /* Borde Azul Tictiva */
-  color: var(--azul-tictiva);            /* Texto Azul Tictiva */
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.moduleButton:hover {
-  background-color: var(--azul-tictiva); /* Se rellena al pasar el mouse */
-  color: var(--blanco);
+  /* Ocultamos el texto de "Humanizamos la gestión" en móviles */
+  .statItem:first-child {
+    display: none;
+  }
 }

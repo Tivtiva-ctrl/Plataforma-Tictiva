@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi';
 import { IoBusiness } from 'react-icons/io5';
 
-// --- Componente Interno (NUEVO ESTILO CON BOTONES) ---
+// --- Componente Interno (Se mantiene igual) ---
 function ModuleCard({ icon, title, description, actions, color }) {
   const iconStyle = {
     backgroundColor: color,
@@ -41,15 +41,12 @@ function DashboardPage() {
 
   // ... (código de handleCompanyChange) ...
 
-  // === DATOS DE MÓDULOS ACTUALIZADOS (AHORA CON 'actions') ===
+  // === TUS DATOS DE MÓDULOS (INTACTOS) ===
   const modules = [
     { 
       icon: <FiUsers size={20} />, 
       title: "RRHH", 
       description: "Gestión humana, clara y cercana", 
-      // ===============================================
-      // ¡AQUÍ ESTÁ LA CORRECCIÓN!
-      // ===============================================
       actions: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"],
       color: "var(--azul-tictiva)"
     },
@@ -57,7 +54,6 @@ function DashboardPage() {
       icon: <FiClock size={20} />, 
       title: "Asistencia", 
       description: "Control preciso, en tiempo real", 
-      // (Este lo corregiremos después)
       actions: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"], 
       color: "#4CAF50"
     },
@@ -65,7 +61,6 @@ function DashboardPage() {
       icon: <FiMessageSquare size={20} />, 
       title: "Comunicaciones", 
       description: "Bienestar con IA integrada",
-      // (Este lo corregiremos después)
       actions: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Canal de denuncias", "Dashboard"],
       color: "#2196F3"
     },
@@ -73,7 +68,6 @@ function DashboardPage() {
       icon: <FiBarChart2 size={20} />, 
       title: "Reportería", 
       description: "Datos que cuentan historias", 
-      // (Este lo corregiremos después)
       actions: ["Informes gerenciales", "Dashboards y presentaciones", "Gestión de documentos", "Integraciones"],
       color: "#FF9800"
     },
@@ -81,7 +75,6 @@ function DashboardPage() {
       icon: <FiShield size={20} />, 
       title: "Tictiva Cuida", 
       description: "Bienestar con ADIA integrado", 
-      // (Este lo corregiremos después)
       actions: ["Adia (IA central)", "Tests psicológicos", "Dashboard de bienestar", "+ Integrado con RRHH"],
       color: "var(--verde-menta)"
     },
@@ -89,18 +82,26 @@ function DashboardPage() {
       icon: <FiArchive size={20} />, 
       title: "Bodega & EPP", 
       description: "Inventario al servicio del equipo", 
-      // (Este lo corregiremos después)
       actions: ["Inventario", "Colaboradores", "Operaciones", "Alertas"],
       color: "var(--gris-azulado)"
     },
   ];
 
+  // =======================================================
+  // === ¡AQUÍ ESTÁ EL CAMBIO! Dividimos los módulos en 2 columnas ===
+  // =======================================================
+  const column1Titles = ["RRHH", "Reportería", "Tictiva Cuida"];
+  const column2Titles = ["Asistencia", "Comunicaciones", "Bodega & EPP"];
+
+  const columnLeft = modules.filter(mod => column1Titles.includes(mod.title));
+  const columnRight = modules.filter(mod => column2Titles.includes(mod.title));
+
+
   return (
     <div className={styles.dashboardContainer}>
       
-      {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR === */}
+      {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR (Se mantiene igual) === */}
       <nav className={styles.topNav}>
-        {/* ... (código de topNav se mantiene igual) ... */}
         <div className={styles.navLeft}>
           <div className={styles.logo}>Tictiva</div>
           <div className={styles.companySelector}>
@@ -133,14 +134,15 @@ function DashboardPage() {
       {/* === 2. CONTENIDO PRINCIPAL === */}
       <main className={styles.mainContent}>
         
-        {/* Saludo */}
+        {/* Saludo (Se mantiene igual) */}
         <header className={styles.dashboardHeader}>
           <h1>Buenas noches, Verónica 💚</h1>
           <p>Humanizamos la gestión. Digitalizamos tu tranquilidad.</p>
         </header>
 
-        {/* === TARJETA ÚNICA DE ESTADÍSTICAS === */}
+        {/* Tarjeta de Estadísticas (Se mantiene igual) */}
         <section className={styles.statCardWide}>
+          {/* ... (todo tu código de statItem) ... */}
           <div className={styles.statItem}>
             <h4>Humanizamos la gestión.</h4>
             <p>Digitalizamos tu tranquilidad</p>
@@ -162,18 +164,39 @@ function DashboardPage() {
           </div>
         </section>
 
-        {/* === GRILLA DE MÓDULOS === */}
-        <section className={styles.moduleGrid}>
-          {modules.map((mod) => (
-            <ModuleCard 
-              key={mod.title}
-              icon={mod.icon}
-              title={mod.title}
-              description={mod.description}
-              actions={mod.actions}
-              color={mod.color}
-            />
-          ))}
+        {/* =============================================== */}
+        {/* === GRILLA DE MÓDULOS (AHORA EN 2 COLUMNAS) === */}
+        {/* =============================================== */}
+        <section className={styles.moduleContainer}> {/* <- CAMBIO de .moduleGrid a .moduleContainer */}
+          
+          {/* Columna Izquierda */}
+          <div className={styles.moduleColumn}>
+            {columnLeft.map((mod) => (
+              <ModuleCard 
+                key={mod.title}
+                icon={mod.icon}
+                title={mod.title}
+                description={mod.description}
+                actions={mod.actions}
+                color={mod.color}
+              />
+            ))}
+          </div>
+
+          {/* Columna Derecha */}
+          <div className={styles.moduleColumn}>
+            {columnRight.map((mod) => (
+              <ModuleCard 
+                key={mod.title}
+                icon={mod.icon}
+                title={mod.title}
+                description={mod.description}
+                actions={mod.actions}
+                color={mod.color}
+              />
+            ))}
+          </div>
+          
         </section>
 
       </main>
