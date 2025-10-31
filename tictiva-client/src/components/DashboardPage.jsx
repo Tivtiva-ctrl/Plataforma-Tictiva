@@ -14,21 +14,14 @@ import iconCuida from '../assets/icon-cuida.png';
 import iconBodega from '../assets/icon-bodega.png';
 
 
-// --- Componente Interno (AQUÍ ESTÁ EL CAMBIO) ---
+// --- Componente Interno (No cambia) ---
 function ModuleCard({ icon, title, description, actions }) {
-  
-  // 1. ¡HEMOS ELIMINADO 'iconStyle' y 'color'!
-  //    Ya no le pasamos el color de fondo.
-
   return (
     <div className={styles.moduleCard}>
       <div className={styles.moduleHeader}>
-        
-        {/* 2. El <div> ya no tiene el 'style={iconStyle}' */}
         <div className={styles.moduleIcon}>
           {icon} 
         </div>
-        
         <div>
           <h3 className={styles.moduleTitle}>{title}</h3>
           <p className={styles.moduleDesc}>{description}</p>
@@ -57,7 +50,6 @@ function DashboardPage() {
       title: "RRHH", 
       description: "Gestión humana, clara y cercana", 
       actions: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"],
-      // 3. Ya no necesitamos pasar el 'color'
     },
     { 
       icon: <img src={iconAsistencia} alt="Asistencia" />, 
@@ -94,7 +86,6 @@ function DashboardPage() {
   return (
     <div className={styles.dashboardContainer}>
       
-      {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR (Se mantiene igual) === */}
       <nav className={styles.topNav}>
         <div className={styles.navLeft}>
           <div className={styles.logo}>Tictiva</div>
@@ -125,29 +116,43 @@ function DashboardPage() {
         </div>
       </nav>
 
-      {/* === 2. CONTENIDO PRINCIPAL (Se mantiene igual) === */}
       <main className={styles.mainContent}>
         
         <header className={styles.dashboardHeader}>
           <h1>Buenas noches, Verónica 💚</h1>
-          <p>Humanizamos la gestión. Digitalizamos tu tranquilidad.</p>
+          {/* =============================================== */}
+          {/* === 1. CAMBIO DE TEXTO DE DESCRIPCIÓN PRINCIPAL === */}
+          {/* =============================================== */}
+          <p>"Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve".</p>
         </header>
 
-        <section className={styles.statCards}>
-          <div className={styles.statCard}>
-            <h3>Mensajes</h3>
-            <span className={styles.statNumber}>3</span>
-          </div>
-          <div className={styles.statCard}>
-            <h3>Marcas hoy</h3>
-            <span className={styles.statNumber}>128</span>
-          </div>
-          <div className={styles.statCard}>
-            <h3>Dispositivos activos</h3>
-            <span className={styles.statNumber}>5</span>
-          </div>
+        {/* =============================================== */}
+        {/* === 2. NUEVA TARJETA GRANDE Y MOVIMIENTO DE STATS === */}
+        {/* =============================================== */}
+        <section className={styles.summaryCard}>
+            <div className={styles.summaryCardContent}>
+                <h2>Humanizamos la gestión, digitalizamos tu tranquilidad</h2>
+                <p>Accede a tus módulos. Todo es simple, rápido y consistente.</p>
+            </div>
+            
+            {/* Mueve las statCards DENTRO de la nueva tarjeta */}
+            <div className={styles.statCardsInSummary}>
+                <div className={styles.statCard}>
+                    <h3>Mensajes</h3>
+                    <span className={styles.statNumber}>3</span>
+                </div>
+                <div className={styles.statCard}>
+                    <h3>Marcas hoy</h3>
+                    <span className={styles.statNumber}>128</span>
+                </div>
+                <div className={styles.statCard}>
+                    <h3>Dispositivos activos</h3>
+                    <span className={styles.statNumber}>5</span>
+                </div>
+            </div>
         </section>
 
+        {/* La sección de módulos queda igual */}
         <section className={styles.moduleGrid}>
           {modules.map((mod) => (
             <ModuleCard 

@@ -1,4 +1,4 @@
-/* ... (Todos los estilos hasta .moduleIcon se mantienen igual) ... */
+/* ... (Estilos previos se mantienen igual hasta .summaryCardContent) ... */
 .dashboardContainer {
   background-color: #f4f7f6;
   min-height: 100vh;
@@ -20,39 +20,91 @@
 .dashboardHeader { margin-bottom: 2rem; }
 .dashboardHeader h1 { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); }
 .dashboardHeader p { font-size: 1.1rem; color: var(--gris-azulado); margin-top: 0.25rem; }
-.statCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-.statCard { background-color: var(--blanco); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
-.statCard h3 { font-weight: 600; color: var(--gris-azulado); }
-.statNumber { font-weight: 800; font-size: 2.5rem; color: var(--azul-tictiva); margin-top: 0.5rem; display: block; }
+.summaryCard {
+    background-color: var(--blanco);
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+.summaryCardContent h2 {
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--azul-tictiva);
+    margin-bottom: 0.5rem;
+}
+.summaryCardContent p {
+    font-size: 0.95rem;
+    color: var(--gris-azulado);
+    line-height: 1.4;
+}
+
+/* =============================================== */
+/* === ¡AQUÍ ESTÁ EL AJUSTE PARA MÁS LARGAS! === */
+/* =============================================== */
+.statCardsInSummary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 1rem;
+    flex-shrink: 0; 
+    width: 100%; /* Hacemos que ocupe el 100% del espacio disponible */
+    max-width: 600px; /* Aumentamos el ancho máximo */
+}
+
+.statCardsInSummary .statCard {
+    background-color: #f4f7f6;
+    padding: 0.8rem 1.5rem; /* Más horizontal, menos vertical */
+    border-radius: 12px;
+    box-shadow: none;
+    text-align: center; /* Volvemos a centrar (como en tu foto) */
+}
+
+.statCardsInSummary .statCard h3 {
+    font-weight: 600;
+    font-size: 0.8rem; 
+    color: var(--gris-azulado);
+    margin-bottom: 0.25rem; /* Más espacio */
+    line-height: 1;
+}
+
+.statCardsInSummary .statCard .statNumber {
+    font-weight: 800;
+    font-size: 1.8rem; /* Devolvemos el tamaño al número */
+    color: var(--azul-tictiva);
+    margin-top: 0;
+    line-height: 1.2;
+}
+
+
+/* ... (Resto de estilos de módulos se mantienen igual) ... */
 .moduleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .moduleCard { background-color: var(--blanco); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; height: 100%; }
 .moduleHeader { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
 .moduleTitle { font-weight: 800; font-size: 1.2rem; color: var(--azul-tictiva); }
 .moduleDesc { font-size: 0.9rem; color: var(--gris-azulado); margin-top: 0.25rem; }
-.moduleActions { display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto; padding-top: 1rem; }
+.moduleActions { display: flex; flex-direction: column; gap: 0.75rem; padding-top: 1rem; }
 .moduleButton { background-color: var(--blanco); border: 1px solid var(--azul-tictiva); color: var(--azul-tictiva); padding: 0.75rem 1rem; border-radius: 8px; font-family: var(--font-principal); font-weight: 600; font-size: 0.9rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
 .moduleButton:hover { background-color: var(--azul-tictiva); color: var(--blanco); }
+.moduleIcon { flex-shrink: 0; display: flex; justify-content: center; width: 60px; }
+.moduleIcon img { width: 60px; height: 60px; object-fit: contain; }
 
-/* =============================================== */
-/* === ¡AQUÍ ESTÁ EL AUMENTO DE TAMAÑO! === */
-/* =============================================== */
-
-.moduleIcon {
-  flex-shrink: 0;
-  /* (El contenedor ya no tiene tamaño) */
-}
-
-.moduleIcon img {
-  width: 56px;  /* <-- MÁS GRANDE */
-  height: 56px; /* <-- MÁS GRANDE */
-  object-fit: contain; 
-}
-
-
-/* ... (El resto de los @media se mantienen igual) ... */
+/* ... (Media Queries se mantienen igual) ... */
 @media (max-width: 1100px) {
   .moduleGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .summaryCard {
+      flex-direction: column; 
+      align-items: flex-start;
+  }
+  .statCardsInSummary {
+      width: 100%; 
+      max-width: none; /* Permitimos que ocupe todo el ancho en tablets */
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   }
 }
 @media (max-width: 700px) {
@@ -63,7 +115,4 @@
 @media (max-width: 500px) {
   .mainContent { padding: 1rem; }
   .dashboardHeader h1 { font-size: 1.8rem; }
-  .statCards {
-    grid-template-columns: 1fr;
-  }
 }
