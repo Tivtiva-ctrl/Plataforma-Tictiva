@@ -23,9 +23,11 @@
 .formSection {
   flex: 1;
   
-  /* AQUÍ ESTÁ LA CORRECCIÓN PARA EL OVERLAP */
-  /* Añadimos más padding a la DERECHA (5rem) para que el contenido no choque con la curva */
-  padding: 3rem 5rem 3rem 3rem; /* Arriba, Derecha, Abajo, Izquierda */
+  /* ================================================= */
+  /* AQUÍ ESTÁ LA CORRECCIÓN FINAL                     */
+  /* Aumentamos el padding derecho de 5rem a 7rem      */
+  /* ================================================= */
+  padding: 3rem 7rem 3rem 3rem; /* Arriba, Derecha, Abajo, Izquierda */
 }
 
 .title {
