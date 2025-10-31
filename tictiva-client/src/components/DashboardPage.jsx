@@ -47,34 +47,41 @@ function DashboardPage() {
       icon: <FiUsers size={20} />, 
       title: "RRHH", 
       description: "Gestión humana, clara y cercana", 
-      actions: ["Supervisión", "Manracs", "Menajes", "Encuestas"],
+      // ===============================================
+      // ¡AQUÍ ESTÁ LA CORRECCIÓN!
+      // ===============================================
+      actions: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"],
       color: "var(--azul-tictiva)"
     },
     { 
       icon: <FiClock size={20} />, 
       title: "Asistencia", 
       description: "Control preciso, en tiempo real", 
-      actions: ["Supervisión", "Mapa"],
-      color: "#4CAF50" // (Color complementario verde)
+      // (Este lo corregiremos después)
+      actions: ["Supervisión", "Mapa"], 
+      color: "#4CAF50"
     },
     { 
       icon: <FiMessageSquare size={20} />, 
       title: "Comunicaciones", 
-      description: "Bienestar con IA integrada", // (Cambié esto según tu foto)
+      description: "Bienestar con IA integrada",
+      // (Este lo corregiremos después)
       actions: ["Dashboards", "Informes"],
-      color: "#2196F3" // (Color complementario azul)
+      color: "#2196F3"
     },
     { 
       icon: <FiBarChart2 size={20} />, 
       title: "Reportería", 
       description: "Datos que cuentan historias", 
+      // (Este lo corregiremos después)
       actions: ["Informes", "Dashboards", "Documentos"],
-      color: "#FF9800" // (Color complementario naranja)
+      color: "#FF9800"
     },
     { 
       icon: <FiShield size={20} />, 
       title: "Tictiva Cuida", 
       description: "Bienestar con ADIA integrado", 
+      // (Este lo corregiremos después)
       actions: ["Ir a ADIA", "Tests", "Resultados"],
       color: "var(--verde-menta)"
     },
@@ -82,6 +89,7 @@ function DashboardPage() {
       icon: <FiArchive size={20} />, 
       title: "Bodega & EPP", 
       description: "Inventario al servicio del equipo", 
+      // (Este lo corregiremos después)
       actions: ["Inventario", "Asignaciones", "Alertas"],
       color: "var(--gris-azulado)"
     },
@@ -125,13 +133,13 @@ function DashboardPage() {
       {/* === 2. CONTENIDO PRINCIPAL === */}
       <main className={styles.mainContent}>
         
-        {/* Saludo (Con emoji de Tictiva 💚) */}
+        {/* Saludo */}
         <header className={styles.dashboardHeader}>
           <h1>Buenas noches, Verónica 💚</h1>
           <p>Humanizamos la gestión. Digitalizamos tu tranquilidad.</p>
         </header>
 
-        {/* === TARJETA ÚNICA DE ESTADÍSTICAS (NUEVO) === */}
+        {/* === TARJETA ÚNICA DE ESTADÍSTICAS === */}
         <section className={styles.statCardWide}>
           <div className={styles.statItem}>
             <h4>Humanizamos la gestión.</h4>
@@ -154,7 +162,7 @@ function DashboardPage() {
           </div>
         </section>
 
-        {/* === GRILLA DE MÓDULOS (NUEVO ESTILO) === */}
+        {/* === GRILLA DE MÓDULOS === */}
         <section className={styles.moduleGrid}>
           {modules.map((mod) => (
             <ModuleCard 
