@@ -1,5 +1,4 @@
 import styles from './LoginPage.module.css';
-// Ya no importamos la imagen aquí, se llama desde el CSS.
 
 function LoginPage() {
   return (
@@ -11,8 +10,9 @@ function LoginPage() {
           <h1 className={styles.title}>Bienvenido de nuevo</h1>
           <p className={styles.subtitle}>a tu plataforma de gestión</p>
           
+          {/* AQUÍ ESTÁ EL CAMBIO DE ESLOGAN */}
           <p className={styles.tagline}>
-            Humanizamos la gestión, digitalizamos tu tranquilidad.
+            Impulsamos el talento. Automatizamos la gestión.
           </p>
 
           <form className={styles.form}>
@@ -39,7 +39,7 @@ function LoginPage() {
             ¿No tienes cuenta? <a href="#">Regístrate</a>
           </p>
 
-          {/* === Sección de Acceso Fiscalización DT (AÑADIDA) === */}
+          {/* === Sección de Acceso Fiscalización DT === */}
           <div className={styles.fiscalizacionSection}>
             <a href="#" className={styles.fiscalizacionLink}>
               Acceso para Fiscalización DT 
@@ -52,8 +52,6 @@ function LoginPage() {
         </div>
 
         {/* === Columna Derecha: Diseño de Marca === */}
-        {/* Esta sección está vacía a propósito. 
-            El CSS le aplica la forma y la imagen de fondo. */}
         <div className={styles.brandSection}>
         </div>
 

@@ -1,28 +1,31 @@
-/* Usaremos las variables de color que definimos en index.css */
-
+/* ... (el resto de tus estilos .loginPage y .loginCard van aquí) ... */
 .loginPage {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #f4f7f6; /* Un gris muy claro, casi blanco */
+  background-color: #f4f7f6;
   padding: 2rem;
 }
 
 .loginCard {
   display: flex;
   width: 100%;
-  max-width: 1000px; /* Ancho máximo de la tarjeta */
+  max-width: 1000px;
   background: var(--blanco);
-  border-radius: 24px; /* Bordes redondeados */
+  border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
+
 /* === Columna Izquierda: Formulario === */
 .formSection {
   flex: 1;
-  padding: 3rem;
+  
+  /* AQUÍ ESTÁ LA CORRECCIÓN PARA EL OVERLAP */
+  /* Añadimos más padding a la DERECHA (5rem) para que el contenido no choque con la curva */
+  padding: 3rem 5rem 3rem 3rem; /* Arriba, Derecha, Abajo, Izquierda */
 }
 
 .title {
@@ -128,37 +131,30 @@
 }
 
 
-/* === Columna Derecha: Diseño de Marca (MODIFICADA) === */
+/* === Columna Derecha: Diseño de Marca === */
 .brandSection {
   flex: 1;
   display: flex;
-  
-  /* 1. Ponemos tu imagen como fondo */
-  /* Revisa que el nombre 'tictiva-brand-image.png' sea correcto */
   background-image: url('../assets/tictiva-brand-image.png');
-  
-  /* 2. Configuramos cómo se muestra el fondo */
-  background-size: cover;   /* Rellena el espacio */
-  background-position: center; /* Se centra (puedes cambiar a 'top center' si prefieres) */
-  background-repeat: no-repeat; /* No se repite */
-
-  /* 3. Mantenemos la forma ondulada */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-top-left-radius: 100px;
   border-bottom-left-radius: 100px;
   margin-left: -80px;
 }
 
 
-/* === Estilos para la sección de Fiscalización DT (AÑADIDOS) === */
+/* === Estilos para la sección de Fiscalización DT === */
 .fiscalizacionSection {
-  margin-top: 2rem; /* Espacio superior */
-  border-top: 1px solid #e0e0e0; /* Una línea divisoria sutil */
+  margin-top: 2rem;
+  border-top: 1px solid #e0e0e0;
   padding-top: 1.5rem;
   text-align: center;
 }
 
 .fiscalizacionLink {
-  display: inline-flex; /* Para que la flecha esté al lado */
+  display: inline-flex;
   align-items: center;
   color: var(--azul-tictiva);
   font-weight: 600;
@@ -168,17 +164,17 @@
 }
 
 .fiscalizacionLink:hover {
-  color: var(--gris-azulado); /* Un ligero cambio al pasar el mouse */
+  color: var(--gris-azulado);
 }
 
 .arrowIcon {
   margin-left: 0.5rem;
-  font-size: 1.2rem; /* Flecha un poco más grande */
+  font-size: 1.2rem;
 }
 
 .fiscalizacionInfo {
   font-size: 0.8rem;
   color: var(--gris-azulado);
   margin-top: 0.5rem;
-  line-height: 1.4; /* Espaciado entre líneas */
+  line-height: 1.4;
 }
