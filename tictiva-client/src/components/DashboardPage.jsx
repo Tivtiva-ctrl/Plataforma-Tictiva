@@ -6,7 +6,9 @@ import {
 } from 'react-icons/fi';
 import { IoBusiness } from 'react-icons/io5';
 
-// --- Componente Interno (Se mantiene igual) ---
+// =======================================================
+// === ¡AQUÍ ESTÁ EL CAMBIO! El Card con BOTONES ===
+// =======================================================
 function ModuleCard({ icon, title, description, actions, color }) {
   const iconStyle = {
     backgroundColor: color,
@@ -24,6 +26,7 @@ function ModuleCard({ icon, title, description, actions, color }) {
           <p className={styles.moduleDesc}>{description}</p>
         </div>
       </div>
+      {/* Usamos los botones (Lirmi-style) */}
       <div className={styles.moduleActions}>
         {actions.map((action, index) => (
           <button key={index} className={styles.moduleButton}>
@@ -31,6 +34,7 @@ function ModuleCard({ icon, title, description, actions, color }) {
           </button>
         ))}
       </div>
+      {/* ¡NO hay enlace "Abrir módulo"! */}
     </div>
   );
 }
@@ -41,7 +45,7 @@ function DashboardPage() {
 
   // ... (código de handleCompanyChange) ...
 
-  // === TUS DATOS DE MÓDULOS (INTACTOS) ===
+  // Tus datos de módulos (perfectos)
   const modules = [
     { 
       icon: <FiUsers size={20} />, 
@@ -60,7 +64,7 @@ function DashboardPage() {
     { 
       icon: <FiMessageSquare size={20} />, 
       title: "Comunicaciones", 
-      description: "Bienestar con IA integrada",
+      description: "Mensajes y encuestas sin fricción", // (Texto original)
       actions: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Canal de denuncias", "Dashboard"],
       color: "#2196F3"
     },
@@ -87,21 +91,12 @@ function DashboardPage() {
     },
   ];
 
-  // =======================================================
-  // === ¡AQUÍ ESTÁ EL CAMBIO! Dividimos los módulos en 2 columnas ===
-  // =======================================================
-  const column1Titles = ["RRHH", "Reportería", "Tictiva Cuida"];
-  const column2Titles = ["Asistencia", "Comunicaciones", "Bodega & EPP"];
-
-  const columnLeft = modules.filter(mod => column1Titles.includes(mod.title));
-  const columnRight = modules.filter(mod => column2Titles.includes(mod.title));
-
-
   return (
     <div className={styles.dashboardContainer}>
       
       {/* === 1. BARRA DE NAVEGACIÓN SUPERIOR (Se mantiene igual) === */}
       <nav className={styles.topNav}>
+        {/* ... (tu código de nav) ... */}
         <div className={styles.navLeft}>
           <div className={styles.logo}>Tictiva</div>
           <div className={styles.companySelector}>
@@ -134,71 +129,43 @@ function DashboardPage() {
       {/* === 2. CONTENIDO PRINCIPAL === */}
       <main className={styles.mainContent}>
         
-        {/* Saludo (Se mantiene igual) */}
+        {/* Saludo */}
         <header className={styles.dashboardHeader}>
           <h1>Buenas noches, Verónica 💚</h1>
           <p>Humanizamos la gestión. Digitalizamos tu tranquilidad.</p>
         </header>
 
-        {/* Tarjeta de Estadísticas (Se mantiene igual) */}
-        <section className={styles.statCardWide}>
-          {/* ... (todo tu código de statItem) ... */}
-          <div className={styles.statItem}>
-            <h4>Humanizamos la gestión.</h4>
-            <p>Digitalizamos tu tranquilidad</p>
-          </div>
-          <div className={styles.statDivider}></div>
-          <div className={styles.statItem}>
-            <span>Mensajes</span>
+        {/* =============================================== */}
+        {/* === ¡AQUÍ ESTÁ EL CAMBIO! Volvemos a las 3 stats === */}
+        {/* =============================================== */}
+        <section className={styles.statCards}>
+          <div className={styles.statCard}>
+            <h3>Mensajes</h3>
             <span className={styles.statNumber}>3</span>
           </div>
-          <div className={styles.statDivider}></div>
-          <div className={styles.statItem}>
-            <span>Marcas hoy</span>
+          <div className={styles.statCard}>
+            <h3>Marcas hoy</h3>
             <span className={styles.statNumber}>128</span>
           </div>
-          <div className={styles.statDivider}></div>
-          <div className={styles.statItem}>
-            <span>Dispositivos activos</span>
+          <div className={styles.statCard}>
+            <h3>Dispositivos activos</h3>
             <span className={styles.statNumber}>5</span>
           </div>
         </section>
 
-        {/* =============================================== */}
-        {/* === GRILLA DE MÓDULOS (AHORA EN 2 COLUMNAS) === */}
-        {/* =============================================== */}
-        <section className={styles.moduleContainer}> {/* <- CAMBIO de .moduleGrid a .moduleContainer */}
-          
-          {/* Columna Izquierda */}
-          <div className={styles.moduleColumn}>
-            {columnLeft.map((mod) => (
-              <ModuleCard 
-                key={mod.title}
-                icon={mod.icon}
-                title={mod.title}
-                description={mod.description}
-                actions={mod.actions}
-                color={mod.color}
-              />
-            ))}
-          </div>
-
-          {/* Columna Derecha */}
-          <div className={styles.moduleColumn}>
-            {columnRight.map((mod) => (
-              <ModuleCard 
-                key={mod.title}
-                icon={mod.icon}
-                title={mod.title}
-                description={mod.description}
-                actions={mod.actions}
-                color={mod.color}
-              />
-            ))}
-          </div>
-          
+        {/* === GRILLA DE MÓDULOS (Orden 3x2) === */}
+        <section className={styles.moduleGrid}>
+          {modules.map((mod) => (
+            <ModuleCard 
+              key={mod.title}
+              icon={mod.icon}
+              title={mod.title}
+              description={mod.description}
+              actions={mod.actions} // Pasamos 'actions'
+              color={mod.color}
+            />
+          ))}
         </section>
-
       </main>
     </div>
   );
