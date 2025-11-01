@@ -1,46 +1,33 @@
 import { useState } from 'react'; 
 import styles from './LoginPage.module.css';
-// 1. ¡IMPORTAMOS NUESTRO CLIENTE DE SUPABASE!
 import { supabase } from '../supabaseClient';
 
 function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  // 2. NUEVOS ESTADOS para manejar el login real
-  const [loading, setLoading] = useState(false); // Para el estado "cargando..."
-  const [error, setError] = useState(null);     // Para mostrar mensajes de error
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);     
 
-  // 3. ESTA ES LA NUEVA FUNCIÓN DE LOGIN
   const handleLogin = async (event) => {
-    event.preventDefault(); // Prevenir recarga de página
-    
-    setLoading(true); // Empezamos a cargar
-    setError(null);   // Limpiamos errores antiguos
+    event.preventDefault(); 
+    setLoading(true);
+    setError(null);   
 
     try {
-      // 4. ¡LA LLAMADA MÁGICA A SUPABASE!
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
 
-      if (error) {
-        // Si Supabase da un error (ej. "Invalid login credentials")
-        throw error;
-      }
+      if (error) throw error;
       
-      // 5. ¡ÉXITO! Si no hay error, le avisamos a App.jsx
       console.log("¡Inicio de sesión exitoso!", data);
       onLoginSuccess();
 
     } catch (error) {
-      // 6. Si hay un error, lo mostramos al usuario
       console.error("Error en el login:", error.message);
-      // Damos un mensaje amigable
       setError("Correo o contraseña incorrectos. Inténtalo de nuevo.");
     } finally {
-      // 7. Pase lo que pase, dejamos de cargar
       setLoading(false);
     }
   };
@@ -62,7 +49,7 @@ function LoginPage({ onLoginSuccess }) {
               placeholder="ejemplo@empresa.com"
               value={email} 
               onChange={(e) => setEmail(e.target.value)}
-              required // Hacemos que el campo sea obligatorio
+              required
             />
 
             <label htmlFor="password">Contraseña</label>
@@ -72,10 +59,9 @@ function LoginPage({ onLoginSuccess }) {
               placeholder="•••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required // Hacemos que el campo sea obligatorio
+              required
             />
 
-            {/* 8. MOSTRAMOS EL MENSAJE DE ERROR SI EXISTE */}
             {error && (
               <p className={styles.errorText}>{error}</p>
             )}
@@ -88,15 +74,18 @@ function LoginPage({ onLoginSuccess }) {
               <a href="#" className={styles.link}>¿Olvidaste tu contraseña?</a>
             </div>
 
-            {/* 9. DESACTIVAMOS EL BOTÓN MIENTRAS CARGA */}
             <button type="submit" className={styles.btnPrimary} disabled={loading}>
               {loading ? 'Ingresando...' : 'Iniciar sesión'}
             </button>
           </form>
 
-          <p className={styles.registerLink}>
+          {/* =============================================== */}
+          {/* === ¡HEMOS ELIMINADO EL ENLACE "REGÍSTRATE"! === */}
+          {/* =============================================== */}
+          {/* <p className={styles.registerLink}>
             ¿No tienes cuenta? <a href="#">Regístrate</a>
-          </p>
+          </p> 
+          */}
 
           <div className={styles.fiscalizacionSection}>
             <a href="#" className={styles.fiscalizacionLink}>
