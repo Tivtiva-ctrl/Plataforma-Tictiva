@@ -1,240 +1,43 @@
-/* ... (Todos tus estilos actuales van aquí) ... */
-.loginPage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background-color: #f4f7f6;
-  padding: 2rem;
-}
-
-.loginCard {
-  display: flex;
-  width: 100%;
-  max-width: 1000px;
-  background: var(--blanco);
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  /* Añadimos una transición para que el cambio de tamaño sea suave */
-  transition: all 0.3s ease;
-}
-
-.formSection {
-  flex: 1;
-  padding: 3rem 7rem 3rem 3rem;
-  transition: all 0.3s ease;
-}
-
-.title {
-  font-family: var(--font-principal);
-  font-weight: 800;
-  font-size: 2rem;
-  color: var(--azul-tictiva);
-}
-
-.subtitle {
-  font-size: 1.1rem;
-  color: var(--gris-azulado);
-  margin-top: 0.25rem;
-}
-
-.tagline {
-  font-size: 1rem;
-  color: var(--azul-tictiva);
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 2rem;
-  border-left: 3px solid var(--verde-claro);
-  padding-left: 1rem;
-}
-
-.form label {
-  display: block;
-  font-weight: 600;
-  color: var(--azul-tictiva);
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
+/* ... (Todos los estilos hasta .fiscalizacionInfo se mantienen igual) ... */
+.loginPage { display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #f4f7f6; padding: 2rem; }
+.loginCard { display: flex; width: 100%; max-width: 1000px; background: var(--blanco); border-radius: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); overflow: hidden; }
+.formSection { flex: 1; padding: 3rem 7rem 3rem 3rem; }
+.title { font-family: var(--font-principal); font-weight: 800; font-size: 2rem; color: var(--azul-tictiva); }
+.subtitle { font-size: 1.1rem; color: var(--gris-azulado); margin-top: 0.25rem; }
+.tagline { font-size: 1rem; color: var(--azul-tictiva); font-weight: 600; margin-top: 1.5rem; margin-bottom: 2rem; border-left: 3px solid var(--verde-claro); padding-left: 1rem; }
+.form label { display: block; font-weight: 600; color: var(--azul-tictiva); margin-bottom: 0.5rem; font-size: 0.9rem; }
 .form input[type="email"],
-.form input[type="password"] {
-  width: 100%;
-  padding: 0.9rem 1rem;
-  border: 1px solid #d0dbe4;
+.form input[type="password"] { width: 100%; padding: 0.9rem 1rem; border: 1px solid #d0dbe4; border-radius: 8px; font-family: var(--font-principal); font-size: 1rem; margin-bottom: 1rem; }
+.form input::placeholder { color: #99a4b0; }
+.formRow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.9rem; }
+.formCheck { display: flex; align-items: center; }
+.formCheck input { margin-right: 0.5rem; }
+.link { color: var(--azul-tictiva); font-weight: 600; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.btnPrimary { width: 100%; padding: 1rem; border: none; border-radius: 8px; background-color: var(--azul-tictiva); color: var(--blanco); font-family: var(--font-principal); font-weight: 600; font-size: 1rem; cursor: pointer; transition: background-color 0.3s ease; }
+.btnPrimary:hover { background-color: var(--gris-azulado); }
+.btnPrimary:disabled { background-color: var(--gris-azulado); cursor: not-allowed; } /* Estilo para botón desactivado */
+.registerLink { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--gris-azulado); }
+.registerLink a { color: var(--azul-tictiva); font-weight: 600; }
+.brandSection { flex: 1; display: flex; background-image: url('../assets/tictiva-brand-image.png'); background-size: cover; background-position: center; background-repeat: no-repeat; border-top-left-radius: 100px; border-bottom-left-radius: 100px; margin-left: -80px; }
+.fiscalizacionSection { margin-top: 2rem; border-top: 1px solid #e0e0e0; padding-top: 1.5rem; text-align: center; }
+.fiscalizacionLink { display: inline-flex; align-items: center; color: var(--azul-tictiva); font-weight: 600; text-decoration: none; font-size: 0.95rem; transition: color 0.3s ease; }
+.fiscalizacionLink:hover { color: var(--gris-azulado); }
+.arrowIcon { margin-left: 0.5rem; font-size: 1.2rem; }
+.fiscalizacionInfo { font-size: 0.8rem; color: var(--gris-azulado); margin-top: 0.5rem; line-height: 1.4; }
+
+/* =============================================== */
+/* === ¡AQUÍ ESTÁ EL NUEVO ESTILO DE ERROR! === */
+/* =============================================== */
+.errorText {
+  color: #D32F2F; /* Un color rojo oscuro */
+  background-color: #FFEBEE; /* Un fondo rojo muy claro */
+  border: 1px solid #D32F2F;
   border-radius: 8px;
+  padding: 0.75rem 1rem;
   font-family: var(--font-principal);
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-.form input::placeholder {
-  color: #99a4b0;
-}
-
-.formRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
   margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-}
-
-.formCheck {
-  display: flex;
-  align-items: center;
-}
-
-.formCheck input {
-  margin-right: 0.5rem;
-}
-
-.link {
-  color: var(--azul-tictiva);
-  font-weight: 600;
-  text-decoration: none;
-}
-.link:hover {
-  text-decoration: underline;
-}
-
-.btnPrimary {
-  width: 100%;
-  padding: 1rem;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--azul-tictiva);
-  color: var(--blanco);
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.btnPrimary:hover {
-  background-color: var(--gris-azulado);
-}
-
-.registerLink {
-  text-align: center;
-  margin-top: 1.5rem;
-  font-size: 0.9rem;
-  color: var(--gris-azulado);
-}
-
-.registerLink a {
-  color: var(--azul-tictiva);
-  font-weight: 600;
-}
-
-.brandSection {
-  flex: 1;
-  display: flex;
-  background-image: url('../assets/tictiva-brand-image.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-top-left-radius: 100px;
-  border-bottom-left-radius: 100px;
-  margin-left: -80px;
-  transition: all 0.3s ease;
-}
-
-.fiscalizacionSection {
-  margin-top: 2rem;
-  border-top: 1px solid #e0e0e0;
-  padding-top: 1.5rem;
-  text-align: center;
-}
-
-.fiscalizacionLink {
-  display: inline-flex;
-  align-items: center;
-  color: var(--azul-tictiva);
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 0.3s ease;
-}
-
-.fiscalizacionLink:hover {
-  color: var(--gris-azulado);
-}
-
-.arrowIcon {
-  margin-left: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.fiscalizacionInfo {
-  font-size: 0.8rem;
-  color: var(--gris-azulado);
-  margin-top: 0.5rem;
-  line-height: 1.4;
-}
-
-/* ================================================== */
-/* === AQUI COMIENZA EL DISEÑO RESPONSIVO === */
-/* ================================================== */
-
-/* 1. VISTA DE TABLET (Hasta 950px) */
-@media (max-width: 950px) {
-  .loginCard {
-    /* Apilamos las columnas una encima de la otra */
-    flex-direction: column;
-    max-width: 500px; /* Hacemos la tarjeta más angosta */
-  }
-
-  .formSection {
-    /* Reseteamos el padding que usamos para el truco de la curva */
-    padding: 3rem; /* Padding simple y uniforme */
-  }
-
-  .brandSection {
-    /* Reseteamos el truco de la curva */
-    margin-left: 0;
-    border-radius: 0; /* Quitamos la curva rara */
-
-    /* Le damos una nueva forma para la parte de abajo */
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-
-    /* Le damos una altura mínima para que se vea la imagen */
-    min-height: 300px;
-  }
-}
-
-
-/* 2. VISTA DE TELÉFONO (Hasta 500px) */
-@media (max-width: 500px) {
-  .loginPage {
-    /* Hacemos que la página ocupe toda la pantalla del teléfono */
-    padding: 0;
-  }
-
-  .loginCard {
-    /* Hacemos que la tarjeta ocupe el 100% de la pantalla */
-    width: 100%;
-    min-height: 100vh;
-    border-radius: 0; /* Sin bordes redondeados */
-    box-shadow: none; /* Sin sombra */
-  }
-
-  .formSection {
-    flex: 1; /* Hacemos que el formulario crezca para llenar el espacio */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Centramos el formulario verticalmente */
-    padding: 2rem; /* Un padding más pequeño para teléfonos */
-  }
-
-  /* ¡En teléfonos, ocultamos la imagen para priorizar el login! */
-  .brandSection {
-    display: none;
-  }
-
-  .title {
-    font-size: 1.8rem; /* Un título un poco más pequeño */
-  }
 }

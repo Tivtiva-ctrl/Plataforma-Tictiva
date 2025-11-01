@@ -1,33 +1,48 @@
 import { useState } from 'react'; 
 import styles from './LoginPage.module.css';
+// 1. ¡IMPORTAMOS NUESTRO CLIENTE DE SUPABASE!
+import { supabase } from '../supabaseClient';
 
-// 1. Aceptamos la nueva prop { onLoginSuccess }
 function LoginPage({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // 2. NUEVOS ESTADOS para manejar el login real
+  const [loading, setLoading] = useState(false); // Para el estado "cargando..."
+  const [error, setError] = useState(null);     // Para mostrar mensajes de error
 
-  // 2. Hacemos la función 'async' (preparándonos para Supabase)
+  // 3. ESTA ES LA NUEVA FUNCIÓN DE LOGIN
   const handleLogin = async (event) => {
-    event.preventDefault(); 
-
-    console.log('¡Intentando iniciar sesión!');
-    console.log('Email:', email);
-    console.log('Contraseña:', password);
+    event.preventDefault(); // Prevenir recarga de página
     
-    // === ¡AQUÍ ESTÁ LA MAGIA! ===
-    // 3. En lugar de solo un console.log, llamamos a la función
-    //    que App.jsx nos pasó.
-    
-    // En el futuro, aquí iría la lógica de Supabase.
-    // try {
-    //   await supabase.auth.signInWithPassword({ email, password });
-    // } catch (error) {
-    //   // manejar error
-    // }
+    setLoading(true); // Empezamos a cargar
+    setError(null);   // Limpiamos errores antiguos
 
-    // Por ahora, simulamos un éxito instantáneo:
-    console.log("¡Simulación de login exitosa!");
-    onLoginSuccess(); // <-- Esto le dice a App.jsx que cambie el estado
+    try {
+      // 4. ¡LA LLAMADA MÁGICA A SUPABASE!
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        // Si Supabase da un error (ej. "Invalid login credentials")
+        throw error;
+      }
+      
+      // 5. ¡ÉXITO! Si no hay error, le avisamos a App.jsx
+      console.log("¡Inicio de sesión exitoso!", data);
+      onLoginSuccess();
+
+    } catch (error) {
+      // 6. Si hay un error, lo mostramos al usuario
+      console.error("Error en el login:", error.message);
+      // Damos un mensaje amigable
+      setError("Correo o contraseña incorrectos. Inténtalo de nuevo.");
+    } finally {
+      // 7. Pase lo que pase, dejamos de cargar
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,10 +52,7 @@ function LoginPage({ onLoginSuccess }) {
         <div className={styles.formSection}>
           <h1 className={styles.title}>Bienvenido de nuevo</h1>
           <p className={styles.subtitle}>a tu plataforma de gestión</p>
-          
-          <p className={styles.tagline}>
-            Impulsamos el talento. Automatizamos la gestión.
-          </p>
+          <p className={styles.tagline}>Impulsamos el talento. Automatizamos la gestión.</p>
 
           <form className={styles.form} onSubmit={handleLogin}>
             <label htmlFor="email">Correo electrónico</label>
@@ -49,7 +61,8 @@ function LoginPage({ onLoginSuccess }) {
               id="email" 
               placeholder="ejemplo@empresa.com"
               value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
+              onChange={(e) => setEmail(e.target.value)}
+              required // Hacemos que el campo sea obligatorio
             />
 
             <label htmlFor="password">Contraseña</label>
@@ -59,10 +72,15 @@ function LoginPage({ onLoginSuccess }) {
               placeholder="•••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required // Hacemos que el campo sea obligatorio
             />
 
+            {/* 8. MOSTRAMOS EL MENSAJE DE ERROR SI EXISTE */}
+            {error && (
+              <p className={styles.errorText}>{error}</p>
+            )}
+
             <div className={styles.formRow}>
-              {/* ... (resto del formulario) ... */}
               <div className={styles.formCheck}>
                 <input type="checkbox" id="remember" />
                 <label htmlFor="remember">Recuérdame</label>
@@ -70,8 +88,9 @@ function LoginPage({ onLoginSuccess }) {
               <a href="#" className={styles.link}>¿Olvidaste tu contraseña?</a>
             </div>
 
-            <button type="submit" className={styles.btnPrimary}>
-              Iniciar sesión
+            {/* 9. DESACTIVAMOS EL BOTÓN MIENTRAS CARGA */}
+            <button type="submit" className={styles.btnPrimary} disabled={loading}>
+              {loading ? 'Ingresando...' : 'Iniciar sesión'}
             </button>
           </form>
 
@@ -80,7 +99,6 @@ function LoginPage({ onLoginSuccess }) {
           </p>
 
           <div className={styles.fiscalizacionSection}>
-            {/* ... (resto de la sección) ... */}
             <a href="#" className={styles.fiscalizacionLink}>
               Acceso para Fiscalización DT 
               <span className={styles.arrowIcon}>→</span>
