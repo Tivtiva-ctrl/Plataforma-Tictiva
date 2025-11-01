@@ -10,6 +10,14 @@ function App() {
     setIsLoggedIn(true);
   };
 
+  // ===============================================
+  // === ¡AQUÍ ESTÁ LA FUNCIÓN DE CERRAR SESIÓN! ===
+  // ===============================================
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    // En el futuro, también llamaríamos a supabase.auth.signOut() aquí
+  };
+
   return (
     <Routes>
       
@@ -17,8 +25,6 @@ function App() {
         path="/" 
         element={
           !isLoggedIn ? (
-            // === ¡AQUÍ ESTÁ EL CAMBIO! ===
-            // Le pasamos la función a LoginPage
             <LoginPage onLoginSuccess={handleLoginSuccess} />
           ) : (
             <Navigate to="/dashboard" />
@@ -29,7 +35,14 @@ function App() {
       <Route 
         path="/dashboard" 
         element={
-          isLoggedIn ? <DashboardPage /> : <Navigate to="/" />
+          isLoggedIn ? (
+            // ===============================================
+            // === ¡LE PASAMOS LA FUNCIÓN AL DASHBOARD! ===
+            // ===============================================
+            <DashboardPage onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/" />
+          )
         } 
       />
     

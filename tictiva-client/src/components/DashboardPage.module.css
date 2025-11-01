@@ -1,4 +1,4 @@
-/* ... (Estilos previos se mantienen igual hasta .summaryCardContent) ... */
+/* ... (Todos los estilos hasta .userAvatar se mantienen igual) ... */
 .dashboardContainer {
   background-color: #f4f7f6;
   min-height: 100vh;
@@ -16,71 +16,91 @@
 .notificationDot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background-color: #E53935; border-radius: 50%; border: 1px solid var(--blanco); }
 .userProfile { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--azul-tictiva); }
 .userAvatar { width: 36px; height: 36px; border-radius: 50%; background-color: var(--azul-tictiva); color: var(--blanco); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
+
+/* =============================================== */
+/* === ¡ESTILOS NUEVOS PARA EL MENÚ Y BUSCADOR! === */
+/* =============================================== */
+
+/* Hacemos que el perfil sea clickeable */
+.userProfile {
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+.userProfile:hover {
+  background-color: #f4f7f6; /* Fondo gris claro al pasar el mouse */
+}
+
+/* 1. Contenedor del menú */
+.profileMenuContainer {
+  position: relative; /* Padre para el menú absoluto */
+}
+
+/* 2. El menú desplegable */
+.profileDropdown {
+  position: absolute;
+  top: calc(100% + 10px); /* 100% (debajo del perfil) + 10px de espacio */
+  right: 0;
+  background: var(--blanco);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  min-width: 200px;
+  z-index: 1000;
+  border: 1px solid #e0e6ed;
+}
+
+/* 3. Botones dentro del menú */
+.profileDropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: none;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-principal);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gris-azulado);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.profileDropdown button:hover {
+  background-color: #f4f7f6; /* Gris claro al pasar el mouse */
+}
+
+/* 4. Botón de Cerrar Sesión (con tu color azulcito) */
+.logoutButton {
+  color: var(--azul-tictiva) !important; /* ¡Tu color de marca! */
+}
+
+/* 5. Mensaje de "No resultados" */
+.noResults {
+  /* Esto hace que ocupe las 3 columnas del grid */
+  grid-column: 1 / -1; 
+  text-align: center;
+  padding: 3rem;
+  color: var(--gris-azulado);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+
+/* ... (El resto de estilos de .mainContent, .summaryCard, .moduleGrid, etc. se mantienen igual) ... */
 .mainContent { padding: 2rem; }
 .dashboardHeader { margin-bottom: 2rem; }
 .dashboardHeader h1 { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); }
 .dashboardHeader p { font-size: 1.1rem; color: var(--gris-azulado); margin-top: 0.25rem; }
-.summaryCard {
-    background-color: var(--blanco);
-    padding: 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-}
-.summaryCardContent h2 {
-    font-weight: 800;
-    font-size: 1.3rem;
-    color: var(--azul-tictiva);
-    margin-bottom: 0.5rem;
-}
-.summaryCardContent p {
-    font-size: 0.95rem;
-    color: var(--gris-azulado);
-    line-height: 1.4;
-}
-
-/* =============================================== */
-/* === ¡AQUÍ ESTÁ EL AJUSTE PARA MÁS LARGAS! === */
-/* =============================================== */
-.statCardsInSummary {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 1rem;
-    flex-shrink: 0; 
-    width: 100%; /* Hacemos que ocupe el 100% del espacio disponible */
-    max-width: 600px; /* Aumentamos el ancho máximo */
-}
-
-.statCardsInSummary .statCard {
-    background-color: #f4f7f6;
-    padding: 0.8rem 1.5rem; /* Más horizontal, menos vertical */
-    border-radius: 12px;
-    box-shadow: none;
-    text-align: center; /* Volvemos a centrar (como en tu foto) */
-}
-
-.statCardsInSummary .statCard h3 {
-    font-weight: 600;
-    font-size: 0.8rem; 
-    color: var(--gris-azulado);
-    margin-bottom: 0.25rem; /* Más espacio */
-    line-height: 1;
-}
-
-.statCardsInSummary .statCard .statNumber {
-    font-weight: 800;
-    font-size: 1.8rem; /* Devolvemos el tamaño al número */
-    color: var(--azul-tictiva);
-    margin-top: 0;
-    line-height: 1.2;
-}
-
-
-/* ... (Resto de estilos de módulos se mantienen igual) ... */
+.summaryCard { background-color: var(--blanco); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+.summaryCardContent h2 { font-weight: 800; font-size: 1.3rem; color: var(--azul-tictiva); margin-bottom: 0.5rem; }
+.summaryCardContent p { font-size: 0.95rem; color: var(--gris-azulado); line-height: 1.4; }
+.statCardsInSummary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; flex-shrink: 0; width: 100%; max-width: 600px; }
+.statCardsInSummary .statCard { background-color: #f4f7f6; padding: 0.8rem 1.5rem; border-radius: 12px; box-shadow: none; text-align: center; }
+.statCardsInSummary .statCard h3 { font-weight: 600; font-size: 0.8rem; color: var(--gris-azulado); margin-bottom: 0.25rem; line-height: 1; }
+.statCardsInSummary .statCard .statNumber { font-weight: 800; font-size: 1.8rem; color: var(--azul-tictiva); margin-top: 0; line-height: 1.2; }
 .moduleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .moduleCard { background-color: var(--blanco); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; height: 100%; }
 .moduleHeader { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
@@ -92,25 +112,13 @@
 .moduleIcon { flex-shrink: 0; display: flex; justify-content: center; width: 60px; }
 .moduleIcon img { width: 60px; height: 60px; object-fit: contain; }
 
-/* ... (Media Queries se mantienen igual) ... */
 @media (max-width: 1100px) {
-  .moduleGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .summaryCard {
-      flex-direction: column; 
-      align-items: flex-start;
-  }
-  .statCardsInSummary {
-      width: 100%; 
-      max-width: none; /* Permitimos que ocupe todo el ancho en tablets */
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  }
+  .moduleGrid { grid-template-columns: repeat(2, 1fr); }
+  .summaryCard { flex-direction: column; align-items: flex-start; }
+  .statCardsInSummary { width: 100%; max-width: none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 }
 @media (max-width: 700px) {
-  .moduleGrid {
-    grid-template-columns: 1fr;
-  }
+  .moduleGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 500px) {
   .mainContent { padding: 1rem; }
