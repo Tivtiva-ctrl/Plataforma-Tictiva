@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient'; // Importamos Supabase
 import styles from './EmployeeListPage.module.css';
-// ===============================================
-// === ¡AQUÍ ESTÁ LA CORRECCIÓN DEL IMPORT! ===
-// ===============================================
 import { 
   FiSearch, FiPlus, FiUpload, FiUsers, FiCheckCircle, FiXCircle, 
-  FiUser, // El ícono que sí existe
-  FiUsers as FiUsersOther // Mantenemos el alias para "Otros"
+  FiUser
 } from 'react-icons/fi'; 
 import { GoTable } from 'react-icons/go';
 
 function EmployeeListPage() {
-  // Datos de ejemplo para las stats cards
+  // Datos de stats (aún de ejemplo)
   const stats = {
     total: 125,
     active: 98,
@@ -22,29 +19,50 @@ function EmployeeListPage() {
     disabled: 8,
   };
 
-  // Datos de ejemplo para la tabla (lo iremos construyendo)
-  const employees = [
-    { id: 1, avatar: "JD", name: "Juan Díaz Morales", rut: "12.345.678-9", position: "Gerente de Operaciones", status: "Activo" },
-    { id: 2, avatar: "MP", name: "María Pérez Lagos", rut: "14.567.890-1", position: "Analista de Recursos Humanos", status: "Activo" },
-    { id: 3, avatar: "CR", name: "Carlos Rodríguez Vega", rut: "16.789.012-3", position: "Desarrollador Senior", status: "Activo" },
-    { id: 4, avatar: "AG", name: "Ana González Muñoz", rut: "18.901.234-5", position: "Diseñadora UX/UI", status: "Inactivo" },
-    { id: 5, avatar: "LS", name: "Luis Soto Parra", rut: "15.432.109-7", position: "Contador", status: "Activo" },
-  ];
-
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState(null);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*'); // Selecciona todo
+
+      if (error) {
+        console.error("Error al cargar empleados:", error);
+      } else {
+        setEmployees(data);
+      }
+      
+      setLoading(false);
+    };
+
+    fetchEmployees();
+  }, []); 
+
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <h2>Cargando empleados...</h2>
+        <p>Por favor, espera un momento.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.employeeListPage}>
       {/* HEADER DE LA PÁGINA */}
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>
-          <GoTable size={28} style={{ marginRight: '0.75rem' }} /> Lista de Empleados - Test 1
+          <GoTable size={28} style={{ marginRight: '0.75rem' }} /> Lista de Empleados
         </h1>
         <p className={styles.pageSubtitle}>
-          Información de empleados para Test One SpA. Haga clic en el nombre para ver detalles.
+          Gestiona la información de todos los colaboradores de la empresa.
         </p>
-
         <div className={styles.headerActions}>
           <div className={styles.searchBar}>
             <FiSearch />
@@ -66,6 +84,7 @@ function EmployeeListPage() {
 
       {/* STATS CARDS */}
       <div className={styles.statsGrid}>
+        {/* ... (tu código de stats cards) ... */}
         <div className={styles.statCard}>
           <div className={styles.statIcon}><FiUsers /></div>
           <div><h3>Total</h3><p>{stats.total}</p></div>
@@ -78,19 +97,16 @@ function EmployeeListPage() {
           <div className={styles.statIconRed}><FiXCircle /></div>
           <div><h3>Inactivos</h3><p>{stats.inactive}</p></div>
         </div>
-        {/* =============================================== */}
-        {/* === ¡AQUÍ ESTÁ LA CORRECCIÓN DE LOS ÍCONOS! === */}
-        {/* =============================================== */}
         <div className={styles.statCard}>
-          <div className={styles.statIcon}><FiUser /></div> {/* Reemplazamos FiMale */}
+          <div className={styles.statIcon}><FiUser /></div>
           <div><h3>Hombres</h3><p>{stats.male}</p></div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statIcon}><FiUser /></div> {/* Reemplazamos FiFemale */}
+          <div className={styles.statIcon}><FiUser /></div>
           <div><h3>Mujeres</h3><p>{stats.female}</p></div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statIcon}><FiUsersOther /></div>
+          <div className={styles.statIcon}><FiUsers /></div>
           <div><h3>Otros</h3><p>{stats.other}</p></div>
         </div>
         <div className={styles.statCard}>
@@ -99,7 +115,7 @@ function EmployeeListPage() {
         </div>
       </div>
 
-      {/* TABLA DE EMPLEADOS (ESTRUCTURA BÁSICA POR AHORA) */}
+      {/* TABLA DE EMPLEADOS */}
       <div className={styles.tableContainer}>
         <table className={styles.employeeTable}>
           <thead>
@@ -113,18 +129,31 @@ function EmployeeListPage() {
             </tr>
           </thead>
           <tbody>
+            {/* =============================================== */}
+            {/* === ¡AQUÍ ESTÁN LAS CORRECCIONES! === */}
+            {/* =============================================== */}
             {employees.map(employee => (
-              <tr key={employee.id}>
-                <td><div className={styles.avatar}>{employee.avatar}</div></td>
-                <td><a href="#" className={styles.employeeNameLink}>{employee.name}</a></td>
-                <td>{employee.rut}</td>
-                <td>{employee.position}</td>
+              // 1. Añadimos la "key" para solucionar el error de consola
+              <tr key={employee.id}> 
                 <td>
-                  <span className={`${styles.statusBadge} ${employee.status === 'Activo' ? styles.statusActive : styles.statusInactive}`}>
-                    {employee.status}
+                  <div className={styles.avatar}>
+                    {/* 2. Usamos 'employee.avatar' (el nombre de tu columna) */}
+                    {employee.avatar ? employee.avatar : '??'}
+                  </div>
+                </td>
+                {/* 3. Usamos 'employee.nombre' */}
+                <td><a href="#" className={styles.employeeNameLink}>{employee.nombre}</a></td>
+                <td>{employee.rut}</td>
+                {/* 4. Usamos 'employee.cargo' */}
+                <td>{employee.cargo}</td>
+                <td>
+                  {/* 5. Usamos 'employee.estado' */}
+                  <span className={`${styles.statusBadge} ${employee.estado === 'Activo' ? styles.statusActive : styles.statusInactive}`}>
+                    {employee.estado}
                   </span>
                 </td>
                 <td>
+                  {/* ... (tu código de acciones) ... */}
                   <div className={styles.actionsCell}>
                     <button 
                       className={styles.actionsButton} 
@@ -155,14 +184,10 @@ function EmployeeListPage() {
 
       {/* PAGINACIÓN */}
       <div className={styles.pagination}>
-        <span>Mostrando 1 a 5 de 125 resultados</span>
+        <span>Mostrando 1 a {employees.length} de {employees.length} resultados</span>
         <div className={styles.paginationControls}>
           <button>&lt;</button>
           <button className={styles.activePage}>1</button>
-          <button>2</button>
-          <button>3</button>
-          <span>...</span>
-          <button>25</button>
           <button>&gt;</button>
         </div>
       </div>
