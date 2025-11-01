@@ -1,24 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient'; // Importamos Supabase
+import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '../supabaseClient'; 
 import styles from './EmployeeListPage.module.css';
 import { 
-  FiSearch, FiPlus, FiUpload, FiUsers, FiCheckCircle, FiXCircle, 
-  FiUser
+  FiSearch, FiPlus, FiUpload, FiUsers, FiCheckCircle, FiXCircle, FiUser
 } from 'react-icons/fi'; 
 import { GoTable } from 'react-icons/go';
 
 function EmployeeListPage() {
-  // Datos de stats (aún de ejemplo)
-  const stats = {
-    total: 125,
-    active: 98,
-    inactive: 27,
-    male: 68,
-    female: 54,
-    other: 3,
-    disabled: 8,
-  };
-
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,22 +15,79 @@ function EmployeeListPage() {
   useEffect(() => {
     const fetchEmployees = async () => {
       setLoading(true);
-      
+
+      // 👇 Tabla: employees (minúscula) | Columna con espacio: "nombre completo"
       const { data, error } = await supabase
         .from('employees')
-        .select('*'); // Selecciona todo
+        .select('"nombre completo", rut, cargo, estado, avatar')
+        .order('"nombre completo"', { ascending: true });
 
       if (error) {
-        console.error("Error al cargar empleados:", error);
+        console.error("Error al cargar empleados:", {
+          message: error.message, details: error.details, hint: error.hint, code: error.code
+        });
+        setEmployees([]);
       } else {
-        setEmployees(data);
+        setEmployees(Array.isArray(data) ? data : []);
       }
-      
       setLoading(false);
     };
 
     fetchEmployees();
-  }, []); 
+  }, []);
+
+  // Normaliza a un shape estable para la UI (usa RUT como id)
+  const safeEmployees = useMemo(() => {
+    return (employees ?? []).map((emp) => ({
+      id: emp?.rut ?? Math.random().toString(36).slice(2),
+      nombre: emp?.['nombre completo'] ?? 'Sin nombre',
+      rut: emp?.rut ?? '—',
+      cargo: emp?.cargo ?? '—',
+      estado: emp?.estado ?? '—',
+      // Campos que no existen en tu schema actual (defaults para no romper tarjetas)
+      genero: 'Otro',
+      discapacidad: false,
+      avatar: typeof emp?.avatar === 'string' ? emp.avatar : null,
+    }));
+  }, [employees]);
+
+  // Buscador (sobre la lista normalizada)
+  const filteredEmployees = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return safeEmployees;
+    return safeEmployees.filter(e =>
+      (e.nombre || '').toLowerCase().includes(q) ||
+      (e.rut || '').toLowerCase().includes(q)
+    );
+  }, [safeEmployees, searchQuery]);
+
+  // Estadísticas básicas
+  const totalEmployees = safeEmployees.length;
+  const activeEmployees = safeEmployees.filter(
+    (e) => (e.estado || '').toLowerCase() === 'activo'
+  ).length;
+  const inactiveEmployees = safeEmployees.filter(
+    (e) => (e.estado || '').toLowerCase() === 'inactivo'
+  ).length;
+  const maleEmployees = safeEmployees.filter(
+    (e) => (e.genero || '').toLowerCase() === 'hombre'
+  ).length;
+  const femaleEmployees = safeEmployees.filter(
+    (e) => (e.genero || '').toLowerCase() === 'mujer'
+  ).length;
+  const otherEmployees = safeEmployees.filter((e) => {
+    const g = (e.genero || '').toLowerCase();
+    return g !== 'hombre' && g !== 'mujer';
+  }).length;
+  const disabledEmployees = safeEmployees.filter((e) => e.discapacidad === true).length;
+
+  const getInitials = (fullName) => {
+    if (!fullName) return '??';
+    const parts = fullName.trim().split(/\s+/);
+    const first = parts[0]?.[0] || '';
+    const last = parts[parts.length - 1]?.[0] || '';
+    return (first + last).toUpperCase() || '??';
+  };
 
   if (loading) {
     return (
@@ -55,7 +100,7 @@ function EmployeeListPage() {
 
   return (
     <div className={styles.employeeListPage}>
-      {/* HEADER DE LA PÁGINA */}
+      {/* HEADER */}
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>
           <GoTable size={28} style={{ marginRight: '0.75rem' }} /> Lista de Empleados
@@ -82,41 +127,40 @@ function EmployeeListPage() {
         </div>
       </div>
 
-      {/* STATS CARDS */}
+      {/* STATS */}
       <div className={styles.statsGrid}>
-        {/* ... (tu código de stats cards) ... */}
         <div className={styles.statCard}>
           <div className={styles.statIcon}><FiUsers /></div>
-          <div><h3>Total</h3><p>{stats.total}</p></div>
+          <div><h3>Total</h3><p>{totalEmployees}</p></div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIconGreen}><FiCheckCircle /></div>
-          <div><h3>Activos</h3><p>{stats.active}</p></div>
+          <div><h3>Activos</h3><p>{activeEmployees}</p></div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIconRed}><FiXCircle /></div>
-          <div><h3>Inactivos</h3><p>{stats.inactive}</p></div>
+          <div><h3>Inactivos</h3><p>{inactiveEmployees}</p></div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon}><FiUser /></div>
-          <div><h3>Hombres</h3><p>{stats.male}</p></div>
+          <div><h3>Hombres</h3><p>{maleEmployees}</p></div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon}><FiUser /></div>
-          <div><h3>Mujeres</h3><p>{stats.female}</p></div>
+          <div><h3>Mujeres</h3><p>{femaleEmployees}</p></div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon}><FiUsers /></div>
-          <div><h3>Otros</h3><p>{stats.other}</p></div>
+          <div><h3>Otros</h3><p>{otherEmployees}</p></div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon}><FiUser /></div>
-          <div><h3>Con Discapacidad</h3><p>{stats.disabled}</p></div>
+          <div><h3>Con Discapacidad</h3><p>{disabledEmployees}</p></div>
         </div>
       </div>
 
-      {/* TABLA DE EMPLEADOS */}
-      <div className={styles.tableContainer}>
+      {/* TABLA */}
+      <div className={styles.tableWrapper}>
         <table className={styles.employeeTable}>
           <thead>
             <tr>
@@ -129,69 +173,89 @@ function EmployeeListPage() {
             </tr>
           </thead>
           <tbody>
-            {/* =============================================== */}
-            {/* === ¡AQUÍ ESTÁN LAS CORRECCIONES! === */}
-            {/* =============================================== */}
-            {employees.map(employee => (
-              // 1. Añadimos la "key" para solucionar el error de consola
-              <tr key={employee.id}> 
-                <td>
-                  <div className={styles.avatar}>
-                    {/* 2. Usamos 'employee.avatar' (el nombre de tu columna) */}
-                    {employee.avatar ? employee.avatar : '??'}
-                  </div>
-                </td>
-                {/* 3. Usamos 'employee.nombre' */}
-                <td><a href="#" className={styles.employeeNameLink}>{employee.nombre}</a></td>
-                <td>{employee.rut}</td>
-                {/* 4. Usamos 'employee.cargo' */}
-                <td>{employee.cargo}</td>
-                <td>
-                  {/* 5. Usamos 'employee.estado' */}
-                  <span className={`${styles.statusBadge} ${employee.estado === 'Activo' ? styles.statusActive : styles.statusInactive}`}>
-                    {employee.estado}
-                  </span>
-                </td>
-                <td>
-                  {/* ... (tu código de acciones) ... */}
-                  <div className={styles.actionsCell}>
-                    <button 
-                      className={styles.actionsButton} 
-                      onClick={() => setOpenDropdownId(openDropdownId === employee.id ? null : employee.id)}
+            {filteredEmployees.map(employee => {
+              const rowKey = employee.id;
+              return (
+                <tr key={rowKey}>
+                  <td>
+                    <div className={styles.avatar}>
+                      {employee.avatar ? (
+                        <img
+                          src={employee.avatar}
+                          alt={employee.nombre}
+                          className={styles.avatarImg}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <span className={styles.avatarInitials}>
+                          {getInitials(employee.nombre)}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <a href="#" className={styles.employeeNameLink}>
+                      {employee.nombre}
+                    </a>
+                  </td>
+                  <td>{employee.rut}</td>
+                  <td>{employee.cargo}</td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${
+                        (employee.estado || '').toLowerCase() === 'activo'
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }`}
                     >
-                      Ver Detalles
-                    </button>
-                    {openDropdownId === employee.id && (
-                      <div className={styles.actionsDropdown}>
-                        <a href="#">Perfil 360</a>
-                        <a href="#">Datos personales</a>
-                        <a href="#">Datos contractuales</a>
-                        <a href="#">Documentos</a>
-                        <a href="#">Previsión</a>
-                        <a href="#">Bancarios</a>
-                        <a href="#">Asistencia</a>
-                        <a href="#">Hoja de vida</a>
-                        <a href="#">Historial</a>
-                      </div>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {employee.estado}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.actionsCell}>
+                      <button 
+                        className={styles.actionsButton} 
+                        onClick={() =>
+                          setOpenDropdownId(openDropdownId === rowKey ? null : rowKey)
+                        }
+                      >
+                        Ver Detalles
+                      </button>
+
+                      {openDropdownId === rowKey && (
+                        <div className={styles.actionsDropdown}>
+                          <a href="#">Tictiva 360</a>
+                          <a href="#">Datos personales</a>
+                          <a href="#">Datos contractuales</a>
+                          <a href="#">Datos previsionales</a>
+                          <a href="#">Datos bancarios</a>
+                          <a href="#">Datos de salud</a>
+                          <a href="#">Documentos</a>
+                          <a href="#">Asistencia</a>
+                          <a href="#">Hoja de vida</a>
+                          <a href="#">Historial</a>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       {/* PAGINACIÓN */}
       <div className={styles.pagination}>
-        <span>Mostrando 1 a {employees.length} de {employees.length} resultados</span>
+        <span>
+          Mostrando 1 a {filteredEmployees.length} de {filteredEmployees.length} resultados
+        </span>
         <div className={styles.paginationControls}>
-          <button>&lt;</button>
+          <button disabled>&lt;</button>
           <button className={styles.activePage}>1</button>
-          <button>&gt;</button>
+          <button disabled>&gt;</button>
         </div>
       </div>
-
     </div>
   );
 }
