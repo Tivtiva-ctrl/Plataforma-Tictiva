@@ -1,0 +1,401 @@
+.employeeListPage {
+  padding: 2rem;
+  background-color: #f4f7f6;
+  min-height: calc(100vh - 65px); /* Altura de la vista menos la barra superior */
+}
+
+/* --- HEADER DE LA PÁGINA --- */
+.header {
+  margin-bottom: 2rem;
+  background-color: var(--blanco);
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.pageTitle {
+  font-family: var(--font-principal);
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: var(--azul-tictiva);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.pageSubtitle {
+  font-size: 0.95rem;
+  color: var(--gris-azulado);
+  margin-bottom: 1.5rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: #f4f7f6;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  flex-grow: 1; /* Para que ocupe el espacio disponible */
+  max-width: 350px; /* Limitar el ancho del buscador */
+}
+
+.searchBar input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-principal);
+  padding-left: 0.5rem;
+  width: 100%;
+}
+
+.btnPrimary, .btnSecondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap; /* Evita que el texto se rompa */
+}
+
+.btnPrimary {
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+  border: 1px solid var(--azul-tictiva);
+}
+
+.btnPrimary:hover {
+  background-color: var(--gris-azulado);
+  border-color: var(--gris-azulado);
+}
+
+.btnSecondary {
+  background-color: var(--blanco);
+  color: var(--azul-tictiva);
+  border: 1px solid var(--azul-tictiva);
+}
+
+.btnSecondary:hover {
+  background-color: var(--azul-tictiva-ligero); /* Un azul más claro */
+  color: var(--blanco);
+}
+
+
+/* --- STATS CARDS --- */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Adaptable */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background-color: var(--blanco);
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.statCard h3 {
+  font-size: 0.85rem;
+  color: var(--gris-azulado);
+  margin-bottom: 0.2rem;
+}
+
+.statCard p {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--azul-tictiva);
+}
+
+.statIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--azul-tictiva-ligero); /* Un azul claro */
+  color: var(--azul-tictiva);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.statIconGreen {
+  composes: statIcon; /* Hereda estilos de statIcon */
+  background-color: #E8F5E9; /* Verde muy claro */
+  color: #4CAF50; /* Verde */
+}
+
+.statIconRed {
+  composes: statIcon; /* Hereda estilos de statIcon */
+  background-color: #FFEBEE; /* Rojo muy claro */
+  color: #F44336; /* Rojo */
+}
+
+/* --- TABLA DE EMPLEADOS --- */
+.tableContainer {
+  background-color: var(--blanco);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow-x: auto; /* Para tablas grandes en pantallas pequeñas */
+  margin-bottom: 2rem;
+}
+
+.employeeTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-principal);
+}
+
+.employeeTable th,
+.employeeTable td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.employeeTable th {
+  background-color: #f4f7f6;
+  font-weight: 600;
+  color: var(--gris-azulado);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.employeeTable td {
+  font-size: 0.9rem;
+  color: var(--azul-tictiva);
+  vertical-align: middle;
+}
+
+.employeeTable tbody tr:hover {
+  background-color: #fdfdfd;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--azul-tictiva-ligero);
+  color: var(--azul-tictiva);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.employeeNameLink {
+  color: var(--azul-tictiva);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.employeeNameLink:hover {
+  text-decoration: underline;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.4em 0.8em;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1;
+}
+
+.statusActive {
+  background-color: #E8F5E9; /* Verde claro */
+  color: #2E7D32; /* Verde oscuro */
+}
+
+.statusInactive {
+  background-color: #FFEBEE; /* Rojo claro */
+  color: #C62828; /* Rojo oscuro */
+}
+
+/* --- COLUMNA DE ACCIONES (VER DETALLES / MENÚ DESPLEGABLE) --- */
+.actionsCell {
+  position: relative;
+  display: inline-block; /* Para que el dropdown se posicione correctamente */
+}
+
+.actionsButton {
+  background-color: var(--blanco);
+  border: 1px solid #e0e6ed;
+  color: var(--gris-azulado);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actionsButton:hover {
+  background-color: #f4f7f6;
+  border-color: var(--azul-tictiva);
+  color: var(--azul-tictiva);
+}
+
+.actionsDropdown {
+  position: absolute;
+  top: 100%; /* Justo debajo del botón */
+  right: 0; /* Alineado a la derecha del botón */
+  background-color: var(--blanco);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e6ed;
+  z-index: 100; /* Asegura que esté por encima de otros elementos */
+  min-width: 200px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem; /* Pequeño espacio entre botón y dropdown */
+  display: flex;
+  flex-direction: column;
+}
+
+.actionsDropdown a {
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: var(--gris-azulado);
+  font-family: var(--font-principal);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.actionsDropdown a:hover {
+  background-color: #f4f7f6;
+  color: var(--azul-tictiva);
+}
+
+
+/* --- PAGINACIÓN --- */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+}
+
+.paginationControls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.paginationControls button {
+  background-color: var(--blanco);
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paginationControls button:hover:not(.activePage) {
+  background-color: #f4f7f6;
+  border-color: var(--azul-tictiva);
+  color: var(--azul-tictiva);
+}
+
+.paginationControls .activePage {
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+  border-color: var(--azul-tictiva);
+}
+
+/* --- Media Queries para Responsividad --- */
+@media (max-width: 1024px) {
+  .headerActions {
+    flex-wrap: wrap; /* Permite que los elementos pasen a la siguiente línea */
+    justify-content: flex-end; /* Alinea los botones a la derecha si se envuelven */
+  }
+  .searchBar {
+    width: 100%; /* Ocupa todo el ancho disponible */
+    max-width: none;
+    order: 1; /* Para que el buscador aparezca primero si se envuelve */
+  }
+  .btnSecondary, .btnPrimary {
+    order: 2; /* Los botones vienen después del buscador */
+  }
+  .statsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .employeeListPage {
+    padding: 1rem;
+  }
+  .header {
+    padding: 1rem 1.5rem;
+  }
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+  .pageSubtitle {
+    font-size: 0.85rem;
+  }
+  .statCard h3 {
+    font-size: 0.75rem;
+  }
+  .statCard p {
+    font-size: 1.2rem;
+  }
+  .statIcon {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+  .employeeTable th,
+  .employeeTable td {
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+  }
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+  .actionsButton {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  .actionsDropdown a {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+  }
+  .pagination {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .paginationControls {
+    width: 100%;
+    justify-content: center;
+  }
+}

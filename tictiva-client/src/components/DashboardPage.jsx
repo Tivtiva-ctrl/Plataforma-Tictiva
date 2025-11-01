@@ -15,6 +15,11 @@ import iconCuida from '../assets/icon-cuida.png';
 import iconBodega from '../assets/icon-bodega.png';
 import tictivaHeart from '../assets/tictiva-heart.png';
 
+// ===============================================
+// === ¡AQUÍ ESTÁ LA CORRECCIÓN DE LA RUTA! ===
+// ===============================================
+import EmployeeListPage from './EmployeeListPage'; // <-- RUTA CORREGIDA
+
 
 // --- Componente Interno (No cambia) ---
 function ModuleCard({ icon, title, description, actions, modulePath }) {
@@ -200,14 +205,11 @@ function DashboardPage({ onLogout }) {
             </header>
 
             <section className={styles.summaryCard}>
+              {/* ... (código de summaryCard) ... */}
               <div className={styles.summaryCardContent}>
                   <h2>Humanizamos la gestión, digitalizamos tu tranquilidad</h2>
                   <p>Accede a tus módulos. Todo es simple, rápido y consistente.</p>
               </div>
-              
-              {/* =============================================== */}
-              {/* === ¡AQUÍ ESTÁ EL CAMBIO! Números a 0 === */}
-              {/* =============================================== */}
               <div className={styles.statCardsInSummary}>
                   <Link to="/dashboard/comunicaciones/envío-de-mensajes" className={styles.statCard}>
                       <h3>Mensajes</h3>
@@ -239,7 +241,12 @@ function DashboardPage({ onLogout }) {
           </main>
         } />
         
+        {/* Ruta para "Listado de fichas" */}
+        <Route path="rrhh/listado-de-fichas" element={<EmployeeListPage />} />
+        
+        {/* Ruta genérica para TODOS los demás submódulos */}
         <Route path=":moduleId/:submoduleId" element={<SubmodulePage />} />
+      
       </Routes>
     </div>
   );
