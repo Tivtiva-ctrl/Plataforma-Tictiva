@@ -10,86 +10,83 @@
 .companySelector select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent; border: none; font-family: var(--font-principal); font-weight: 600; font-size: 0.9rem; color: var(--azul-tictiva); padding-left: 0.5rem; padding-right: 1.5rem; cursor: pointer; }
 .companySelector select:focus { outline: none; }
 .selectArrow { position: absolute; right: 10px; pointer-events: none; }
-.searchBar { display: flex; align-items: center; background-color: #f4f7f6; padding: 0.5rem 1rem; border-radius: 8px; min-width: 300px; }
+.searchBar { display: flex; align-items: center; background-color: #f4f7f6; padding: 0.5rem 1rem; border-radius: 8px; width: 300px; }
 .searchBar input { border: none; background: transparent; outline: none; font-family: var(--font-principal); padding-left: 0.5rem; width: 100%; }
 .iconButton { background: transparent; border: none; cursor: pointer; color: var(--gris-azulado); position: relative; padding: 0; }
 .notificationDot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background-color: #E53935; border-radius: 50%; border: 1px solid var(--blanco); }
-.userProfile { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--azul-tictiva); }
+.userProfile { cursor: pointer; padding: 0.25rem; border-radius: 6px; transition: background-color 0.2s ease; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--azul-tictiva); }
+.userProfile:hover { background-color: #f4f7f6; }
 .userAvatar { width: 36px; height: 36px; border-radius: 50%; background-color: var(--azul-tictiva); color: var(--blanco); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
+.profileMenuContainer { position: relative; }
+.profileDropdown { position: absolute; top: calc(100% + 10px); right: 0; background: var(--blanco); border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 0.5rem; min-width: 200px; z-index: 1000; border: 1px solid #e0e6ed; }
+.profileDropdown button { display: flex; align-items: center; gap: 0.75rem; background: transparent; border: none; width: 100%; padding: 0.75rem 1rem; font-family: var(--font-principal); font-size: 0.95rem; font-weight: 600; color: var(--gris-azulado); text-align: left; cursor: pointer; border-radius: 6px; }
+.profileDropdown button:hover { background-color: #f4f7f6; }
+.logoutButton { color: var(--azul-tictiva) !important; }
 
 /* =============================================== */
-/* === ¡ESTILOS NUEVOS PARA EL MENÚ Y BUSCADOR! === */
+/* === ¡ESTILOS NUEVOS PARA EL BUSCADOR INTELIGENTE! === */
 /* =============================================== */
-
-/* Hacemos que el perfil sea clickeable */
-.userProfile {
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-}
-.userProfile:hover {
-  background-color: #f4f7f6; /* Fondo gris claro al pasar el mouse */
+.searchContainer {
+  position: relative; /* Padre para el menú desplegable */
 }
 
-/* 1. Contenedor del menú */
-.profileMenuContainer {
-  position: relative; /* Padre para el menú absoluto */
-}
-
-/* 2. El menú desplegable */
-.profileDropdown {
+.searchDropdown {
   position: absolute;
-  top: calc(100% + 10px); /* 100% (debajo del perfil) + 10px de espacio */
-  right: 0;
+  top: calc(100% + 5px); /* Debajo de la barra + 5px de espacio */
+  left: 0;
+  width: 100%; /* Mismo ancho que la barra de búsqueda */
   background: var(--blanco);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem;
-  min-width: 200px;
-  z-index: 1000;
   border: 1px solid #e0e6ed;
+  z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-/* 3. Botones dentro del menú */
-.profileDropdown button {
+.searchResultItem {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: transparent;
-  border: none;
-  width: 100%;
+  justify-content: space-between;
   padding: 0.75rem 1rem;
+  text-decoration: none;
+  border-bottom: 1px solid #f4f7f6; /* Separador sutil */
+}
+.searchResultItem:last-child {
+  border-bottom: none;
+}
+.searchResultItem:hover {
+  background-color: #f4f7f6;
+}
+
+.resultText {
+  display: flex;
+  flex-direction: column;
+}
+
+.searchResultItem strong {
   font-family: var(--font-principal);
-  font-size: 0.95rem;
   font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--azul-tictiva);
+}
+
+.searchResultItem span {
+  font-size: 0.8rem;
   color: var(--gris-azulado);
-  text-align: left;
-  cursor: pointer;
-  border-radius: 6px;
-}
-.profileDropdown button:hover {
-  background-color: #f4f7f6; /* Gris claro al pasar el mouse */
 }
 
-/* 4. Botón de Cerrar Sesión (con tu color azulcito) */
-.logoutButton {
-  color: var(--azul-tictiva) !important; /* ¡Tu color de marca! */
-}
-
-/* 5. Mensaje de "No resultados" */
-.noResults {
-  /* Esto hace que ocupe las 3 columnas del grid */
-  grid-column: 1 / -1; 
+.searchNoResult {
+  padding: 1rem;
   text-align: center;
-  padding: 3rem;
   color: var(--gris-azulado);
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
 
 /* ... (El resto de estilos de .mainContent, .summaryCard, .moduleGrid, etc. se mantienen igual) ... */
+.noResults { grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--gris-azulado); font-weight: 600; font-size: 1.1rem; }
 .mainContent { padding: 2rem; }
 .dashboardHeader { margin-bottom: 2rem; }
 .dashboardHeader h1 { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); }
@@ -107,7 +104,7 @@
 .moduleTitle { font-weight: 800; font-size: 1.2rem; color: var(--azul-tictiva); }
 .moduleDesc { font-size: 0.9rem; color: var(--gris-azulado); margin-top: 0.25rem; }
 .moduleActions { display: flex; flex-direction: column; gap: 0.75rem; padding-top: 1rem; }
-.moduleButton { background-color: var(--blanco); border: 1px solid var(--azul-tictiva); color: var(--azul-tictiva); padding: 0.75rem 1rem; border-radius: 8px; font-family: var(--font-principal); font-weight: 600; font-size: 0.9rem; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+.moduleButton { background-color: var(--blanco); border: 1px solid var(--azul-tictiva); color: var(--azul-tictiva); padding: 0.75rem 1rem; border-radius: 8px; font-family: var(--font-principal); font-weight: 600; font-size: 0.9rem; text-align: center; cursor: pointer; transition: all 0.2s ease; text-decoration: none; }
 .moduleButton:hover { background-color: var(--azul-tictiva); color: var(--blanco); }
 .moduleIcon { flex-shrink: 0; display: flex; justify-content: center; width: 60px; }
 .moduleIcon img { width: 60px; height: 60px; object-fit: contain; }
