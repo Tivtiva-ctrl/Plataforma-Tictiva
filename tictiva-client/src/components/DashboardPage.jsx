@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'; // <-- ¡NUEVOS IMPORTS!
+import { useState, useRef, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom'; 
 import styles from './DashboardPage.module.css';
 import { 
@@ -13,10 +13,12 @@ import iconComunicaciones from '../assets/icon-comunicaciones.png';
 import iconReporteria from '../assets/icon-reporteria.png';
 import iconCuida from '../assets/icon-cuida.png';
 import iconBodega from '../assets/icon-bodega.png';
+import tictivaHeart from '../assets/tictiva-heart.png';
 
 
 // --- Componente Interno (No cambia) ---
 function ModuleCard({ icon, title, description, actions, modulePath }) {
+  // ... (código de ModuleCard) ...
   return (
     <div className={styles.moduleCard}>
       <div className={styles.moduleHeader}>
@@ -45,6 +47,7 @@ function ModuleCard({ icon, title, description, actions, modulePath }) {
 
 // --- Componente de Página de Submódulo (Placeholder) ---
 function SubmodulePage() {
+  // ... (código de SubmodulePage) ...
   return (
     <div style={{ padding: '2rem' }}>
       <h2>Página del Submódulo</h2>
@@ -58,14 +61,10 @@ function SubmodulePage() {
 function DashboardPage({ onLogout }) {
   const [selectedCompany, setSelectedCompany] = useState('tictiva');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  
-  // ===============================================
-  // === ¡NUEVOS ESTADOS Y LÓGICA PARA EL BUSCADOR! ===
-  // ===============================================
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
-  const searchContainerRef = useRef(null); // Ref para el "click outside"
+  const searchContainerRef = useRef(null); 
 
   const getGreeting = () => { /* ... (código de saludo) ... */
     const currentHour = new Date().getHours();
@@ -74,7 +73,7 @@ function DashboardPage({ onLogout }) {
     else return "Buenas noches";
   };
 
-  const modules = [
+  const modules = [ /* ... (código de modules) ... */
     { path: "rrhh", icon: <img src={iconRrhh} alt="RRHH" />, title: "RRHH", description: "Gestión humana, clara y cercana", actions: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"] },
     { path: "asistencia", icon: <img src={iconAsistencia} alt="Asistencia" />, title: "Asistencia", description: "Control preciso, en tiempo real", actions: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"] },
     { path: "comunicaciones", icon: <img src={iconComunicaciones} alt="Comunicaciones" />, title: "Comunicaciones", description: "Mensajes y encuestas sin fricción", actions: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Canal de denuncias", "Dashboard"] },
@@ -83,21 +82,18 @@ function DashboardPage({ onLogout }) {
     { path: "bodega-epp", icon: <img src={iconBodega} alt="Bodega & EPP" />, title: "Bodega & EPP", description: "Inventario al servicio del equipo", actions: ["Inventario", "Colaboradores", "Operaciones", "Alertas"] },
   ];
 
-  // 1. Creamos la "lista maestra" de búsqueda
-  const allSearchableItems = [];
+  const allSearchableItems = []; // ... (código de allSearchableItems) ...
   modules.forEach(mod => {
-    // Añadimos cada submódulo (acción)
     mod.actions.forEach(action => {
       allSearchableItems.push({
-        title: action, // "Listado de fichas"
-        context: mod.title, // "en RRHH"
+        title: action,
+        context: mod.title,
         path: `/dashboard/${mod.path}/${action.toLowerCase().replace(/ /g, '-')}`
       });
     });
   });
 
-  // 2. Lógica para el "click outside" del buscador
-  useEffect(() => {
+  useEffect(() => { // ... (código de useEffect) ...
     const handleClickOutside = (event) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
         setIsSearchDropdownOpen(false);
@@ -109,12 +105,11 @@ function DashboardPage({ onLogout }) {
     };
   }, []);
 
-  // 3. Función que se ejecuta al escribir en el buscador
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e) => { // ... (código de handleSearchChange) ...
     const query = e.target.value;
     setSearchQuery(query);
 
-    if (query.length > 1) { // Buscamos después de 1 caracter
+    if (query.length > 1) {
       const results = allSearchableItems.filter(item => 
         item.title.toLowerCase().includes(query.toLowerCase())
       );
@@ -126,8 +121,7 @@ function DashboardPage({ onLogout }) {
     }
   };
   
-  // 4. Limpiamos el buscador y cerramos el dropdown al hacer clic
-  const handleResultClick = () => {
+  const handleResultClick = () => { // ... (código de handleResultClick) ...
     setSearchQuery('');
     setSearchResults([]);
     setIsSearchDropdownOpen(false);
@@ -138,8 +132,8 @@ function DashboardPage({ onLogout }) {
     <div className={styles.dashboardContainer}>
       
       <nav className={styles.topNav}>
+        {/* ... (código de nav) ... */}
         <div className={styles.navLeft}>
-          {/* ... (código de logo y selector de empresa) ... */}
           <div className={styles.logo}>Tictiva</div>
           <div className={styles.companySelector}>
             <IoBusiness />
@@ -151,33 +145,16 @@ function DashboardPage({ onLogout }) {
           </div>
         </div>
         <div className={styles.navRight}>
-          
-          {/* =============================================== */}
-          {/* === ¡NUEVO CONTENEDOR DE BÚSQUEDA! === */}
-          {/* =============================================== */}
           <div className={styles.searchContainer} ref={searchContainerRef}>
             <div className={styles.searchBar}>
               <FiSearch />
-              <input 
-                type="text" 
-                placeholder="Buscar submódulos..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => { if (searchQuery.length > 0) setIsSearchDropdownOpen(true); }}
-              />
+              <input type="text" placeholder="Buscar submódulos..." value={searchQuery} onChange={handleSearchChange} onFocus={() => { if (searchQuery.length > 0) setIsSearchDropdownOpen(true); }} />
             </div>
-            
-            {/* 5. El Menú Desplegable de Resultados */}
             {isSearchDropdownOpen && (
               <div className={styles.searchDropdown}>
                 {searchResults.length > 0 ? (
                   searchResults.map((item) => (
-                    <Link 
-                      key={item.path} 
-                      to={item.path} 
-                      className={styles.searchResultItem}
-                      onClick={handleResultClick}
-                    >
+                    <Link key={item.path} to={item.path} className={styles.searchResultItem} onClick={handleResultClick}>
                       <div className={styles.resultText}>
                         <strong>{item.title}</strong>
                         <span>en {item.context}</span>
@@ -185,22 +162,17 @@ function DashboardPage({ onLogout }) {
                     </Link>
                   ))
                 ) : (
-                  <div className={styles.searchNoResult}>
-                    No hay resultados para "{searchQuery}"
-                  </div>
+                  <div className={styles.searchNoResult}>No hay resultados para "{searchQuery}"</div>
                 )}
               </div>
             )}
           </div>
-          
           <button className={styles.iconButton}><FiHelpCircle size={22} /></button>
           <button className={styles.iconButton}><FiSettings size={22} /></button>
           <button className={styles.iconButton}>
             <FiBell size={22} />
             <span className={styles.notificationDot}></span>
           </button>
-
-          {/* ... (código del menú de perfil) ... */}
           <div className={styles.profileMenuContainer}>
             <div className={styles.userProfile} onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}>
               <div className={styles.userAvatar}>VM</div>
@@ -216,15 +188,14 @@ function DashboardPage({ onLogout }) {
         </div>
       </nav>
 
-      {/* =============================================== */}
-      {/* === ¡EL DASHBOARD AHORA USA RUTAS! === */}
-      {/* =============================================== */}
       <Routes>
-        {/* Ruta 1: /dashboard (La página principal con los módulos) */}
         <Route index element={
           <main className={styles.mainContent}>
             <header className={styles.dashboardHeader}>
-              <h1>{getGreeting()}, Verónica 💚</h1>
+              <h1>
+                {getGreeting()}, Verónica 
+                <img src={tictivaHeart} alt="corazón" className={styles.greetingIcon} />
+              </h1>
               <p>"Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve".</p>
             </header>
 
@@ -233,14 +204,26 @@ function DashboardPage({ onLogout }) {
                   <h2>Humanizamos la gestión, digitalizamos tu tranquilidad</h2>
                   <p>Accede a tus módulos. Todo es simple, rápido y consistente.</p>
               </div>
+              
+              {/* =============================================== */}
+              {/* === ¡AQUÍ ESTÁ EL CAMBIO! Números a 0 === */}
+              {/* =============================================== */}
               <div className={styles.statCardsInSummary}>
-                  <div className={styles.statCard}><h3>Mensajes</h3><span className={styles.statNumber}>3</span></div>
-                  <div className={styles.statCard}><h3>Marcas hoy</h3><span className={styles.statNumber}>128</span></div>
-                  <div className={styles.statCard}><h3>Dispositivos activos</h3><span className={styles.statNumber}>5</span></div>
+                  <Link to="/dashboard/comunicaciones/envío-de-mensajes" className={styles.statCard}>
+                      <h3>Mensajes</h3>
+                      <span className={styles.statNumber}>0</span>
+                  </Link>
+                  <Link to="/dashboard/asistencia/marcas-registradas" className={styles.statCard}>
+                      <h3>Marcas hoy</h3>
+                      <span className={styles.statNumber}>0</span>
+                  </Link>
+                  <Link to="/dashboard/asistencia/gestion-de-dispositivos" className={styles.statCard}>
+                      <h3>Dispositivos activos</h3>
+                      <span className={styles.statNumber}>0</span>
+                  </Link>
               </div>
             </section>
             
-            {/* Ya no filtramos los módulos aquí, mostramos todos */}
             <section className={styles.moduleGrid}>
               {modules.map((mod) => (
                 <ModuleCard 
@@ -256,9 +239,7 @@ function DashboardPage({ onLogout }) {
           </main>
         } />
         
-        {/* Ruta 2: /dashboard/:moduleId/:submoduleId (Las páginas de submódulo) */}
         <Route path=":moduleId/:submoduleId" element={<SubmodulePage />} />
-      
       </Routes>
     </div>
   );

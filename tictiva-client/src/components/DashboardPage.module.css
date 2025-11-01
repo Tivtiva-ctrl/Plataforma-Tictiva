@@ -1,4 +1,4 @@
-/* ... (Todos los estilos hasta .userAvatar se mantienen igual) ... */
+/* ... (Todos los estilos hasta .statCardsInSummary se mantienen igual) ... */
 .dashboardContainer {
   background-color: #f4f7f6;
   min-height: 100vh;
@@ -22,82 +22,61 @@
 .profileDropdown button { display: flex; align-items: center; gap: 0.75rem; background: transparent; border: none; width: 100%; padding: 0.75rem 1rem; font-family: var(--font-principal); font-size: 0.95rem; font-weight: 600; color: var(--gris-azulado); text-align: left; cursor: pointer; border-radius: 6px; }
 .profileDropdown button:hover { background-color: #f4f7f6; }
 .logoutButton { color: var(--azul-tictiva) !important; }
-
-/* =============================================== */
-/* === ¡ESTILOS NUEVOS PARA EL BUSCADOR INTELIGENTE! === */
-/* =============================================== */
-.searchContainer {
-  position: relative; /* Padre para el menú desplegable */
-}
-
-.searchDropdown {
-  position: absolute;
-  top: calc(100% + 5px); /* Debajo de la barra + 5px de espacio */
-  left: 0;
-  width: 100%; /* Mismo ancho que la barra de búsqueda */
-  background: var(--blanco);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0e6ed;
-  z-index: 1000;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.searchResultItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  border-bottom: 1px solid #f4f7f6; /* Separador sutil */
-}
-.searchResultItem:last-child {
-  border-bottom: none;
-}
-.searchResultItem:hover {
-  background-color: #f4f7f6;
-}
-
-.resultText {
-  display: flex;
-  flex-direction: column;
-}
-
-.searchResultItem strong {
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--azul-tictiva);
-}
-
-.searchResultItem span {
-  font-size: 0.8rem;
-  color: var(--gris-azulado);
-}
-
-.searchNoResult {
-  padding: 1rem;
-  text-align: center;
-  color: var(--gris-azulado);
-  font-style: italic;
-  font-size: 0.9rem;
-}
-
-
-/* ... (El resto de estilos de .mainContent, .summaryCard, .moduleGrid, etc. se mantienen igual) ... */
+.searchContainer { position: relative; }
+.searchDropdown { position: absolute; top: calc(100% + 5px); left: 0; width: 100%; background: var(--blanco); border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e6ed; z-index: 1000; max-height: 400px; overflow-y: auto; }
+.searchResultItem { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; text-decoration: none; border-bottom: 1px solid #f4f7f6; }
+.searchResultItem:last-child { border-bottom: none; }
+.searchResultItem:hover { background-color: #f4f7f6; }
+.resultText { display: flex; flex-direction: column; }
+.searchResultItem strong { font-family: var(--font-principal); font-weight: 600; font-size: 0.9rem; color: var(--azul-tictiva); }
+.searchResultItem span { font-size: 0.8rem; color: var(--gris-azulado); }
+.searchNoResult { padding: 1rem; text-align: center; color: var(--gris-azulado); font-style: italic; font-size: 0.9rem; }
 .noResults { grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--gris-azulado); font-weight: 600; font-size: 1.1rem; }
 .mainContent { padding: 2rem; }
 .dashboardHeader { margin-bottom: 2rem; }
-.dashboardHeader h1 { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); }
+.dashboardHeader h1 { font-weight: 800; font-size: 2.2rem; color: var(--azul-tictiva); display: flex; align-items: center; gap: 0.5rem; }
 .dashboardHeader p { font-size: 1.1rem; color: var(--gris-azulado); margin-top: 0.25rem; }
 .summaryCard { background-color: var(--blanco); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
 .summaryCardContent h2 { font-weight: 800; font-size: 1.3rem; color: var(--azul-tictiva); margin-bottom: 0.5rem; }
 .summaryCardContent p { font-size: 0.95rem; color: var(--gris-azulado); line-height: 1.4; }
 .statCardsInSummary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; flex-shrink: 0; width: 100%; max-width: 600px; }
-.statCardsInSummary .statCard { background-color: #f4f7f6; padding: 0.8rem 1.5rem; border-radius: 12px; box-shadow: none; text-align: center; }
-.statCardsInSummary .statCard h3 { font-weight: 600; font-size: 0.8rem; color: var(--gris-azulado); margin-bottom: 0.25rem; line-height: 1; }
-.statCardsInSummary .statCard .statNumber { font-weight: 800; font-size: 1.8rem; color: var(--azul-tictiva); margin-top: 0; line-height: 1.2; }
+
+/* =============================================== */
+/* === ¡AQUÍ ESTÁN LOS CAMBIOS PARA LOS <Link>! === */
+/* =============================================== */
+.statCardsInSummary .statCard {
+    background-color: #f4f7f6;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: none;
+    text-align: center;
+    text-decoration: none; /* <-- 1. QUITAR SUBRAYADO */
+    transition: all 0.2s ease; /* <-- 2. AÑADIR TRANSICIÓN */
+}
+
+.statCardsInSummary .statCard:hover {
+    transform: translateY(-2px); /* <-- 3. EFECTO HOVER */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.statCardsInSummary .statCard h3 {
+    font-weight: 600;
+    font-size: 0.8rem; 
+    color: var(--gris-azulado); /* 4. COLOR EXPLÍCITO */
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+
+.statCardsInSummary .statCard .statNumber {
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--azul-tictiva); /* 5. COLOR EXPLÍCITO */
+    margin-top: 0;
+    line-height: 1.2;
+}
+
+
+/* ... (El resto de los estilos de módulos se mantienen igual) ... */
 .moduleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .moduleCard { background-color: var(--blanco); padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; height: 100%; }
 .moduleHeader { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
@@ -108,13 +87,14 @@
 .moduleButton:hover { background-color: var(--azul-tictiva); color: var(--blanco); }
 .moduleIcon { flex-shrink: 0; display: flex; justify-content: center; width: 60px; }
 .moduleIcon img { width: 60px; height: 60px; object-fit: contain; }
+.greetingIcon { width: 2.2rem; height: 2.2rem; object-fit: contain; }
 
 @media (max-width: 1100px) {
   .moduleGrid { grid-template-columns: repeat(2, 1fr); }
   .summaryCard { flex-direction: column; align-items: flex-start; }
   .statCardsInSummary { width: 100%; max-width: none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 }
-@media (max-width: 700px) {
+@media (max-midth: 700px) {
   .moduleGrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 500px) {
