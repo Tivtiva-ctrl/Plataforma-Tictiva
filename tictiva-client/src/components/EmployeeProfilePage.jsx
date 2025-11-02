@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Link, NavLink, useParams } from 'react-router-dom';
-import { supabase } from '../supabaseClient'; // Importamos Supabase
+import { supabase } from '../supabaseClient'; 
 import styles from './EmployeeProfilePage.module.css';
 import { FiEdit, FiDownload } from 'react-icons/fi';
 
@@ -8,7 +8,6 @@ import { FiEdit, FiDownload } from 'react-icons/fi';
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
 // =======================================================
 function Overview360({ employee, isEditing }) {
-  // Estos datos vendrán del 'employee'
   return (
     <div className={styles.cardGrid}>
       
@@ -89,7 +88,7 @@ function Overview360({ employee, isEditing }) {
         <p className={styles.attendanceStatus}>Asistencia destacada</p>
         <div className={styles.attendanceAlert}>⚠️ Atrasos: 1 atraso – 4h: 51m acumulado</div>
         {/* =============================================== */}
-        {/* === ¡AQUÍ ESTÁ LA CORRECCIÓN 1! === */}
+        {/* === ¡CORRECCIÓN 1! (</K> -> </Link>) === */}
         {/* =============================================== */}
         <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
@@ -97,7 +96,7 @@ function Overview360({ employee, isEditing }) {
       {/* --- Tarjeta: Alerta (Hola Verito) --- */}
       <div className={`${styles.infoCard} ${styles.alertCard}`}>
         <h3>Hola, Verónica 💚</h3>
-        <p>Detecté que {employee.nombre} tiene 2 documentos vencidos.</p>
+        <p>Detecté que {employee['nombre completo']} tiene 2 documentos vencidos.</p>
         <p className={styles.alertQuestion}>¿Quieres enviarle un recordatorio?</p>
         <div className={styles.alertActions}>
           <button className={styles.alertButtonSend}>Sí, enviar</button>
@@ -120,7 +119,7 @@ function Overview360({ employee, isEditing }) {
         <p>18 mensajes registrados</p>
         <p className={styles.lastCommunication}>Hola Verito 👋 tu solicitud fue respondida.</p>
         {/* =============================================== */}
-        {/* === ¡AQUÍ ESTÁ LA CORRECCIÓN 2! === */}
+        {/* === ¡CORRECCIÓN 2! (</K> -> </Link>) === */}
         {/* =============================================== */}
         <Link to="/dashboard/comunicaciones/envío-de-mensajes" className={styles.detailButton}>Ver detalle</Link>
       </div>
@@ -179,7 +178,6 @@ function EmployeeProfilePage() {
 
   // Calcula la antigüedad
   const yearsAndMonths = useMemo(() => {
-    // ¡Asegúrate de AÑADIR la columna 'fechaIngreso' a tu tabla 'employees' en Supabase!
     if (!employeeData?.fechaIngreso) return '[Sin fecha de ingreso]';
 
     const ingressDate = new Date(employeeData.fechaIngreso);
@@ -206,6 +204,9 @@ function EmployeeProfilePage() {
     { title: 'Datos bancarios', path: 'bancario' },
     { title: 'Datos de salud', path: 'salud' },
     { title: 'Documentos', path: 'documentos' },
+    // ===============================================
+    // === ¡CORRECCIÓN 3! (Faltaba ' y ,) ===
+    // ===============================================
     { title: 'Asistencia', path: 'asistencia' },
     { title: 'Hoja de vida', path: 'hoja-de-vida' },
     { title: 'Historial', path: 'historial' },
@@ -232,6 +233,9 @@ function EmployeeProfilePage() {
     return (
       <div className={styles.errorContainer}>
         <h2>Empleado no encontrado</h2>
+        {/* =============================================== */}
+        {/* === ¡CORRECCIÓN 4! (</o> -> </p>) === */}
+        {/* =============================================== */}
         <p>No se pudieron cargar los datos del empleado (RUT: {employeeId}).</p>
         <Link to="/dashboard/rrhh/listado-de-fichas" className={styles.backLink}>
           ← Volver a Lista de Empleados
@@ -243,18 +247,19 @@ function EmployeeProfilePage() {
   // Lógica para el botón de Editar/Guardar
   const handleEditToggle = () => {
     if (isEditing) {
-      // Si SÍ estábamos editando, ahora guardamos
       console.log("Guardando cambios...");
-      // Aquí irá la llamada a supabase.update()
     }
-    setIsEditing(!isEditing); // Cambia el modo
+    setIsEditing(!isEditing); 
   };
 
   return (
     <div className={styles.profilePage}>
       {/* HEADER PRINCIPAL FIJO DEL PERFIL (como en Lirmi) */}
-      <div className={styles.profileHeader}>
-        {/* Botón de volver */}
+      <div 
+        className={styles.profileHeader}
+        // Forzamos el fondo blanco y el z-index
+        style={{ background: 'var(--blanco)', zIndex: 100 }}
+      >
         <Link to="/dashboard/rrhh/listado-de-fichas" className={styles.backButton}>
           ←
         </Link>
@@ -263,13 +268,13 @@ function EmployeeProfilePage() {
         <div className={styles.profileInfo}>
           <div className={styles.profileAvatar}>
             {employeeData.avatar && typeof employeeData.avatar === 'string' && employeeData.avatar.startsWith('http') ? (
-              <img src={employeeData.avatar} alt={employeeData.nombre} />
+              <img src={employeeData.avatar} alt={employeeData['nombre completo']} />
             ) : (
-              <span>{getInitials(employeeData.nombre)}</span>
+              <span>{getInitials(employeeData['nombre completo'])}</span>
             )}
           </div>
           <div className={styles.profileDetails}>
-            <h1 className={styles.employeeName}>{employeeData.nombre}</h1>
+            <h1 className={styles.employeeName}>{employeeData['nombre completo']}</h1>
             <p className={styles.employeeTitle}>{employeeData.cargo}</p>
             <p className={styles.employeeStatus}>
               <span className={`${styles.statusBadge} ${employeeData.estado === 'Activo' ? styles.statusActive : styles.statusInactive}`}>

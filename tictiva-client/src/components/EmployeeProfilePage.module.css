@@ -2,39 +2,34 @@
 /* === PÁGINA DE PERFIL (CONTENEDOR GENERAL) === */
 /* =============================================== */
 .profilePage {
-  /* Dejamos el fondo gris claro de la app */
-  /* El padding se lo daremos al contenido */
+  padding: 2rem;
 }
 
 /* =============================================== */
-/* === HEADER FIJO (¡ESTILO LIRMI!) === */
+/* === HEADER (YA NO ES FIJO/FLOTANTE) === */
 /* =============================================== */
 .profileHeader {
-  position: sticky; /* ¡HEADER FIJO! */
-  top: 65px; /* Se pega debajo de la nav principal */
-  z-index: 100; /* Se asegura de estar encima */
-  
+  /* ¡SIN position: sticky, top, y z-index! */
   background: var(--blanco);
-  padding: 1.5rem 2rem 0 2rem; /* Sin padding abajo, la nav lo tiene */
-  margin: 2rem 2rem 1.5rem 2rem; /* Espaciado de la página */
+  padding: 1.5rem 2rem 0 2rem;
+  margin-bottom: 1.5rem;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  
-  /* Contiene 3 partes: Info, Acciones, Nav */
   display: grid;
   grid-template-areas: 
     "info actions"
     "nav nav";
-  grid-template-columns: 1fr auto; /* Info ocupa todo, Acciones se ajusta */
+  grid-template-columns: 1fr auto;
   align-items: center;
+  position: relative; /* Ancla para la flecha */
 }
 
 .profileInfo {
   grid-area: info;
   display: flex;
   align-items: center;
-  padding-left: 3rem; /* Espacio para el botón de volver */
-  position: relative; /* Para el botón de volver */
+  margin-left: 3rem; 
+  position: relative;
 }
 
 .profileActions {
@@ -46,20 +41,30 @@
 .profileNav {
   grid-area: nav;
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 0;
   margin-top: 1.5rem;
   width: 100%;
-  border-top: 1px solid #e0e6ed; /* Línea divisoria */
-  padding-top: 0.5rem; /* Espacio sobre los links */
+  border-top: 1px solid #e0e6ed;
+  padding-top: 0.5rem;
 }
+
+/* Regla separada para Chrome/Safari */
+.profileNav::-webkit-scrollbar {
+  display: none;
+}
+
 
 /* --- Elementos del Header --- */
 
 .backButton {
   position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 1.5rem;
+  top: 1.5rem;
+  transform: translateY(0);
   font-size: 1.5rem;
   color: var(--azul-tictiva);
   text-decoration: none;
@@ -149,40 +154,36 @@
   background-color: #1a4a75;
 }
 
-/* --- Navegación (Estilo Lirmi) --- */
 .navLink {
   font-family: var(--font-principal);
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--gris-azulado);
   text-decoration: none;
-  padding: 0.75rem 0.5rem; /* Menos padding horizontal para que quepan */
-  margin: 0 0.5rem;
-  border-bottom: 3px solid transparent; /* Borde inferior invisible */
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 .navLink:hover {
   color: var(--azul-tictiva);
 }
 .navLink.active {
   color: var(--azul-tictiva);
-  border-bottom-color: var(--azul-tictiva); /* ¡Línea activa estilo Lirmi! */
+  border-bottom-color: var(--azul-tictiva);
 }
+
 
 /* =============================================== */
 /* === CONTENIDO PRINCIPAL (Donde van las tarjetas) === */
 /* =============================================== */
 .profileContent {
-  margin: 0 2rem 2rem 2rem; /* Margen para alinear con el header */
-  /* Este es el contenedor que se scrollea, NO la página entera */
+  /* Ya no necesita margen superior, ahora está debajo del header */
 }
 
-/* =============================================== */
-/* === ¡AQUÍ ESTÁ LA GRILLA DE LA FOTO 1! === */
-/* =============================================== */
 .cardGrid {
   display: grid;
-  /* 3 columnas de igual tamaño */
   grid-template-columns: repeat(3, 1fr); 
   gap: 1.5rem;
 }
@@ -195,8 +196,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   position: relative;
   display: flex;
-  flex-direction: column; /* Para alinear botones al fondo */
-  height: 100%; /* ¡Para que las tarjetas de la misma fila tengan la misma altura! */
+  flex-direction: column;
+  height: 100%;
 }
 
 .infoCard h3 {
@@ -230,9 +231,9 @@
   cursor: pointer;
   padding: 0;
   text-decoration: none;
-  margin-top: auto; /* ¡EMPUJA AL FONDO! */
-  padding-top: 1rem; /* Espacio antes del botón */
-  align-self: flex-start; /* Se alinea a la izquierda */
+  margin-top: auto;
+  padding-top: 1rem;
+  align-self: flex-start;
 }
 .detailButton:hover {
   text-decoration: underline;
@@ -258,7 +259,6 @@
 
 /* --- Estilos Específicos de Tarjetas --- */
 
-/* Asistencia */
 .attendanceCircle {
   width: 90px;
   height: 90px;
@@ -289,7 +289,6 @@
   font-weight: 600;
 }
 
-/* Evaluaciones */
 .evaluationScore {
   width: 90px;
   height: 90px;
@@ -316,7 +315,6 @@
   text-align: center;
 }
 
-/* Registros y Anotaciones */
 .progressBarContainer {
   display: flex;
   align-items: center;
@@ -347,9 +345,8 @@
   color: var(--gris-azulado);
 }
 
-/* Alerta (Hola Verito) */
 .alertCard {
-  background-color: #EBF4FF; /* Fondo azul claro */
+  background-color: #EBF4FF;
   border-color: #93C5FD;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1);
 }
@@ -418,7 +415,7 @@
   background-color: var(--blanco);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  margin: 2rem;
+  margin: 0 2rem 2rem 2rem; /* Alineado con el contenido */
 }
 .loadingContainer h2, .errorContainer h2 {
   font-family: var(--font-principal);
