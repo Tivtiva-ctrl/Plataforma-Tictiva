@@ -1,5 +1,7 @@
+// 1. IMPORTAMOS Link
 import React, { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../supabaseClient'; 
+import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import styles from './EmployeeListPage.module.css';
 import { 
   FiSearch, FiPlus, FiUpload, FiUsers, FiCheckCircle, FiXCircle, FiUser
@@ -16,7 +18,7 @@ function EmployeeListPage() {
     const fetchEmployees = async () => {
       setLoading(true);
 
-      // 👇 Tabla: employees (minúscula) | Columna con espacio: "nombre completo"
+      // ✅ Columnas reales: "nombre completo" (con espacio), rut, cargo, estado, avatar
       const { data, error } = await supabase
         .from('employees')
         .select('"nombre completo", rut, cargo, estado, avatar')
@@ -39,14 +41,16 @@ function EmployeeListPage() {
   // Normaliza a un shape estable para la UI (usa RUT como id)
   const safeEmployees = useMemo(() => {
     return (employees ?? []).map((emp) => ({
+      // Usamos el RUT como clave estable (no hay 'id' en tu tabla)
       id: emp?.rut ?? Math.random().toString(36).slice(2),
       nombre: emp?.['nombre completo'] ?? 'Sin nombre',
       rut: emp?.rut ?? '—',
       cargo: emp?.cargo ?? '—',
       estado: emp?.estado ?? '—',
-      // Campos que no existen en tu schema actual (defaults para no romper tarjetas)
+      // Defaults para tarjetas que aún no están en tu schema
       genero: 'Otro',
       discapacidad: false,
+      // Solo URL string válida; si no, null para mostrar iniciales
       avatar: typeof emp?.avatar === 'string' ? emp.avatar : null,
     }));
   }, [employees]);
@@ -61,28 +65,17 @@ function EmployeeListPage() {
     );
   }, [safeEmployees, searchQuery]);
 
-  // Estadísticas básicas
+  // Estadísticas (usa los datos seguros)
   const totalEmployees = safeEmployees.length;
-  const activeEmployees = safeEmployees.filter(
-    (e) => (e.estado || '').toLowerCase() === 'activo'
-  ).length;
-  const inactiveEmployees = safeEmployees.filter(
-    (e) => (e.estado || '').toLowerCase() === 'inactivo'
-  ).length;
-  const maleEmployees = safeEmployees.filter(
-    (e) => (e.genero || '').toLowerCase() === 'hombre'
-  ).length;
-  const femaleEmployees = safeEmployees.filter(
-    (e) => (e.genero || '').toLowerCase() === 'mujer'
-  ).length;
-  const otherEmployees = safeEmployees.filter((e) => {
-    const g = (e.genero || '').toLowerCase();
-    return g !== 'hombre' && g !== 'mujer';
-  }).length;
-  const disabledEmployees = safeEmployees.filter((e) => e.discapacidad === true).length;
+  const activeEmployees = safeEmployees.filter(e => (e.estado || '').toLowerCase() === 'activo').length;
+  const inactiveEmployees = safeEmployees.filter(e => (e.estado || '').toLowerCase() === 'inactivo').length;
+  const maleEmployees = safeEmployees.filter(e => (e.genero || '').toLowerCase() === 'hombre').length;
+  const femaleEmployees = safeEmployees.filter(e => (e.genero || '').toLowerCase() === 'mujer').length;
+  const otherEmployees = totalEmployees - maleEmployees - femaleEmployees;
+  const disabledEmployees = safeEmployees.filter(e => e.discapacidad === true).length;
 
   const getInitials = (fullName) => {
-    if (!fullName) return '??';
+    if (!fullName || fullName === 'Sin nombre') return '??';
     const parts = fullName.trim().split(/\s+/);
     const first = parts[0]?.[0] || '';
     const last = parts[parts.length - 1]?.[0] || '';
@@ -174,7 +167,7 @@ function EmployeeListPage() {
           </thead>
           <tbody>
             {filteredEmployees.map(employee => {
-              const rowKey = employee.id;
+              const rowKey = employee.id; // Usamos el RUT como clave estable
               return (
                 <tr key={rowKey}>
                   <td>
@@ -194,9 +187,10 @@ function EmployeeListPage() {
                     </div>
                   </td>
                   <td>
-                    <a href="#" className={styles.employeeNameLink}>
+                    {/* Nombre como Link a la ficha */}
+                    <Link to={`/dashboard/rrhh/empleado/${rowKey}/tictiva-360`} className={styles.employeeNameLink}>
                       {employee.nombre}
-                    </a>
+                    </Link>
                   </td>
                   <td>{employee.rut}</td>
                   <td>{employee.cargo}</td>
@@ -224,16 +218,16 @@ function EmployeeListPage() {
 
                       {openDropdownId === rowKey && (
                         <div className={styles.actionsDropdown}>
-                          <a href="#">Tictiva 360</a>
-                          <a href="#">Datos personales</a>
-                          <a href="#">Datos contractuales</a>
-                          <a href="#">Datos previsionales</a>
-                          <a href="#">Datos bancarios</a>
-                          <a href="#">Datos de salud</a>
-                          <a href="#">Documentos</a>
-                          <a href="#">Asistencia</a>
-                          <a href="#">Hoja de vida</a>
-                          <a href="#">Historial</a>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/tictiva-360`}>Tictiva 360</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/personal`}>Datos personales</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/contractual`}>Datos contractuales</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/previsional`}>Datos previsionales</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/bancario`}>Datos bancarios</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/salud`}>Datos de salud</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/documentos`}>Documentos</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/asistencia`}>Asistencia</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/hoja-de-vida`}>Hoja de vida</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/historial`}>Historial</Link>
                         </div>
                       )}
                     </div>

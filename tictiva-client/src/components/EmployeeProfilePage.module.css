@@ -1,0 +1,437 @@
+/* =============================================== */
+/* === PÁGINA DE PERFIL (CONTENEDOR GENERAL) === */
+/* =============================================== */
+.profilePage {
+  /* Dejamos el fondo gris claro de la app */
+  /* El padding se lo daremos al contenido */
+}
+
+/* =============================================== */
+/* === HEADER FIJO (¡ESTILO LIRMI!) === */
+/* =============================================== */
+.profileHeader {
+  position: sticky; /* ¡HEADER FIJO! */
+  top: 65px; /* Se pega debajo de la nav principal */
+  z-index: 100; /* Se asegura de estar encima */
+  
+  background: var(--blanco);
+  padding: 1.5rem 2rem 0 2rem; /* Sin padding abajo, la nav lo tiene */
+  margin: 2rem 2rem 1.5rem 2rem; /* Espaciado de la página */
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  
+  /* Contiene 3 partes: Info, Acciones, Nav */
+  display: grid;
+  grid-template-areas: 
+    "info actions"
+    "nav nav";
+  grid-template-columns: 1fr auto; /* Info ocupa todo, Acciones se ajusta */
+  align-items: center;
+}
+
+.profileInfo {
+  grid-area: info;
+  display: flex;
+  align-items: center;
+  padding-left: 3rem; /* Espacio para el botón de volver */
+  position: relative; /* Para el botón de volver */
+}
+
+.profileActions {
+  grid-area: actions;
+  display: flex;
+  gap: 1rem;
+}
+
+.profileNav {
+  grid-area: nav;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  width: 100%;
+  border-top: 1px solid #e0e6ed; /* Línea divisoria */
+  padding-top: 0.5rem; /* Espacio sobre los links */
+}
+
+/* --- Elementos del Header --- */
+
+.backButton {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+  color: var(--azul-tictiva);
+  text-decoration: none;
+  font-weight: bold;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.profileAvatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-principal);
+  font-weight: 700;
+  font-size: 1.8rem;
+  overflow: hidden;
+  border: 3px solid var(--blanco);
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+}
+.profileAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.employeeName {
+  font-family: var(--font-principal);
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: var(--azul-tictiva);
+  margin: 0;
+}
+.employeeTitle {
+  font-size: 1rem;
+  color: var(--gris-azulado);
+  margin: 0.1rem 0;
+}
+.employeeStatus {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  margin-top: 0.25rem;
+}
+.statusBadge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-right: 0.8rem;
+  font-size: 0.8rem;
+}
+.statusActive {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+.statusInactive {
+  background-color: #FFEBEE;
+  color: #C62828;
+}
+
+.actionButton {
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+  border: none;
+  padding: 0.7rem 1.1rem;
+  border-radius: 8px;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.actionButton:hover {
+  background-color: #1a4a75;
+}
+
+/* --- Navegación (Estilo Lirmi) --- */
+.navLink {
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  text-decoration: none;
+  padding: 0.75rem 0.5rem; /* Menos padding horizontal para que quepan */
+  margin: 0 0.5rem;
+  border-bottom: 3px solid transparent; /* Borde inferior invisible */
+  transition: all 0.2s ease;
+}
+.navLink:hover {
+  color: var(--azul-tictiva);
+}
+.navLink.active {
+  color: var(--azul-tictiva);
+  border-bottom-color: var(--azul-tictiva); /* ¡Línea activa estilo Lirmi! */
+}
+
+/* =============================================== */
+/* === CONTENIDO PRINCIPAL (Donde van las tarjetas) === */
+/* =============================================== */
+.profileContent {
+  margin: 0 2rem 2rem 2rem; /* Margen para alinear con el header */
+  /* Este es el contenedor que se scrollea, NO la página entera */
+}
+
+/* =============================================== */
+/* === ¡AQUÍ ESTÁ LA GRILLA DE LA FOTO 1! === */
+/* =============================================== */
+.cardGrid {
+  display: grid;
+  /* 3 columnas de igual tamaño */
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 1.5rem;
+}
+
+.infoCard {
+  background-color: var(--blanco);
+  border: 1px solid #e0e6ed;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Para alinear botones al fondo */
+  height: 100%; /* ¡Para que las tarjetas de la misma fila tengan la misma altura! */
+}
+
+.infoCard h3 {
+  font-family: var(--font-principal);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--azul-tictiva);
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.infoCard p {
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.infoCard strong {
+  color: var(--azul-tictiva);
+  font-weight: 600;
+}
+
+.detailButton {
+  background: none;
+  border: none;
+  color: var(--azul-tictiva);
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  margin-top: auto; /* ¡EMPUJA AL FONDO! */
+  padding-top: 1rem; /* Espacio antes del botón */
+  align-self: flex-start; /* Se alinea a la izquierda */
+}
+.detailButton:hover {
+  text-decoration: underline;
+}
+
+/* --- Estilos para inputs de "Editar Ficha" --- */
+.inlineLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gris-azulado);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+.inlineInput {
+  width: 100%;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #d0dbe4;
+  border-radius: 6px;
+  font-family: var(--font-principal);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+/* --- Estilos Específicos de Tarjetas --- */
+
+/* Asistencia */
+.attendanceCircle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem auto 1rem auto;
+  border: 5px solid #2E7D32;
+}
+.attendanceStatus {
+  text-align: center;
+  font-weight: 600;
+  color: #2E7D32;
+  margin-bottom: 1rem;
+}
+.attendanceAlert {
+  background-color: #FFFBEB;
+  color: #B45309;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Evaluaciones */
+.evaluationScore {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #EBF4FF;
+  color: #2563EB;
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem auto 1rem auto;
+  border: 5px solid #2563EB;
+}
+.evaluationStatus {
+  text-align: center;
+  font-weight: 600;
+  color: #2563EB;
+  margin-bottom: 0.5rem;
+}
+.evaluationSubtitle {
+  font-size: 0.85rem;
+  color: var(--gris-azulado);
+  text-align: center;
+}
+
+/* Registros y Anotaciones */
+.progressBarContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  gap: 0.5rem;
+}
+.progressBarLabel {
+  flex-basis: 90px;
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+}
+.progressBar {
+  flex-grow: 1;
+  height: 8px;
+  background-color: #e0e6ed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progressBarFillBlue { background-color: #2563EB; height: 100%; }
+.progressBarFillGreen { background-color: #16A34A; height: 100%; }
+.progressBarFillRed { background-color: #DC2626; height: 100%; }
+.progressBarFillPurple { background-color: #7C3AED; height: 100%; }
+.progressBarValue {
+  width: 20px;
+  text-align: right;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gris-azulado);
+}
+
+/* Alerta (Hola Verito) */
+.alertCard {
+  background-color: #EBF4FF; /* Fondo azul claro */
+  border-color: #93C5FD;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1);
+}
+.alertCard h3 { color: #1D4ED8; }
+.alertCard p { color: #1E40AF; }
+.alertQuestion { font-weight: 600; margin-top: 1rem; }
+.alertActions { display: flex; gap: 0.8rem; margin-top: 1rem; }
+.alertButtonSend {
+  background-color: #2563EB;
+  color: var(--blanco);
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+.alertButtonSend:hover { background-color: #1D4ED8; }
+.alertButtonCancel {
+  background-color: transparent;
+  color: #2563EB;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-principal);
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+.alertButtonCancel:hover { background-color: #DBEAFE; }
+
+.lastCommunication {
+  font-style: italic;
+  color: var(--gris-azulado);
+  border-top: 1px solid #e0e6ed;
+  padding-top: 10px;
+  margin-top: 15px;
+}
+
+/* --- Contenido de las Secciones (Placeholders) --- */
+.sectionContent h2 {
+  font-family: var(--font-principal);
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--azul-tictiva);
+  border-bottom: 2px solid #f4f7f6;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+.sectionContent p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: var(--gris-azulado);
+}
+
+/* --- Contenedores de Carga y Error --- */
+.loadingContainer, .errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 65px - 4rem);
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--blanco);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  margin: 2rem;
+}
+.loadingContainer h2, .errorContainer h2 {
+  font-family: var(--font-principal);
+  font-weight: 800;
+  color: var(--azul-tictiva);
+  margin-bottom: 1rem;
+}
+.loadingContainer p, .errorContainer p {
+  color: var(--gris-azulado);
+  font-size: 1.1rem;
+}
+.errorContainer .backLink {
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}

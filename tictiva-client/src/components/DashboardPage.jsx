@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+// 1. Importamos Routes, Route, Link
 import { Routes, Route, Link } from 'react-router-dom'; 
 import styles from './DashboardPage.module.css';
 import { 
@@ -15,15 +16,13 @@ import iconCuida from '../assets/icon-cuida.png';
 import iconBodega from '../assets/icon-bodega.png';
 import tictivaHeart from '../assets/tictiva-heart.png';
 
-// ===============================================
-// === ¡AQUÍ ESTÁ LA CORRECCIÓN DE LA RUTA! ===
-// ===============================================
-import EmployeeListPage from './EmployeeListPage'; // <-- RUTA CORREGIDA
+// 2. Importamos las páginas de submódulo
+import EmployeeListPage from './EmployeeListPage'; 
+import EmployeeProfilePage from './EmployeeProfilePage'; // <-- ¡Esta era la importación que faltaba!
 
 
 // --- Componente Interno (No cambia) ---
 function ModuleCard({ icon, title, description, actions, modulePath }) {
-  // ... (código de ModuleCard) ...
   return (
     <div className={styles.moduleCard}>
       <div className={styles.moduleHeader}>
@@ -52,7 +51,6 @@ function ModuleCard({ icon, title, description, actions, modulePath }) {
 
 // --- Componente de Página de Submódulo (Placeholder) ---
 function SubmodulePage() {
-  // ... (código de SubmodulePage) ...
   return (
     <div style={{ padding: '2rem' }}>
       <h2>Página del Submódulo</h2>
@@ -193,7 +191,12 @@ function DashboardPage({ onLogout }) {
         </div>
       </nav>
 
+      {/* =============================================== */}
+      {/* === 3. ¡UN SOLO BLOQUE DE RUTAS, LIMPIO! === */}
+      {/* =============================================== */}
       <Routes>
+        
+        {/* Ruta 1: /dashboard (La página principal con los módulos) */}
         <Route index element={
           <main className={styles.mainContent}>
             <header className={styles.dashboardHeader}>
@@ -205,7 +208,6 @@ function DashboardPage({ onLogout }) {
             </header>
 
             <section className={styles.summaryCard}>
-              {/* ... (código de summaryCard) ... */}
               <div className={styles.summaryCardContent}>
                   <h2>Humanizamos la gestión, digitalizamos tu tranquilidad</h2>
                   <p>Accede a tus módulos. Todo es simple, rápido y consistente.</p>
@@ -234,17 +236,22 @@ function DashboardPage({ onLogout }) {
                   title={mod.title}
                   description={mod.description}
                   actions={mod.actions}
-                  modulePath={mod.path}
+                  modulePath={mod.path} // Usamos el path base
                 />
               ))}
             </section>
           </main>
         } />
         
-        {/* Ruta para "Listado de fichas" */}
+        {/* Ruta 2: /dashboard/rrhh/listado-de-fichas */}
         <Route path="rrhh/listado-de-fichas" element={<EmployeeListPage />} />
         
-        {/* Ruta genérica para TODOS los demás submódulos */}
+        {/* =============================================== */}
+        {/* === 4. ¡AQUÍ ESTÁN LAS NUEVAS RUTAS DE PERFIL! === */}
+        {/* =============================================== */}
+        <Route path="rrhh/empleado/:employeeId/*" element={<EmployeeProfilePage />} />
+
+        {/* Ruta 5: Ruta genérica para TODOS los demás submódulos */}
         <Route path=":moduleId/:submoduleId" element={<SubmodulePage />} />
       
       </Routes>
