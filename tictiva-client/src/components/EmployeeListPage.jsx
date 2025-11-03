@@ -1,4 +1,3 @@
-// 1. IMPORTAMOS Link
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -17,17 +16,14 @@ function EmployeeListPage() {
   useEffect(() => {
     const fetchEmployees = async () => {
       setLoading(true);
-
-      // ✅ Columnas reales: "nombre completo" (con espacio), rut, cargo, estado, avatar
+      
+      // Leemos de "employee_personal"
       const { data, error } = await supabase
-        .from('employees')
-        .select('"nombre completo", rut, cargo, estado, avatar')
-        .order('"nombre completo"', { ascending: true });
+        .from('employee_personal')
+        .select('id, nombre_completo, rut, cargo, estado, avatar, genero, discapacidad, fecha_nacimiento');
 
       if (error) {
-        console.error("Error al cargar empleados:", {
-          message: error.message, details: error.details, hint: error.hint, code: error.code
-        });
+        console.error("Error al cargar empleados:", error);
         setEmployees([]);
       } else {
         setEmployees(Array.isArray(data) ? data : []);
@@ -38,24 +34,22 @@ function EmployeeListPage() {
     fetchEmployees();
   }, []);
 
-  // Normaliza a un shape estable para la UI (usa RUT como id)
+  // Normaliza datos
   const safeEmployees = useMemo(() => {
     return (employees ?? []).map((emp) => ({
-      // Usamos el RUT como clave estable (no hay 'id' en tu tabla)
-      id: emp?.rut ?? Math.random().toString(36).slice(2),
-      nombre: emp?.['nombre completo'] ?? 'Sin nombre',
-      rut: emp?.rut ?? '—',
-      cargo: emp?.cargo ?? '—',
-      estado: emp?.estado ?? '—',
-      // Defaults para tarjetas que aún no están en tu schema
-      genero: 'Otro',
-      discapacidad: false,
-      // Solo URL string válida; si no, null para mostrar iniciales
-      avatar: typeof emp?.avatar === 'string' ? emp.avatar : null,
+      id: emp.id ?? emp.rut ?? Math.random().toString(36).slice(2),
+      nombre: emp.nombre_completo ?? 'Sin nombre',
+      rut: emp.rut ?? '—',
+      cargo: emp.cargo ?? '—',
+      estado: emp.estado ?? '—',
+      genero: emp.genero ?? 'Otro',
+      discapacidad: emp.discapacidad ?? false,
+      avatar: emp.avatar ?? '??',
+      fechaIngreso: emp.fecha_nacimiento,
     }));
   }, [employees]);
 
-  // Buscador (sobre la lista normalizada)
+  // Buscador
   const filteredEmployees = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return safeEmployees;
@@ -65,7 +59,7 @@ function EmployeeListPage() {
     );
   }, [safeEmployees, searchQuery]);
 
-  // Estadísticas (usa los datos seguros)
+  // Stats
   const totalEmployees = safeEmployees.length;
   const activeEmployees = safeEmployees.filter(e => (e.estado || '').toLowerCase() === 'activo').length;
   const inactiveEmployees = safeEmployees.filter(e => (e.estado || '').toLowerCase() === 'inactivo').length;
@@ -167,12 +161,12 @@ function EmployeeListPage() {
           </thead>
           <tbody>
             {filteredEmployees.map(employee => {
-              const rowKey = employee.id; // Usamos el RUT como clave estable
+              const employeeRut = employee.rut; // lo usamos en la URL
               return (
-                <tr key={rowKey}>
+                <tr key={employee.id}>
                   <td>
                     <div className={styles.avatar}>
-                      {employee.avatar ? (
+                      {employee.avatar && typeof employee.avatar === 'string' && employee.avatar.startsWith('http') ? (
                         <img
                           src={employee.avatar}
                           alt={employee.nombre}
@@ -187,8 +181,11 @@ function EmployeeListPage() {
                     </div>
                   </td>
                   <td>
-                    {/* Nombre como Link a la ficha */}
-                    <Link to={`/dashboard/rrhh/empleado/${rowKey}/tictiva-360`} className={styles.employeeNameLink}>
+                    {/* ✅ RUTA ABSOLUTA CORRECTA */}
+                    <Link
+                      to={`/dashboard/rrhh/empleado/${employeeRut}/tictiva-360`}
+                      className={styles.employeeNameLink}
+                    >
                       {employee.nombre}
                     </Link>
                   </td>
@@ -210,24 +207,25 @@ function EmployeeListPage() {
                       <button 
                         className={styles.actionsButton} 
                         onClick={() =>
-                          setOpenDropdownId(openDropdownId === rowKey ? null : rowKey)
+                          setOpenDropdownId(openDropdownId === employee.id ? null : employee.id)
                         }
                       >
                         Ver Detalles
                       </button>
 
-                      {openDropdownId === rowKey && (
+                      {openDropdownId === employee.id && (
                         <div className={styles.actionsDropdown}>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/tictiva-360`}>Tictiva 360</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/personal`}>Datos personales</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/contractual`}>Datos contractuales</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/previsional`}>Datos previsionales</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/bancario`}>Datos bancarios</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/salud`}>Datos de salud</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/documentos`}>Documentos</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/asistencia`}>Asistencia</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/hoja-de-vida`}>Hoja de vida</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${rowKey}/historial`}>Historial</Link>
+                          {/* ✅ TODAS LAS RUTAS ABSOLUTAS BAJO /dashboard/rrhh/empleado/:rut */}
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/tictiva-360`}>Tictiva 360</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/personal`}>Datos personales</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/contractual`}>Datos contractuales</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/previsional`}>Datos previsionales</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/bancario`}>Datos bancarios</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/salud`}>Datos de salud</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/documentos`}>Documentos</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/asistencia`}>Asistencia</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/hoja-de-vida`}>Hoja de vida</Link>
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/historial`}>Historial</Link>
                         </div>
                       )}
                     </div>

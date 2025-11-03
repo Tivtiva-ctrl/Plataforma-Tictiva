@@ -1,0 +1,101 @@
+.formContainer {
+  padding: 1rem 0; /* Espacio dentro de la tarjeta de contenido */
+}
+
+/* La grilla principal de 3 columnas */
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem; /* Espacio entre campos */
+}
+
+.sectionTitle {
+  font-family: var(--font-principal);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--azul-tictiva);
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e6ed;
+  padding-bottom: 0.5rem;
+  /* Hacemos que ocupe las 3 columnas */
+  grid-column: 1 / -1; 
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formLabel {
+  font-family: var(--font-principal);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--gris-azulado);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+/* Estilo base para inputs y selects */
+.formInput,
+.formGroup select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #d0dbe4;
+  border-radius: 8px;
+  font-family: var(--font-principal);
+  font-size: 0.95rem;
+  color: var(--azul-tictiva);
+  background-color: #f9fafb; /* Fondo por defecto */
+  transition: all 0.2s ease;
+  -webkit-appearance: none; /* Quita estilos por defecto de iOS */
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* --- ESTILOS DE MODO --- */
+
+/* 1. MODO LECTURA (por defecto) */
+.formInput:read-only {
+  background-color: #f9fafb;
+  border-color: #e0e6ed;
+  color: var(--gris-azulado);
+  cursor: not-allowed;
+}
+
+/* 2. MODO EDICIÓN */
+.formInput:not(:read-only),
+.formGroup select {
+  background-color: var(--blanco);
+  border-color: var(--azul-tictiva); /* Borde azul al editar */
+  box-shadow: 0 0 0 3px rgba(26, 56, 90, 0.1); /* Resplandor azul */
+  cursor: text;
+}
+
+.formGroup select {
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%233A4A5C" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.5em;
+}
+
+/* --- Media Queries (para pantallas más pequeñas) --- */
+@media (max-width: 900px) {
+  .formGrid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas en tablets */
+  }
+}
+
+@media (max-width: 600px) {
+  .formGrid {
+    grid-template-columns: 1fr; /* 1 columna en móviles */
+  }
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  font-family: var(--font-principal);
+  color: var(--gris-azulado);
+}

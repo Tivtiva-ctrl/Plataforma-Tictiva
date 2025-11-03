@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-// 1. Importamos Routes, Route, Link
 import { Routes, Route, Link } from 'react-router-dom'; 
 import styles from './DashboardPage.module.css';
 import { 
@@ -16,12 +15,11 @@ import iconCuida from '../assets/icon-cuida.png';
 import iconBodega from '../assets/icon-bodega.png';
 import tictivaHeart from '../assets/tictiva-heart.png';
 
-// 2. Importamos las páginas de submódulo
+// Importamos las páginas de submódulo
 import EmployeeListPage from './EmployeeListPage'; 
-import EmployeeProfilePage from './EmployeeProfilePage'; // <-- ¡Esta era la importación que faltaba!
+import EmployeeProfilePage from './EmployeeProfilePage'; 
 
-
-// --- Componente Interno (No cambia) ---
+// --- Componente Interno ---
 function ModuleCard({ icon, title, description, actions, modulePath }) {
   return (
     <div className={styles.moduleCard}>
@@ -37,8 +35,9 @@ function ModuleCard({ icon, title, description, actions, modulePath }) {
       <div className={styles.moduleActions}>
         {actions.map((action, index) => (
           <Link 
-            key={index} 
-            to={`${modulePath}/${action.toLowerCase().replace(/ /g, '-')}`}
+            key={index}
+            // ✅ Ruta absoluta bajo /dashboard (más robusto)
+            to={`/dashboard/${modulePath}/${action.toLowerCase().replace(/ /g, '-')}`}
             className={styles.moduleButton}
           >
             {action}
@@ -69,14 +68,14 @@ function DashboardPage({ onLogout }) {
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchContainerRef = useRef(null); 
 
-  const getGreeting = () => { /* ... (código de saludo) ... */
+  const getGreeting = () => {
     const currentHour = new Date().getHours();
     if (currentHour >= 5 && currentHour < 12) return "Buenos días";
     else if (currentHour >= 12 && currentHour < 19) return "Buenas tardes";
     else return "Buenas noches";
   };
 
-  const modules = [ /* ... (código de modules) ... */
+  const modules = [
     { path: "rrhh", icon: <img src={iconRrhh} alt="RRHH" />, title: "RRHH", description: "Gestión humana, clara y cercana", actions: ["Listado de fichas", "Permisos y justificaciones", "Gestión de turnos", "Validación DT"] },
     { path: "asistencia", icon: <img src={iconAsistencia} alt="Asistencia" />, title: "Asistencia", description: "Control preciso, en tiempo real", actions: ["Supervisión integral", "Marcas registradas", "Mapa de cobertura", "Gestión de dispositivos"] },
     { path: "comunicaciones", icon: <img src={iconComunicaciones} alt="Comunicaciones" />, title: "Comunicaciones", description: "Mensajes y encuestas sin fricción", actions: ["Envío de mensajes", "Plantillas", "Encuestas de clima", "Canal de denuncias", "Dashboard"] },
@@ -85,7 +84,7 @@ function DashboardPage({ onLogout }) {
     { path: "bodega-epp", icon: <img src={iconBodega} alt="Bodega & EPP" />, title: "Bodega & EPP", description: "Inventario al servicio del equipo", actions: ["Inventario", "Colaboradores", "Operaciones", "Alertas"] },
   ];
 
-  const allSearchableItems = []; // ... (código de allSearchableItems) ...
+  const allSearchableItems = [];
   modules.forEach(mod => {
     mod.actions.forEach(action => {
       allSearchableItems.push({
@@ -96,7 +95,7 @@ function DashboardPage({ onLogout }) {
     });
   });
 
-  useEffect(() => { // ... (código de useEffect) ...
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
         setIsSearchDropdownOpen(false);
@@ -108,7 +107,7 @@ function DashboardPage({ onLogout }) {
     };
   }, []);
 
-  const handleSearchChange = (e) => { // ... (código de handleSearchChange) ...
+  const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
 
@@ -124,18 +123,16 @@ function DashboardPage({ onLogout }) {
     }
   };
   
-  const handleResultClick = () => { // ... (código de handleResultClick) ...
+  const handleResultClick = () => {
     setSearchQuery('');
     setSearchResults([]);
     setIsSearchDropdownOpen(false);
   };
 
-
   return (
     <div className={styles.dashboardContainer}>
       
       <nav className={styles.topNav}>
-        {/* ... (código de nav) ... */}
         <div className={styles.navLeft}>
           <div className={styles.logo}>Tictiva</div>
           <div className={styles.companySelector}>
@@ -151,13 +148,24 @@ function DashboardPage({ onLogout }) {
           <div className={styles.searchContainer} ref={searchContainerRef}>
             <div className={styles.searchBar}>
               <FiSearch />
-              <input type="text" placeholder="Buscar submódulos..." value={searchQuery} onChange={handleSearchChange} onFocus={() => { if (searchQuery.length > 0) setIsSearchDropdownOpen(true); }} />
+              <input
+                type="text"
+                placeholder="Buscar submódulos..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => { if (searchQuery.length > 0) setIsSearchDropdownOpen(true); }}
+              />
             </div>
             {isSearchDropdownOpen && (
               <div className={styles.searchDropdown}>
                 {searchResults.length > 0 ? (
                   searchResults.map((item) => (
-                    <Link key={item.path} to={item.path} className={styles.searchResultItem} onClick={handleResultClick}>
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={styles.searchResultItem}
+                      onClick={handleResultClick}
+                    >
                       <div className={styles.resultText}>
                         <strong>{item.title}</strong>
                         <span>en {item.context}</span>
@@ -165,7 +173,9 @@ function DashboardPage({ onLogout }) {
                     </Link>
                   ))
                 ) : (
-                  <div className={styles.searchNoResult}>No hay resultados para "{searchQuery}"</div>
+                  <div className={styles.searchNoResult}>
+                    No hay resultados para "{searchQuery}"
+                  </div>
                 )}
               </div>
             )}
@@ -177,83 +187,95 @@ function DashboardPage({ onLogout }) {
             <span className={styles.notificationDot}></span>
           </button>
           <div className={styles.profileMenuContainer}>
-            <div className={styles.userProfile} onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}>
+            <div
+              className={styles.userProfile}
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+            >
               <div className={styles.userAvatar}>VM</div>
               <span>Verónica Mateo</span>
             </div>
             {isProfileMenuOpen && (
               <div className={styles.profileDropdown}>
                 <button><FiSettings /> Configuración</button>
-                <button className={styles.logoutButton} onClick={onLogout}><FiPower /> Cerrar Sesión</button>
+                <button className={styles.logoutButton} onClick={onLogout}>
+                  <FiPower /> Cerrar Sesión
+                </button>
               </div>
             )}
           </div>
         </div>
       </nav>
 
-      {/* =============================================== */}
-      {/* === 3. ¡UN SOLO BLOQUE DE RUTAS, LIMPIO! === */}
-      {/* =============================================== */}
       <Routes>
-        
-        {/* Ruta 1: /dashboard (La página principal con los módulos) */}
-        <Route index element={
-          <main className={styles.mainContent}>
-            <header className={styles.dashboardHeader}>
-              <h1>
-                {getGreeting()}, Verónica 
-                <img src={tictivaHeart} alt="corazón" className={styles.greetingIcon} />
-              </h1>
-              <p>"Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve".</p>
-            </header>
+        {/* Ruta 1: /dashboard (home con módulos) */}
+        <Route
+          index
+          element={
+            <main className={styles.mainContent}>
+              <header className={styles.dashboardHeader}>
+                <h1>
+                  {getGreeting()}, Verónica 
+                  <img src={tictivaHeart} alt="corazón" className={styles.greetingIcon} />
+                </h1>
+                <p>
+                  "Creemos en la fuerza del trabajo bien hecho, incluso cuando nadie lo ve".
+                </p>
+              </header>
 
-            <section className={styles.summaryCard}>
-              <div className={styles.summaryCardContent}>
+              <section className={styles.summaryCard}>
+                <div className={styles.summaryCardContent}>
                   <h2>Humanizamos la gestión, digitalizamos tu tranquilidad</h2>
                   <p>Accede a tus módulos. Todo es simple, rápido y consistente.</p>
-              </div>
-              <div className={styles.statCardsInSummary}>
-                  <Link to="/dashboard/comunicaciones/envío-de-mensajes" className={styles.statCard}>
-                      <h3>Mensajes</h3>
-                      <span className={styles.statNumber}>0</span>
+                </div>
+                <div className={styles.statCardsInSummary}>
+                  <Link
+                    to="/dashboard/comunicaciones/envío-de-mensajes"
+                    className={styles.statCard}
+                  >
+                    <h3>Mensajes</h3>
+                    <span className={styles.statNumber}>0</span>
                   </Link>
-                  <Link to="/dashboard/asistencia/marcas-registradas" className={styles.statCard}>
-                      <h3>Marcas hoy</h3>
-                      <span className={styles.statNumber}>0</span>
+                  <Link
+                    to="/dashboard/asistencia/marcas-registradas"
+                    className={styles.statCard}
+                  >
+                    <h3>Marcas hoy</h3>
+                    <span className={styles.statNumber}>0</span>
                   </Link>
-                  <Link to="/dashboard/asistencia/gestion-de-dispositivos" className={styles.statCard}>
-                      <h3>Dispositivos activos</h3>
-                      <span className={styles.statNumber}>0</span>
+                  <Link
+                    to="/dashboard/asistencia/gestion-de-dispositivos"
+                    className={styles.statCard}
+                  >
+                    <h3>Dispositivos activos</h3>
+                    <span className={styles.statNumber}>0</span>
                   </Link>
-              </div>
-            </section>
-            
-            <section className={styles.moduleGrid}>
-              {modules.map((mod) => (
-                <ModuleCard 
-                  key={mod.title}
-                  icon={mod.icon}
-                  title={mod.title}
-                  description={mod.description}
-                  actions={mod.actions}
-                  modulePath={mod.path} // Usamos el path base
-                />
-              ))}
-            </section>
-          </main>
-        } />
+                </div>
+              </section>
+              
+              <section className={styles.moduleGrid}>
+                {modules.map((mod) => (
+                  <ModuleCard 
+                    key={mod.title}
+                    icon={mod.icon}
+                    title={mod.title}
+                    description={mod.description}
+                    actions={mod.actions}
+                    modulePath={mod.path}
+                  />
+                ))}
+              </section>
+            </main>
+          }
+        />
         
         {/* Ruta 2: /dashboard/rrhh/listado-de-fichas */}
         <Route path="rrhh/listado-de-fichas" element={<EmployeeListPage />} />
         
-        {/* =============================================== */}
-        {/* === 4. ¡AQUÍ ESTÁN LAS NUEVAS RUTAS DE PERFIL! === */}
-        {/* =============================================== */}
-        <Route path="rrhh/empleado/:employeeId/*" element={<EmployeeProfilePage />} />
+        {/* ✅ Ruta de perfil (usa :rut y permite hijas como /tictiva-360, /personal, etc.) */}
+        <Route path="rrhh/empleado/:rut/*" element={<EmployeeProfilePage />} />
 
-        {/* Ruta 5: Ruta genérica para TODOS los demás submódulos */}
+        {/* Ruta genérica para otros submódulos */}
         <Route path=":moduleId/:submoduleId" element={<SubmodulePage />} />
-      
       </Routes>
     </div>
   );
