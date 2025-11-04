@@ -1,24 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import styles from './DatosPersonales.module.css';
 
-// Componente reutilizable para un campo del formulario
-function FormField({
-  label,
-  value,
-  name,
-  onChange,
-  isEditing,
-  type = 'text',
-  options = [],
-}) {
-  const InputComponent = type === 'select' ? 'select' : 'input';
+function FormField({ label, value, name, onChange, isEditing, type = "text", options = [] }) {
+  const InputComponent = type === "select" ? "select" : "input";
 
-  // Normalizamos el value para evitar cosas raras (null, undefined, Date, etc.)
   let normalizedValue = value ?? '';
-  if (type === 'date' && normalizedValue) {
+  if (type === "date" && normalizedValue) {
     const d = new Date(normalizedValue);
     if (!Number.isNaN(d.getTime())) {
-      normalizedValue = d.toISOString().slice(0, 10); // YYYY-MM-DD
+      normalizedValue = d.toISOString().slice(0, 10);
     }
   }
 
@@ -28,15 +18,13 @@ function FormField({
       value={normalizedValue}
       onChange={onChange}
       className={styles.formInput}
-      {...(type === 'select' ? {} : { type })}
+      {...(type === "select" ? {} : { type })}
     >
-      {type === 'select' && (
+      {type === "select" && (
         <>
           <option value="">Seleccionar...</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
+          {options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
           ))}
         </>
       )}
@@ -61,7 +49,6 @@ function FormField({
 }
 
 function DatosPersonales({ personalData, isEditing }) {
-  // Si llegara null, evitamos romper nada
   const [formData, setFormData] = useState(personalData || {});
 
   useEffect(() => {
@@ -71,41 +58,33 @@ function DatosPersonales({ personalData, isEditing }) {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // OJO: los <select> no son type="checkbox",
-    // así que tratamos el caso especial de tiene_discapacidad
     if (name === 'tiene_discapacidad') {
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
-        // convertimos el string "true"/"false" a boolean
         [name]: value === 'true',
       }));
       return;
     }
 
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
-  // Opciones para selects
-  const generos = ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo'];
-  const estadosCiviles = ['Soltero', 'Casado', 'Divorciado', 'Viudo', 'Conviviente'];
-  const nacionalidades = ['Chilena', 'Peruana', 'Venezolana', 'Argentina', 'Colombiana', 'Otra'];
-  const regiones = ['Región Metropolitana', 'Valparaíso', 'Biobío', 'Otra'];
-  const comunas = ['Santiago Centro', 'Providencia', 'Las Condes', 'Otra'];
+  const generos = ["Masculino", "Femenino", "Otro", "Prefiero no decirlo"];
+  const estadosCiviles = ["Soltero", "Casado", "Divorciado", "Viudo", "Conviviente"];
+  const nacionalidades = ["Chilena", "Peruana", "Venezolana", "Argentina", "Colombiana", "Otra"];
+  const regiones = ["Región Metropolitana", "Valparaíso", "Biobío", "Otra"];
+  const comunas = ["Santiago Centro", "Providencia", "Las Condes", "Otra"];
 
   if (!personalData) {
-    return (
-      <div className={styles.loading}>
-        Cargando datos personales...
-      </div>
-    );
+    return <div className={styles.loading}>Cargando datos personales...</div>;
   }
 
   return (
     <div className={styles.formContainer}>
-      {/* === Sección 1: Datos Básicos === */}
+      {/* Sección 1: Datos básicos */}
       <div className={styles.formGrid}>
         <FormField
           label="RUT"
@@ -158,7 +137,7 @@ function DatosPersonales({ personalData, isEditing }) {
         />
       </div>
 
-      {/* === Sección 2: Ubicación y Contacto === */}
+      {/* Sección 2: Ubicación y Contacto */}
       <h3 className={styles.sectionTitle}>Ubicación y Contacto</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -202,8 +181,8 @@ function DatosPersonales({ personalData, isEditing }) {
           type="email"
         />
       </div>
-      
-      {/* === Sección 3: Contacto de Emergencia === */}
+
+      {/* Sección 3: Contacto de Emergencia */}
       <h3 className={styles.sectionTitle}>Contacto de Emergencia</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -222,7 +201,7 @@ function DatosPersonales({ personalData, isEditing }) {
         />
       </div>
 
-      {/* === Sección 4: Discapacidad === */}
+      {/* Sección 4: Discapacidad */}
       <h3 className={styles.sectionTitle}>Información Adicional</h3>
       <div className={styles.formGrid}>
         <div className={styles.formGroup}>

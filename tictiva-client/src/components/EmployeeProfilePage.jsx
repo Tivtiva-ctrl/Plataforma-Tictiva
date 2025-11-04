@@ -3,12 +3,15 @@ import { Routes, Route, Link, NavLink, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import styles from './EmployeeProfilePage.module.css';
 import { FiEdit, FiDownload } from 'react-icons/fi';
-import DatosPersonales from './DatosPersonales'; // Importamos tu componente
+import DatosPersonales from './DatosPersonales';
 
-// === COMPONENTE "TICTIVA 360" ===
+// =======================================================
+// === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
+// =======================================================
 function Overview360({ employee, isEditing }) {
-  // Si por algún motivo no hay datos, no rompemos nada
-  if (!employee) return null;
+  if (!employee) {
+    return <div className={styles.sectionContent}>Cargando datos del empleado…</div>;
+  }
 
   return (
     <div className={styles.cardGrid}>
@@ -19,24 +22,15 @@ function Overview360({ employee, isEditing }) {
         <p>Email: {employee.email_personal || '[campo sin definir]'}</p>
         <p>Dirección: {employee.direccion || '[campo sin definir]'}</p>
         <p>Comuna: {employee.comuna || '[campo sin definir]'}</p>
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/personal`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        {/* 👇 RUTA RELATIVA AL PERFIL: /empleado/:rut/personal */}
+        <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Horario --- */}
       <div className={styles.infoCard}>
         <h3>Horario</h3>
         <p>El empleado no tiene asignaciones activas en este momento.</p>
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/asistencia`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Evaluaciones --- */}
@@ -45,12 +39,7 @@ function Overview360({ employee, isEditing }) {
         <div className={styles.evaluationScore}>7.8</div>
         <p className={styles.evaluationStatus}>Estado óptimo</p>
         <p className={styles.evaluationSubtitle}>Último test aplicado por Nadia (psicóloga interna)</p>
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/hoja-de-vida`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        <Link to="hoja-de-vida" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Contacto de emergencia --- */}
@@ -77,12 +66,7 @@ function Overview360({ employee, isEditing }) {
             <p>Teléfono: {employee.contacto_emergencia_telefono || '[campo sin definir]'}</p>
           </>
         )}
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/personal`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Registros y anotaciones --- */}
@@ -91,37 +75,32 @@ function Overview360({ employee, isEditing }) {
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Observaciones</div>
           <div className={styles.progressBar}>
-            <div className={styles.progressBarFillBlue} style={{ width: '60%' }}></div>
+            <div className={styles.progressBarFillBlue} style={{ width: '60%' }} />
           </div>
           <div className={styles.progressBarValue}>1</div>
         </div>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Positivas</div>
           <div className={styles.progressBar}>
-            <div className={styles.progressBarFillGreen} style={{ width: '80%' }}></div>
+            <div className={styles.progressBarFillGreen} style={{ width: '80%' }} />
           </div>
           <div className={styles.progressBarValue}>1</div>
         </div>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Negativas</div>
           <div className={styles.progressBar}>
-            <div className={styles.progressBarFillRed} style={{ width: '30%' }}></div>
+            <div className={styles.progressBarFillRed} style={{ width: '30%' }} />
           </div>
           <div className={styles.progressBarValue}>1</div>
         </div>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Entrevistas</div>
           <div className={styles.progressBar}>
-            <div className={styles.progressBarFillPurple} style={{ width: '40%' }}></div>
+            <div className={styles.progressBarFillPurple} style={{ width: '40%' }} />
           </div>
           <div className={styles.progressBarValue}>0</div>
         </div>
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/historial`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        <Link to="historial" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Asistencia --- */}
@@ -132,18 +111,13 @@ function Overview360({ employee, isEditing }) {
         <div className={styles.attendanceAlert}>
           ⚠️ Atrasos: 1 atraso – 4h: 51m acumulado
         </div>
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/asistencia`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
       
       {/* --- Tarjeta: Alerta (Hola Verito) --- */}
       <div className={`${styles.infoCard} ${styles.alertCard}`}>
         <h3>Hola, Verónica 💚</h3>
-        <p>Detecté que {(employee.nombre_completo || employee['nombre_completo'] || 'este colaborador')} tiene 2 documentos vencidos.</p>
+        <p>Detecté que {employee.nombre_completo} tiene 2 documentos vencidos.</p>
         <p className={styles.alertQuestion}>¿Quieres enviarle un recordatorio?</p>
         <div className={styles.alertActions}>
           <button className={styles.alertButtonSend}>Sí, enviar</button>
@@ -157,12 +131,7 @@ function Overview360({ employee, isEditing }) {
         <p>Alergias: {employee.tipo_discapacidad || '[campo sin definir]'}</p>
         <p>Enf. crónicas: {'[campo sin definir]'}</p>
         <p>Seguro de salud: {'[Sin definir]'}</p>
-        <Link
-          to={`/dashboard/rrhh/empleado/${employee.rut}/salud`}
-          className={styles.detailButton}
-        >
-          Ver detalle
-        </Link>
+        <Link to="salud" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Comunicación interna --- */}
@@ -179,16 +148,18 @@ function Overview360({ employee, isEditing }) {
           Ver detalle
         </Link>
       </div>
+
     </div>
   );
 }
 
-// --- Placeholder para las OTRAS secciones ---
+// --- Placeholder para las otras secciones mientras las armamos ---
 function SectionPlaceholder({ title }) {
   return (
     <div className={styles.sectionContent}>
       <h2>{title}</h2>
       <p>Aquí irá el contenido detallado de la sección: {title}.</p>
+      <p>Pronto construiremos los formularios de edición y las tablas de datos.</p>
     </div>
   );
 }
@@ -197,27 +168,25 @@ function SectionPlaceholder({ title }) {
 // === PÁGINA DE PERFIL PRINCIPAL ===
 // =======================================================
 function EmployeeProfilePage() {
-  // Tomamos el parámetro de la URL (RUT). Si en el router se llama employeeId, también lo agarramos.
-  const params = useParams();
-  const rut = params.rut || params.employeeId;
-
-  const [personalData, setPersonalData] = useState(null);   // Tabla 'employee_personal'
-  const [contractData, setContractData] = useState(null);   // Tabla 'employee_contracts'
+  // 👇 El rut viene de la URL: /dashboard/rrhh/empleado/:rut/*
+  const { rut } = useParams();
+  const [personalData, setPersonalData] = useState(null);
+  const [contractData, setContractData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Carga los datos del empleado desde Supabase usando el RUT
+  // Cargamos datos desde Supabase
   useEffect(() => {
     if (!rut) {
       setLoading(false);
-      console.error("No se proporcionó RUT en la URL");
+      console.error("No se proporcionó RUT");
       return;
     }
 
     const fetchEmployeeData = async () => {
       setLoading(true);
       
-      // 1. Cargar datos de la tabla 'employee_personal'
+      // 1) Datos personales
       const { data: personal, error: perError } = await supabase
         .from('employee_personal')
         .select('*')
@@ -225,56 +194,37 @@ function EmployeeProfilePage() {
         .single();
 
       if (perError) {
-        console.error("Error al cargar datos personales:", {
-          message: perError.message,
-          details: perError.details,
-          hint: perError.hint,
-          code: perError.code,
-        });
-        setPersonalData(null);
-        setContractData(null);
+        console.error("Error al cargar datos personales:", perError);
         setLoading(false);
         return;
       }
-
       setPersonalData(personal);
 
-      // 2. Cargar datos contractuales usando employee_id (NO rut)
-      // Asegúrate de que employee_contracts tenga columna employee_id FK a employee_personal.id
+      // 2) Datos contractuales (solo fecha_ingreso por ahora)
       const { data: contract, error: conError } = await supabase
         .from('employee_contracts')
-        .select('fecha_ingreso, employee_id')
-        .eq('employee_id', personal.id)
+        .select('fecha_ingreso')
+        .eq('rut', rut)
         .maybeSingle();
 
       if (conError) {
-        console.warn("Error al cargar datos de contrato:", {
-          message: conError.message,
-          details: conError.details,
-          hint: conError.hint,
-          code: conError.code,
-        });
+        console.warn("Error al cargar datos de contrato:", conError.message);
       }
-      
-      setContractData(contract || {}); 
+
+      setContractData(contract || {});
       setLoading(false);
     };
 
     fetchEmployeeData();
   }, [rut]);
 
-  // CÁLCULO DE ANTIGÜEDAD
+  // Antigüedad (usa employee_contracts.fecha_ingreso si existe)
   const yearsAndMonths = useMemo(() => {
-    // Usamos primero la fecha de contrato; si no, la fecha_ingreso de personal (si la tienes allí)
-    const fechaRef =
-      contractData?.fecha_ingreso ||
-      personalData?.fecha_ingreso ||
-      null;
+    const fecha = contractData?.fecha_ingreso || personalData?.fecha_ingreso;
+    if (!fecha) return '[Sin fecha de ingreso]';
 
-    if (!fechaRef) return '[Sin fecha de ingreso]'; 
-    
-    const ingressDate = new Date(fechaRef);
-    if (Number.isNaN(ingressDate.getTime())) return '[Sin fecha de ingreso]';
+    const ingressDate = new Date(fecha);
+    if (Number.isNaN(ingressDate.getTime())) return '[Sin fecha de ingreso válida]';
 
     const today = new Date();
     let years = today.getFullYear() - ingressDate.getFullYear();
@@ -288,9 +238,8 @@ function EmployeeProfilePage() {
     if (years === 0) return `${months} ${months === 1 ? 'mes' : 'meses'}`;
     if (months === 0) return `${years} ${years === 1 ? 'año' : 'años'}`;
     return `${years} ${years === 1 ? 'año' : 'años'} y ${months} ${months === 1 ? 'mes' : 'meses'}`;
-  }, [contractData?.fecha_ingreso, personalData?.fecha_ingreso]); 
+  }, [contractData?.fecha_ingreso, personalData?.fecha_ingreso]);
 
-  // Menú navegación
   const menuItems = [
     { title: 'Tictiva 360', path: '.' },
     { title: 'Datos personales', path: 'personal' },
@@ -304,11 +253,9 @@ function EmployeeProfilePage() {
     { title: 'Historial', path: 'historial' },
   ];
 
-  // Iniciales
   const getInitials = (fullName) => {
-    const name = fullName || 'Sin nombre';
-    if (!name) return '??';
-    const parts = name.trim().split(/\s+/);
+    if (!fullName) return '??';
+    const parts = fullName.trim().split(/\s+/);
     const first = parts[0]?.[0] || '';
     const last = parts[parts.length - 1]?.[0] || '';
     return (first + last).toUpperCase() || '??';
@@ -337,18 +284,15 @@ function EmployeeProfilePage() {
   const handleEditToggle = () => {
     if (isEditing) {
       console.log("Guardando cambios...");
-      // Aquí irá el supabase.update() más adelante
+      // Aquí irá supabase.update() más adelante
     }
-    setIsEditing(!isEditing); 
+    setIsEditing(!isEditing);
   };
 
   return (
     <div className={styles.profilePage}>
-      {/* HEADER PRINCIPAL FIJO DEL PERFIL */}
-      <div 
-        className={styles.profileHeader}
-        style={{ background: 'var(--blanco)', zIndex: 100 }}
-      >
+      {/* HEADER PRINCIPAL */}
+      <div className={styles.profileHeader}>
         <Link to="/dashboard/rrhh/listado-de-fichas" className={styles.backButton}>
           ←
         </Link>
@@ -358,18 +302,20 @@ function EmployeeProfilePage() {
             {personalData.avatar &&
              typeof personalData.avatar === 'string' &&
              personalData.avatar.startsWith('http') ? (
-              <img src={personalData.avatar} alt={personalData.nombre_completo || personalData['nombre_completo']} />
+              <img src={personalData.avatar} alt={personalData.nombre_completo} />
             ) : (
-              <span>{getInitials(personalData.nombre_completo || personalData['nombre_completo'])}</span>
+              <span>{getInitials(personalData.nombre_completo)}</span>
             )}
           </div>
           <div className={styles.profileDetails}>
-            <h1 className={styles.employeeName}>
-              {personalData.nombre_completo || personalData['nombre_completo']}
-            </h1>
+            <h1 className={styles.employeeName}>{personalData.nombre_completo}</h1>
             <p className={styles.employeeTitle}>{personalData.cargo}</p>
             <p className={styles.employeeStatus}>
-              <span className={`${styles.statusBadge} ${personalData.estado === 'Activo' ? styles.statusActive : styles.statusInactive}`}>
+              <span
+                className={`${styles.statusBadge} ${
+                  personalData.estado === 'Activo' ? styles.statusActive : styles.statusInactive
+                }`}
+              >
                 {personalData.estado}
               </span>
               <span className={styles.employeeDates}>
@@ -379,7 +325,6 @@ function EmployeeProfilePage() {
           </div>
         </div>
 
-        {/* Botones de Acción */}
         <div className={styles.profileActions}>
           <button className={styles.actionButton} onClick={handleEditToggle}>
             {isEditing ? "Guardar Ficha" : "Editar Ficha"} <FiEdit />
@@ -391,13 +336,13 @@ function EmployeeProfilePage() {
           )}
         </div>
 
-        {/* NAVEGACIÓN DE SECCIONES */}
+        {/* NAV DE SECCIONES */}
         <nav className={styles.profileNav}>
           {menuItems.map((item) => (
             <NavLink
               key={item.path}
-              to={item.path} 
-              className={({ isActive }) => 
+              to={item.path}
+              className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
               }
               end={item.path === '.'}
@@ -408,9 +353,10 @@ function EmployeeProfilePage() {
         </nav>
       </div>
 
-      {/* ÁREA DE CONTENIDO */}
+      {/* CONTENIDO DE CADA SECCIÓN */}
       <main className={styles.profileContent}>
         <Routes>
+          {/* Index y alias /tictiva-360 muestran el mismo resumen */}
           <Route
             index
             element={<Overview360 employee={personalData} isEditing={isEditing} />}
@@ -419,25 +365,51 @@ function EmployeeProfilePage() {
             path="tictiva-360"
             element={<Overview360 employee={personalData} isEditing={isEditing} />}
           />
-          
-          <Route 
-            path="personal" 
+
+          {/* 🔥 AQUÍ ENGANCHAMOS DATOS PERSONALES DE VERDAD */}
+          <Route
+            path="personal"
             element={
-              <DatosPersonales 
-                personalData={personalData} 
-                isEditing={isEditing} 
+              <DatosPersonales
+                personalData={personalData}
+                isEditing={isEditing}
               />
-            } 
+            }
           />
-          
-          <Route path="contractual" element={<SectionPlaceholder title="Datos Contractuales" />} />
-          <Route path="previsional" element={<SectionPlaceholder title="Datos Previsionales" />} />
-          <Route path="bancario" element={<SectionPlaceholder title="Datos Bancarios" />} />
-          <Route path="salud" element={<SectionPlaceholder title="Datos de Salud" />} />
-          <Route path="documentos" element={<SectionPlaceholder title="Documentos" />} />
-          <Route path="asistencia" element={<SectionPlaceholder title="Asistencia" />} />
-          <Route path="hoja-de-vida" element={<SectionPlaceholder title="Hoja de Vida" />} />
-          <Route path="historial" element={<SectionPlaceholder title="Historial" />} />
+
+          {/* Resto de secciones aún como placeholders */}
+          <Route
+            path="contractual"
+            element={<SectionPlaceholder title="Datos Contractuales" />}
+          />
+          <Route
+            path="previsional"
+            element={<SectionPlaceholder title="Datos Previsionales" />}
+          />
+          <Route
+            path="bancario"
+            element={<SectionPlaceholder title="Datos Bancarios" />}
+          />
+          <Route
+            path="salud"
+            element={<SectionPlaceholder title="Datos de Salud" />}
+          />
+          <Route
+            path="documentos"
+            element={<SectionPlaceholder title="Documentos" />}
+          />
+          <Route
+            path="asistencia"
+            element={<SectionPlaceholder title="Asistencia" />}
+          />
+          <Route
+            path="hoja-de-vida"
+            element={<SectionPlaceholder title="Hoja de Vida" />}
+          />
+          <Route
+            path="historial"
+            element={<SectionPlaceholder title="Historial" />}
+          />
         </Routes>
       </main>
     </div>
