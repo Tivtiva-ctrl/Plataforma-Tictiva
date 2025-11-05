@@ -1,0 +1,473 @@
+import React, { useState, useEffect } from 'react';
+// ¡Reutilizamos el mismo CSS!
+import styles from './DatosPersonales.module.css'; 
+
+// Componente reutilizable para un campo del formulario
+// (Copiado de DatosContractuales)
+function FormField({ label, value, name, onChange, isEditing, type = "text", options = [] }) {
+  const InputComponent = type === "select" ? "select" : "input";
+  
+  const EditableInput = () => (
+    <InputComponent
+      name={name}
+      value={value ?? ''}               
+      onChange={onChange}
+      className={styles.formInput}
+      {...(type === "select" ? {} : { type })}
+    >
+      {type === "select" && (
+        <>
+          <option value="">Seleccionar...</option>
+          {options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </>
+      )}
+    </InputComponent>
+  );
+
+  const ReadOnlyInput = () => (
+    <input
+      type="text"
+      value={value ?? '—'}              // Muestra '—' si está vacío
+      readOnly
+      className={styles.formInput}
+    />
+  );
+
+  return (
+    <div className={styles.formGroup}>
+      <label className={styles.formLabel}>{label}</label>
+      {isEditing ? <EditableInput /> : <ReadOnlyInput />}
+    </div>
+  );
+}
+
+// Componente para campos Booleanos (Sí/No)
+function BooleanField({ label, value, name, onChange, isEditing }) {
+  // Normalizamos el valor para el <select>
+  const normalized = value === true ? 'true' : value === false ? 'false' : '';
+
+  return (
+    <div className={styles.formGroup}>
+      <label className={styles.formLabel}>{label}</label>
+      {isEditing ? (
+        <select
+          name={name}
+          value={normalized}
+          onChange={onChange}
+          className={styles.formInput}
+        >
+          <option value="false">No</option>
+          <option value="true">Sí</option>
+        </select>
+      ) : (
+        <input
+          type="text"
+          value={value ? "Sí" : "No"}
+          readOnly
+          className={styles.formInput}
+        />
+      )}
+    </div>
+  );
+}
+
+
+// --- Componente Principal de Datos Previsionales ---
+function DatosPrevisionales({ previsionalData, isEditing }) {
+  const [formData, setFormData] = useState(previsionalData || {});
+
+  useEffect(() => {
+    setFormData(previsionalData || {});
+  }, [previsionalData]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    // Para checkbox (por si en el futuro agregas alguno)
+    if (type === 'checkbox') {
+      setFormData(prev => ({ ...prev, [name]: checked }));
+      return;
+    }
+
+    // Para selects (incluidos los booleanos)
+if (type === 'select-one') {
+  let finalValue = value;
+  if (value === 'true') finalValue = true;
+  else if (value === 'false') finalValue = false;
+
+  setFormData(prev => ({ ...prev, [name]: finalValue }));
+  return;
+}
+
+
+    // Inputs normales
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // --- Opciones para los menús desplegables ---
+  const afps = ["Capital", "Cuprum", "Habitat", "Modelo", "Planvital", "Provida", "Uno"];
+  const sistemasSalud = ["Fonasa", "Isapre"];
+  const fonasaTramos = ["A", "B", "C", "D"];
+  const isapreNombres = ["Banmédica", "Colmena", "CruzBlanca", "Consalud", "Vida Tres", "Otra"];
+  const montoTipos = ["CLP", "UF", "%"];
+  const apvTipos = ["A", "B"];
+
+  if (!previsionalData) {
+    return <div className={styles.loading}>Cargando datos previsionales...</div>;
+  }
+
+  return (
+    <div className={styles.formContainer}>
+      
+      {/* === Sección 1: Base Imponible === */}
+      <h3 className={styles.sectionTitle}>1. Base Imponible</h3>
+      <div className={styles.formGrid}>
+        <FormField
+          label="BP General"
+          name="bp_previsional"
+          value={formData.bp_previsional}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+        <FormField
+          label="BP Salud"
+          name="bp_salud"
+          value={formData.bp_salud}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+        <FormField
+          label="BP AFP"
+          name="bp_afp"
+          value={formData.bp_afp}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+      </div>
+
+      {/* === Sección 2: AFP / Jubilación === */}
+      <h3 className={styles.sectionTitle}>2. AFP / Jubilación</h3>
+      <div className={styles.formGrid}>
+        <FormField
+          label="AFP"
+          name="afp"
+          value={formData.afp}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="select"
+          options={afps}
+        />
+        <FormField
+          label="Fecha de Afiliación"
+          name="afp_fecha_afiliacion"
+          value={formData.afp_fecha_afiliacion}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="date"
+        />
+        <FormField
+          label="N° Cuenta / Afiliación"
+          name="afp_numero_cuenta"
+          value={formData.afp_numero_cuenta}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+      </div>
+      
+      {/* === Sección 3: Salud (FONASA / ISAPRE) === */}
+      <h3 className={styles.sectionTitle}>3. Salud</h3>
+      <div className={styles.formGrid}>
+        <FormField
+          label="Sistema de Salud"
+          name="sistema_salud"
+          value={formData.sistema_salud}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="select"
+          options={sistemasSalud}
+        />
+      </div>
+
+      {/* Mostramos esto SÓLO SI es Fonasa */}
+      {formData.sistema_salud === 'Fonasa' && (
+        <div className={styles.formGrid}>
+          <FormField
+            label="Fonasa Tramo"
+            name="fonasa_tramo"
+            value={formData.fonasa_tramo}
+            onChange={handleChange}
+            isEditing={isEditing}
+            type="select"
+            options={fonasaTramos}
+          />
+          <FormField
+            label="N° Cargas Fonasa"
+            name="fonasa_numero_cargas"
+            value={formData.fonasa_numero_cargas}
+            onChange={handleChange}
+            isEditing={isEditing}
+            type="number"
+          />
+          <FormField
+            label="Detalle Cargas Fonasa"
+            name="fonasa_detalle_cargas"
+            value={formData.fonasa_detalle_cargas}
+            onChange={handleChange}
+            isEditing={isEditing}
+          />
+        </div>
+      )}
+
+      {/* Mostramos esto SÓLO SI es Isapre */}
+      {formData.sistema_salud === 'Isapre' && (
+        <div className={styles.formGrid}>
+          <FormField
+            label="Nombre Isapre"
+            name="isapre_nombre"
+            value={formData.isapre_nombre}
+            onChange={handleChange}
+            isEditing={isEditing}
+            type="select"
+            options={isapreNombres}
+          />
+          <FormField
+            label="Nombre del Plan"
+            name="isapre_plan"
+            value={formData.isapre_plan}
+            onChange={handleChange}
+            isEditing={isEditing}
+          />
+          <FormField
+            label="Monto Plan"
+            name="isapre_monto_plan"
+            value={formData.isapre_monto_plan}
+            onChange={handleChange}
+            isEditing={isEditing}
+            type="number"
+          />
+          <FormField
+            label="Tipo Monto (CLP/UF/%)"
+            name="isapre_monto_plan_tipo"
+            value={formData.isapre_monto_plan_tipo}
+            onChange={handleChange}
+            isEditing={isEditing}
+            type="select"
+            options={montoTipos}
+          />
+          <FormField
+            label="N° Cargas Isapre"
+            name="isapre_numero_cargas"
+            value={formData.isapre_numero_cargas}
+            onChange={handleChange}
+            isEditing={isEditing}
+            type="number"
+          />
+          <FormField
+            label="Detalle Cargas Isapre"
+            name="isapre_detalle_cargas"
+            value={formData.isapre_detalle_cargas}
+            onChange={handleChange}
+            isEditing={isEditing}
+          />
+        </div>
+      )}
+
+      {/* === Sección 4: APV / APB === */}
+      <h3 className={styles.sectionTitle}>4. Ahorro Previsional Voluntario (APV)</h3>
+      <div className={styles.formGrid}>
+        <BooleanField
+          label="¿Tiene APV?"
+          name="apv_tiene"
+          value={formData.apv_tiene}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+        {formData.apv_tiene && (
+          <>
+            <FormField
+              label="Entidad APV"
+              name="apv_entidad"
+              value={formData.apv_entidad}
+              onChange={handleChange}
+              isEditing={isEditing}
+            />
+            <FormField
+              label="Tipo APV"
+              name="apv_tipo"
+              value={formData.apv_tipo}
+              onChange={handleChange}
+              isEditing={isEditing}
+              type="select"
+              options={apvTipos}
+            />
+            <FormField
+              label="Monto APV"
+              name="apv_monto"
+              value={formData.apv_monto}
+              onChange={handleChange}
+              isEditing={isEditing}
+              type="number"
+            />
+            <FormField
+              label="Tipo Monto (CLP/UF/%)"
+              name="apv_monto_tipo"
+              value={formData.apv_monto_tipo}
+              onChange={handleChange}
+              isEditing={isEditing}
+              type="select"
+              options={montoTipos}
+            />
+          </>
+        )}
+      </div>
+
+      {/* === Sección 5: Seguros y Beneficios === */}
+      <h3 className={styles.sectionTitle}>5. Seguros y Beneficios</h3>
+      <div className={styles.formGrid}>
+        <BooleanField
+          label="¿Seguro Complementario?"
+          name="seguro_complementario_tiene"
+          value={formData.seguro_complementario_tiene}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+        {formData.seguro_complementario_tiene && (
+          <FormField
+            label="Detalle Seguro Comp."
+            name="seguro_complementario_detalle"
+            value={formData.seguro_complementario_detalle}
+            onChange={handleChange}
+            isEditing={isEditing}
+          />
+        )}
+      </div>
+
+      <div className={styles.formGrid}>
+        <BooleanField
+          label="¿Seguro de Vida?"
+          name="seguro_vida_tiene"
+          value={formData.seguro_vida_tiene}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+        {formData.seguro_vida_tiene && (
+          <>
+            <FormField
+              label="Monto Seguro Vida"
+              name="seguro_vida_monto"
+              value={formData.seguro_vida_monto}
+              onChange={handleChange}
+              isEditing={isEditing}
+              type="number"
+            />
+            <FormField
+              label="Detalle Seguro Vida"
+              name="seguro_vida_detalle"
+              value={formData.seguro_vida_detalle}
+              onChange={handleChange}
+              isEditing={isEditing}
+            />
+          </>
+        )}
+      </div>
+
+      <div className={styles.formGrid}>
+        <BooleanField
+          label="¿Seguro SANTIA?"
+          name="seguro_santia_tiene"
+          value={formData.seguro_santia_tiene}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+        {formData.seguro_santia_tiene && (
+          <FormField
+            label="Detalle SANTIA"
+            name="seguro_santia_detalle"
+            value={formData.seguro_santia_detalle}
+            onChange={handleChange}
+            isEditing={isEditing}
+          />
+        )}
+      </div>
+
+      {/* === Sección 6: Cargas Familiares === */}
+      <h3 className={styles.sectionTitle}>6. Cargas Familiares</h3>
+      <div className={styles.formGrid}>
+        <FormField
+          label="Cargas Simples"
+          name="cargas_simples"
+          value={formData.cargas_simples}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+        <FormField
+          label="Cargas Maternales"
+          name="cargas_maternales"
+          value={formData.cargas_maternales}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+        <FormField
+          label="Cargas Inválidas"
+          name="cargas_invalidas"
+          value={formData.cargas_invalidas}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+        <FormField
+          label="Otras Cargas"
+          name="cargas_otras"
+          value={formData.cargas_otras}
+          onChange={handleChange}
+          isEditing={isEditing}
+          type="number"
+        />
+        <FormField
+          label="Observaciones Cargas"
+          name="cargas_observaciones"
+          value={formData.cargas_observaciones}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+      </div>
+
+      {/* === Sección 7: Créditos y Observaciones === */}
+      <h3 className={styles.sectionTitle}>7. Créditos Sociales y Observaciones</h3>
+      <div className={styles.formGrid}>
+        <BooleanField
+          label="¿Tiene Crédito Social?"
+          name="tiene_credito_social"
+          value={formData.tiene_credito_social}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+        {formData.tiene_credito_social && (
+          <FormField
+            label="Detalle Crédito Social"
+            name="credito_social_detalle"
+            value={formData.credito_social_detalle}
+            onChange={handleChange}
+            isEditing={isEditing}
+          />
+        )}
+        <FormField
+          label="Observaciones Previsionales"
+          name="observaciones_previsionales"
+          value={formData.observaciones_previsionales}
+          onChange={handleChange}
+          isEditing={isEditing}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default DatosPrevisionales;

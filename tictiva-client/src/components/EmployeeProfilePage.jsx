@@ -4,7 +4,8 @@ import { supabase } from '../supabaseClient';
 import styles from './EmployeeProfilePage.module.css';
 import { FiEdit, FiDownload } from 'react-icons/fi';
 import DatosPersonales from './DatosPersonales';
-import DatosContractuales from './DatosContractuales'; // ✅ NUEVO IMPORT
+import DatosContractuales from './DatosContractuales';
+import DatosPrevisionales from './DatosPrevisionales'; // ✅ NUEVO IMPORT
 
 // =======================================================
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
@@ -16,14 +17,12 @@ function Overview360({ employee, isEditing }) {
 
   return (
     <div className={styles.cardGrid}>
-      
       {/* --- Tarjeta: Datos personales --- */}
       <div className={styles.infoCard}>
         <h3>Datos personales</h3>
         <p>Email: {employee.email_personal || '[campo sin definir]'}</p>
         <p>Dirección: {employee.direccion || '[campo sin definir]'}</p>
         <p>Comuna: {employee.comuna || '[campo sin definir]'}</p>
-        {/* 👇 RUTA RELATIVA AL PERFIL: /empleado/:rut/personal */}
         <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
@@ -149,7 +148,6 @@ function Overview360({ employee, isEditing }) {
           Ver detalle
         </Link>
       </div>
-
     </div>
   );
 }
@@ -169,10 +167,10 @@ function SectionPlaceholder({ title }) {
 // === PÁGINA DE PERFIL PRINCIPAL ===
 // =======================================================
 function EmployeeProfilePage() {
-  // 👇 El rut viene de la URL: /dashboard/rrhh/empleado/:rut/*
-  const { rut } = useParams();
+  const { rut } = useParams(); // /dashboard/rrhh/empleado/:rut/*
   const [personalData, setPersonalData] = useState(null);
   const [contractData, setContractData] = useState(null);
+  const [previsionalData, setPrevisionalData] = useState(null); // ✅ NUEVO ESTADO
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -201,25 +199,37 @@ function EmployeeProfilePage() {
       }
       setPersonalData(personal);
 
-      // 2) Datos contractuales — AHORA TODOS LOS CAMPOS
+      // 2) Datos contractuales
       const { data: contract, error: conError } = await supabase
         .from('employee_contracts')
-        .select('*')              // ✅ ANTES: 'fecha_ingreso'
+        .select('*')
         .eq('rut', rut)
         .maybeSingle();
 
       if (conError) {
         console.warn("Error al cargar datos de contrato:", conError.message);
       }
-
       setContractData(contract || {});
+
+      // 3) Datos previsionales ✅
+      const { data: previsional, error: prevError } = await supabase
+        .from('employee_prevision')     // 👈 nombre de tabla en Supabase
+        .select('*')
+        .eq('rut', rut)
+        .maybeSingle();
+
+      if (prevError) {
+        console.warn("Error al cargar datos previsionales:", prevError.message);
+      }
+      setPrevisionalData(previsional || {});
+
       setLoading(false);
     };
 
     fetchEmployeeData();
   }, [rut]);
 
-  // Antigüedad (usa employee_contracts.fecha_ingreso si existe)
+  // Antigüedad
   const yearsAndMonths = useMemo(() => {
     const fecha = contractData?.fecha_ingreso || personalData?.fecha_ingreso;
     if (!fecha) return '[Sin fecha de ingreso]';
@@ -340,7 +350,6 @@ function EmployeeProfilePage() {
         {/* NAV DE SECCIONES */}
         <nav className={styles.profileNav}>
           {menuItems.map((item) => {
-            // 🔗 Construimos la URL COMPLETA, con el rut
             const targetPath =
               item.path === '.'
                 ? `/dashboard/rrhh/empleado/${rut}`
@@ -365,7 +374,7 @@ function EmployeeProfilePage() {
       {/* CONTENIDO DE CADA SECCIÓN */}
       <main className={styles.profileContent}>
         <Routes>
-          {/* Index y alias /tictiva-360 muestran el mismo resumen */}
+          {/* Tictiva 360 */}
           <Route
             index
             element={<Overview360 employee={personalData} isEditing={isEditing} />}
@@ -375,7 +384,7 @@ function EmployeeProfilePage() {
             element={<Overview360 employee={personalData} isEditing={isEditing} />}
           />
 
-          {/* DATOS PERSONALES */}
+          {/* Datos personales */}
           <Route
             path="personal"
             element={
@@ -386,7 +395,7 @@ function EmployeeProfilePage() {
             }
           />
 
-          {/* ✅ DATOS CONTRACTUALES REALES */}
+          {/* Datos contractuales */}
           <Route
             path="contractual"
             element={
@@ -397,11 +406,18 @@ function EmployeeProfilePage() {
             }
           />
 
-          {/* Resto de secciones aún como placeholders */}
+          {/* ✅ Datos previsionales reales */}
           <Route
             path="previsional"
-            element={<SectionPlaceholder title="Datos Previsionales" />}
+            element={
+              <DatosPrevisionales
+                previsionalData={previsionalData}
+                isEditing={isEditing}
+              />
+            }
           />
+
+          {/* Resto aún como placeholders */}
           <Route
             path="bancario"
             element={<SectionPlaceholder title="Datos Bancarios" />}
