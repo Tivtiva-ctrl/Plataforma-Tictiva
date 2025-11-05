@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import styles from './EmployeeProfilePage.module.css';
 import { FiEdit, FiDownload } from 'react-icons/fi';
 import DatosPersonales from './DatosPersonales';
+import DatosContractuales from './DatosContractuales'; // ✅ NUEVO IMPORT
 
 // =======================================================
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
@@ -200,10 +201,10 @@ function EmployeeProfilePage() {
       }
       setPersonalData(personal);
 
-      // 2) Datos contractuales (solo fecha_ingreso por ahora)
+      // 2) Datos contractuales — AHORA TODOS LOS CAMPOS
       const { data: contract, error: conError } = await supabase
         .from('employee_contracts')
-        .select('fecha_ingreso')
+        .select('*')              // ✅ ANTES: 'fecha_ingreso'
         .eq('rut', rut)
         .maybeSingle();
 
@@ -338,18 +339,26 @@ function EmployeeProfilePage() {
 
         {/* NAV DE SECCIONES */}
         <nav className={styles.profileNav}>
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
-              }
-              end={item.path === '.'}
-            >
-              {item.title}
-            </NavLink>
-          ))}
+          {menuItems.map((item) => {
+            // 🔗 Construimos la URL COMPLETA, con el rut
+            const targetPath =
+              item.path === '.'
+                ? `/dashboard/rrhh/empleado/${rut}`
+                : `/dashboard/rrhh/empleado/${rut}/${item.path}`;
+
+            return (
+              <NavLink
+                key={item.path}
+                to={targetPath}
+                className={({ isActive }) =>
+                  isActive ? `${styles.navLink} ${styles.active}` : styles.navLink
+                }
+                end={item.path === '.'}
+              >
+                {item.title}
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
 
@@ -366,7 +375,7 @@ function EmployeeProfilePage() {
             element={<Overview360 employee={personalData} isEditing={isEditing} />}
           />
 
-          {/* 🔥 AQUÍ ENGANCHAMOS DATOS PERSONALES DE VERDAD */}
+          {/* DATOS PERSONALES */}
           <Route
             path="personal"
             element={
@@ -377,11 +386,18 @@ function EmployeeProfilePage() {
             }
           />
 
-          {/* Resto de secciones aún como placeholders */}
+          {/* ✅ DATOS CONTRACTUALES REALES */}
           <Route
             path="contractual"
-            element={<SectionPlaceholder title="Datos Contractuales" />}
+            element={
+              <DatosContractuales
+                contractData={contractData}
+                isEditing={isEditing}
+              />
+            }
           />
+
+          {/* Resto de secciones aún como placeholders */}
           <Route
             path="previsional"
             element={<SectionPlaceholder title="Datos Previsionales" />}
