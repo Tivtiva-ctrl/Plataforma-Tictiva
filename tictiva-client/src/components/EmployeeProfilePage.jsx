@@ -6,6 +6,8 @@ import { FiEdit, FiDownload } from 'react-icons/fi';
 import DatosPersonales from './DatosPersonales';
 import DatosContractuales from './DatosContractuales';
 import DatosPrevisionales from './DatosPrevisionales'; // ✅ NUEVO IMPORT
+import DatosBancarios from './DatosBancarios';          // ✅ IMPORT BANCARIOS
+import DatosSalud from './DatosSalud';                  // ✅ IMPORT SALUD
 
 // =======================================================
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
@@ -171,6 +173,8 @@ function EmployeeProfilePage() {
   const [personalData, setPersonalData] = useState(null);
   const [contractData, setContractData] = useState(null);
   const [previsionalData, setPrevisionalData] = useState(null); // ✅ NUEVO ESTADO
+  const [bankData, setBankData] = useState({});                // ✅ ESTADO BANCARIO
+  const [healthData, setHealthData] = useState({});            // ✅ ESTADO SALUD
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -296,6 +300,9 @@ function EmployeeProfilePage() {
     if (isEditing) {
       console.log("Guardando cambios...");
       // Aquí irá supabase.update() más adelante
+      // bankData tendrá los datos de la ficha bancaria editados en memoria
+      console.log("Datos bancarios actuales:", bankData);
+      console.log("Datos de salud actuales:", healthData);
     }
     setIsEditing(!isEditing);
   };
@@ -417,15 +424,31 @@ function EmployeeProfilePage() {
             }
           />
 
-          {/* Resto aún como placeholders */}
+          {/* ✅ Datos bancarios reales (ficha) */}
           <Route
             path="bancario"
-            element={<SectionPlaceholder title="Datos Bancarios" />}
+            element={
+              <DatosBancarios
+                bankData={bankData}
+                isEditing={isEditing}
+                onChange={setBankData}
+              />
+            }
           />
+
+          {/* ✅ Datos de salud reales (ficha) */}
           <Route
             path="salud"
-            element={<SectionPlaceholder title="Datos de Salud" />}
+            element={
+              <DatosSalud
+                healthData={healthData}
+                isEditing={isEditing}
+                onChange={setHealthData}
+              />
+            }
           />
+
+          {/* Resto aún como placeholders */}
           <Route
             path="documentos"
             element={<SectionPlaceholder title="Documentos" />}
