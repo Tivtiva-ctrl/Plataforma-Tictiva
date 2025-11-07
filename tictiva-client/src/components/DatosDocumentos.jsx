@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useParams } from 'react-router-dom';
-import EditarDocumentoModal from './EditarDocumentoModal';
 import styles from './DatosDocumentos.module.css';
 import {
   FiFileText,
@@ -10,18 +9,27 @@ import {
   FiPaperclip,
   FiEdit,
   FiDownload,
+  FiEye,              // 👈 NUEVO ICONO
 } from 'react-icons/fi';
 
-// ===============================================
-// === 1. EL POPUP (MODAL) PARA SUBIR DOCUMENTOS ===
-// ===============================================
-function UploadModal({ onClose, onSave, rut }) {
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [tag, setTag] = useState('General');
-  const [file, setFile] = useState(null);
+/**
+ * Modal único para SUBIR o EDITAR documentos.
+ * - existingDocument === null  => SUBIR
+ * - existingDocument !== null  => EDITAR
+ */
+function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
+  const isEditing = !!existingDocument;
+
+  const [nombre, setNombre] = useState(existingDocument?.display_name || '');
+  const [descripcion, setDescripcion] = useState(
+    existingDocument?.description || ''
+  );
+  const [tag, setTag] = useState(existingDocument?.tag || 'General');
+  const [file, setFile] = useState(null); // nuevo archivo (opcional al editar)
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState(null); // Para mostrar errores
+  const [error, setError] = useState(null);
+
+  const title = isEditing ? 'Editar Documento' : 'Subir Documento';
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -30,148 +38,232 @@ function UploadModal({ onClose, onSave, rut }) {
     }
   };
 
-  const handleSave = async () => {
-    if (!file || !nombre || !rut) {
-      setError('Por favor completa el nombre y selecciona un archivo.');
-      return;
-    }
-    setIsUploading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError(null);
 
+    if (!rut) {
+      setError('No se encontró el RUT del empleado.');
+      return;
+    }
+
+    if (!nombre) {
+      setError('Por favor completa el nombre.');
+      return;
+    }
+
+    // Al subir es obligatorio archivo, al editar es opcional
+    if (!isEditing && !file) {
+      setError('Por favor selecciona un archivo para subir.');
+      return;
+    }
+
+    setIsUploading(true);
+
     try {
-      // 1. Creamos un path único (ej: 12.345.678-9/16788866.pdf)
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${rut}/${fileName}`;
+      let filePath = existingDocument?.file_path || null;
 
-      // 2. Subimos el archivo a Supabase Storage (al bucket que creaste)
-      const { error: storageError } = await supabase.storage
-        .from('employee-documents') // 👈 NOMBRE CORRECTO DEL BUCKET
-        .upload(filePath, file);
+      // 1) Manejo del archivo (solo si se selecciona uno nuevo)
+      if (file) {
+        // Si estamos editando y ya había archivo, intentar borrarlo
+        if (isEditing && filePath) {
+          const { error: removeError } = await supabase.storage
+            .from('employee-documents')
+            .remove([filePath]);
 
-      if (storageError) {
-        throw storageError;
+          if (removeError) {
+            console.warn(
+              'Error al eliminar archivo antiguo del storage:',
+              removeError.message
+            );
+            // no cortamos el flujo por esto
+          }
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        filePath = `${rut}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('employee-documents')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(`Error al subir el archivo: ${uploadError.message}`);
+        }
       }
 
-      // 3. Guardamos la referencia en la Base de Datos (tu tabla)
-      const { error: dbError } = await supabase.from('employee_documents').insert({
+      // 2) Datos para la tabla
+      const documentData = {
         rut,
         display_name: nombre,
         description: descripcion,
         tag,
-        file_path: filePath, // ¡Guardamos el path del archivo!
-      });
+        file_path: filePath,
+      };
 
-      if (dbError) {
-        throw dbError;
+      // 3) INSERT o UPDATE
+      if (isEditing) {
+        const { error: dbError } = await supabase
+          .from('employee_documents')
+          .update(documentData)
+          .eq('id', existingDocument.id);
+
+        if (dbError) {
+          throw new Error(
+            `Error al actualizar los datos del documento: ${dbError.message}`
+          );
+        }
+      } else {
+        const { error: dbError } = await supabase
+          .from('employee_documents')
+          .insert({
+            ...documentData,
+            uploaded_at: new Date(), // si tu columna tiene DEFAULT, esto se puede omitir
+          });
+
+        if (dbError) {
+          throw new Error(
+            `Error al guardar los datos del documento: ${dbError.message}`
+          );
+        }
       }
 
-      setIsUploading(false);
-      onSave(); // Recarga la lista
-      onClose(); // Cierra modal
-    } catch (error) {
-      console.error('Error al subir documento:', error.message);
-      setError('Error al subir el archivo: ' + (error.message || 'Error desconocido'));
+      onSave();   // refresca la lista
+      onClose();  // cierra modal
+    } catch (err) {
+      console.error('Error al guardar documento:', err.message);
+      setError(err.message || 'Error desconocido al guardar el documento.');
+    } finally {
       setIsUploading(false);
     }
   };
+
+  const nombreArchivoActual = existingDocument?.file_path
+    ? existingDocument.file_path.split('/').pop()
+    : 'No especificado';
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h2>Subir Documento</h2>
-          <button onClick={onClose} className={styles.closeButton}>
+          <h2 className={styles.modalTitle}>{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className={styles.closeButton}
+          >
             <FiX />
           </button>
         </div>
 
-        {/* Formulario del Modal */}
-        <div className={styles.modalBody}>
-          <div className={styles.formGroup}>
-            <label htmlFor="nombre">Nombre *</label>
-            <input
-              id="nombre"
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej. Contrato de Trabajo"
-            />
-          </div>
+        {/* Usamos exactamente las mismas clases que el modal bonito */}
+        <form onSubmit={handleSubmit}>
+          <div className={styles.modalBody}>
+            <div className={styles.formGroup}>
+              <label htmlFor="nombre">Nombre *</label>
+              <input
+                id="nombre"
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej. Contrato de Trabajo"
+              />
+            </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="descripcion">Descripción</label>
-            <textarea
-              id="descripcion"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Ej. Contrato indefinido firmado el 03/03/2021"
-            />
-          </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="descripcion">Descripción</label>
+              <textarea
+                id="descripcion"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Ej. Contrato indefinido firmado el 03/03/2021"
+              />
+            </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="tag">Etiqueta (para clasificar)</label>
-            <select
-              id="tag"
-              value={tag}
-              onChange={(e) => setTag(e.target.value)}
-            >
-              <option value="Contractual">Contractual</option>
-              <option value="Previsional">Previsional</option>
-              <option value="Personal">Personal</option>
-              <option value="Salud">Salud</option>
-              <option value="General">General</option>
-            </select>
-          </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="tag">Etiqueta (Tipo de Documento)</label>
+              <select
+                id="tag"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+              >
+                <option value="Contractual">Contractual</option>
+                <option value="Previsional">Previsional</option>
+                <option value="Personal">Personal</option>
+                <option value="Salud">Salud</option>
+                <option value="General">General</option>
+              </select>
+            </div>
 
-          <div className={styles.dropZone}>
-            <FiPaperclip size={30} />
-            {file ? (
-              <p>
-                Archivo seleccionado: <strong>{file.name}</strong>
+            <div className={styles.dropZone}>
+              <FiPaperclip size={30} />
+              {file ? (
+                <p>
+                  Nuevo archivo: <strong>{file.name}</strong>
+                </p>
+              ) : isEditing ? (
+                <p>
+                  Arrastra un nuevo archivo aquí para reemplazar el actual o
+                  haz clic.
+                </p>
+              ) : (
+                <p>Haz clic o arrastra el documento hasta aquí.</p>
+              )}
+              <input type="file" onChange={handleFileChange} />
+            </div>
+
+            {isEditing && (
+              <p className={styles.currentFileText}>
+                Archivo actual: <strong>{nombreArchivoActual}</strong>
               </p>
-            ) : (
-              <p>Haz clic o arrastra el documento hasta aquí.</p>
             )}
-            <input type="file" onChange={handleFileChange} />
+
+            {error && <p className={styles.modalError}>{error}</p>}
           </div>
 
-          {/* Mostramos el error si existe */}
-          {error && <p className={styles.modalError}>{error}</p>}
-        </div>
-
-        <div className={styles.modalFooter}>
-          <button onClick={onClose} className={styles.cancelButton} disabled={isUploading}>
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            className={styles.saveButton}
-            disabled={isUploading || !file || !nombre}
-          >
-            {isUploading ? 'Guardando...' : 'Guardar'}
-          </button>
-        </div>
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelButton}
+              disabled={isUploading}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={isUploading || !nombre || (!isEditing && !file)}
+            >
+              {isUploading
+                ? 'Guardando...'
+                : isEditing
+                ? 'Guardar Cambios'
+                : 'Guardar'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
-// ===============================================
-// === 2. EL COMPONENTE PRINCIPAL DE DOCUMENTOS ===
-// ===============================================
+/**
+ * Listado principal de documentos
+ */
 function DatosDocumentos({ rut: rutProp }) {
-  // Si no viene el rut por props, tomamos el de la URL (/empleado/:rut)
   const { rut: rutFromParams } = useParams();
   const rut = rutProp || rutFromParams;
 
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 🔹 Estado para edición
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState(null);
 
   const fetchDocuments = async () => {
     if (!rut) {
@@ -217,11 +309,30 @@ function DatosDocumentos({ rut: rutProp }) {
     }
   };
 
-  // Función para descargar
+  // 👁️ NUEVO: ver documento en pestaña nueva con URL firmada
+  const handleView = async (filePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('employee-documents')
+        .createSignedUrl(filePath, 300); // 5 minutos
+
+      if (error) throw error;
+
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      } else {
+        alert('No se pudo generar el enlace de visualización.');
+      }
+    } catch (error) {
+      console.error('Error al visualizar el archivo:', error.message);
+      alert('No se pudo abrir el archivo.');
+    }
+  };
+
   const handleDownload = async (filePath) => {
     try {
       const { data, error } = await supabase.storage
-        .from('employee-documents') // 👈 NOMBRE CORRECTO DEL BUCKET
+        .from('employee-documents')
         .download(filePath);
 
       if (error) throw error;
@@ -240,47 +351,31 @@ function DatosDocumentos({ rut: rutProp }) {
     }
   };
 
-  const handleOpenEditModal = (doc) => {
-    setSelectedDoc(doc);
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setSelectedDoc(null);
-    setIsEditModalOpen(false);
-  };
-
-  const handleEditSuccess = () => {
-    fetchDocuments();
-    handleCloseEditModal();
-  };
-
   return (
     <div className={styles.documentContainer}>
-      {/* Modal de subida */}
-      {isModalOpen && (
-        <UploadModal
+      {/* Modal SUBIR */}
+      {isUploadModalOpen && (
+        <DocumentModal
           rut={rut}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => setIsUploadModalOpen(false)}
           onSave={fetchDocuments}
         />
       )}
 
-      {/* Modal de edición */}
-      {isEditModalOpen && selectedDoc && (
-        <EditarDocumentoModal
-          document={selectedDoc}
-          employeeRut={rut}
-          onClose={handleCloseEditModal}
-          onSuccess={handleEditSuccess}
+      {/* Modal EDITAR */}
+      {editingDocument && (
+        <DocumentModal
+          rut={rut}
+          existingDocument={editingDocument}
+          onClose={() => setEditingDocument(null)}
+          onSave={fetchDocuments}
         />
       )}
 
-      {/* Header con el botón "Subir" a la derecha */}
       <div className={styles.documentHeader}>
         <h2>Documentos del Empleado</h2>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setIsUploadModalOpen(true)}
           className={styles.uploadButton}
           disabled={!rut}
         >
@@ -288,7 +383,6 @@ function DatosDocumentos({ rut: rutProp }) {
         </button>
       </div>
 
-      {/* Lista de Documentos */}
       <div className={styles.documentList}>
         {loading && <p>Cargando documentos...</p>}
 
@@ -322,7 +416,14 @@ function DatosDocumentos({ rut: rutProp }) {
                   <button
                     className={styles.actionButtonEdit}
                     type="button"
-                    onClick={() => handleOpenEditModal(doc)}
+                    onClick={() => handleView(doc.file_path)}
+                  >
+                    <FiEye size={14} /> Ver
+                  </button>
+                  <button
+                    className={styles.actionButtonEdit}
+                    type="button"
+                    onClick={() => setEditingDocument(doc)}
                   >
                     <FiEdit size={14} /> Editar
                   </button>
