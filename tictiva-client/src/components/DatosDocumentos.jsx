@@ -9,7 +9,6 @@ import {
   FiPaperclip,
   FiEdit,
   FiDownload,
-  FiEye,              // 👈 NUEVO ICONO
 } from 'react-icons/fi';
 
 /**
@@ -309,26 +308,6 @@ function DatosDocumentos({ rut: rutProp }) {
     }
   };
 
-  // 👁️ NUEVO: ver documento en pestaña nueva con URL firmada
-  const handleView = async (filePath) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('employee-documents')
-        .createSignedUrl(filePath, 300); // 5 minutos
-
-      if (error) throw error;
-
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
-      } else {
-        alert('No se pudo generar el enlace de visualización.');
-      }
-    } catch (error) {
-      console.error('Error al visualizar el archivo:', error.message);
-      alert('No se pudo abrir el archivo.');
-    }
-  };
-
   const handleDownload = async (filePath) => {
     try {
       const { data, error } = await supabase.storage
@@ -413,13 +392,6 @@ function DatosDocumentos({ rut: rutProp }) {
                   </small>
                 </div>
                 <div className={styles.fileActions}>
-                  <button
-                    className={styles.actionButtonEdit}
-                    type="button"
-                    onClick={() => handleView(doc.file_path)}
-                  >
-                    <FiEye size={14} /> Ver
-                  </button>
                   <button
                     className={styles.actionButtonEdit}
                     type="button"
