@@ -9,6 +9,7 @@ import DatosPrevisionales from './DatosPrevisionales'; // ✅ NUEVO IMPORT
 import DatosBancarios from './DatosBancarios';          // ✅ IMPORT BANCARIOS
 import DatosSalud from './DatosSalud';                  // ✅ IMPORT SALUD
 import DatosDocumentos from './DatosDocumentos';        // ✅ IMPORT DOCUMENTOS
+import DatosAsistencia from './DatosAsistencia';        // ✅ IMPORT ASISTENCIA
 
 // =======================================================
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
@@ -455,11 +456,13 @@ function EmployeeProfilePage() {
             element={<DatosDocumentos />}
           />
 
-          {/* Resto aún como placeholders */}
+          {/* ✅ Asistencia real */}
           <Route
             path="asistencia"
-            element={<SectionPlaceholder title="Asistencia" />}
+            element={<DatosAsistencia rut={rut} />}
           />
+
+          {/* Placeholders restantes */}
           <Route
             path="hoja-de-vida"
             element={<SectionPlaceholder title="Hoja de Vida" />}

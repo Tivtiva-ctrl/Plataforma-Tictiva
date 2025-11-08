@@ -1,0 +1,205 @@
+.attendanceContainer {
+  padding: 1rem 0;
+  /* Definimos los colores de Tictiva para las tarjetas */
+  --verde-claro-tictiva: #A5D6A7;
+  --naranja-tictiva: #FFB74D; /* Un naranja de alerta suave */
+  --rojo-tictiva: #EF9A9A; /* Un rojo de alerta suave */
+}
+
+/* === 1. HEADER Y CONTROLES === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f4f7f6;
+}
+.header h2 {
+  font-family: var(--font-principal);
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--azul-tictiva);
+  margin: 0;
+}
+.controls {
+  display: flex;
+  gap: 1rem;
+}
+.viewSelect, .datePicker {
+  display: flex;
+  align-items: center;
+  background-color: var(--blanco);
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  font-family: var(--font-principal);
+  font-weight: 600;
+}
+.viewSelect {
+  padding: 0.5rem 0.5rem;
+  font-size: 0.9rem;
+  color: var(--azul-tictiva);
+  cursor: pointer;
+}
+.datePicker span {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--azul-tictiva);
+  text-transform: capitalize;
+}
+.datePicker button {
+  background: none;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.2rem;
+  color: var(--gris-azulado);
+  cursor: pointer;
+}
+.datePicker button:hover {
+  color: var(--azul-tictiva);
+}
+
+/* === 2. TARJETAS DE RESUMEN === */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.summaryCard {
+  background: var(--blanco);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e0e6ed;
+  /* Usamos el color de la variable --color definida en el JSX */
+  border-left: 5px solid var(--color); 
+}
+.cardIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--color);
+  background-color: color-mix(in srgb, var(--color) 20%, var(--blanco));
+  flex-shrink: 0;
+}
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+}
+.cardNumber {
+  font-family: var(--font-principal);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--azul-tictiva);
+  line-height: 1.1;
+}
+.cardLabel {
+  font-family: var(--font-principal);
+  font-size: 0.9rem;
+  color: var(--gris-azulado);
+  font-weight: 600;
+}
+
+/* === 3. TABLA DE DETALLES === */
+.tableContainer {
+  background-color: var(--blanco);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+.tableContainer h3 {
+  font-family: var(--font-principal);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--azul-tictiva);
+  margin: 0;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+}
+
+.detailsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-principal);
+}
+.detailsTable th,
+.detailsTable td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e6ed;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+.detailsTable th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: var(--gris-azulado);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+.detailsTable td {
+  color: var(--azul-tictiva);
+}
+.detailsTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Estilos para los tags (Entrada, Salida, Válida, Atraso) */
+.tag {
+  display: inline-block;
+  padding: 0.3em 0.8em;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1;
+}
+.tagEntrada { background-color: #DBEAFE; color: #1E40AF; }
+.tagSalida { background-color: #EDE9FE; color: #5B21B6; }
+.tagValida { background-color: #D1FAE5; color: #065F46; }
+.tagAtraso { background-color: #FEF3C7; color: #92400E; }
+
+.photoButton {
+  background-color: var(--azul-tictiva-ligero);
+  color: var(--azul-tictiva);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photoButton:hover {
+  background-color: var(--azul-tictiva);
+  color: var(--blanco);
+}
+
+/* --- Media Queries --- */
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .summaryGrid {
+    grid-template-columns: 1fr; /* 1 columna en tablets */
+  }
+}
+@media (max-width: 500px) {
+  .controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
