@@ -6,29 +6,29 @@
 }
 
 /* =============================================== */
-/* === HEADER (YA NO ES FIJO/FLOTANTE) === */
+/* === HEADER (DISEÑO ORIGINAL RESTAURADO + FIX NAV) === */
 /* =============================================== */
 .profileHeader {
-  /* ¡SIN position: sticky, top, y z-index! */
   background: var(--blanco);
   padding: 1.5rem 2rem 0 2rem;
   margin-bottom: 1.5rem;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   display: grid;
-  grid-template-areas: 
+  grid-template-areas:
     "info actions"
     "nav nav";
   grid-template-columns: 1fr auto;
   align-items: center;
-  position: relative; /* Ancla para la flecha */
+  position: relative;
 }
 
+/* --- Info principal (avatar + nombre + cargo) --- */
 .profileInfo {
   grid-area: info;
   display: flex;
   align-items: center;
-  margin-left: 3rem; 
+  margin-left: 3rem;
   position: relative;
 }
 
@@ -38,28 +38,32 @@
   gap: 1rem;
 }
 
+/* =============================================== */
+/* === NAV DE SECCIONES (TABS) === */
+/* =============================================== */
 .profileNav {
   grid-area: nav;
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  flex-wrap: nowrap;          /* una sola línea */
+  overflow-x: hidden;         /* ya no mostramos scroll */
   gap: 0;
   margin-top: 1.5rem;
   width: 100%;
   border-top: 1px solid #e0e6ed;
-  padding-top: 0.5rem;
+  padding-top: 0.4rem;
+  padding-right: 0.25rem;     /* menos margen a la derecha */
+  padding-left: 0.25rem;      /* menos margen a la izquierda */
 }
 
-/* Regla separada para Chrome/Safari */
+
+/* Oculta la barra de desplazamiento */
 .profileNav::-webkit-scrollbar {
   display: none;
 }
 
-
-/* --- Elementos del Header --- */
-
+/* =============================================== */
+/* === ELEMENTOS DEL HEADER === */
+/* =============================================== */
 .backButton {
   position: absolute;
   left: 1.5rem;
@@ -89,7 +93,7 @@
   font-size: 1.8rem;
   overflow: hidden;
   border: 3px solid var(--blanco);
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-right: 1.5rem;
   flex-shrink: 0;
 }
@@ -135,6 +139,7 @@
   color: #C62828;
 }
 
+/* === BOTONES DE ACCIÓN (Editar/Descargar) === */
 .actionButton {
   background-color: var(--azul-tictiva);
   color: var(--blanco);
@@ -154,18 +159,20 @@
   background-color: #1a4a75;
 }
 
+/* === LINKS DEL NAV (tabs) === */
 .navLink {
   font-family: var(--font-principal);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;       /* un pelín más pequeño */
   color: var(--gris-azulado);
   text-decoration: none;
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 0.7rem;  /* menos padding horizontal */
   white-space: nowrap;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
+
 .navLink:hover {
   color: var(--azul-tictiva);
 }
@@ -174,17 +181,17 @@
   border-bottom-color: var(--azul-tictiva);
 }
 
-
 /* =============================================== */
-/* === CONTENIDO PRINCIPAL (Donde van las tarjetas) === */
+/* === CONTENIDO PRINCIPAL === */
 /* =============================================== */
 .profileContent {
-  /* Ya no necesita margen superior, ahora está debajo del header */
+  margin-top: 1rem;
 }
 
+/* === TARJETAS DEL PERFIL 360 === */
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); 
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
@@ -194,7 +201,6 @@
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -205,7 +211,6 @@
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--azul-tictiva);
-  margin-top: 0;
   margin-bottom: 1rem;
 }
 
@@ -216,11 +221,7 @@
   line-height: 1.5;
 }
 
-.infoCard strong {
-  color: var(--azul-tictiva);
-  font-weight: 600;
-}
-
+/* Botón de detalle */
 .detailButton {
   background: none;
   border: none;
@@ -229,7 +230,6 @@
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  padding: 0;
   text-decoration: none;
   margin-top: auto;
   padding-top: 1rem;
@@ -239,7 +239,7 @@
   text-decoration: underline;
 }
 
-/* --- Estilos para inputs de "Editar Ficha" --- */
+/* === Inputs de edición === */
 .inlineLabel {
   font-size: 0.8rem;
   font-weight: 600;
@@ -257,8 +257,9 @@
   margin-bottom: 0.75rem;
 }
 
-/* --- Estilos Específicos de Tarjetas --- */
-
+/* =============================================== */
+/* === TARJETAS ESPECÍFICAS === */
+/* =============================================== */
 .attendanceCircle {
   width: 90px;
   height: 90px;
@@ -345,6 +346,7 @@
   color: var(--gris-azulado);
 }
 
+/* Tarjeta de alerta (Hola Verito 💚) */
 .alertCard {
   background-color: #EBF4FF;
   border-color: #93C5FD;
@@ -375,7 +377,6 @@
   cursor: pointer;
   font-family: var(--font-principal);
   font-weight: 600;
-  transition: background-color 0.2s ease;
 }
 .alertButtonCancel:hover { background-color: #DBEAFE; }
 
@@ -387,7 +388,9 @@
   margin-top: 15px;
 }
 
-/* --- Contenido de las Secciones (Placeholders) --- */
+/* =============================================== */
+/* === PLACEHOLDERS, CARGA Y ERRORES === */
+/* =============================================== */
 .sectionContent h2 {
   font-family: var(--font-principal);
   font-weight: 800;
@@ -403,7 +406,6 @@
   color: var(--gris-azulado);
 }
 
-/* --- Contenedores de Carga y Error --- */
 .loadingContainer, .errorContainer {
   display: flex;
   flex-direction: column;
@@ -415,7 +417,7 @@
   background-color: var(--blanco);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  margin: 0 2rem 2rem 2rem; /* Alineado con el contenido */
+  margin: 0 2rem 2rem 2rem;
 }
 .loadingContainer h2, .errorContainer h2 {
   font-family: var(--font-principal);
