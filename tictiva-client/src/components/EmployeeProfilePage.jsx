@@ -1,15 +1,20 @@
+// src/components/EmployeeProfilePage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Link, NavLink, useParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import styles from './EmployeeProfilePage.module.css';
 import { FiEdit, FiDownload } from 'react-icons/fi';
+
 import DatosPersonales from './DatosPersonales';
 import DatosContractuales from './DatosContractuales';
-import DatosPrevisionales from './DatosPrevisionales'; // ✅ NUEVO IMPORT
-import DatosBancarios from './DatosBancarios';          // ✅ IMPORT BANCARIOS
-import DatosSalud from './DatosSalud';                  // ✅ IMPORT SALUD
-import DatosDocumentos from './DatosDocumentos';        // ✅ IMPORT DOCUMENTOS
-import DatosAsistencia from './DatosAsistencia';        // ✅ IMPORT ASISTENCIA
+import DatosPrevisionales from './DatosPrevisionales';
+import DatosBancarios from './DatosBancarios';
+import DatosSalud from './DatosSalud';
+import DatosDocumentos from './DatosDocumentos';
+import DatosAsistencia from './DatosAsistencia';
+
+// ✅ NUEVO IMPORT: Bitácora Laboral
+import DatosBitacora from './DatosBitacora';
 
 // =======================================================
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
@@ -42,8 +47,11 @@ function Overview360({ employee, isEditing }) {
         <h3>Evaluaciones</h3>
         <div className={styles.evaluationScore}>7.8</div>
         <p className={styles.evaluationStatus}>Estado óptimo</p>
-        <p className={styles.evaluationSubtitle}>Último test aplicado por Nadia (psicóloga interna)</p>
-        <Link to="hoja-de-vida" className={styles.detailButton}>Ver detalle</Link>
+        <p className={styles.evaluationSubtitle}>
+          Último test aplicado por Nadia (psicóloga interna)
+        </p>
+        {/* 🔁 Antes iba a "hoja-de-vida". Ahora apuntamos a Bitácora Laboral */}
+        <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Contacto de emergencia --- */}
@@ -104,7 +112,8 @@ function Overview360({ employee, isEditing }) {
           </div>
           <div className={styles.progressBarValue}>0</div>
         </div>
-        <Link to="historial" className={styles.detailButton}>Ver detalle</Link>
+        {/* 🔁 Antes iba a "historial". Esta tarjeta tiene TODO el sentido con Bitácora */}
+        <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
       {/* --- Tarjeta: Asistencia --- */}
@@ -156,7 +165,7 @@ function Overview360({ employee, isEditing }) {
   );
 }
 
-// --- Placeholder para las otras secciones mientras las armamos ---
+// --- Placeholder para otras secciones mientras se construyen ---
 function SectionPlaceholder({ title }) {
   return (
     <div className={styles.sectionContent}>
@@ -174,9 +183,9 @@ function EmployeeProfilePage() {
   const { rut } = useParams(); // /dashboard/rrhh/empleado/:rut/*
   const [personalData, setPersonalData] = useState(null);
   const [contractData, setContractData] = useState(null);
-  const [previsionalData, setPrevisionalData] = useState(null); // ✅ NUEVO ESTADO
-  const [bankData, setBankData] = useState({});                // ✅ ESTADO BANCARIO
-  const [healthData, setHealthData] = useState({});            // ✅ ESTADO SALUD
+  const [previsionalData, setPrevisionalData] = useState(null);
+  const [bankData, setBankData] = useState({});
+  const [healthData, setHealthData] = useState({});
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -184,13 +193,13 @@ function EmployeeProfilePage() {
   useEffect(() => {
     if (!rut) {
       setLoading(false);
-      console.error("No se proporcionó RUT");
+      console.error('No se proporcionó RUT');
       return;
     }
 
     const fetchEmployeeData = async () => {
       setLoading(true);
-      
+
       // 1) Datos personales
       const { data: personal, error: perError } = await supabase
         .from('employee_personal')
@@ -199,7 +208,7 @@ function EmployeeProfilePage() {
         .single();
 
       if (perError) {
-        console.error("Error al cargar datos personales:", perError);
+        console.error('Error al cargar datos personales:', perError);
         setLoading(false);
         return;
       }
@@ -213,19 +222,19 @@ function EmployeeProfilePage() {
         .maybeSingle();
 
       if (conError) {
-        console.warn("Error al cargar datos de contrato:", conError.message);
+        console.warn('Error al cargar datos de contrato:', conError.message);
       }
       setContractData(contract || {});
 
-      // 3) Datos previsionales ✅
+      // 3) Datos previsionales
       const { data: previsional, error: prevError } = await supabase
-        .from('employee_prevision')     // 👈 nombre de tabla en Supabase
+        .from('employee_prevision')
         .select('*')
         .eq('rut', rut)
         .maybeSingle();
 
       if (prevError) {
-        console.warn("Error al cargar datos previsionales:", prevError.message);
+        console.warn('Error al cargar datos previsionales:', prevError.message);
       }
       setPrevisionalData(previsional || {});
 
@@ -246,17 +255,20 @@ function EmployeeProfilePage() {
     const today = new Date();
     let years = today.getFullYear() - ingressDate.getFullYear();
     let months = today.getMonth() - ingressDate.getMonth();
-    
+
     if (months < 0 || (months === 0 && today.getDate() < ingressDate.getDate())) {
       years--;
       months = (months + 12) % 12;
     }
-    
+
     if (years === 0) return `${months} ${months === 1 ? 'mes' : 'meses'}`;
     if (months === 0) return `${years} ${years === 1 ? 'año' : 'años'}`;
-    return `${years} ${years === 1 ? 'año' : 'años'} y ${months} ${months === 1 ? 'mes' : 'meses'}`;
+    return `${years} ${years === 1 ? 'año' : 'años'} y ${months} ${
+      months === 1 ? 'mes' : 'meses'
+    }`;
   }, [contractData?.fecha_ingreso, personalData?.fecha_ingreso]);
 
+  // ✅ Actualizamos el menú para usar "Bitácora laboral"
   const menuItems = [
     { title: 'Tictiva 360', path: '.' },
     { title: 'Datos personales', path: 'personal' },
@@ -266,7 +278,9 @@ function EmployeeProfilePage() {
     { title: 'Datos de salud', path: 'salud' },
     { title: 'Documentos', path: 'documentos' },
     { title: 'Asistencia', path: 'asistencia' },
-    { title: 'Hoja de vida', path: 'hoja-de-vida' },
+    // 🔁 Antes: 'Hoja de vida' / 'hoja-de-vida'
+    { title: 'Bitácora laboral', path: 'bitacora' },
+    // Dejamos Historial como sección aparte por si la usas distinto más adelante
     { title: 'Historial', path: 'historial' },
   ];
 
@@ -300,11 +314,9 @@ function EmployeeProfilePage() {
 
   const handleEditToggle = () => {
     if (isEditing) {
-      console.log("Guardando cambios...");
-      // Aquí irá supabase.update() más adelante
-      // bankData tendrá los datos de la ficha bancaria editados en memoria
-      console.log("Datos bancarios actuales:", bankData);
-      console.log("Datos de salud actuales:", healthData);
+      console.log('Guardando cambios...');
+      console.log('Datos bancarios actuales:', bankData);
+      console.log('Datos de salud actuales:', healthData);
     }
     setIsEditing(!isEditing);
   };
@@ -316,12 +328,12 @@ function EmployeeProfilePage() {
         <Link to="/dashboard/rrhh/listado-de-fichas" className={styles.backButton}>
           ←
         </Link>
-        
+
         <div className={styles.profileInfo}>
           <div className={styles.profileAvatar}>
             {personalData.avatar &&
-             typeof personalData.avatar === 'string' &&
-             personalData.avatar.startsWith('http') ? (
+            typeof personalData.avatar === 'string' &&
+            personalData.avatar.startsWith('http') ? (
               <img src={personalData.avatar} alt={personalData.nombre_completo} />
             ) : (
               <span>{getInitials(personalData.nombre_completo)}</span>
@@ -333,7 +345,9 @@ function EmployeeProfilePage() {
             <p className={styles.employeeStatus}>
               <span
                 className={`${styles.statusBadge} ${
-                  personalData.estado === 'Activo' ? styles.statusActive : styles.statusInactive
+                  personalData.estado === 'Activo'
+                    ? styles.statusActive
+                    : styles.statusInactive
                 }`}
               >
                 {personalData.estado}
@@ -347,7 +361,7 @@ function EmployeeProfilePage() {
 
         <div className={styles.profileActions}>
           <button className={styles.actionButton} onClick={handleEditToggle}>
-            {isEditing ? "Guardar Ficha" : "Editar Ficha"} <FiEdit />
+            {isEditing ? 'Guardar Ficha' : 'Editar Ficha'} <FiEdit />
           </button>
           {!isEditing && (
             <button className={styles.actionButton}>
@@ -396,37 +410,24 @@ function EmployeeProfilePage() {
           {/* Datos personales */}
           <Route
             path="personal"
-            element={
-              <DatosPersonales
-                personalData={personalData}
-                isEditing={isEditing}
-              />
-            }
+            element={<DatosPersonales personalData={personalData} isEditing={isEditing} />}
           />
 
           {/* Datos contractuales */}
           <Route
             path="contractual"
-            element={
-              <DatosContractuales
-                contractData={contractData}
-                isEditing={isEditing}
-              />
-            }
+            element={<DatosContractuales contractData={contractData} isEditing={isEditing} />}
           />
 
-          {/* ✅ Datos previsionales reales */}
+          {/* Datos previsionales */}
           <Route
             path="previsional"
             element={
-              <DatosPrevisionales
-                previsionalData={previsionalData}
-                isEditing={isEditing}
-              />
+              <DatosPrevisionales previsionalData={previsionalData} isEditing={isEditing} />
             }
           />
 
-          {/* ✅ Datos bancarios reales (ficha) */}
+          {/* Datos bancarios */}
           <Route
             path="bancario"
             element={
@@ -438,7 +439,7 @@ function EmployeeProfilePage() {
             }
           />
 
-          {/* ✅ Datos de salud reales (ficha) */}
+          {/* Datos de salud */}
           <Route
             path="salud"
             element={
@@ -450,27 +451,17 @@ function EmployeeProfilePage() {
             }
           />
 
-          {/* ✅ Documentos reales */}
-          <Route
-            path="documentos"
-            element={<DatosDocumentos />}
-          />
+          {/* Documentos */}
+          <Route path="documentos" element={<DatosDocumentos />} />
 
-          {/* ✅ Asistencia real */}
-          <Route
-            path="asistencia"
-            element={<DatosAsistencia rut={rut} />}
-          />
+          {/* Asistencia */}
+          <Route path="asistencia" element={<DatosAsistencia rut={rut} />} />
 
-          {/* Placeholders restantes */}
-          <Route
-            path="hoja-de-vida"
-            element={<SectionPlaceholder title="Hoja de Vida" />}
-          />
-          <Route
-            path="historial"
-            element={<SectionPlaceholder title="Historial" />}
-          />
+          {/* ✅ Bitácora Laboral – nueva pestaña real */}
+          <Route path="bitacora" element={<DatosBitacora rut={rut} />} />
+
+          {/* Historial (por ahora placeholder) */}
+          <Route path="historial" element={<SectionPlaceholder title="Historial" />} />
         </Routes>
       </main>
     </div>
