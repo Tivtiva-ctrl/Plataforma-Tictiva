@@ -613,4 +613,17 @@
     transform: translateY(0);
     opacity: 1;
   }
+}.semaforoEstable { /* verde */ }
+.semaforoAtencion { /* amarillo suave */ }
+.semaforoAlerta { /* naranja */ }
+.semaforoCritico { /* rojo */ }
+/* Amarillo suave, elegante para "Atención" */
+.semaforoAtencion {
+  background-color: #fff8d6;
+  border-left: 6px solid #f2c94c;
+  color: #8d6e00;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
 }
+
