@@ -224,7 +224,8 @@ function EmployeeListPage() {
                           <Link to={`/dashboard/rrhh/empleado/${employeeRut}/salud`}>Datos de salud</Link>
                           <Link to={`/dashboard/rrhh/empleado/${employeeRut}/documentos`}>Documentos</Link>
                           <Link to={`/dashboard/rrhh/empleado/${employeeRut}/asistencia`}>Asistencia</Link>
-                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/hoja-de-vida`}>Hoja de vida</Link>
+                          {/* 🔁 AQUÍ EL CAMBIO: antes era /hoja-de-vida */}
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/bitacora`}>Bitácora laboral 360</Link>
                           <Link to={`/dashboard/rrhh/empleado/${employeeRut}/historial`}>Historial</Link>
                         </div>
                       )}
