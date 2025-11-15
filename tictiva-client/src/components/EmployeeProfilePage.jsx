@@ -12,8 +12,6 @@ import DatosBancarios from './DatosBancarios';
 import DatosSalud from './DatosSalud';
 import DatosDocumentos from './DatosDocumentos';
 import DatosAsistencia from './DatosAsistencia';
-
-// ✅ NUEVO IMPORT: Bitácora Laboral
 import DatosBitacora from './DatosBitacora';
 
 // =======================================================
@@ -50,7 +48,6 @@ function Overview360({ employee, isEditing }) {
         <p className={styles.evaluationSubtitle}>
           Último test aplicado por Nadia (psicóloga interna)
         </p>
-        {/* 🔁 Antes iba a "hoja-de-vida". Ahora apuntamos a Bitácora Laboral */}
         <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
@@ -112,7 +109,6 @@ function Overview360({ employee, isEditing }) {
           </div>
           <div className={styles.progressBarValue}>0</div>
         </div>
-        {/* 🔁 Antes iba a "historial". Esta tarjeta tiene TODO el sentido con Bitácora */}
         <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
@@ -165,7 +161,6 @@ function Overview360({ employee, isEditing }) {
   );
 }
 
-// --- Placeholder para otras secciones mientras se construyen ---
 function SectionPlaceholder({ title }) {
   return (
     <div className={styles.sectionContent}>
@@ -189,7 +184,9 @@ function EmployeeProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Cargamos datos desde Supabase
+  // ==========================================
+  // Carga de datos desde Supabase
+  // ==========================================
   useEffect(() => {
     if (!rut) {
       setLoading(false);
@@ -200,7 +197,7 @@ function EmployeeProfilePage() {
     const fetchEmployeeData = async () => {
       setLoading(true);
 
-      // 1) Datos personales
+      // 1) Datos personales (aquí sí usamos rut)
       const { data: personal, error: perError } = await supabase
         .from('employee_personal')
         .select('*')
@@ -212,13 +209,26 @@ function EmployeeProfilePage() {
         setLoading(false);
         return;
       }
+
       setPersonalData(personal);
 
-      // 2) Datos contractuales
+      // 🔹 Obtenemos el employee_id desde la fila de employee_personal
+      const employeeId = personal.employee_id || personal.id;
+      if (!employeeId) {
+        console.warn(
+          'No se encontró employee_id en employee_personal; no se cargarán contrato ni previsión.'
+        );
+        setContractData(null);
+        setPrevisionalData(null);
+        setLoading(false);
+        return;
+      }
+
+      // 2) Datos contractuales (ahora por employee_id, NO por rut)
       const { data: contract, error: conError } = await supabase
         .from('employee_contracts')
         .select('*')
-        .eq('rut', rut)
+        .eq('employee_id', employeeId)
         .maybeSingle();
 
       if (conError) {
@@ -226,11 +236,11 @@ function EmployeeProfilePage() {
       }
       setContractData(contract || {});
 
-      // 3) Datos previsionales
+      // 3) Datos previsionales (también por employee_id)
       const { data: previsional, error: prevError } = await supabase
         .from('employee_prevision')
         .select('*')
-        .eq('rut', rut)
+        .eq('employee_id', employeeId)
         .maybeSingle();
 
       if (prevError) {
@@ -268,7 +278,6 @@ function EmployeeProfilePage() {
     }`;
   }, [contractData?.fecha_ingreso, personalData?.fecha_ingreso]);
 
-  // ✅ Actualizamos el menú para usar "Bitácora laboral"
   const menuItems = [
     { title: 'Tictiva 360', path: '.' },
     { title: 'Datos personales', path: 'personal' },
@@ -278,9 +287,7 @@ function EmployeeProfilePage() {
     { title: 'Datos de salud', path: 'salud' },
     { title: 'Documentos', path: 'documentos' },
     { title: 'Asistencia', path: 'asistencia' },
-    // 🔁 Antes: 'Hoja de vida' / 'hoja-de-vida'
     { title: 'Bitácora laboral', path: 'bitacora' },
-    // Dejamos Historial como sección aparte por si la usas distinto más adelante
     { title: 'Historial', path: 'historial' },
   ];
 
@@ -457,10 +464,10 @@ function EmployeeProfilePage() {
           {/* Asistencia */}
           <Route path="asistencia" element={<DatosAsistencia rut={rut} />} />
 
-          {/* ✅ Bitácora Laboral – nueva pestaña real */}
+          {/* Bitácora Laboral */}
           <Route path="bitacora" element={<DatosBitacora rut={rut} />} />
 
-          {/* Historial (por ahora placeholder) */}
+          {/* Historial */}
           <Route path="historial" element={<SectionPlaceholder title="Historial" />} />
         </Routes>
       </main>
