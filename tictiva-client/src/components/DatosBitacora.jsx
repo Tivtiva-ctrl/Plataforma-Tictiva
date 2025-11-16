@@ -101,8 +101,9 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
     area: logData?.area || logData?.area_name || '',
     motivo: logData?.motivo || logData?.motive || '',
     detalle: logData?.detalle || logData?.detail || '',
-    impacto: logData?.impacto || 'Leve',
-    estado: logData?.estado || 'Abierto',
+    // 👇 leemos español o inglés
+    impacto: logData?.impacto || logData?.impact || 'Leve',
+    estado: logData?.estado || logData?.status || 'Abierto',
     grado: logData?.grado || 'Positiva',
   });
 
@@ -137,8 +138,9 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
       area: logData?.area || logData?.area_name || '',
       motivo: logData?.motivo || logData?.motive || '',
       detalle: logData?.detalle || logData?.detail || '',
-      impacto: logData?.impacto || 'Leve',
-      estado: logData?.estado || 'Abierto',
+      // 👇 igual aquí: impacto / impact, estado / status
+      impacto: logData?.impacto || logData?.impact || 'Leve',
+      estado: logData?.estado || logData?.status || 'Abierto',
       grado: logData?.grado || 'Positiva',
     });
   }, [logData]);
@@ -211,8 +213,11 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         area_name: formData.area || 'Sin área definida',
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
+        // 👇 sincronizamos ambas parejas de columnas
         impacto: formData.impacto,
         estado: formData.estado,
+        impact: formData.impacto,
+        status: formData.estado,
         evidence_path: evidencePath,
         author_name: CURRENT_USER_NAME, // 👈 se guarda el autor
       };
@@ -742,6 +747,9 @@ function DatosBitacora({ rut, employeeName }) {
         area: row.area || row.area_name,
         motivo: row.motivo || row.motive,
         detalle: row.detalle || row.detail,
+        // 👇 mapear impacto/estado desde ambas columnas
+        impacto: row.impacto || row.impact || 'Leve',
+        estado: row.estado || row.status || 'Abierto',
       }));
       setLogs(mapped);
     }
