@@ -29,52 +29,42 @@ const LOG_TABLE = 'bitacora_entries';
 const CURRENT_USER_NAME = 'Usuario demo Tictiva';
 
 // Motivos sugeridos para anotaciones (VISIBLES)
-// Los códigos (AP-01, AN-01, etc.) se manejan INTERNAMENTE a nivel de reportes/ADIA.
 const MOTIVOS_POSITIVOS = [
-  // Desempeño / Productividad
   'Reconocimiento por desempeño',
   'Cumplimiento destacado de metas',
   'Calidad superior en la entrega de tareas',
   'Proactividad en resolución de problemas',
-  // Trabajo en equipo
   'Excelente actitud con el equipo',
   'Apoyo voluntario a compañeros',
   'Buena comunicación y colaboración',
-  // Innovación / Aporte
   'Aporte significativo a un proyecto',
   'Propuesta de mejoras efectivas',
   'Liderazgo positivo en actividades o reuniones',
 ];
 
 const MOTIVOS_NEGATIVOS = [
-  // Asistencia y puntualidad
   'Incumplimiento de horario',
   'Ausencias reiteradas sin justificación',
   'Salida anticipada sin autorización',
   'Retrasos constantes',
-  // Rendimiento / Funciones
   'Incumplimiento de funciones asignadas',
   'Bajo rendimiento en tareas críticas',
   'Entrega deficiente de trabajo',
   'No cumplimiento de procedimientos establecidos',
-  // Conducta
   'Llamado de atención por conducta',
   'Actitud inapropiada con compañeros o superiores',
   'Falta de respeto o trato hostil',
   'Conflictos o discusiones dentro del horario laboral',
-  // Seguridad y normativa
   'Falta a protocolo interno',
   'Incumplimiento de normas de seguridad',
   'Uso incorrecto de equipamiento o herramientas',
   'Riesgo generado a terceros por negligencia',
-  // Ética laboral
   'Ocultamiento de información relevante',
   'Uso inapropiado de recursos institucionales',
   'Falsificación de datos o mala fe',
   'Incumplimiento grave de políticas internas',
 ];
 
-// Motivos para OBSERVACIONES (más leves que las anotaciones)
 const MOTIVOS_OBSERVACION = [
   'Desempeño por debajo de lo esperado (puntual)',
   'Necesidad de refuerzo en funciones específicas',
@@ -101,9 +91,8 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
     area: logData?.area || logData?.area_name || '',
     motivo: logData?.motivo || logData?.motive || '',
     detalle: logData?.detalle || logData?.detail || '',
-    // 👇 leemos español o inglés
-    impacto: logData?.impacto || logData?.impact || 'Leve',
-    estado: logData?.estado || logData?.status || 'Abierto',
+    impacto: logData?.impacto || 'Leve',
+    estado: logData?.estado || 'Abierto',
     grado: logData?.grado || 'Positiva',
   });
 
@@ -114,14 +103,12 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
   const isEvidenceMode = mode === 'evidence';
   const isCreate = mode === 'create';
 
-  // Títulos base
   const titles = {
     edit: 'Editar Entrada',
     view: 'Detalle de Bitácora',
     evidence: 'Subir Evidencia',
   };
 
-  // Títulos dinámicos para creación según tipo
   const createTitlesByType = {
     Anotación: 'Nueva anotación',
     Observación: 'Nueva observación',
@@ -138,9 +125,8 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
       area: logData?.area || logData?.area_name || '',
       motivo: logData?.motivo || logData?.motive || '',
       detalle: logData?.detalle || logData?.detail || '',
-      // 👇 igual aquí: impacto / impact, estado / status
-      impacto: logData?.impacto || logData?.impact || 'Leve',
-      estado: logData?.estado || logData?.status || 'Abierto',
+      impacto: logData?.impacto || 'Leve',
+      estado: logData?.estado || 'Abierto',
       grado: logData?.grado || 'Positiva',
     });
   }, [logData]);
@@ -167,7 +153,6 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
   const handleSubmit = async () => {
     setIsUploading(true);
 
-    // Validación básica: motivo y detalle obligatorios
     if (!formData.motivo || !formData.detalle) {
       alert('Por favor completa Motivo y Detalle antes de guardar.');
       setIsUploading(false);
@@ -177,7 +162,6 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
     let evidencePath = logData?.evidence_path || null;
 
     try {
-      // 1) Subir archivo si hay
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -191,10 +175,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         evidencePath = filePath;
       }
 
-      // Campos comunes (rut + employee_id si lo tenemos)
-      const commonFields = {
-        rut,
-      };
+      const commonFields = { rut };
 
       if (employeeId) {
         commonFields.employee_id = employeeId;
@@ -202,7 +183,6 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         commonFields.employee_id = logData.employee_id;
       }
 
-      // 2) Payload completo alineado con la tabla
       const fullPayload = {
         ...commonFields,
         fecha: formData.fecha,
@@ -213,16 +193,13 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         area_name: formData.area || 'Sin área definida',
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
-        // 👇 sincronizamos ambas parejas de columnas
+        // 👇 solo columnas en español
         impacto: formData.impacto,
         estado: formData.estado,
-        impact: formData.impacto,
-        status: formData.estado,
         evidence_path: evidencePath,
-        author_name: CURRENT_USER_NAME, // 👈 se guarda el autor
+        author_name: CURRENT_USER_NAME,
       };
 
-      // 3) Payload básico por si en dev falta alguna columna
       const basePayload = {
         ...commonFields,
         entry_date: formData.fecha,
@@ -230,7 +207,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         area_name: formData.area || 'Sin área definida',
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
-        author_name: CURRENT_USER_NAME, // 👈 también en el payload básico
+        author_name: CURRENT_USER_NAME,
       };
 
       const save = async (payload) => {
@@ -240,10 +217,8 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         return supabase.from(LOG_TABLE).update(payload).eq('id', logData.id);
       };
 
-      // Intento 1: payload completo
       let { error } = await save(fullPayload);
 
-      // Si falla por alguna columna → fallback al básico
       if (error) {
         console.warn(
           'Fallo guardando con payload completo, probando payload básico:',
@@ -288,16 +263,13 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
     }
   };
 
-  // Flags por tipo
   const isAnotacion = formData.tipo === 'Anotación';
   const isObservacion = formData.tipo === 'Observación';
   const isEntrevista = formData.tipo === 'Entrevista';
 
-  // Motivos según tipo
   const motivosAnotacionOptions =
     formData.grado === 'Negativa' ? MOTIVOS_NEGATIVOS : MOTIVOS_POSITIVOS;
 
-  // Autor (nombre) y fecha/hora de creación para mostrar en el header del modal
   const autorNombre =
     logData?.autor ||
     logData?.author ||
@@ -317,7 +289,6 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
     autorFechaHora = `${fechaStr} ${horaStr}`;
   }
 
-  // 🔹 Título del modal
   const modalTitle = isCreate
     ? createTitlesByType[formData.tipo] || 'Nueva entrada de bitácora'
     : titles[mode] || 'Bitácora laboral';
@@ -603,7 +574,6 @@ function computeLogScore(log) {
       }
     }
   } else if (tipo === 'Observación') {
-    // Observaciones: siempre restan algo, pero menos que anotaciones fuertes
     switch (impacto) {
       case 'Crítico':
         score -= 4;
@@ -655,16 +625,12 @@ function DatosBitacora({ rut, employeeName }) {
     employeeName || ''
   );
 
-  // Si el padre algún día manda employeeName, lo tomamos
   useEffect(() => {
     if (employeeName) {
       setEmployeeDisplayName(employeeName);
     }
   }, [employeeName]);
 
-  // ==============================
-  // Cargar nombre desde employee_personal
-  // ==============================
   const fetchEmployeeId = async () => {
     if (!rut) return;
 
@@ -681,13 +647,11 @@ function DatosBitacora({ rut, employeeName }) {
       }
 
       if (data) {
-        // Si la tabla tiene un id o employee_id lo usamos por si más adelante lo conectamos
         const idFromPersonal = data.employee_id || data.id || null;
         if (idFromPersonal) {
           setEmployeeId(idFromPersonal);
         }
 
-        // Varios posibles nombres, más combinación de nombres + apellidos
         const combinedName = `${data.nombres || ''} ${data.apellidos || ''}`.trim();
 
         const nameFromPersonal =
@@ -747,9 +711,8 @@ function DatosBitacora({ rut, employeeName }) {
         area: row.area || row.area_name,
         motivo: row.motivo || row.motive,
         detalle: row.detalle || row.detail,
-        // 👇 mapear impacto/estado desde ambas columnas
-        impacto: row.impacto || row.impact || 'Leve',
-        estado: row.estado || row.status || 'Abierto',
+        impacto: row.impacto || 'Leve',
+        estado: row.estado || 'Abierto',
       }));
       setLogs(mapped);
     }
@@ -805,7 +768,6 @@ function DatosBitacora({ rut, employeeName }) {
     const doc = new jsPDF('p', 'mm', 'a4');
     const displayName = employeeDisplayName || employeeName || '-';
 
-    // HEADER
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.text('BITÁCORA LABORAL DEL TRABAJADOR', 105, 20, { align: 'center' });
@@ -817,7 +779,7 @@ function DatosBitacora({ rut, employeeName }) {
 
     let y = 46;
 
-    const registros = [...logs].reverse(); // del más antiguo al más nuevo
+    const registros = [...logs].reverse();
 
     registros.forEach((log, index) => {
       if (y > 250) {
@@ -849,7 +811,6 @@ function DatosBitacora({ rut, employeeName }) {
 
       const autorDisplay = autor && autor !== 'No registrado' ? autor : '-';
 
-      // Título del bloque
       doc.setFont('helvetica', 'bold');
       doc.text(`Registro ${index + 1}`, 20, y);
       y += 6;
@@ -864,7 +825,6 @@ function DatosBitacora({ rut, employeeName }) {
       doc.text(`Autor: ${autorDisplay}`, 20, y);
       y += 7;
 
-      // Motivo
       doc.setFont('helvetica', 'bold');
       doc.text('Motivo:', 20, y);
       y += 5;
@@ -874,7 +834,6 @@ function DatosBitacora({ rut, employeeName }) {
       doc.text(motivoLines, 25, y);
       y += motivoLines.length * 5 + 4;
 
-      // Descripción / Detalle
       doc.setFont('helvetica', 'bold');
       doc.text('Descripción:', 20, y);
       y += 5;
@@ -884,7 +843,6 @@ function DatosBitacora({ rut, employeeName }) {
       doc.text(detalleLines, 25, y);
       y += detalleLines.length * 5 + 8;
 
-      // Separador
       doc.setDrawColor(200);
       doc.line(20, y, 190, y);
       y += 6;
@@ -965,9 +923,6 @@ function DatosBitacora({ rut, employeeName }) {
     (l) => l.estado === 'En seguimiento'
   ).length;
 
-  // ============================
-  // CÁLCULO DEL SEMÁFORO LABORAL
-  // ============================
   let totalScore = 0;
   logs.forEach((log) => {
     totalScore += computeLogScore(log);
