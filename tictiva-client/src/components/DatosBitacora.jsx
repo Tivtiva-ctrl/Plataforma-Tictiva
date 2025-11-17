@@ -652,7 +652,9 @@ function DatosBitacora({ rut, employeeName }) {
           setEmployeeId(idFromPersonal);
         }
 
-        const combinedName = `${data.nombres || ''} ${data.apellidos || ''}`.trim();
+        const combinedName = `${data.nombres || ''} ${
+          data.apellidos || ''
+        }`.trim();
 
         const nameFromPersonal =
           data.full_name ||
@@ -676,16 +678,14 @@ function DatosBitacora({ rut, employeeName }) {
   };
 
   const fetchLogbook = async () => {
-    if (!rut && !employeeId) return;
+    // 👉 Ahora siempre filtramos por RUT para incluir registros viejos y nuevos
+    if (!rut) return;
     setLoading(true);
 
     let query = supabase.from(LOG_TABLE).select('*');
 
-    if (employeeId) {
-      query = query.eq('employee_id', employeeId);
-    } else if (rut) {
-      query = query.eq('rut', rut);
-    }
+    // Solo por rut (todos los registros del trabajador)
+    query = query.eq('rut', rut);
 
     query = query.order('entry_date', { ascending: false });
 
