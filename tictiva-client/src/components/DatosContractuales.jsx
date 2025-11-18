@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // ===============================================
 // === REUTILIZAMOS EL CSS DE DATOS PERSONALES ===
 // ===============================================
 import styles from './DatosPersonales.module.css'; 
 
 // Componente reutilizable para un campo del formulario
-function FormField({ label, value, name, onChange, isEditing, type = "text", options = [] }) {
-  const InputComponent = type === "select" ? "select" : "input";
-  
+function FormField({ label, value, name, onChange, isEditing, type = 'text', options = [] }) {
+  const InputComponent = type === 'select' ? 'select' : 'input';
+
   const EditableInput = () => (
     <InputComponent
       name={name}
-      value={value ?? ''}           
+      value={value ?? ''}
       onChange={onChange}
       className={styles.formInput}
-      {...(type === "select" ? {} : { type })}
+      {...(type === 'select' ? {} : { type })}
     >
-      {type === "select" && (
+      {type === 'select' && (
         <>
           <option value="">Seleccionar...</option>
-          {options.map(opt => (
+          {options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -32,7 +32,7 @@ function FormField({ label, value, name, onChange, isEditing, type = "text", opt
   const ReadOnlyInput = () => (
     <input
       type="text"
-      value={value ?? '—'}          
+      value={value ?? '—'}
       readOnly
       className={styles.formInput}
     />
@@ -47,52 +47,46 @@ function FormField({ label, value, name, onChange, isEditing, type = "text", opt
 }
 
 // --- Componente Principal de Datos Contractuales ---
-function DatosContractuales({ contractData, isEditing }) {
-  // Estado local para edición
-  const [formData, setFormData] = useState(contractData || {});
-
-  useEffect(() => {
-    setFormData(contractData || {});
-  }, [contractData]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // --- Opciones para los menús desplegables ---
-  const tiposContrato = ["Indefinido", "Plazo Fijo", "Por Obra o Faena"];
-  const estadosContrato = ["Vigente", "Terminado", "Suspendido"];
-  const tiposJornada = ["Completa (40h)", "Parcial (30h)", "Part-Time (20h)"];
-  const afps = ["Capital", "Cuprum", "Habitat", "Modelo", "Planvital", "Provida", "Uno"];
-  const sistemasSalud = [
-    "Fonasa",
-    "Isapre Banmédica",
-    "Isapre Colmena",
-    "Isapre CruzBlanca",
-    "Isapre Consalud",
-    "Isapre Vida Tres",
-    "Otro"
-  ];
-
-  // Si todavía no llega nada y no tienes fila de contrato, mostramos mensaje
+function DatosContractuales({ contractData, isEditing, onChange }) {
   if (!contractData) {
     return <div className={styles.loading}>Cargando datos contractuales...</div>;
   }
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    const updated = {
+      ...contractData,
+      [name]: value,
+    };
+
+    onChange && onChange(updated);
+  };
+
+  // --- Opciones para los menús desplegables ---
+  const tiposContrato = ['Indefinido', 'Plazo Fijo', 'Por Obra o Faena'];
+  const estadosContrato = ['Vigente', 'Terminado', 'Suspendido'];
+  const tiposJornada = ['Completa (40h)', 'Parcial (30h)', 'Part-Time (20h)'];
+  const afps = ['Capital', 'Cuprum', 'Habitat', 'Modelo', 'Planvital', 'Provida', 'Uno'];
+  const sistemasSalud = [
+    'Fonasa',
+    'Isapre Banmédica',
+    'Isapre Colmena',
+    'Isapre CruzBlanca',
+    'Isapre Consalud',
+    'Isapre Vida Tres',
+    'Otro',
+  ];
+
   return (
     <div className={styles.formContainer}>
-      
       {/* === Sección 1: Información del contrato === */}
       <h3 className={styles.sectionTitle}>1. Información del contrato</h3>
       <div className={styles.formGrid}>
         <FormField
           label="Tipo de contrato"
           name="tipo_contrato"
-          value={formData.tipo_contrato}
+          value={contractData.tipo_contrato}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -101,7 +95,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Fecha de ingreso"
           name="fecha_ingreso"
-          value={formData.fecha_ingreso}
+          value={contractData.fecha_ingreso}
           onChange={handleChange}
           isEditing={isEditing}
           type="date"
@@ -109,7 +103,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Fecha de término"
           name="fecha_termino"
-          value={formData.fecha_termino}
+          value={contractData.fecha_termino}
           onChange={handleChange}
           isEditing={isEditing}
           type="date"
@@ -117,7 +111,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Estado del contrato"
           name="estado_contrato"
-          value={formData.estado_contrato}
+          value={contractData.estado_contrato}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -126,7 +120,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Motivo de término"
           name="motivo_termino"
-          value={formData.motivo_termino}
+          value={contractData.motivo_termino}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -138,21 +132,21 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Cargo"
           name="cargo"
-          value={formData.cargo}
+          value={contractData.cargo}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Área / Departamento"
           name="area"
-          value={formData.area}
+          value={contractData.area}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Centro de costo / Sucursal"
           name="centro_costo"
-          value={formData.centro_costo}
+          value={contractData.centro_costo}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -164,7 +158,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Tipo de jornada"
           name="tipo_jornada"
-          value={formData.tipo_jornada}
+          value={contractData.tipo_jornada}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -173,7 +167,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Horas semanales"
           name="horas_semanales"
-          value={formData.horas_semanales}
+          value={contractData.horas_semanales}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -181,14 +175,14 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Día de descanso"
           name="dia_descanso"
-          value={formData.dia_descanso}
+          value={contractData.dia_descanso}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Turno asignado"
           name="turno_asignado"
-          value={formData.turno_asignado}
+          value={contractData.turno_asignado}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -200,7 +194,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Sueldo base"
           name="sueldo_base"
-          value={formData.sueldo_base}
+          value={contractData.sueldo_base}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -208,21 +202,21 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Moneda"
           name="moneda"
-          value={formData.moneda}
+          value={contractData.moneda}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Gratificación"
           name="gratificacion"
-          value={formData.gratificacion}
+          value={contractData.gratificacion}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Asignación de colación"
           name="asignacion_colacion"
-          value={formData.asignacion_colacion}
+          value={contractData.asignacion_colacion}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -230,7 +224,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Asignación de locomoción"
           name="asignacion_locomocion"
-          value={formData.asignacion_locomocion}
+          value={contractData.asignacion_locomocion}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -238,7 +232,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Otros haberes"
           name="otros_haberes"
-          value={formData.otros_haberes}
+          value={contractData.otros_haberes}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -251,7 +245,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="AFP"
           name="afp"
-          value={formData.afp}
+          value={contractData.afp}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -260,7 +254,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Sistema de salud"
           name="sistema_salud"
-          value={formData.sistema_salud}
+          value={contractData.sistema_salud}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -269,14 +263,14 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="Plan de salud / Detalle plan"
           name="plan_salud"
-          value={formData.plan_salud}
+          value={contractData.plan_salud}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Caja de compensación"
           name="caja_compensacion"
-          value={formData.caja_compensacion}
+          value={contractData.caja_compensacion}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -288,7 +282,7 @@ function DatosContractuales({ contractData, isEditing }) {
         <FormField
           label="PIN de marcación"
           name="pin_marcacion"
-          value={formData.pin_marcacion}
+          value={contractData.pin_marcacion}
           onChange={handleChange}
           isEditing={isEditing}
         />

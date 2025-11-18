@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // ¡Reutilizamos el mismo CSS!
 import styles from './DatosPersonales.module.css'; 
 
 // Componente reutilizable para un campo del formulario
-// (Copiado de DatosContractuales)
-function FormField({ label, value, name, onChange, isEditing, type = "text", options = [] }) {
-  const InputComponent = type === "select" ? "select" : "input";
-  
+function FormField({ label, value, name, onChange, isEditing, type = 'text', options = [] }) {
+  const InputComponent = type === 'select' ? 'select' : 'input';
+
   const EditableInput = () => (
     <InputComponent
       name={name}
-      value={value ?? ''}               
+      value={value ?? ''}
       onChange={onChange}
       className={styles.formInput}
-      {...(type === "select" ? {} : { type })}
+      {...(type === 'select' ? {} : { type })}
     >
-      {type === "select" && (
+      {type === 'select' && (
         <>
           <option value="">Seleccionar...</option>
-          {options.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
           ))}
         </>
       )}
@@ -45,7 +46,6 @@ function FormField({ label, value, name, onChange, isEditing, type = "text", opt
 
 // Componente para campos Booleanos (Sí/No)
 function BooleanField({ label, value, name, onChange, isEditing }) {
-  // Normalizamos el valor para el <select>
   const normalized = value === true ? 'true' : value === false ? 'false' : '';
 
   return (
@@ -64,7 +64,7 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
       ) : (
         <input
           type="text"
-          value={value ? "Sí" : "No"}
+          value={value ? 'Sí' : 'No'}
           readOnly
           className={styles.formInput}
         />
@@ -73,61 +73,54 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
   );
 }
 
-
 // --- Componente Principal de Datos Previsionales ---
-function DatosPrevisionales({ previsionalData, isEditing }) {
-  const [formData, setFormData] = useState(previsionalData || {});
-
-  useEffect(() => {
-    setFormData(previsionalData || {});
-  }, [previsionalData]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    // Para checkbox (por si en el futuro agregas alguno)
-    if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: checked }));
-      return;
-    }
-
-    // Para selects (incluidos los booleanos)
-if (type === 'select-one') {
-  let finalValue = value;
-  if (value === 'true') finalValue = true;
-  else if (value === 'false') finalValue = false;
-
-  setFormData(prev => ({ ...prev, [name]: finalValue }));
-  return;
-}
-
-
-    // Inputs normales
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // --- Opciones para los menús desplegables ---
-  const afps = ["Capital", "Cuprum", "Habitat", "Modelo", "Planvital", "Provida", "Uno"];
-  const sistemasSalud = ["Fonasa", "Isapre"];
-  const fonasaTramos = ["A", "B", "C", "D"];
-  const isapreNombres = ["Banmédica", "Colmena", "CruzBlanca", "Consalud", "Vida Tres", "Otra"];
-  const montoTipos = ["CLP", "UF", "%"];
-  const apvTipos = ["A", "B"];
-
+function DatosPrevisionales({ previsionalData, isEditing, onChange }) {
   if (!previsionalData) {
     return <div className={styles.loading}>Cargando datos previsionales...</div>;
   }
 
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    let finalValue;
+
+    if (type === 'checkbox') {
+      finalValue = checked;
+    } else if (type === 'select-one') {
+      // Para selects (incluidos los booleanos)
+      if (value === 'true') finalValue = true;
+      else if (value === 'false') finalValue = false;
+      else finalValue = value;
+    } else {
+      // Inputs normales
+      finalValue = value;
+    }
+
+    const updated = {
+      ...previsionalData,
+      [name]: finalValue,
+    };
+
+    onChange && onChange(updated);
+  };
+
+  // --- Opciones para los menús desplegables ---
+  const afps = ['Capital', 'Cuprum', 'Habitat', 'Modelo', 'Planvital', 'Provida', 'Uno'];
+  const sistemasSalud = ['Fonasa', 'Isapre'];
+  const fonasaTramos = ['A', 'B', 'C', 'D'];
+  const isapreNombres = ['Banmédica', 'Colmena', 'CruzBlanca', 'Consalud', 'Vida Tres', 'Otra'];
+  const montoTipos = ['CLP', 'UF', '%'];
+  const apvTipos = ['A', 'B'];
+
   return (
     <div className={styles.formContainer}>
-      
       {/* === Sección 1: Base Imponible === */}
       <h3 className={styles.sectionTitle}>1. Base Imponible</h3>
       <div className={styles.formGrid}>
         <FormField
           label="BP General"
           name="bp_previsional"
-          value={formData.bp_previsional}
+          value={previsionalData.bp_previsional}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -135,7 +128,7 @@ if (type === 'select-one') {
         <FormField
           label="BP Salud"
           name="bp_salud"
-          value={formData.bp_salud}
+          value={previsionalData.bp_salud}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -143,7 +136,7 @@ if (type === 'select-one') {
         <FormField
           label="BP AFP"
           name="bp_afp"
-          value={formData.bp_afp}
+          value={previsionalData.bp_afp}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -156,7 +149,7 @@ if (type === 'select-one') {
         <FormField
           label="AFP"
           name="afp"
-          value={formData.afp}
+          value={previsionalData.afp}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -165,7 +158,7 @@ if (type === 'select-one') {
         <FormField
           label="Fecha de Afiliación"
           name="afp_fecha_afiliacion"
-          value={formData.afp_fecha_afiliacion}
+          value={previsionalData.afp_fecha_afiliacion}
           onChange={handleChange}
           isEditing={isEditing}
           type="date"
@@ -173,7 +166,7 @@ if (type === 'select-one') {
         <FormField
           label="N° Cuenta / Afiliación"
           name="afp_numero_cuenta"
-          value={formData.afp_numero_cuenta}
+          value={previsionalData.afp_numero_cuenta}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -185,7 +178,7 @@ if (type === 'select-one') {
         <FormField
           label="Sistema de Salud"
           name="sistema_salud"
-          value={formData.sistema_salud}
+          value={previsionalData.sistema_salud}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -194,12 +187,12 @@ if (type === 'select-one') {
       </div>
 
       {/* Mostramos esto SÓLO SI es Fonasa */}
-      {formData.sistema_salud === 'Fonasa' && (
+      {previsionalData.sistema_salud === 'Fonasa' && (
         <div className={styles.formGrid}>
           <FormField
             label="Fonasa Tramo"
             name="fonasa_tramo"
-            value={formData.fonasa_tramo}
+            value={previsionalData.fonasa_tramo}
             onChange={handleChange}
             isEditing={isEditing}
             type="select"
@@ -208,7 +201,7 @@ if (type === 'select-one') {
           <FormField
             label="N° Cargas Fonasa"
             name="fonasa_numero_cargas"
-            value={formData.fonasa_numero_cargas}
+            value={previsionalData.fonasa_numero_cargas}
             onChange={handleChange}
             isEditing={isEditing}
             type="number"
@@ -216,7 +209,7 @@ if (type === 'select-one') {
           <FormField
             label="Detalle Cargas Fonasa"
             name="fonasa_detalle_cargas"
-            value={formData.fonasa_detalle_cargas}
+            value={previsionalData.fonasa_detalle_cargas}
             onChange={handleChange}
             isEditing={isEditing}
           />
@@ -224,12 +217,12 @@ if (type === 'select-one') {
       )}
 
       {/* Mostramos esto SÓLO SI es Isapre */}
-      {formData.sistema_salud === 'Isapre' && (
+      {previsionalData.sistema_salud === 'Isapre' && (
         <div className={styles.formGrid}>
           <FormField
             label="Nombre Isapre"
             name="isapre_nombre"
-            value={formData.isapre_nombre}
+            value={previsionalData.isapre_nombre}
             onChange={handleChange}
             isEditing={isEditing}
             type="select"
@@ -238,14 +231,14 @@ if (type === 'select-one') {
           <FormField
             label="Nombre del Plan"
             name="isapre_plan"
-            value={formData.isapre_plan}
+            value={previsionalData.isapre_plan}
             onChange={handleChange}
             isEditing={isEditing}
           />
           <FormField
             label="Monto Plan"
             name="isapre_monto_plan"
-            value={formData.isapre_monto_plan}
+            value={previsionalData.isapre_monto_plan}
             onChange={handleChange}
             isEditing={isEditing}
             type="number"
@@ -253,7 +246,7 @@ if (type === 'select-one') {
           <FormField
             label="Tipo Monto (CLP/UF/%)"
             name="isapre_monto_plan_tipo"
-            value={formData.isapre_monto_plan_tipo}
+            value={previsionalData.isapre_monto_plan_tipo}
             onChange={handleChange}
             isEditing={isEditing}
             type="select"
@@ -262,7 +255,7 @@ if (type === 'select-one') {
           <FormField
             label="N° Cargas Isapre"
             name="isapre_numero_cargas"
-            value={formData.isapre_numero_cargas}
+            value={previsionalData.isapre_numero_cargas}
             onChange={handleChange}
             isEditing={isEditing}
             type="number"
@@ -270,7 +263,7 @@ if (type === 'select-one') {
           <FormField
             label="Detalle Cargas Isapre"
             name="isapre_detalle_cargas"
-            value={formData.isapre_detalle_cargas}
+            value={previsionalData.isapre_detalle_cargas}
             onChange={handleChange}
             isEditing={isEditing}
           />
@@ -283,23 +276,23 @@ if (type === 'select-one') {
         <BooleanField
           label="¿Tiene APV?"
           name="apv_tiene"
-          value={formData.apv_tiene}
+          value={previsionalData.apv_tiene}
           onChange={handleChange}
           isEditing={isEditing}
         />
-        {formData.apv_tiene && (
+        {previsionalData.apv_tiene && (
           <>
             <FormField
               label="Entidad APV"
               name="apv_entidad"
-              value={formData.apv_entidad}
+              value={previsionalData.apv_entidad}
               onChange={handleChange}
               isEditing={isEditing}
             />
             <FormField
               label="Tipo APV"
               name="apv_tipo"
-              value={formData.apv_tipo}
+              value={previsionalData.apv_tipo}
               onChange={handleChange}
               isEditing={isEditing}
               type="select"
@@ -308,7 +301,7 @@ if (type === 'select-one') {
             <FormField
               label="Monto APV"
               name="apv_monto"
-              value={formData.apv_monto}
+              value={previsionalData.apv_monto}
               onChange={handleChange}
               isEditing={isEditing}
               type="number"
@@ -316,7 +309,7 @@ if (type === 'select-one') {
             <FormField
               label="Tipo Monto (CLP/UF/%)"
               name="apv_monto_tipo"
-              value={formData.apv_monto_tipo}
+              value={previsionalData.apv_monto_tipo}
               onChange={handleChange}
               isEditing={isEditing}
               type="select"
@@ -332,15 +325,15 @@ if (type === 'select-one') {
         <BooleanField
           label="¿Seguro Complementario?"
           name="seguro_complementario_tiene"
-          value={formData.seguro_complementario_tiene}
+          value={previsionalData.seguro_complementario_tiene}
           onChange={handleChange}
           isEditing={isEditing}
         />
-        {formData.seguro_complementario_tiene && (
+        {previsionalData.seguro_complementario_tiene && (
           <FormField
             label="Detalle Seguro Comp."
             name="seguro_complementario_detalle"
-            value={formData.seguro_complementario_detalle}
+            value={previsionalData.seguro_complementario_detalle}
             onChange={handleChange}
             isEditing={isEditing}
           />
@@ -351,16 +344,16 @@ if (type === 'select-one') {
         <BooleanField
           label="¿Seguro de Vida?"
           name="seguro_vida_tiene"
-          value={formData.seguro_vida_tiene}
+          value={previsionalData.seguro_vida_tiene}
           onChange={handleChange}
           isEditing={isEditing}
         />
-        {formData.seguro_vida_tiene && (
+        {previsionalData.seguro_vida_tiene && (
           <>
             <FormField
               label="Monto Seguro Vida"
               name="seguro_vida_monto"
-              value={formData.seguro_vida_monto}
+              value={previsionalData.seguro_vida_monto}
               onChange={handleChange}
               isEditing={isEditing}
               type="number"
@@ -368,7 +361,7 @@ if (type === 'select-one') {
             <FormField
               label="Detalle Seguro Vida"
               name="seguro_vida_detalle"
-              value={formData.seguro_vida_detalle}
+              value={previsionalData.seguro_vida_detalle}
               onChange={handleChange}
               isEditing={isEditing}
             />
@@ -380,15 +373,15 @@ if (type === 'select-one') {
         <BooleanField
           label="¿Seguro SANTIA?"
           name="seguro_santia_tiene"
-          value={formData.seguro_santia_tiene}
+          value={previsionalData.seguro_santia_tiene}
           onChange={handleChange}
           isEditing={isEditing}
         />
-        {formData.seguro_santia_tiene && (
+        {previsionalData.seguro_santia_tiene && (
           <FormField
             label="Detalle SANTIA"
             name="seguro_santia_detalle"
-            value={formData.seguro_santia_detalle}
+            value={previsionalData.seguro_santia_detalle}
             onChange={handleChange}
             isEditing={isEditing}
           />
@@ -401,7 +394,7 @@ if (type === 'select-one') {
         <FormField
           label="Cargas Simples"
           name="cargas_simples"
-          value={formData.cargas_simples}
+          value={previsionalData.cargas_simples}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -409,7 +402,7 @@ if (type === 'select-one') {
         <FormField
           label="Cargas Maternales"
           name="cargas_maternales"
-          value={formData.cargas_maternales}
+          value={previsionalData.cargas_maternales}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -417,7 +410,7 @@ if (type === 'select-one') {
         <FormField
           label="Cargas Inválidas"
           name="cargas_invalidas"
-          value={formData.cargas_invalidas}
+          value={previsionalData.cargas_invalidas}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -425,7 +418,7 @@ if (type === 'select-one') {
         <FormField
           label="Otras Cargas"
           name="cargas_otras"
-          value={formData.cargas_otras}
+          value={previsionalData.cargas_otras}
           onChange={handleChange}
           isEditing={isEditing}
           type="number"
@@ -433,7 +426,7 @@ if (type === 'select-one') {
         <FormField
           label="Observaciones Cargas"
           name="cargas_observaciones"
-          value={formData.cargas_observaciones}
+          value={previsionalData.cargas_observaciones}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -445,15 +438,15 @@ if (type === 'select-one') {
         <BooleanField
           label="¿Tiene Crédito Social?"
           name="tiene_credito_social"
-          value={formData.tiene_credito_social}
+          value={previsionalData.tiene_credito_social}
           onChange={handleChange}
           isEditing={isEditing}
         />
-        {formData.tiene_credito_social && (
+        {previsionalData.tiene_credito_social && (
           <FormField
             label="Detalle Crédito Social"
             name="credito_social_detalle"
-            value={formData.credito_social_detalle}
+            value={previsionalData.credito_social_detalle}
             onChange={handleChange}
             isEditing={isEditing}
           />
@@ -461,7 +454,7 @@ if (type === 'select-one') {
         <FormField
           label="Observaciones Previsionales"
           name="observaciones_previsionales"
-          value={formData.observaciones_previsionales}
+          value={previsionalData.observaciones_previsionales}
           onChange={handleChange}
           isEditing={isEditing}
         />

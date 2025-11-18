@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // Reutilizamos el mismo CSS de DatosPersonales para mantener el estilo
 import styles from './DatosPersonales.module.css'; 
 
@@ -11,20 +11,20 @@ function FormField({
   name,
   onChange,
   isEditing,
-  type = "text",
+  type = 'text',
   options = [],
 }) {
-  const InputComponent = type === "select" ? "select" : "input";
+  const InputComponent = type === 'select' ? 'select' : 'input';
 
   const EditableInput = () => (
     <InputComponent
       name={name}
-      value={value ?? ''}          // aseguramos string controlado
+      value={value ?? ''} // aseguramos string controlado
       onChange={onChange}
       className={styles.formInput}
-      {...(type === "select" ? {} : { type })}
+      {...(type === 'select' ? {} : { type })}
     >
-      {type === "select" && (
+      {type === 'select' && (
         <>
           <option value="">Seleccionar...</option>
           {options.map((opt) => (
@@ -58,7 +58,6 @@ function FormField({
 // Campo booleano (Sí / No) reutilizable
 // ========================================
 function BooleanField({ label, value, name, onChange, isEditing }) {
-  // Normalizamos el valor: si viene undefined/null, lo tratamos como false
   const normalized = value === undefined || value === null ? false : !!value;
 
   return (
@@ -67,7 +66,7 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
       {isEditing ? (
         <select
           name={name}
-          value={String(normalized)}       // "true" o "false"
+          value={String(normalized)} // "true" o "false"
           onChange={onChange}
           className={styles.formInput}
         >
@@ -89,35 +88,35 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
 // ========================================
 // Componente principal: Datos Bancarios
 // ========================================
-// onChange es opcional, pero muy útil para que el padre reciba los cambios.
 function DatosBancarios({ bankData, isEditing, onChange }) {
-  const [formData, setFormData] = useState(bankData || {});
-
-  // Si cambian los datos desde el padre, sincronizamos el estado interno
-  useEffect(() => {
-    setFormData(bankData || {});
-  }, [bankData]);
+  if (!bankData) {
+    return <div className={styles.loading}>Cargando datos bancarios...</div>;
+  }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
-    // Para campos booleanos (select de Sí/No), convertimos string a boolean
-    const parsedValue =
-      value === 'true' ? true : value === 'false' ? false : value;
+    let finalValue;
 
-    setFormData((prev) => {
-      const updated = {
-        ...prev,
-        [name]: parsedValue,
-      };
+    if (type === 'checkbox') {
+      finalValue = checked;
+    } else if (type === 'select-one') {
+      // Para selects (incluyendo Sí/No)
+      if (value === 'true') finalValue = true;
+      else if (value === 'false') finalValue = false;
+      else finalValue = value;
+    } else {
+      finalValue = value;
+    }
 
-      // Si el padre nos pasa onChange, le notificamos el objeto completo actualizado
-      if (typeof onChange === 'function') {
-        onChange(updated);
-      }
+    const updated = {
+      ...bankData,
+      [name]: finalValue,
+    };
 
-      return updated;
-    });
+    if (typeof onChange === 'function') {
+      onChange(updated);
+    }
   };
 
   // Opciones para selects
@@ -131,20 +130,11 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
     'Otro',
   ];
 
-  const tiposCuenta = [
-    'Cuenta Corriente',
-    'Cuenta Vista / RUT',
-    'Cuenta de Ahorro',
-  ];
+  const tiposCuenta = ['Cuenta Corriente', 'Cuenta Vista / RUT', 'Cuenta de Ahorro'];
 
   const monedas = ['CLP', 'USD', 'EUR'];
 
   const estadosCuenta = ['Activa', 'Inactiva'];
-
-  // Mientras no tengamos bankData (por ejemplo, cargando desde Supabase)
-  if (!bankData) {
-    return <div className={styles.loading}>Cargando datos bancarios...</div>;
-  }
 
   return (
     <div className={styles.formContainer}>
@@ -154,7 +144,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="Banco"
           name="banco"
-          value={formData.banco}
+          value={bankData.banco}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -164,7 +154,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="Tipo de cuenta"
           name="tipo_cuenta"
-          value={formData.tipo_cuenta}
+          value={bankData.tipo_cuenta}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -174,7 +164,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="Número de cuenta"
           name="numero_cuenta"
-          value={formData.numero_cuenta}
+          value={bankData.numero_cuenta}
           onChange={handleChange}
           isEditing={isEditing}
           // Mejor text que number para no perder ceros a la izquierda
@@ -184,7 +174,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="Moneda"
           name="moneda"
-          value={formData.moneda}
+          value={bankData.moneda}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -194,7 +184,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="Titular de la cuenta"
           name="titular"
-          value={formData.titular}
+          value={bankData.titular}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -202,7 +192,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="RUT del titular"
           name="rut_titular"
-          value={formData.rut_titular}
+          value={bankData.rut_titular}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -210,7 +200,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <BooleanField
           label="Cuenta principal"
           name="cuenta_principal"
-          value={formData.cuenta_principal}
+          value={bankData.cuenta_principal}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -218,7 +208,7 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
         <FormField
           label="Estado de la cuenta"
           name="estado"
-          value={formData.estado}
+          value={bankData.estado}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"

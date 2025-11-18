@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 // ¡Reutilizamos el mismo CSS!
 import styles from './DatosPersonales.module.css'; 
 
@@ -11,20 +11,20 @@ function FormField({
   name,
   onChange,
   isEditing,
-  type = "text",
+  type = 'text',
   options = [],
 }) {
-  const InputComponent = type === "select" ? "select" : "input";
-  
+  const InputComponent = type === 'select' ? 'select' : 'input';
+
   const EditableInput = () => (
     <InputComponent
       name={name}
-      value={value ?? ''}            
+      value={value ?? ''}
       onChange={onChange}
       className={styles.formInput}
-      {...(type === "select" ? {} : { type })}
+      {...(type === 'select' ? {} : { type })}
     >
-      {type === "select" && (
+      {type === 'select' && (
         <>
           <option value="">Seleccionar...</option>
           {options.map((opt) => (
@@ -40,7 +40,7 @@ function FormField({
   const ReadOnlyInput = () => (
     <input
       type="text"
-      value={value ?? '—'}           
+      value={value ?? '—'}
       readOnly
       className={styles.formInput}
     />
@@ -67,8 +67,7 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
       {isEditing ? (
         <select
           name={name}
-          // Aseguramos que el valor sea "true" o "false" para el select
-          value={String(normalized)}
+          value={String(normalized)} // "true" o "false"
           onChange={onChange}
           className={styles.formInput}
         >
@@ -78,7 +77,7 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
       ) : (
         <input
           type="text"
-          value={normalized ? "Sí" : "No"}
+          value={normalized ? 'Sí' : 'No'}
           readOnly
           className={styles.formInput}
         />
@@ -89,40 +88,49 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
 
 // --- Componente Principal de Datos de Salud ---
 function DatosSalud({ healthData, isEditing, onChange }) {
-  const [formData, setFormData] = useState(healthData || {});
-
-  // Sincronizamos cuando cambian los datos desde el padre
-  useEffect(() => {
-    setFormData(healthData || {});
-  }, [healthData]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    // Convertimos 'true'/'false' de string a booleano, el resto lo dejamos igual
-    const val = value === 'true' ? true : value === 'false' ? false : value;
-
-    setFormData((prev) => {
-      const updated = {
-        ...prev, 
-        [name]: val,
-      };
-
-      // Si el padre nos pasa onChange, le mandamos el objeto completo actualizado
-      if (typeof onChange === 'function') {
-        onChange(updated);
-      }
-
-      return updated;
-    });
-  };
-
-  // --- Opciones para los menús desplegables ---
-  const tiposSeguro = ["Fonasa", "Isapre", "Particular", "Otro"];
-  const gruposSanguineos = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "No sabe"];
-
   if (!healthData) {
     return <div className={styles.loading}>Cargando datos de salud...</div>;
   }
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    let finalValue;
+
+    if (type === 'checkbox') {
+      finalValue = checked;
+    } else if (type === 'select-one') {
+      // Para selects (incluidos Sí/No)
+      if (value === 'true') finalValue = true;
+      else if (value === 'false') finalValue = false;
+      else finalValue = value;
+    } else {
+      finalValue = value;
+    }
+
+    const updated = {
+      ...healthData,
+      [name]: finalValue,
+    };
+
+    if (typeof onChange === 'function') {
+      onChange(updated);
+    }
+  };
+
+  // --- Opciones para los menús desplegables ---
+  const tiposSeguro = ['Fonasa', 'Isapre', 'Particular', 'Otro'];
+  const gruposSanguineos = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-',
+    'No sabe',
+  ];
 
   return (
     <div className={styles.formContainer}>
@@ -132,7 +140,7 @@ function DatosSalud({ healthData, isEditing, onChange }) {
         <FormField
           label="Alergias a alimentos"
           name="alergias_alimentos"
-          value={formData.alergias_alimentos}
+          value={healthData.alergias_alimentos}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -140,7 +148,7 @@ function DatosSalud({ healthData, isEditing, onChange }) {
         <FormField
           label="Alergias a medicamentos"
           name="alergias_medicamentos"
-          value={formData.alergias_medicamentos}
+          value={healthData.alergias_medicamentos}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -148,7 +156,7 @@ function DatosSalud({ healthData, isEditing, onChange }) {
         <FormField
           label="Enfermedades crónicas"
           name="enfermedades_cronicas"
-          value={formData.enfermedades_cronicas}
+          value={healthData.enfermedades_cronicas}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -156,7 +164,7 @@ function DatosSalud({ healthData, isEditing, onChange }) {
         <FormField
           label="Medicamentos permanentes"
           name="medicamentos_permanentes"
-          value={formData.medicamentos_permanentes}
+          value={healthData.medicamentos_permanentes}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -164,18 +172,18 @@ function DatosSalud({ healthData, isEditing, onChange }) {
         <BooleanField
           label="¿Tiene seguro de salud?"
           name="tiene_seguro_salud"
-          value={formData.tiene_seguro_salud}
+          value={healthData.tiene_seguro_salud}
           onChange={handleChange}
           isEditing={isEditing}
         />
-        
+
         {/* Mostramos estos campos solo si tiene_seguro_salud es true */}
-        {!!formData.tiene_seguro_salud && (
+        {!!healthData.tiene_seguro_salud && (
           <>
             <FormField
               label="Tipo de seguro"
               name="tipo_seguro"
-              value={formData.tipo_seguro}
+              value={healthData.tipo_seguro}
               onChange={handleChange}
               isEditing={isEditing}
               type="select"
@@ -184,17 +192,17 @@ function DatosSalud({ healthData, isEditing, onChange }) {
             <FormField
               label="Nombre del seguro"
               name="nombre_seguro"
-              value={formData.nombre_seguro}
+              value={healthData.nombre_seguro}
               onChange={handleChange}
               isEditing={isEditing}
             />
           </>
         )}
-        
+
         <FormField
           label="Grupo sanguíneo"
           name="grupo_sanguineo"
-          value={formData.grupo_sanguineo}
+          value={healthData.grupo_sanguineo}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -204,7 +212,7 @@ function DatosSalud({ healthData, isEditing, onChange }) {
         <FormField
           label="Observaciones de salud"
           name="observaciones_salud"
-          value={formData.observaciones_salud}
+          value={healthData.observaciones_salud}
           onChange={handleChange}
           isEditing={isEditing}
         />

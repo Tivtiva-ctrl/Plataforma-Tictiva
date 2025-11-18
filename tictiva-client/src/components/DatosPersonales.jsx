@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styles from './DatosPersonales.module.css';
 
-function FormField({ label, value, name, onChange, isEditing, type = "text", options = [] }) {
-  const InputComponent = type === "select" ? "select" : "input";
+function FormField({ label, value, name, onChange, isEditing, type = 'text', options = [] }) {
+  const InputComponent = type === 'select' ? 'select' : 'input';
 
   let normalizedValue = value ?? '';
-  if (type === "date" && normalizedValue) {
+  if (type === 'date' && normalizedValue) {
     const d = new Date(normalizedValue);
     if (!Number.isNaN(d.getTime())) {
       normalizedValue = d.toISOString().slice(0, 10);
@@ -18,13 +18,15 @@ function FormField({ label, value, name, onChange, isEditing, type = "text", opt
       value={normalizedValue}
       onChange={onChange}
       className={styles.formInput}
-      {...(type === "select" ? {} : { type })}
+      {...(type === 'select' ? {} : { type })}
     >
-      {type === "select" && (
+      {type === 'select' && (
         <>
           <option value="">Seleccionar...</option>
-          {options.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
           ))}
         </>
       )}
@@ -48,39 +50,39 @@ function FormField({ label, value, name, onChange, isEditing, type = "text", opt
   );
 }
 
-function DatosPersonales({ personalData, isEditing }) {
-  const [formData, setFormData] = useState(personalData || {});
-
-  useEffect(() => {
-    setFormData(personalData || {});
-  }, [personalData]);
+function DatosPersonales({ personalData, isEditing, onChange }) {
+  if (!personalData) {
+    return <div className={styles.loading}>Cargando datos personales...</div>;
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
+    // Caso especial: discapacidad booleana
     if (name === 'tiene_discapacidad') {
-      setFormData(prev => ({
-        ...prev,
+      const updated = {
+        ...personalData,
         [name]: value === 'true',
-      }));
+      };
+      onChange && onChange(updated);
       return;
     }
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    const newValue = type === 'checkbox' ? checked : value;
+
+    const updated = {
+      ...personalData,
+      [name]: newValue,
+    };
+
+    onChange && onChange(updated);
   };
 
-  const generos = ["Masculino", "Femenino", "Otro", "Prefiero no decirlo"];
-  const estadosCiviles = ["Soltero", "Casado", "Divorciado", "Viudo", "Conviviente"];
-  const nacionalidades = ["Chilena", "Peruana", "Venezolana", "Argentina", "Colombiana", "Otra"];
-  const regiones = ["Región Metropolitana", "Valparaíso", "Biobío", "Otra"];
-  const comunas = ["Santiago Centro", "Providencia", "Las Condes", "Otra"];
-
-  if (!personalData) {
-    return <div className={styles.loading}>Cargando datos personales...</div>;
-  }
+  const generos = ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo'];
+  const estadosCiviles = ['Soltero', 'Casado', 'Divorciado', 'Viudo', 'Conviviente'];
+  const nacionalidades = ['Chilena', 'Peruana', 'Venezolana', 'Argentina', 'Colombiana', 'Otra'];
+  const regiones = ['Región Metropolitana', 'Valparaíso', 'Biobío', 'Otra'];
+  const comunas = ['Santiago Centro', 'Providencia', 'Las Condes', 'Otra'];
 
   return (
     <div className={styles.formContainer}>
@@ -89,21 +91,21 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="RUT"
           name="rut"
-          value={formData.rut}
+          value={personalData.rut}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Nombre Completo"
           name="nombre_completo"
-          value={formData.nombre_completo}
+          value={personalData.nombre_completo}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Fecha de Nacimiento"
           name="fecha_nacimiento"
-          value={formData.fecha_nacimiento}
+          value={personalData.fecha_nacimiento}
           onChange={handleChange}
           isEditing={isEditing}
           type="date"
@@ -111,7 +113,7 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Género"
           name="genero"
-          value={formData.genero}
+          value={personalData.genero}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -120,7 +122,7 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Estado Civil"
           name="estado_civil"
-          value={formData.estado_civil}
+          value={personalData.estado_civil}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -129,7 +131,7 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Nacionalidad"
           name="nacionalidad"
-          value={formData.nacionalidad}
+          value={personalData.nacionalidad}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -143,14 +145,14 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Dirección"
           name="direccion"
-          value={formData.direccion}
+          value={personalData.direccion}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Región"
           name="region"
-          value={formData.region}
+          value={personalData.region}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -159,7 +161,7 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Comuna"
           name="comuna"
-          value={formData.comuna}
+          value={personalData.comuna}
           onChange={handleChange}
           isEditing={isEditing}
           type="select"
@@ -168,14 +170,14 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Teléfono"
           name="telefono"
-          value={formData.telefono}
+          value={personalData.telefono}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Email Personal"
           name="email_personal"
-          value={formData.email_personal}
+          value={personalData.email_personal}
           onChange={handleChange}
           isEditing={isEditing}
           type="email"
@@ -188,14 +190,14 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Nombre Contacto Emergencia"
           name="contacto_emergencia_nombre"
-          value={formData.contacto_emergencia_nombre}
+          value={personalData.contacto_emergencia_nombre}
           onChange={handleChange}
           isEditing={isEditing}
         />
         <FormField
           label="Teléfono Contacto Emergencia"
           name="contacto_emergencia_telefono"
-          value={formData.contacto_emergencia_telefono}
+          value={personalData.contacto_emergencia_telefono}
           onChange={handleChange}
           isEditing={isEditing}
         />
@@ -209,7 +211,7 @@ function DatosPersonales({ personalData, isEditing }) {
           {isEditing ? (
             <select
               name="tiene_discapacidad"
-              value={formData.tiene_discapacidad ? 'true' : 'false'}
+              value={personalData.tiene_discapacidad ? 'true' : 'false'}
               onChange={handleChange}
               className={styles.formInput}
             >
@@ -219,7 +221,7 @@ function DatosPersonales({ personalData, isEditing }) {
           ) : (
             <input
               type="text"
-              value={formData.tiene_discapacidad ? 'Sí' : 'No'}
+              value={personalData.tiene_discapacidad ? 'Sí' : 'No'}
               readOnly
               className={styles.formInput}
             />
@@ -228,9 +230,9 @@ function DatosPersonales({ personalData, isEditing }) {
         <FormField
           label="Tipo de Discapacidad"
           name="tipo_discapacidad"
-          value={formData.tipo_discapacidad}
+          value={personalData.tipo_discapacidad}
           onChange={handleChange}
-          isEditing={isEditing && !!formData.tiene_discapacidad}
+          isEditing={isEditing && !!personalData.tiene_discapacidad}
         />
       </div>
     </div>

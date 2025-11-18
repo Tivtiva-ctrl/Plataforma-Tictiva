@@ -13,12 +13,12 @@ import DatosSalud from './DatosSalud';
 import DatosDocumentos from './DatosDocumentos';
 import DatosAsistencia from './DatosAsistencia';
 import DatosBitacora from './DatosBitacora';
-import DatosHistorial from './DatosHistorial'; // 👈 NUEVO: historial real
+import DatosHistorial from './DatosHistorial';
 
 // =======================================================
-// === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
+// === COMPONENTE "TICTIVA 360" (SOLO LECTURA POR AHORA) ===
 // =======================================================
-function Overview360({ employee, isEditing }) {
+function Overview360({ employee }) {
   if (!employee) {
     return <div className={styles.sectionContent}>Cargando datos del empleado…</div>;
   }
@@ -52,30 +52,11 @@ function Overview360({ employee, isEditing }) {
         <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Contacto de emergencia --- */}
+      {/* --- Tarjeta: Contacto de emergencia (solo lectura) --- */}
       <div className={styles.infoCard}>
         <h3>Contacto de emergencia</h3>
-        {isEditing ? (
-          <>
-            <label className={styles.inlineLabel}>Nombre:</label>
-            <input
-              type="text"
-              defaultValue={employee.contacto_emergencia_nombre || ''}
-              className={styles.inlineInput}
-            />
-            <label className={styles.inlineLabel}>Teléfono:</label>
-            <input
-              type="text"
-              defaultValue={employee.contacto_emergencia_telefono || ''}
-              className={styles.inlineInput}
-            />
-          </>
-        ) : (
-          <>
-            <p>Nombre: {employee.contacto_emergencia_nombre || '[campo sin definir]'}</p>
-            <p>Teléfono: {employee.contacto_emergencia_telefono || '[campo sin definir]'}</p>
-          </>
-        )}
+        <p>Nombre: {employee.contacto_emergencia_nombre || '[campo sin definir]'}</p>
+        <p>Teléfono: {employee.contacto_emergencia_telefono || '[campo sin definir]'}</p>
         <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
@@ -135,7 +116,7 @@ function Overview360({ employee, isEditing }) {
         </div>
       </div>
 
-      {/* --- Tarjeta: Datos de salud --- */}
+      {/* --- Tarjeta: Datos de salud (resumen) --- */}
       <div className={styles.infoCard}>
         <h3>Datos de salud</h3>
         <p>Alergias: {employee.tipo_discapacidad || '[campo sin definir]'}</p>
@@ -162,16 +143,6 @@ function Overview360({ employee, isEditing }) {
   );
 }
 
-function SectionPlaceholder({ title }) {
-  return (
-    <div className={styles.sectionContent}>
-      <h2>{title}</h2>
-      <p>Aquí irá el contenido detallado de la sección: {title}.</p>
-      <p>Pronto construiremos los formularios de edición y las tablas de datos.</p>
-    </div>
-  );
-}
-
 // =======================================================
 // === PÁGINA DE PERFIL PRINCIPAL ===
 // =======================================================
@@ -185,6 +156,10 @@ function EmployeeProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(null);
+
   // ==========================================
   // Carga de datos desde Supabase
   // ==========================================
@@ -197,8 +172,10 @@ function EmployeeProfilePage() {
 
     const fetchEmployeeData = async () => {
       setLoading(true);
+      setSaveError(null);
+      setSaveSuccess(null);
 
-      // 1) Datos personales (aquí sí usamos rut)
+      // 1) Datos personales (rut)
       const { data: personal, error: perError } = await supabase
         .from('employee_personal')
         .select('*')
@@ -213,19 +190,20 @@ function EmployeeProfilePage() {
 
       setPersonalData(personal);
 
-      // 🔹 Obtenemos el employee_id desde la fila de employee_personal
       const employeeId = personal.employee_id || personal.id;
       if (!employeeId) {
         console.warn(
-          'No se encontró employee_id en employee_personal; no se cargarán contrato ni previsión.'
+          'No se encontró employee_id; no se cargarán contrato, previsión, bancos ni salud.'
         );
         setContractData(null);
         setPrevisionalData(null);
+        setBankData({});
+        setHealthData({});
         setLoading(false);
         return;
       }
 
-      // 2) Datos contractuales (ahora por employee_id, NO por rut)
+      // 2) Contrato
       const { data: contract, error: conError } = await supabase
         .from('employee_contracts')
         .select('*')
@@ -235,9 +213,9 @@ function EmployeeProfilePage() {
       if (conError) {
         console.warn('Error al cargar datos de contrato:', conError.message);
       }
-      setContractData(contract || {});
+      setContractData(contract || { employee_id: employeeId });
 
-      // 3) Datos previsionales (también por employee_id)
+      // 3) Previsión
       const { data: previsional, error: prevError } = await supabase
         .from('employee_prevision')
         .select('*')
@@ -247,7 +225,31 @@ function EmployeeProfilePage() {
       if (prevError) {
         console.warn('Error al cargar datos previsionales:', prevError.message);
       }
-      setPrevisionalData(previsional || {});
+      setPrevisionalData(previsional || { employee_id: employeeId });
+
+      // 4) Datos bancarios
+      const { data: bank, error: bankError } = await supabase
+        .from('employee_bank_accounts')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .maybeSingle();
+
+      if (bankError) {
+        console.warn('Error al cargar datos bancarios:', bankError.message);
+      }
+      setBankData(bank || { employee_id: employeeId });
+
+      // 5) Datos de salud
+      const { data: health, error: healthError } = await supabase
+        .from('employee_health')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .maybeSingle();
+
+      if (healthError) {
+        console.warn('Error al cargar datos de salud:', healthError.message);
+      }
+      setHealthData(health || { employee_id: employeeId });
 
       setLoading(false);
     };
@@ -300,6 +302,191 @@ function EmployeeProfilePage() {
     return (first + last).toUpperCase() || '??';
   };
 
+  // ==========================================
+  // Guardar TODAS las secciones editables
+  // ==========================================
+  const saveAllSections = async () => {
+    if (!personalData) return;
+
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(null);
+
+    try {
+      const employeeId = personalData.employee_id || personalData.id;
+
+      // 1) Datos personales
+      if (personalData.id) {
+        const {
+          id,
+          employee_id,
+          created_at,
+          updated_at,
+          ...personalPayload
+        } = personalData;
+
+        const { error: perUpdateError } = await supabase
+          .from('employee_personal')
+          .update(personalPayload)
+          .eq('id', personalData.id);
+
+        if (perUpdateError) {
+          console.error('Error al actualizar employee_personal:', perUpdateError);
+          throw perUpdateError;
+        }
+      }
+
+      // 2) Contractuales
+      if (contractData && (contractData.id || employeeId)) {
+        const {
+          id,
+          employee_id,
+          created_at,
+          updated_at,
+          ...contractPayload
+        } = contractData;
+
+        if (contractData.id) {
+          const { error: conUpdateError } = await supabase
+            .from('employee_contracts')
+            .update(contractPayload)
+            .eq('id', contractData.id);
+
+          if (conUpdateError) {
+            console.error('Error al actualizar employee_contracts:', conUpdateError);
+            throw conUpdateError;
+          }
+        } else {
+          const { error: conInsertError } = await supabase
+            .from('employee_contracts')
+            .insert([{ ...contractPayload, employee_id: employeeId }]);
+
+          if (conInsertError) {
+            console.error('Error al insertar employee_contracts:', conInsertError);
+            throw conInsertError;
+          }
+        }
+      }
+
+      // 3) Previsionales
+      if (previsionalData && (previsionalData.id || employeeId)) {
+        const {
+          id,
+          employee_id,
+          created_at,
+          updated_at,
+          ...prevPayload
+        } = previsionalData;
+
+        if (previsionalData.id) {
+          const { error: prevUpdateError } = await supabase
+            .from('employee_prevision')
+            .update(prevPayload)
+            .eq('id', previsionalData.id);
+
+          if (prevUpdateError) {
+            console.error('Error al actualizar employee_prevision:', prevUpdateError);
+            throw prevUpdateError;
+          }
+        } else {
+          const { error: prevInsertError } = await supabase
+            .from('employee_prevision')
+            .insert([{ ...prevPayload, employee_id: employeeId }]);
+
+          if (prevInsertError) {
+            console.error('Error al insertar employee_prevision:', prevInsertError);
+            throw prevInsertError;
+          }
+        }
+      }
+
+      // 4) Bancarios
+      if (bankData && (bankData.id || employeeId)) {
+        const {
+          id,
+          employee_id,
+          created_at,
+          updated_at,
+          ...bankPayload
+        } = bankData;
+
+        if (bankData.id) {
+          const { error: bankUpdateError } = await supabase
+            .from('employee_bank_accounts')
+            .update(bankPayload)
+            .eq('id', bankData.id);
+
+          if (bankUpdateError) {
+            console.error('Error al actualizar employee_bank_accounts:', bankUpdateError);
+            throw bankUpdateError;
+          }
+        } else {
+          const { error: bankInsertError } = await supabase
+            .from('employee_bank_accounts')
+            .insert([{ ...bankPayload, employee_id: employeeId }]);
+
+          if (bankInsertError) {
+            console.error('Error al insertar employee_bank_accounts:', bankInsertError);
+            throw bankInsertError;
+          }
+        }
+      }
+
+      // 5) Salud
+      if (healthData && (healthData.id || employeeId)) {
+        const {
+          id,
+          employee_id,
+          created_at,
+          updated_at,
+          ...healthPayload
+        } = healthData;
+
+        if (healthData.id) {
+          const { error: healthUpdateError } = await supabase
+            .from('employee_health')
+            .update(healthPayload)
+            .eq('id', healthData.id);
+
+          if (healthUpdateError) {
+            console.error('Error al actualizar employee_health:', healthUpdateError);
+            throw healthUpdateError;
+          }
+        } else {
+          const { error: healthInsertError } = await supabase
+            .from('employee_health')
+            .insert([{ ...healthPayload, employee_id: employeeId }]);
+
+          if (healthInsertError) {
+            console.error('Error al insertar employee_health:', healthInsertError);
+            throw healthInsertError;
+          }
+        }
+      }
+
+      setSaveSuccess('Ficha guardada correctamente ✅');
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Error al guardar la ficha completa:', err);
+      setSaveError('Ocurrió un error al guardar la ficha. Revisa la consola para más detalles.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditToggle = async () => {
+    if (!isEditing) {
+      // Entrar a modo edición
+      setSaveError(null);
+      setSaveSuccess(null);
+      setIsEditing(true);
+      return;
+    }
+
+    // Si ya estaba en edición, ahora es "Guardar Ficha"
+    await saveAllSections();
+  };
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -319,15 +506,6 @@ function EmployeeProfilePage() {
       </div>
     );
   }
-
-  const handleEditToggle = () => {
-    if (isEditing) {
-      console.log('Guardando cambios...');
-      console.log('Datos bancarios actuales:', bankData);
-      console.log('Datos de salud actuales:', healthData);
-    }
-    setIsEditing(!isEditing);
-  };
 
   return (
     <div className={styles.profilePage}>
@@ -368,15 +546,31 @@ function EmployeeProfilePage() {
         </div>
 
         <div className={styles.profileActions}>
-          <button className={styles.actionButton} onClick={handleEditToggle}>
-            {isEditing ? 'Guardar Ficha' : 'Editar Ficha'} <FiEdit />
+          <button
+            className={styles.actionButton}
+            onClick={handleEditToggle}
+            disabled={saving}
+          >
+            {isEditing
+              ? (saving ? 'Guardando...' : 'Guardar Ficha')
+              : 'Editar Ficha'}{' '}
+            <FiEdit />
           </button>
+
           {!isEditing && (
             <button className={styles.actionButton}>
               Descargar Ficha <FiDownload />
             </button>
           )}
         </div>
+
+        {/* Mensajes de guardado */}
+        {(saveError || saveSuccess) && (
+          <div className={styles.saveStatusBar}>
+            {saveError && <span className={styles.saveError}>{saveError}</span>}
+            {saveSuccess && <span className={styles.saveSuccess}>{saveSuccess}</span>}
+          </div>
+        )}
 
         {/* NAV DE SECCIONES */}
         <nav className={styles.profileNav}>
@@ -405,33 +599,43 @@ function EmployeeProfilePage() {
       {/* CONTENIDO DE CADA SECCIÓN */}
       <main className={styles.profileContent}>
         <Routes>
-          {/* Tictiva 360 */}
-          <Route
-            index
-            element={<Overview360 employee={personalData} isEditing={isEditing} />}
-          />
-          <Route
-            path="tictiva-360"
-            element={<Overview360 employee={personalData} isEditing={isEditing} />}
-          />
+          {/* Tictiva 360 (solo lectura) */}
+          <Route index element={<Overview360 employee={personalData} />} />
+          <Route path="tictiva-360" element={<Overview360 employee={personalData} />} />
 
           {/* Datos personales */}
           <Route
             path="personal"
-            element={<DatosPersonales personalData={personalData} isEditing={isEditing} />}
+            element={
+              <DatosPersonales
+                personalData={personalData}
+                isEditing={isEditing}
+                onChange={setPersonalData}
+              />
+            }
           />
 
           {/* Datos contractuales */}
           <Route
             path="contractual"
-            element={<DatosContractuales contractData={contractData} isEditing={isEditing} />}
+            element={
+              <DatosContractuales
+                contractData={contractData}
+                isEditing={isEditing}
+                onChange={setContractData}
+              />
+            }
           />
 
           {/* Datos previsionales */}
           <Route
             path="previsional"
             element={
-              <DatosPrevisionales previsionalData={previsionalData} isEditing={isEditing} />
+              <DatosPrevisionales
+                previsionalData={previsionalData}
+                isEditing={isEditing}
+                onChange={setPrevisionalData}
+              />
             }
           />
 
