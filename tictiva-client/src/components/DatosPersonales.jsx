@@ -1,10 +1,17 @@
 import React from 'react';
 import styles from './DatosPersonales.module.css';
 
-function FormField({ label, value, name, onChange, isEditing, type = 'text', options = [] }) {
-  const InputComponent = type === 'select' ? 'select' : 'input';
-
+function FormField({
+  label,
+  value,
+  name,
+  onChange,
+  isEditing,
+  type = 'text',
+  options = [],
+}) {
   let normalizedValue = value ?? '';
+
   if (type === 'date' && normalizedValue) {
     const d = new Date(normalizedValue);
     if (!Number.isNaN(d.getTime())) {
@@ -12,40 +19,53 @@ function FormField({ label, value, name, onChange, isEditing, type = 'text', opt
     }
   }
 
-  const EditableInput = () => (
-    <InputComponent
-      name={name}
-      value={normalizedValue}
-      onChange={onChange}
-      className={styles.formInput}
-      {...(type === 'select' ? {} : { type })}
-    >
-      {type === 'select' && (
-        <>
-          <option value="">Seleccionar...</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </>
-      )}
-    </InputComponent>
-  );
+  const displayValue = normalizedValue || '—';
 
-  const ReadOnlyInput = () => (
-    <input
-      type="text"
-      value={normalizedValue || '—'}
-      readOnly
-      className={styles.formInput}
-    />
-  );
+  if (isEditing) {
+    if (type === 'select') {
+      return (
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>{label}</label>
+          <select
+            name={name}
+            value={normalizedValue}
+            onChange={onChange}
+            className={styles.formInput}
+          >
+            <option value="">Seleccionar...</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.formGroup}>
+        <label className={styles.formLabel}>{label}</label>
+        <input
+          name={name}
+          value={normalizedValue}
+          onChange={onChange}
+          className={styles.formInput}
+          type={type}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.formGroup}>
       <label className={styles.formLabel}>{label}</label>
-      {isEditing ? <EditableInput /> : <ReadOnlyInput />}
+      <input
+        type="text"
+        value={displayValue}
+        readOnly
+        className={styles.formInput}
+      />
     </div>
   );
 }
@@ -58,7 +78,6 @@ function DatosPersonales({ personalData, isEditing, onChange }) {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // Caso especial: discapacidad booleana
     if (name === 'tiene_discapacidad') {
       const updated = {
         ...personalData,

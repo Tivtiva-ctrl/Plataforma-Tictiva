@@ -14,42 +14,58 @@ function FormField({
   type = 'text',
   options = [],
 }) {
-  const InputComponent = type === 'select' ? 'select' : 'input';
+  const normalizedValue = value ?? '';
+  const displayValue = normalizedValue || '—';
 
-  const EditableInput = () => (
-    <InputComponent
-      name={name}
-      value={value ?? ''} // aseguramos string controlado
-      onChange={onChange}
-      className={styles.formInput}
-      {...(type === 'select' ? {} : { type })}
-    >
-      {type === 'select' && (
-        <>
-          <option value="">Seleccionar...</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </>
-      )}
-    </InputComponent>
-  );
+  // MODO EDICIÓN
+  if (isEditing) {
+    // SELECT
+    if (type === 'select') {
+      return (
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>{label}</label>
+          <select
+            name={name}
+            value={normalizedValue}
+            onChange={onChange}
+            className={styles.formInput}
+          >
+            <option value="">Seleccionar...</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
 
-  const ReadOnlyInput = () => (
-    <input
-      type="text"
-      value={value ?? '—'}
-      readOnly
-      className={styles.formInput}
-    />
-  );
+    // INPUT (text, number, email, etc.)
+    return (
+      <div className={styles.formGroup}>
+        <label className={styles.formLabel}>{label}</label>
+        <input
+          name={name}
+          value={normalizedValue}
+          onChange={onChange}
+          className={styles.formInput}
+          type={type}
+        />
+      </div>
+    );
+  }
 
+  // MODO SOLO LECTURA
   return (
     <div className={styles.formGroup}>
       <label className={styles.formLabel}>{label}</label>
-      {isEditing ? <EditableInput /> : <ReadOnlyInput />}
+      <input
+        type="text"
+        value={displayValue}
+        readOnly
+        className={styles.formInput}
+      />
     </div>
   );
 }

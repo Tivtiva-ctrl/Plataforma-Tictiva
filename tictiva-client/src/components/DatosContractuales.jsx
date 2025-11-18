@@ -1,52 +1,67 @@
 import React from 'react';
-// ===============================================
-// === REUTILIZAMOS EL CSS DE DATOS PERSONALES ===
-// ===============================================
-import styles from './DatosPersonales.module.css'; 
+import styles from './DatosPersonales.module.css';
 
-// Componente reutilizable para un campo del formulario
-function FormField({ label, value, name, onChange, isEditing, type = 'text', options = [] }) {
-  const InputComponent = type === 'select' ? 'select' : 'input';
+function FormField({
+  label,
+  value,
+  name,
+  onChange,
+  isEditing,
+  type = 'text',
+  options = [],
+}) {
+  const normalizedValue = value ?? '';
+  const displayValue = normalizedValue || '—';
 
-  const EditableInput = () => (
-    <InputComponent
-      name={name}
-      value={value ?? ''}
-      onChange={onChange}
-      className={styles.formInput}
-      {...(type === 'select' ? {} : { type })}
-    >
-      {type === 'select' && (
-        <>
-          <option value="">Seleccionar...</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </>
-      )}
-    </InputComponent>
-  );
+  if (isEditing) {
+    if (type === 'select') {
+      return (
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>{label}</label>
+          <select
+            name={name}
+            value={normalizedValue}
+            onChange={onChange}
+            className={styles.formInput}
+          >
+            <option value="">Seleccionar...</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
 
-  const ReadOnlyInput = () => (
-    <input
-      type="text"
-      value={value ?? '—'}
-      readOnly
-      className={styles.formInput}
-    />
-  );
+    return (
+      <div className={styles.formGroup}>
+        <label className={styles.formLabel}>{label}</label>
+        <input
+          name={name}
+          value={normalizedValue}
+          onChange={onChange}
+          className={styles.formInput}
+          type={type}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.formGroup}>
       <label className={styles.formLabel}>{label}</label>
-      {isEditing ? <EditableInput /> : <ReadOnlyInput />}
+      <input
+        type="text"
+        value={displayValue}
+        readOnly
+        className={styles.formInput}
+      />
     </div>
   );
 }
 
-// --- Componente Principal de Datos Contractuales ---
 function DatosContractuales({ contractData, isEditing, onChange }) {
   if (!contractData) {
     return <div className={styles.loading}>Cargando datos contractuales...</div>;
@@ -63,7 +78,6 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
     onChange && onChange(updated);
   };
 
-  // --- Opciones para los menús desplegables ---
   const tiposContrato = ['Indefinido', 'Plazo Fijo', 'Por Obra o Faena'];
   const estadosContrato = ['Vigente', 'Terminado', 'Suspendido'];
   const tiposJornada = ['Completa (40h)', 'Parcial (30h)', 'Part-Time (20h)'];
@@ -80,7 +94,7 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
 
   return (
     <div className={styles.formContainer}>
-      {/* === Sección 1: Información del contrato === */}
+      {/* 1. Info contrato */}
       <h3 className={styles.sectionTitle}>1. Información del contrato</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -126,7 +140,7 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
         />
       </div>
 
-      {/* === Sección 2: Cargo y organización === */}
+      {/* 2. Cargo y organización */}
       <h3 className={styles.sectionTitle}>2. Cargo y organización</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -151,8 +165,8 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
           isEditing={isEditing}
         />
       </div>
-      
-      {/* === Sección 3: Jornada laboral === */}
+
+      {/* 3. Jornada laboral */}
       <h3 className={styles.sectionTitle}>3. Jornada laboral</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -188,7 +202,7 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
         />
       </div>
 
-      {/* === Sección 4: Remuneraciones base === */}
+      {/* 4. Remuneraciones base */}
       <h3 className={styles.sectionTitle}>4. Remuneraciones base</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -239,7 +253,7 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
         />
       </div>
 
-      {/* === Sección 5: Previsión asociada al contrato === */}
+      {/* 5. Previsión asociada */}
       <h3 className={styles.sectionTitle}>5. Previsión</h3>
       <div className={styles.formGrid}>
         <FormField
@@ -276,7 +290,7 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
         />
       </div>
 
-      {/* === Sección 6: Control de asistencia === */}
+      {/* 6. Control asistencia */}
       <h3 className={styles.sectionTitle}>6. Control de asistencia</h3>
       <div className={styles.formGrid}>
         <FormField
