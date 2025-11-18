@@ -13,6 +13,7 @@ import DatosSalud from './DatosSalud';
 import DatosDocumentos from './DatosDocumentos';
 import DatosAsistencia from './DatosAsistencia';
 import DatosBitacora from './DatosBitacora';
+import DatosHistorial from './DatosHistorial'; // 👈 NUEVO: historial real
 
 // =======================================================
 // === COMPONENTE "TICTIVA 360" (LA GRILLA DE TARJETAS) ===
@@ -468,7 +469,7 @@ function EmployeeProfilePage() {
           <Route path="bitacora" element={<DatosBitacora rut={rut} />} />
 
           {/* Historial */}
-          <Route path="historial" element={<SectionPlaceholder title="Historial" />} />
+          <Route path="historial" element={<DatosHistorial rut={rut} />} />
         </Routes>
       </main>
     </div>
