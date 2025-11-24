@@ -17,13 +17,12 @@ function FormField({
   const normalizedValue = value ?? '';
   const displayValue = normalizedValue || '—';
 
-  // MODO EDICIÓN
-  if (isEditing) {
-    // SELECT
-    if (type === 'select') {
-      return (
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>{label}</label>
+  return (
+    <div className={styles.formGroup}>
+      <label className={styles.formLabel}>{label}</label>
+
+      {isEditing ? (
+        type === 'select' ? (
           <select
             name={name}
             value={normalizedValue}
@@ -37,35 +36,23 @@ function FormField({
               </option>
             ))}
           </select>
-        </div>
-      );
-    }
-
-    // INPUT (text, number, email, etc.)
-    return (
-      <div className={styles.formGroup}>
-        <label className={styles.formLabel}>{label}</label>
+        ) : (
+          <input
+            name={name}
+            value={normalizedValue}
+            onChange={onChange}
+            className={styles.formInput}
+            type={type}
+          />
+        )
+      ) : (
         <input
-          name={name}
-          value={normalizedValue}
-          onChange={onChange}
+          type="text"
+          value={displayValue}
+          readOnly
           className={styles.formInput}
-          type={type}
         />
-      </div>
-    );
-  }
-
-  // MODO SOLO LECTURA
-  return (
-    <div className={styles.formGroup}>
-      <label className={styles.formLabel}>{label}</label>
-      <input
-        type="text"
-        value={displayValue}
-        readOnly
-        className={styles.formInput}
-      />
+      )}
     </div>
   );
 }
@@ -79,10 +66,11 @@ function BooleanField({ label, value, name, onChange, isEditing }) {
   return (
     <div className={styles.formGroup}>
       <label className={styles.formLabel}>{label}</label>
+
       {isEditing ? (
         <select
           name={name}
-          value={String(normalized)} // "true" o "false"
+          value={String(normalized)}
           onChange={onChange}
           className={styles.formInput}
         >
@@ -117,7 +105,6 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
     if (type === 'checkbox') {
       finalValue = checked;
     } else if (type === 'select-one') {
-      // Para selects (incluyendo Sí/No)
       if (value === 'true') finalValue = true;
       else if (value === 'false') finalValue = false;
       else finalValue = value;
@@ -183,7 +170,6 @@ function DatosBancarios({ bankData, isEditing, onChange }) {
           value={bankData.numero_cuenta}
           onChange={handleChange}
           isEditing={isEditing}
-          // Mejor text que number para no perder ceros a la izquierda
           type="text"
         />
 

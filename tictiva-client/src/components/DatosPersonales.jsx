@@ -11,15 +11,22 @@ function FormField({
   options = [],
 }) {
   let normalizedValue = value ?? '';
+  let displayValue = normalizedValue || '—';
 
+  // Manejo especial para fechas
   if (type === 'date' && normalizedValue) {
     const d = new Date(normalizedValue);
     if (!Number.isNaN(d.getTime())) {
-      normalizedValue = d.toISOString().slice(0, 10);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+
+      // formato para el input date (obligatorio yyyy-MM-dd)
+      normalizedValue = `${yyyy}-${mm}-${dd}`;
+      // formato lindo para lectura (dd-MM-yyyy)
+      displayValue = `${dd}-${mm}-${yyyy}`;
     }
   }
-
-  const displayValue = normalizedValue || '—';
 
   if (isEditing) {
     if (type === 'select') {
@@ -57,6 +64,7 @@ function FormField({
     );
   }
 
+  // MODO SOLO LECTURA
   return (
     <div className={styles.formGroup}>
       <label className={styles.formLabel}>{label}</label>

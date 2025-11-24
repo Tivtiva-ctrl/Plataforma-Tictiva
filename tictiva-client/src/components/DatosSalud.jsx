@@ -17,13 +17,13 @@ function FormField({
   const normalizedValue = value ?? '';
   const displayValue = normalizedValue || '—';
 
-  // MODO EDICIÓN
-  if (isEditing) {
-    // SELECT
-    if (type === 'select') {
-      return (
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>{label}</label>
+  return (
+    <div className={styles.formGroup}>
+      <label className={styles.formLabel}>{label}</label>
+
+      {/* MODO EDICIÓN */}
+      {isEditing ? (
+        type === 'select' ? (
           <select
             name={name}
             value={normalizedValue}
@@ -37,35 +37,24 @@ function FormField({
               </option>
             ))}
           </select>
-        </div>
-      );
-    }
-
-    // INPUT (text, number, email, etc.)
-    return (
-      <div className={styles.formGroup}>
-        <label className={styles.formLabel}>{label}</label>
+        ) : (
+          <input
+            name={name}
+            value={normalizedValue}
+            onChange={onChange}
+            className={styles.formInput}
+            type={type}
+          />
+        )
+      ) : (
+        // MODO SOLO LECTURA
         <input
-          name={name}
-          value={normalizedValue}
-          onChange={onChange}
+          type="text"
+          value={displayValue}
+          readOnly
           className={styles.formInput}
-          type={type}
         />
-      </div>
-    );
-  }
-
-  // MODO SOLO LECTURA
-  return (
-    <div className={styles.formGroup}>
-      <label className={styles.formLabel}>{label}</label>
-      <input
-        type="text"
-        value={displayValue}
-        readOnly
-        className={styles.formInput}
-      />
+      )}
     </div>
   );
 }

@@ -16,7 +16,49 @@ import DatosBitacora from './DatosBitacora';
 import DatosHistorial from './DatosHistorial';
 
 // =======================================================
-// === COMPONENTE "TICTIVA 360" (SOLO LECTURA POR AHORA) ===
+// Helper: limpiar payload para Supabase
+// - Omite llaves técnicas (id, employee_id, created_at, updated_at)
+// - Convierte "" en null
+// =======================================================
+function sanitizeRow(row, omitKeys = []) {
+  if (!row || typeof row !== 'object') return row;
+  const cleaned = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (omitKeys.includes(key)) continue;
+    cleaned[key] = value === '' ? null : value;
+  }
+  return cleaned;
+}
+
+// =======================================================
+// Helper: registrar evento en employee_history
+// (simple: un registro por "Guardar ficha")
+// =======================================================
+async function registerHistoryEntry({ rut, employeeId, autor }) {
+  if (!rut || !employeeId) return;
+
+  const { error } = await supabase.from('employee_history').insert([
+    {
+      rut,
+      employee_id: employeeId,
+      categoria: 'RRHH',
+      tipo: 'ACTUALIZACION_FICHA',
+      titulo: 'Actualización de ficha del colaborador',
+      descripcion: 'Se actualizó la información de la ficha del colaborador desde el módulo RRHH.',
+      estado: 'OK',
+      autor: autor || 'Administrador',
+      autor_rol: 'ADMINISTRADOR',
+      // columna fecha la dejamos que la ponga el DEFAULT now() de la tabla
+    },
+  ]);
+
+  if (error) {
+    console.error('Error registrando historial (supabase-js):', error);
+  }
+}
+
+// =======================================================
+// === COMPONENTE "TICTIVA 360" (SOLO LECTURA) ===
 // =======================================================
 function Overview360({ employee }) {
   if (!employee) {
@@ -25,7 +67,7 @@ function Overview360({ employee }) {
 
   return (
     <div className={styles.cardGrid}>
-      {/* --- Tarjeta: Datos personales --- */}
+      {/* Datos personales */}
       <div className={styles.infoCard}>
         <h3>Datos personales</h3>
         <p>Email: {employee.email_personal || '[campo sin definir]'}</p>
@@ -34,14 +76,14 @@ function Overview360({ employee }) {
         <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Horario --- */}
+      {/* Horario */}
       <div className={styles.infoCard}>
         <h3>Horario</h3>
         <p>El empleado no tiene asignaciones activas en este momento.</p>
         <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Evaluaciones --- */}
+      {/* Evaluaciones */}
       <div className={styles.infoCard}>
         <h3>Evaluaciones</h3>
         <div className={styles.evaluationScore}>7.8</div>
@@ -52,7 +94,7 @@ function Overview360({ employee }) {
         <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Contacto de emergencia (solo lectura) --- */}
+      {/* Contacto de emergencia */}
       <div className={styles.infoCard}>
         <h3>Contacto de emergencia</h3>
         <p>Nombre: {employee.contacto_emergencia_nombre || '[campo sin definir]'}</p>
@@ -60,7 +102,7 @@ function Overview360({ employee }) {
         <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Registros y anotaciones --- */}
+      {/* Registros y anotaciones */}
       <div className={styles.infoCard}>
         <h3>Registros y anotaciones</h3>
         <div className={styles.progressBarContainer}>
@@ -94,7 +136,7 @@ function Overview360({ employee }) {
         <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Asistencia --- */}
+      {/* Asistencia */}
       <div className={styles.infoCard}>
         <h3>Asistencia</h3>
         <div className={styles.attendanceCircle}>100%</div>
@@ -104,8 +146,8 @@ function Overview360({ employee }) {
         </div>
         <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
-      
-      {/* --- Tarjeta: Alerta (Hola Verito) --- */}
+
+      {/* Alerta Verito */}
       <div className={`${styles.infoCard} ${styles.alertCard}`}>
         <h3>Hola, Verónica 💚</h3>
         <p>Detecté que {employee.nombre_completo} tiene 2 documentos vencidos.</p>
@@ -116,7 +158,7 @@ function Overview360({ employee }) {
         </div>
       </div>
 
-      {/* --- Tarjeta: Datos de salud (resumen) --- */}
+      {/* Salud */}
       <div className={styles.infoCard}>
         <h3>Datos de salud</h3>
         <p>Alergias: {employee.tipo_discapacidad || '[campo sin definir]'}</p>
@@ -125,7 +167,7 @@ function Overview360({ employee }) {
         <Link to="salud" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* --- Tarjeta: Comunicación interna --- */}
+      {/* Comunicaciones */}
       <div className={styles.infoCard}>
         <h3>Comunicación interna</h3>
         <p>18 mensajes registrados</p>
@@ -147,7 +189,7 @@ function Overview360({ employee }) {
 // === PÁGINA DE PERFIL PRINCIPAL ===
 // =======================================================
 function EmployeeProfilePage() {
-  const { rut } = useParams(); // /dashboard/rrhh/empleado/:rut/*
+  const { rut } = useParams();
   const [personalData, setPersonalData] = useState(null);
   const [contractData, setContractData] = useState(null);
   const [previsionalData, setPrevisionalData] = useState(null);
@@ -158,7 +200,6 @@ function EmployeeProfilePage() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
-  const [saveSuccess, setSaveSuccess] = useState(null);
 
   // ==========================================
   // Carga de datos desde Supabase
@@ -173,9 +214,8 @@ function EmployeeProfilePage() {
     const fetchEmployeeData = async () => {
       setLoading(true);
       setSaveError(null);
-      setSaveSuccess(null);
 
-      // 1) Datos personales (rut)
+      // 1) Datos personales
       const { data: personal, error: perError } = await supabase
         .from('employee_personal')
         .select('*')
@@ -227,7 +267,7 @@ function EmployeeProfilePage() {
       }
       setPrevisionalData(previsional || { employee_id: employeeId });
 
-      // 4) Datos bancarios
+      // 4) Bancarios
       const { data: bank, error: bankError } = await supabase
         .from('employee_bank_accounts')
         .select('*')
@@ -239,7 +279,7 @@ function EmployeeProfilePage() {
       }
       setBankData(bank || { employee_id: employeeId });
 
-      // 5) Datos de salud
+      // 5) Salud
       const { data: health, error: healthError } = await supabase
         .from('employee_health')
         .select('*')
@@ -259,7 +299,7 @@ function EmployeeProfilePage() {
 
   // Antigüedad
   const yearsAndMonths = useMemo(() => {
-    const fecha = contractData?.fecha_ingreso || personalData?.fecha_ingreso;
+    const fecha = contractData?.fecha_inicio || personalData?.fecha_ingreso;
     if (!fecha) return '[Sin fecha de ingreso]';
 
     const ingressDate = new Date(fecha);
@@ -279,7 +319,7 @@ function EmployeeProfilePage() {
     return `${years} ${years === 1 ? 'año' : 'años'} y ${months} ${
       months === 1 ? 'mes' : 'meses'
     }`;
-  }, [contractData?.fecha_ingreso, personalData?.fecha_ingreso]);
+  }, [contractData?.fecha_inicio, personalData?.fecha_ingreso]);
 
   const menuItems = [
     { title: 'Tictiva 360', path: '.' },
@@ -310,20 +350,20 @@ function EmployeeProfilePage() {
 
     setSaving(true);
     setSaveError(null);
-    setSaveSuccess(null);
 
     try {
       const employeeId = personalData.employee_id || personalData.id;
 
       // 1) Datos personales
       if (personalData.id) {
-        const {
-          id,
-          employee_id,
-          created_at,
-          updated_at,
-          ...personalPayload
-        } = personalData;
+        const personalPayload = sanitizeRow(personalData, [
+          'id',
+          'employee_id',
+          'created_at',
+          'updated_at',
+        ]);
+
+        console.log('Payload employee_personal:', personalPayload);
 
         const { error: perUpdateError } = await supabase
           .from('employee_personal')
@@ -338,13 +378,12 @@ function EmployeeProfilePage() {
 
       // 2) Contractuales
       if (contractData && (contractData.id || employeeId)) {
-        const {
-          id,
-          employee_id,
-          created_at,
-          updated_at,
-          ...contractPayload
-        } = contractData;
+        const contractPayload = sanitizeRow(contractData, [
+          'id',
+          'employee_id',
+          'created_at',
+          'updated_at',
+        ]);
 
         if (contractData.id) {
           const { error: conUpdateError } = await supabase
@@ -370,13 +409,12 @@ function EmployeeProfilePage() {
 
       // 3) Previsionales
       if (previsionalData && (previsionalData.id || employeeId)) {
-        const {
-          id,
-          employee_id,
-          created_at,
-          updated_at,
-          ...prevPayload
-        } = previsionalData;
+        const prevPayload = sanitizeRow(previsionalData, [
+          'id',
+          'employee_id',
+          'created_at',
+          'updated_at',
+        ]);
 
         if (previsionalData.id) {
           const { error: prevUpdateError } = await supabase
@@ -402,13 +440,12 @@ function EmployeeProfilePage() {
 
       // 4) Bancarios
       if (bankData && (bankData.id || employeeId)) {
-        const {
-          id,
-          employee_id,
-          created_at,
-          updated_at,
-          ...bankPayload
-        } = bankData;
+        const bankPayload = sanitizeRow(bankData, [
+          'id',
+          'employee_id',
+          'created_at',
+          'updated_at',
+        ]);
 
         if (bankData.id) {
           const { error: bankUpdateError } = await supabase
@@ -434,13 +471,12 @@ function EmployeeProfilePage() {
 
       // 5) Salud
       if (healthData && (healthData.id || employeeId)) {
-        const {
-          id,
-          employee_id,
-          created_at,
-          updated_at,
-          ...healthPayload
-        } = healthData;
+        const healthPayload = sanitizeRow(healthData, [
+          'id',
+          'employee_id',
+          'created_at',
+          'updated_at',
+        ]);
 
         if (healthData.id) {
           const { error: healthUpdateError } = await supabase
@@ -464,7 +500,13 @@ function EmployeeProfilePage() {
         }
       }
 
-      setSaveSuccess('Ficha guardada correctamente ✅');
+      // 6) Registrar en historial (supabase-js, sin "columns=")
+      await registerHistoryEntry({
+        rut: personalData.rut,
+        employeeId,
+        autor: 'Admin Tictiva', // si quieres después lo cambiamos por el usuario logueado
+      });
+
       setIsEditing(false);
     } catch (err) {
       console.error('Error al guardar la ficha completa:', err);
@@ -476,14 +518,10 @@ function EmployeeProfilePage() {
 
   const handleEditToggle = async () => {
     if (!isEditing) {
-      // Entrar a modo edición
       setSaveError(null);
-      setSaveSuccess(null);
       setIsEditing(true);
       return;
     }
-
-    // Si ya estaba en edición, ahora es "Guardar Ficha"
     await saveAllSections();
   };
 
@@ -509,7 +547,6 @@ function EmployeeProfilePage() {
 
   return (
     <div className={styles.profilePage}>
-      {/* HEADER PRINCIPAL */}
       <div className={styles.profileHeader}>
         <Link to="/dashboard/rrhh/listado-de-fichas" className={styles.backButton}>
           ←
@@ -551,9 +588,7 @@ function EmployeeProfilePage() {
             onClick={handleEditToggle}
             disabled={saving}
           >
-            {isEditing
-              ? (saving ? 'Guardando...' : 'Guardar Ficha')
-              : 'Editar Ficha'}{' '}
+            {isEditing ? (saving ? 'Guardando...' : 'Guardar Ficha') : 'Editar Ficha'}{' '}
             <FiEdit />
           </button>
 
@@ -564,15 +599,13 @@ function EmployeeProfilePage() {
           )}
         </div>
 
-        {/* Mensajes de guardado */}
-        {(saveError || saveSuccess) && (
+        {/* Solo mostramos errores, sin mensaje verde feo */}
+        {saveError && (
           <div className={styles.saveStatusBar}>
-            {saveError && <span className={styles.saveError}>{saveError}</span>}
-            {saveSuccess && <span className={styles.saveSuccess}>{saveSuccess}</span>}
+            <span className={styles.saveError}>{saveError}</span>
           </div>
         )}
 
-        {/* NAV DE SECCIONES */}
         <nav className={styles.profileNav}>
           {menuItems.map((item) => {
             const targetPath =
@@ -596,14 +629,11 @@ function EmployeeProfilePage() {
         </nav>
       </div>
 
-      {/* CONTENIDO DE CADA SECCIÓN */}
       <main className={styles.profileContent}>
         <Routes>
-          {/* Tictiva 360 (solo lectura) */}
           <Route index element={<Overview360 employee={personalData} />} />
           <Route path="tictiva-360" element={<Overview360 employee={personalData} />} />
 
-          {/* Datos personales */}
           <Route
             path="personal"
             element={
@@ -614,8 +644,6 @@ function EmployeeProfilePage() {
               />
             }
           />
-
-          {/* Datos contractuales */}
           <Route
             path="contractual"
             element={
@@ -626,8 +654,6 @@ function EmployeeProfilePage() {
               />
             }
           />
-
-          {/* Datos previsionales */}
           <Route
             path="previsional"
             element={
@@ -638,8 +664,6 @@ function EmployeeProfilePage() {
               />
             }
           />
-
-          {/* Datos bancarios */}
           <Route
             path="bancario"
             element={
@@ -650,8 +674,6 @@ function EmployeeProfilePage() {
               />
             }
           />
-
-          {/* Datos de salud */}
           <Route
             path="salud"
             element={
@@ -662,17 +684,9 @@ function EmployeeProfilePage() {
               />
             }
           />
-
-          {/* Documentos */}
           <Route path="documentos" element={<DatosDocumentos />} />
-
-          {/* Asistencia */}
           <Route path="asistencia" element={<DatosAsistencia rut={rut} />} />
-
-          {/* Bitácora Laboral */}
           <Route path="bitacora" element={<DatosBitacora rut={rut} />} />
-
-          {/* Historial */}
           <Route path="historial" element={<DatosHistorial rut={rut} />} />
         </Routes>
       </main>

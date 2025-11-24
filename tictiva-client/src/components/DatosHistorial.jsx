@@ -1,4 +1,4 @@
-// DatosHistorial.jsx
+// src/components/DatosHistorial.jsx
 // ==========================================
 //  HISTORIAL DEL COLABORADOR – TODOS LOS MOVIMIENTOS
 // ==========================================
@@ -21,10 +21,10 @@ function DatosHistorial({ rut }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtros (arriba, estilo Canva)
-  const [periodFilter, setPeriodFilter] = useState('hoy'); // hoy | 7d | 30d | year | all
-  const [categoryFilter, setCategoryFilter] = useState('TODAS'); // TODAS | ASISTENCIA | RRHH | BITACORA | DOCUMENTOS | SISTEMA
-  const [actorFilter, setActorFilter] = useState('TODOS'); // TODOS | ADMINISTRADOR | SUPERVISOR | SISTEMA
+  // Filtros
+  const [periodFilter, setPeriodFilter] = useState('hoy');
+  const [categoryFilter, setCategoryFilter] = useState('TODAS');
+  const [actorFilter, setActorFilter] = useState('TODOS');
   const [searchQuery, setSearchQuery] = useState('');
 
   // ==============================
@@ -40,7 +40,8 @@ function DatosHistorial({ rut }) {
         .from('employee_history')
         .select('*')
         .eq('rut', rut)
-        .order('fecha', { ascending: false });
+        // usamos created_at para ordenar; si no existe, revisa nombre de tu columna de fecha
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error cargando historial:', error);
@@ -58,8 +59,8 @@ function DatosHistorial({ rut }) {
   // ==============================
   // HELPERS
   // ==============================
+  const getDateFromItem = (item) => item.fecha || item.created_at || null;
 
-  // Ícono según tipo / categoría
   const getIcon = (tipo, categoria) => {
     const tipoUpper = (tipo || '').toUpperCase();
     const catUpper = (categoria || '').toUpperCase();
@@ -70,18 +71,16 @@ function DatosHistorial({ rut }) {
     return <FiCheckCircle />;
   };
 
-  // Formatea fecha → "15/11/2025 10:22"
   const formatDate = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
     if (Number.isNaN(date.getTime())) return '';
-    return `${date.toLocaleDateString('es-CL')} ${date.toLocaleTimeString(
-      'es-CL',
-      { hour: '2-digit', minute: '2-digit' }
-    )}`;
+    return `${date.toLocaleDateString('es-CL')} ${date.toLocaleTimeString('es-CL', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
   };
 
-  // Etiqueta de grupo → HOY / AYER / "13 NOV"
   const getGroupLabel = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -112,8 +111,9 @@ function DatosHistorial({ rut }) {
     const now = new Date();
 
     const matchesPeriod = (item) => {
-      if (!item.fecha) return false;
-      const d = new Date(item.fecha);
+      const src = getDateFromItem(item);
+      if (!src) return false;
+      const d = new Date(src);
       if (Number.isNaN(d.getTime())) return false;
 
       const startOfToday = new Date(
@@ -141,24 +141,24 @@ function DatosHistorial({ rut }) {
 
     const matchesCategory = (item) => {
       if (categoryFilter === 'TODAS') return true;
-      const cat =
-        (item.categoria ||
-          item.category ||
-          item.origen ||
-          item.tipo ||
-          ''
-        ).toUpperCase();
+      const cat = (
+        item.categoria ||
+        item.category ||
+        item.origen ||
+        item.tipo ||
+        ''
+      ).toUpperCase();
       return cat === categoryFilter;
     };
 
     const matchesActor = (item) => {
       if (actorFilter === 'TODOS') return true;
-      const rol =
-        (item.autor_rol ||
-          item.actor_role ||
-          item.actor_type ||
-          ''
-        ).toUpperCase();
+      const rol = (
+        item.autor_rol ||
+        item.actor_role ||
+        item.actor_type ||
+        ''
+      ).toUpperCase();
       return rol === actorFilter;
     };
 
@@ -180,11 +180,11 @@ function DatosHistorial({ rut }) {
 
   // ==============================
   // AGRUPAR POR FECHA (HOY / AYER / 13 NOV)
-// ==============================
+  // ==============================
   const groupedHistory = useMemo(() => {
     const groups = [];
     filteredHistory.forEach((item) => {
-      const label = getGroupLabel(item.fecha);
+      const label = getGroupLabel(getDateFromItem(item));
       let group = groups.find((g) => g.label === label);
       if (!group) {
         group = { label, items: [] };
@@ -206,9 +206,9 @@ function DatosHistorial({ rut }) {
         </p>
       </header>
 
-      {/* FILTROS SUPERIORES (PERÍODO / CATEGORÍA / REALIZADO POR / BUSCAR) */}
+      {/* FILTROS */}
       <section className={styles.filtersSection}>
-        {/* Filtro: Periodo */}
+        {/* Periodo */}
         <div className={styles.filterBlock}>
           <h4>Periodo</h4>
           <div className={styles.filterPillsRow}>
@@ -260,107 +260,53 @@ function DatosHistorial({ rut }) {
           </div>
         </div>
 
-        {/* Filtro: Categoría */}
+        {/* Categoría */}
         <div className={styles.filterBlock}>
           <h4>Categoría</h4>
           <div className={styles.filterPillsRow}>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                categoryFilter === 'TODAS' ? styles.pillActive : ''
-              }`}
-              onClick={() => setCategoryFilter('TODAS')}
-            >
-              Todas
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                categoryFilter === 'ASISTENCIA' ? styles.pillActive : ''
-              }`}
-              onClick={() => setCategoryFilter('ASISTENCIA')}
-            >
-              Asistencia
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                categoryFilter === 'RRHH' ? styles.pillActive : ''
-              }`}
-              onClick={() => setCategoryFilter('RRHH')}
-            >
-              RRHH
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                categoryFilter === 'BITACORA' ? styles.pillActive : ''
-              }`}
-              onClick={() => setCategoryFilter('BITACORA')}
-            >
-              Bitácora
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                categoryFilter === 'DOCUMENTOS' ? styles.pillActive : ''
-              }`}
-              onClick={() => setCategoryFilter('DOCUMENTOS')}
-            >
-              Documentos
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                categoryFilter === 'SISTEMA' ? styles.pillActive : ''
-              }`}
-              onClick={() => setCategoryFilter('SISTEMA')}
-            >
-              Sistema
-            </button>
+            {[
+              ['TODAS', 'Todas'],
+              ['ASISTENCIA', 'Asistencia'],
+              ['RRHH', 'RRHH'],
+              ['BITACORA', 'Bitácora'],
+              ['DOCUMENTOS', 'Documentos'],
+              ['SISTEMA', 'Sistema'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`${styles.pillButton} ${
+                  categoryFilter === value ? styles.pillActive : ''
+                }`}
+                onClick={() => setCategoryFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Filtro: Realizado por */}
+        {/* Realizado por */}
         <div className={styles.filterBlock}>
           <h4>Realizado por</h4>
           <div className={styles.filterPillsRow}>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                actorFilter === 'TODOS' ? styles.pillActive : ''
-              }`}
-              onClick={() => setActorFilter('TODOS')}
-            >
-              Todos
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                actorFilter === 'ADMINISTRADOR' ? styles.pillActive : ''
-              }`}
-              onClick={() => setActorFilter('ADMINISTRADOR')}
-            >
-              Administrador
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                actorFilter === 'SUPERVISOR' ? styles.pillActive : ''
-              }`}
-              onClick={() => setActorFilter('SUPERVISOR')}
-            >
-              Supervisor
-            </button>
-            <button
-              type="button"
-              className={`${styles.pillButton} ${
-                actorFilter === 'SISTEMA' ? styles.pillActive : ''
-              }`}
-              onClick={() => setActorFilter('SISTEMA')}
-            >
-              Sistema
-            </button>
+            {[
+              ['TODOS', 'Todos'],
+              ['ADMINISTRADOR', 'Administrador'],
+              ['SUPERVISOR', 'Supervisor'],
+              ['SISTEMA', 'Sistema'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`${styles.pillButton} ${
+                  actorFilter === value ? styles.pillActive : ''
+                }`}
+                onClick={() => setActorFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -388,48 +334,48 @@ function DatosHistorial({ rut }) {
         ) : (
           groupedHistory.map((group) => (
             <div key={group.label} className={styles.groupBlock}>
-              {group.items.map((item, index) => (
-                <div key={item.id} className={styles.timelineItem}>
-                  {/* Etiqueta de fecha (HOY, AYER, 13 NOV) solo en el primer item del grupo */}
-                  {index === 0 && (
-                    <div className={styles.dateLabel}>{group.label}</div>
-                  )}
+              {group.items.map((item, index) => {
+                const dateValue = getDateFromItem(item);
+                return (
+                  <div key={item.id} className={styles.timelineItem}>
+                    {index === 0 && (
+                      <div className={styles.dateLabel}>{group.label}</div>
+                    )}
 
-                  {/* Tarjeta de evento */}
-                  <div className={styles.eventCard}>
-                    <div className={styles.iconWrapper}>
-                      {getIcon(item.tipo, item.categoria)}
-                    </div>
+                    <div className={styles.eventCard}>
+                      <div className={styles.iconWrapper}>
+                        {getIcon(item.tipo, item.categoria)}
+                      </div>
 
-                    <div className={styles.contentWrapper}>
-                      <h3 className={styles.eventTitle}>
-                        {item.titulo || 'Acción registrada'}
-                      </h3>
-                      <small className={styles.eventMeta}>
-                        Por:{' '}
-                        <strong>{item.autor || 'Sistema'}</strong> –{' '}
-                        {formatDate(item.fecha)}
-                      </small>
+                      <div className={styles.contentWrapper}>
+                        <h3 className={styles.eventTitle}>
+                          {item.titulo || 'Acción registrada'}
+                        </h3>
+                        <small className={styles.eventMeta}>
+                          Por: <strong>{item.autor || 'Sistema'}</strong> –{' '}
+                          {formatDate(dateValue)}
+                        </small>
 
-                      <p className={styles.eventDescription}>
-                        {item.descripcion ||
-                          'Movimiento registrado en la plataforma.'}
-                      </p>
+                        <p className={styles.eventDescription}>
+                          {item.descripcion ||
+                            'Movimiento registrado en la plataforma.'}
+                        </p>
 
-                      <div className={styles.tags}>
-                        <span className={styles.tagTipo}>
-                          {(item.categoria || item.tipo || 'OTRO').toString()}
-                        </span>
-                        {item.estado && (
-                          <span className={styles.tagEstado}>
-                            {item.estado}
+                        <div className={styles.tags}>
+                          <span className={styles.tagTipo}>
+                            {(item.categoria || item.tipo || 'OTRO').toString()}
                           </span>
-                        )}
+                          {item.estado && (
+                            <span className={styles.tagEstado}>
+                              {item.estado}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))
         )}
