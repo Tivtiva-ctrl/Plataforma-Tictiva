@@ -26,34 +26,60 @@ function sanitizeRow(row, omitKeys = []) {
   for (const [key, value] of Object.entries(row)) {
     if (omitKeys.includes(key)) continue;
     cleaned[key] = value === '' ? null : value;
-  }
+    }
   return cleaned;
 }
 
 // =======================================================
 // Helper: registrar evento en employee_history
-// (simple: un registro por "Guardar ficha")
+// usando la estructura REAL de la tabla
 // =======================================================
 async function registerHistoryEntry({ rut, employeeId, autor }) {
   if (!rut || !employeeId) return;
 
-  const { error } = await supabase.from('employee_history').insert([
-    {
-      rut,
-      employee_id: employeeId,
-      categoria: 'RRHH',
-      tipo: 'ACTUALIZACION_FICHA',
-      titulo: 'Actualización de ficha del colaborador',
-      descripcion: 'Se actualizó la información de la ficha del colaborador desde el módulo RRHH.',
-      estado: 'OK',
-      autor: autor || 'Administrador',
-      autor_rol: 'ADMINISTRADOR',
-      // columna fecha la dejamos que la ponga el DEFAULT now() de la tabla
-    },
-  ]);
+  const actorName = autor || 'Admin Tictiva';
+
+  const payload = {
+    employee_id: employeeId,
+    rut,
+
+    // Contexto del módulo
+    modulo: 'RRHH',
+    submodulo: 'FICHA',
+
+    // Qué pasó
+    tipo: 'CAMBIO',
+    titulo: 'Actualización de ficha del colaborador',
+    categoria: 'RRHH',
+    descripcion:
+      'Se actualizó la información de la ficha del colaborador desde el módulo RRHH.',
+    estado: 'REGISTRADO', // o "OK", como prefieras que aparezca
+
+    // Detalle de la acción
+    tipo_accion: 'ACTUALIZACION',
+    gravedad: 'BAJA', // BAJA / MEDIA / ALTA
+    etiqueta_accion: 'FICHA_ACTUALIZADA',
+    valor_anterior: null,
+    nuevo_valor: null,
+
+    // Quién hizo la acción
+    autor: actorName,
+    autor_role: 'ADMINISTRADOR',
+    realizado_por_id: null,
+    realizado_por_nombre: actorName,
+    realizado_por_role: 'ADMINISTRADOR',
+
+    // De dónde vino
+    origen: 'WEB_RRHH',
+    direccion_ip: null,
+    agente_usuario: null,
+    dt_relevante: false,
+  };
+
+  const { error } = await supabase.from('employee_history').insert([payload]);
 
   if (error) {
-    console.error('Error registrando historial (supabase-js):', error);
+    console.error('Error registrando historial (employee_history):', error);
   }
 }
 
@@ -73,14 +99,18 @@ function Overview360({ employee }) {
         <p>Email: {employee.email_personal || '[campo sin definir]'}</p>
         <p>Dirección: {employee.direccion || '[campo sin definir]'}</p>
         <p>Comuna: {employee.comuna || '[campo sin definir]'}</p>
-        <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="personal" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Horario */}
       <div className={styles.infoCard}>
         <h3>Horario</h3>
         <p>El empleado no tiene asignaciones activas en este momento.</p>
-        <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="asistencia" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Evaluaciones */}
@@ -91,7 +121,9 @@ function Overview360({ employee }) {
         <p className={styles.evaluationSubtitle}>
           Último test aplicado por Nadia (psicóloga interna)
         </p>
-        <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="bitacora" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Contacto de emergencia */}
@@ -99,7 +131,9 @@ function Overview360({ employee }) {
         <h3>Contacto de emergencia</h3>
         <p>Nombre: {employee.contacto_emergencia_nombre || '[campo sin definir]'}</p>
         <p>Teléfono: {employee.contacto_emergencia_telefono || '[campo sin definir]'}</p>
-        <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="personal" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Registros y anotaciones */}
@@ -133,7 +167,9 @@ function Overview360({ employee }) {
           </div>
           <div className={styles.progressBarValue}>0</div>
         </div>
-        <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="bitacora" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Asistencia */}
@@ -144,7 +180,9 @@ function Overview360({ employee }) {
         <div className={styles.attendanceAlert}>
           ⚠️ Atrasos: 1 atraso – 4h: 51m acumulado
         </div>
-        <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="asistencia" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Alerta Verito */}
@@ -164,7 +202,9 @@ function Overview360({ employee }) {
         <p>Alergias: {employee.tipo_discapacidad || '[campo sin definir]'}</p>
         <p>Enf. crónicas: {'[campo sin definir]'}</p>
         <p>Seguro de salud: {'[Sin definir]'}</p>
-        <Link to="salud" className={styles.detailButton}>Ver detalle</Link>
+        <Link to="salud" className={styles.detailButton}>
+          Ver detalle
+        </Link>
       </div>
 
       {/* Comunicaciones */}
@@ -248,6 +288,8 @@ function EmployeeProfilePage() {
         .from('employee_contracts')
         .select('*')
         .eq('employee_id', employeeId)
+        .order('id', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (conError) {
@@ -260,6 +302,8 @@ function EmployeeProfilePage() {
         .from('employee_prevision')
         .select('*')
         .eq('employee_id', employeeId)
+        .order('id', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (prevError) {
@@ -272,6 +316,8 @@ function EmployeeProfilePage() {
         .from('employee_bank_accounts')
         .select('*')
         .eq('employee_id', employeeId)
+        .order('id', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (bankError) {
@@ -284,6 +330,8 @@ function EmployeeProfilePage() {
         .from('employee_health')
         .select('*')
         .eq('employee_id', employeeId)
+        .order('id', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (healthError) {
@@ -500,17 +548,19 @@ function EmployeeProfilePage() {
         }
       }
 
-      // 6) Registrar en historial (supabase-js, sin "columns=")
+      // 6) Registrar en historial
       await registerHistoryEntry({
         rut: personalData.rut,
         employeeId,
-        autor: 'Admin Tictiva', // si quieres después lo cambiamos por el usuario logueado
+        autor: 'Admin Tictiva',
       });
 
       setIsEditing(false);
     } catch (err) {
       console.error('Error al guardar la ficha completa:', err);
-      setSaveError('Ocurrió un error al guardar la ficha. Revisa la consola para más detalles.');
+      setSaveError(
+        'Ocurrió un error al guardar la ficha. Revisa la consola para más detalles.'
+      );
     } finally {
       setSaving(false);
     }
@@ -599,7 +649,6 @@ function EmployeeProfilePage() {
           )}
         </div>
 
-        {/* Solo mostramos errores, sin mensaje verde feo */}
         {saveError && (
           <div className={styles.saveStatusBar}>
             <span className={styles.saveError}>{saveError}</span>

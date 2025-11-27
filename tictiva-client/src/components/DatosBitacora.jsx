@@ -27,6 +27,100 @@ const LOG_TABLE = 'bitacora_entries';
 // 🔹 Usuario actual (provisorio).
 // Más adelante se reemplaza por el usuario logueado en Tictiva.
 const CURRENT_USER_NAME = 'Usuario demo Tictiva';
+const CURRENT_USER_ROLE = 'ADMINISTRADOR';
+
+// Helper para fecha local en formato yyyy-MM-dd
+function getTodayLocalString() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+// ==========================================
+// === HISTORIAL: REGISTRO EN employee_history
+// ==========================================
+async function registerBitacoraHistory({ rut, employeeId, actionType, log }) {
+  if (!rut) return;
+
+  // Tipo “humano” de registro
+  const tipoRegistro = log?.tipo || log?.entry_type || 'Anotación';
+
+  // Título según acción
+  let titulo = 'Registro en Bitácora Laboral';
+  if (actionType === 'CREAR') {
+    titulo = `Nueva ${tipoRegistro.toLowerCase()} en Bitácora Laboral`;
+  } else if (actionType === 'EDITAR') {
+    titulo = `Edición de ${tipoRegistro.toLowerCase()} en Bitácora Laboral`;
+  } else if (actionType === 'ELIMINAR') {
+    titulo = `Eliminación de ${tipoRegistro.toLowerCase()} en Bitácora Laboral`;
+  }
+
+  const actionTextMap = {
+    CREAR: 'Se creó un registro en la Bitácora Laboral.',
+    EDITAR: 'Se editó un registro en la Bitácora Laboral.',
+    ELIMINAR: 'Se eliminó un registro en la Bitácora Laboral.',
+  };
+
+  const actionText = actionTextMap[actionType] || '';
+
+  const descripcion = [
+    actionText,
+    `Tipo: ${tipoRegistro}.`,
+    log?.grado ? `Clasificación: ${log.grado}.` : '',
+    log?.motivo || log?.motive ? `Motivo: ${log.motivo || log.motive}.` : '',
+    log?.detalle || log?.detail
+      ? `Detalle: ${log.detalle || log.detail}.`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  // 🔁 Alineado con la tabla employee_history (todo en español)
+  const payload = {
+    // Identificación del colaborador
+    employee_id: employeeId || null,
+    rut,
+
+    // Contexto del módulo
+    modulo: 'BITACORA',
+    submodulo: 'BITACORA_LABORAL',
+
+    // Metadatos “conceptuales”
+    tipo: 'BITACORA',
+    titulo,
+    categoria: 'BITACORA',
+    descripcion,
+    estado: log?.estado || 'OK',
+
+    // Detalle de la acción
+    tipo_accion: actionType,                  // CREAR / EDITAR / ELIMINAR
+    gravedad: log?.impacto || null,           // Leve / Moderado / Alto / Crítico
+    etiqueta_accion: `BITACORA_${actionType}`,// Ej: BITACORA_CREAR
+    valor_anterior: null,                     // para futuro diff
+    nuevo_valor: null,
+
+    // Quién realiza la acción
+    autor: CURRENT_USER_NAME,
+    autor_role: CURRENT_USER_ROLE,
+    realizado_por_id: null,
+    realizado_por_nombre: CURRENT_USER_NAME,
+    realizado_por_role: CURRENT_USER_ROLE,
+
+    // Origen técnico (para auditoría)
+    origen: 'BITACORA_LABORAL',
+    direccion_ip: null,
+    agente_usuario: null,
+    dt_relevante: true,
+  };
+
+  const { error } = await supabase.from('employee_history').insert([payload]);
+
+  if (error) {
+    console.error('Error registrando historial de Bitácora:', error);
+  }
+}
 
 // Motivos sugeridos para anotaciones (VISIBLES)
 const MOTIVOS_POSITIVOS = [
@@ -83,10 +177,7 @@ const MOTIVOS_OBSERVACION = [
 // ==========================================
 function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
   const [formData, setFormData] = useState({
-    fecha:
-      logData?.fecha ||
-      logData?.entry_date ||
-      new Date().toISOString().split('T')[0],
+    fecha: logData?.fecha || logData?.entry_date || getTodayLocalString(),
     tipo: logData?.tipo || logData?.entry_type || 'Anotación',
     area: logData?.area || logData?.area_name || '',
     motivo: logData?.motivo || logData?.motive || '',
@@ -117,10 +208,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
 
   useEffect(() => {
     setFormData({
-      fecha:
-        logData?.fecha ||
-        logData?.entry_date ||
-        new Date().toISOString().split('T')[0],
+      fecha: logData?.fecha || logData?.entry_date || getTodayLocalString(),
       tipo: logData?.tipo || logData?.entry_type || 'Anotación',
       area: logData?.area || logData?.area_name || '',
       motivo: logData?.motivo || logData?.motive || '',
@@ -193,11 +281,11 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         area_name: formData.area || 'Sin área definida',
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
-        // 👇 solo columnas en español
         impacto: formData.impacto,
         estado: formData.estado,
         evidence_path: evidencePath,
         author_name: CURRENT_USER_NAME,
+        author_role: CURRENT_USER_ROLE,
       };
 
       const basePayload = {
@@ -208,6 +296,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
         author_name: CURRENT_USER_NAME,
+        author_role: CURRENT_USER_ROLE,
       };
 
       const save = async (payload) => {
@@ -228,6 +317,18 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
       }
 
       if (error) throw error;
+
+      // 👉 Registrar en employee_history
+      const actionType = mode === 'create' ? 'CREAR' : 'EDITAR';
+      await registerBitacoraHistory({
+        rut,
+        employeeId: commonFields.employee_id || null,
+        actionType,
+        log: {
+          ...(logData || {}),
+          ...formData,
+        },
+      });
 
       onSave();
       onClose();
@@ -678,15 +779,13 @@ function DatosBitacora({ rut, employeeName }) {
   };
 
   const fetchLogbook = async () => {
-    // 👉 Ahora siempre filtramos por RUT para incluir registros viejos y nuevos
+    // 👉 Siempre filtramos por RUT para incluir registros viejos y nuevos
     if (!rut) return;
     setLoading(true);
 
     let query = supabase.from(LOG_TABLE).select('*');
 
-    // Solo por rut (todos los registros del trabajador)
     query = query.eq('rut', rut);
-
     query = query.order('entry_date', { ascending: false });
 
     if (periodo !== 'Todos') {
@@ -738,15 +837,23 @@ function DatosBitacora({ rut, employeeName }) {
     setIsRegisterOpen(false);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (log) => {
     if (!window.confirm('¿Estás seguro de eliminar este registro?')) return;
 
-    const { error } = await supabase.from(LOG_TABLE).delete().eq('id', id);
+    const { error } = await supabase.from(LOG_TABLE).delete().eq('id', log.id);
 
     if (error) {
       console.error('Error al eliminar:', error.message);
       alert('No se pudo eliminar el registro.');
     } else {
+      // 👉 Registrar en historial la eliminación
+      await registerBitacoraHistory({
+        rut,
+        employeeId,
+        actionType: 'ELIMINAR',
+        log,
+      });
+
       fetchLogbook();
     }
     setOpenActionMenuId(null);
@@ -989,27 +1096,21 @@ function DatosBitacora({ rut, employeeName }) {
               <div className={styles.registerDropdown}>
                 <button
                   type="button"
-                  onClick={() =>
-                    openModal('create', { tipo: 'Anotación' })
-                  }
+                  onClick={() => openModal('create', { tipo: 'Anotación' })}
                 >
                   <strong>Anotación</strong>
                   <small>Positivas o negativas</small>
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    openModal('create', { tipo: 'Observación' })
-                  }
+                  onClick={() => openModal('create', { tipo: 'Observación' })}
                 >
                   <strong>Observación</strong>
                   <small>Formales sobre desempeño</small>
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    openModal('create', { tipo: 'Entrevista' })
-                  }
+                  onClick={() => openModal('create', { tipo: 'Entrevista' })}
                 >
                   <strong>Entrevista</strong>
                   <small>Individual con colaborador</small>
@@ -1038,10 +1139,7 @@ function DatosBitacora({ rut, employeeName }) {
         <div className={styles.filterGroup}>
           <FiFilter />
           <label>Tipo:</label>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-          >
+          <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
             <option value="Todos">Todos</option>
             <option value="Anotación">Anotación</option>
             <option value="Observación">Observación</option>
@@ -1052,10 +1150,7 @@ function DatosBitacora({ rut, employeeName }) {
         <div className={styles.filterGroup}>
           <FiCheckCircle />
           <label>Estado:</label>
-          <select
-            value={estado}
-            onChange={(e) => setEstado(e.target.value)}
-          >
+          <select value={estado} onChange={(e) => setEstado(e.target.value)}>
             <option value="Todos">Todos</option>
             <option value="Abierto">Abierto</option>
             <option value="En seguimiento">En seguimiento</option>
@@ -1192,9 +1287,7 @@ function DatosBitacora({ rut, employeeName }) {
                             </button>
                             <button
                               type="button"
-                              onClick={() =>
-                                openModal('evidence', log)
-                              }
+                              onClick={() => openModal('evidence', log)}
                             >
                               <FiPaperclip /> Subir evidencia
                             </button>
@@ -1215,7 +1308,7 @@ function DatosBitacora({ rut, employeeName }) {
                             <button
                               type="button"
                               className={styles.actionDelete}
-                              onClick={() => handleDelete(log.id)}
+                              onClick={() => handleDelete(log)}
                             >
                               <FiTrash2 /> Eliminar
                             </button>

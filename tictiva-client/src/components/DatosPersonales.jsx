@@ -14,17 +14,34 @@ function FormField({
   let displayValue = normalizedValue || '—';
 
   // Manejo especial para fechas
-  if (type === 'date' && normalizedValue) {
-    const d = new Date(normalizedValue);
-    if (!Number.isNaN(d.getTime())) {
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
+  if (type === 'date') {
+    if (!normalizedValue) {
+      // Sin valor: input vacío, modo lectura muestra "—"
+      normalizedValue = '';
+      displayValue = '—';
+    } else {
+      // Si ya viene en formato correcto yyyy-MM-dd
+      if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+        const [yyyy, mm, dd] = normalizedValue.split('-');
+        displayValue = `${dd}-${mm}-${yyyy}`;
+      } else {
+        // Intentamos parsear cualquier otra cosa (ISO con hora, etc.)
+        const d = new Date(normalizedValue);
+        if (!Number.isNaN(d.getTime())) {
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
 
-      // formato para el input date (obligatorio yyyy-MM-dd)
-      normalizedValue = `${yyyy}-${mm}-${dd}`;
-      // formato lindo para lectura (dd-MM-yyyy)
-      displayValue = `${dd}-${mm}-${yyyy}`;
+          // formato para el input date (obligatorio yyyy-MM-dd)
+          normalizedValue = `${yyyy}-${mm}-${dd}`;
+          // formato lindo para lectura (dd-MM-yyyy)
+          displayValue = `${dd}-${mm}-${yyyy}`;
+        } else {
+          // Valor basura tipo "1-06-04": limpiamos para que no rompa el input
+          normalizedValue = '';
+          displayValue = '—';
+        }
+      }
     }
   }
 

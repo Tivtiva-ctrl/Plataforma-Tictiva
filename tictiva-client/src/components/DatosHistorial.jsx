@@ -14,14 +14,10 @@ import {
   FiSearch,
 } from 'react-icons/fi';
 
-// ==========================================
-// === COMPONENTE PRINCIPAL
-// ==========================================
 function DatosHistorial({ rut }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtros
   const [periodFilter, setPeriodFilter] = useState('hoy');
   const [categoryFilter, setCategoryFilter] = useState('TODAS');
   const [actorFilter, setActorFilter] = useState('TODOS');
@@ -40,8 +36,7 @@ function DatosHistorial({ rut }) {
         .from('employee_history')
         .select('*')
         .eq('rut', rut)
-        // usamos created_at para ordenar; si no existe, revisa nombre de tu columna de fecha
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }); // ← CORREGIDO
 
       if (error) {
         console.error('Error cargando historial:', error);
@@ -59,15 +54,24 @@ function DatosHistorial({ rut }) {
   // ==============================
   // HELPERS
   // ==============================
-  const getDateFromItem = (item) => item.fecha || item.created_at || null;
+  const getDateFromItem = (item) =>
+    item.created_at || item.fecha || null; // ← CORREGIDO
 
-  const getIcon = (tipo, categoria) => {
-    const tipoUpper = (tipo || '').toUpperCase();
-    const catUpper = (categoria || '').toUpperCase();
+  const getIcon = (tipo, categoria, modulo, origen) => {
+    const t = (tipo || '').toUpperCase();
+    const c = (categoria || '').toUpperCase();
+    const m = (modulo || '').toUpperCase();
+    const o = (origen || '').toUpperCase();
 
-    if (tipoUpper === 'ASISTENCIA' || catUpper === 'ASISTENCIA') return <FiClock />;
-    if (tipoUpper === 'DOCUMENTOS' || catUpper === 'DOCUMENTOS') return <FiFileText />;
-    if (tipoUpper === 'SISTEMA' || catUpper === 'SISTEMA') return <FiSettings />;
+    if (t === 'ASISTENCIA' || c === 'ASISTENCIA' || m === 'ASISTENCIA' || o === 'ASISTENCIA') {
+      return <FiClock />;
+    }
+    if (t === 'DOCUMENTOS' || c === 'DOCUMENTOS' || m === 'DOCUMENTOS' || o === 'DOCUMENTOS') {
+      return <FiFileText />;
+    }
+    if (t === 'SISTEMA' || c === 'SISTEMA' || m === 'SISTEMA' || o === 'SISTEMA') {
+      return <FiSettings />;
+    }
     return <FiCheckCircle />;
   };
 
@@ -105,7 +109,7 @@ function DatosHistorial({ rut }) {
   };
 
   // ==============================
-  // APLICAR FILTROS EN MEMORIA
+  // APLICAR FILTROS
   // ==============================
   const filteredHistory = useMemo(() => {
     const now = new Date();
@@ -121,7 +125,8 @@ function DatosHistorial({ rut }) {
         now.getMonth(),
         now.getDate()
       );
-      const diffMs = startOfToday - new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffMs =
+        startOfToday - new Date(d.getFullYear(), d.getMonth(), d.getDate());
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
       switch (periodFilter) {
@@ -133,7 +138,6 @@ function DatosHistorial({ rut }) {
           return diffDays <= 30 && diffDays >= 0;
         case 'year':
           return d.getFullYear() === now.getFullYear();
-        case 'all':
         default:
           return true;
       }
@@ -141,33 +145,42 @@ function DatosHistorial({ rut }) {
 
     const matchesCategory = (item) => {
       if (categoryFilter === 'TODAS') return true;
+
       const cat = (
         item.categoria ||
-        item.category ||
+        item.modulo ||
         item.origen ||
         item.tipo ||
         ''
-      ).toUpperCase();
+      )
+        .toString()
+        .toUpperCase();
+
       return cat === categoryFilter;
     };
 
     const matchesActor = (item) => {
       if (actorFilter === 'TODOS') return true;
+
       const rol = (
         item.autor_rol ||
-        item.actor_role ||
-        item.actor_type ||
+        item.realizado_por_role ||
         ''
-      ).toUpperCase();
+      )
+        .toString()
+        .toUpperCase();
+
       return rol === actorFilter;
     };
 
     const matchesSearch = (item) => {
       const q = searchQuery.trim().toLowerCase();
       if (!q) return true;
+
       return (
         (item.titulo || '').toLowerCase().includes(q) ||
-        (item.descripcion || '').toLowerCase().includes(q)
+        (item.descripcion || '').toLowerCase().includes(q) ||
+        (item.etiqueta_accion || '').toLowerCase().includes(q)
       );
     };
 
@@ -179,7 +192,7 @@ function DatosHistorial({ rut }) {
   }, [history, periodFilter, categoryFilter, actorFilter, searchQuery]);
 
   // ==============================
-  // AGRUPAR POR FECHA (HOY / AYER / 13 NOV)
+  // AGRUPAR POR FECHA
   // ==============================
   const groupedHistory = useMemo(() => {
     const groups = [];
@@ -197,7 +210,6 @@ function DatosHistorial({ rut }) {
 
   return (
     <div className={styles.historyContainer}>
-      {/* HEADER */}
       <header className={styles.header}>
         <h2>Historial del Colaborador</h2>
         <p className={styles.subtitle}>
@@ -336,6 +348,14 @@ function DatosHistorial({ rut }) {
             <div key={group.label} className={styles.groupBlock}>
               {group.items.map((item, index) => {
                 const dateValue = getDateFromItem(item);
+
+                const categoriaVisual =
+                  item.categoria ||
+                  item.modulo ||
+                  item.origen ||
+                  item.tipo ||
+                  'OTRO';
+
                 return (
                   <div key={item.id} className={styles.timelineItem}>
                     {index === 0 && (
@@ -344,16 +364,29 @@ function DatosHistorial({ rut }) {
 
                     <div className={styles.eventCard}>
                       <div className={styles.iconWrapper}>
-                        {getIcon(item.tipo, item.categoria)}
+                        {getIcon(
+                          item.tipo,
+                          item.categoria,
+                          item.modulo,
+                          item.origen
+                        )}
                       </div>
 
                       <div className={styles.contentWrapper}>
                         <h3 className={styles.eventTitle}>
-                          {item.titulo || 'Acción registrada'}
+                          {item.titulo ||
+                            item.etiqueta_accion ||
+                            'Acción registrada'}
                         </h3>
+
                         <small className={styles.eventMeta}>
-                          Por: <strong>{item.autor || 'Sistema'}</strong> –{' '}
-                          {formatDate(dateValue)}
+                          Por:{' '}
+                          <strong>
+                            {item.realizado_por_nombre ||
+                              item.autor ||
+                              'Sistema'}
+                          </strong>{' '}
+                          – {formatDate(dateValue)}
                         </small>
 
                         <p className={styles.eventDescription}>
@@ -363,8 +396,9 @@ function DatosHistorial({ rut }) {
 
                         <div className={styles.tags}>
                           <span className={styles.tagTipo}>
-                            {(item.categoria || item.tipo || 'OTRO').toString()}
+                            {categoriaVisual.toString()}
                           </span>
+
                           {item.estado && (
                             <span className={styles.tagEstado}>
                               {item.estado}
