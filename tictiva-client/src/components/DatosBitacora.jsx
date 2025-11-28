@@ -38,6 +38,24 @@ function getTodayLocalString() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// ✅ Helper para mostrar fechas SIN problemas de zona horaria
+function formatLogDate(value, locale = 'es-CL') {
+  if (!value) return '—';
+
+  // Si viene como 'yyyy-MM-dd' (típico DATE en Postgres)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [yyyy, mm, dd] = value.split('-');
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(locale);
+  }
+
+  // Si viene en otro formato (ISO completo, etc.)
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(locale);
+}
+
 // ==========================================
 // === HISTORIAL: REGISTRO EN employee_history
 // ==========================================
@@ -904,9 +922,7 @@ function DatosBitacora({ rut, employeeName }) {
         tipoDisplay = `Anotación (${log.tipo})`;
       }
 
-      const fechaTexto = log.fecha
-        ? new Date(log.fecha).toLocaleDateString('es-CL')
-        : '—';
+      const fechaTexto = formatLogDate(log.fecha, 'es-CL');
 
       const autor =
         log.autor ||
@@ -969,9 +985,7 @@ function DatosBitacora({ rut, employeeName }) {
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
 
-    const fechaTexto = log.fecha
-      ? new Date(log.fecha).toLocaleDateString('es-ES')
-      : '—';
+    const fechaTexto = formatLogDate(log.fecha, 'es-ES');
 
     const autor =
       log.autor ||
@@ -1228,11 +1242,7 @@ function DatosBitacora({ rut, employeeName }) {
 
                 return (
                   <tr key={log.id}>
-                    <td>
-                      {log.fecha
-                        ? new Date(log.fecha).toLocaleDateString('es-ES')
-                        : '—'}
-                    </td>
+                    <td>{formatLogDate(log.fecha, 'es-ES')}</td>
                     <td>{tipoDisplay}</td>
                     <td>{log.area || '—'}</td>
                     <td>{log.motivo || '—'}</td>

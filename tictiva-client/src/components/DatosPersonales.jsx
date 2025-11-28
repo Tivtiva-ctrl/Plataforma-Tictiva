@@ -1,5 +1,10 @@
 import React from 'react';
 import styles from './DatosPersonales.module.css';
+// 👇 nuevo import con todas las regiones y comunas
+import {
+  REGIONES,
+  REGIONES_COMUNAS,
+} from '../constants/regionesComunasChile';
 
 function FormField({
   label,
@@ -112,6 +117,17 @@ function DatosPersonales({ personalData, isEditing, onChange }) {
       return;
     }
 
+    // 👇 si cambia la región, también reseteamos la comuna
+    if (name === 'region') {
+      const updated = {
+        ...personalData,
+        region: value,
+        comuna: '', // para que el usuario vuelva a elegir según la región nueva
+      };
+      onChange && onChange(updated);
+      return;
+    }
+
     const newValue = type === 'checkbox' ? checked : value;
 
     const updated = {
@@ -123,10 +139,30 @@ function DatosPersonales({ personalData, isEditing, onChange }) {
   };
 
   const generos = ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo'];
-  const estadosCiviles = ['Soltero', 'Casado', 'Divorciado', 'Viudo', 'Conviviente'];
-  const nacionalidades = ['Chilena', 'Peruana', 'Venezolana', 'Argentina', 'Colombiana', 'Otra'];
-  const regiones = ['Región Metropolitana', 'Valparaíso', 'Biobío', 'Otra'];
-  const comunas = ['Santiago Centro', 'Providencia', 'Las Condes', 'Otra'];
+  const estadosCiviles = [
+    'Soltero',
+    'Casado',
+    'Divorciado',
+    'Viudo',
+    'Conviviente',
+  ];
+  const nacionalidades = [
+    'Chilena',
+    'Peruana',
+    'Venezolana',
+    'Argentina',
+    'Colombiana',
+    'Otra',
+  ];
+
+  // 👇 ahora usamos la constante con TODAS las regiones
+  const regiones = REGIONES;
+
+  // 👇 comunas dependen de la región seleccionada
+  const comunas =
+    personalData.region && REGIONES_COMUNAS[personalData.region]
+      ? REGIONES_COMUNAS[personalData.region]
+      : [];
 
   return (
     <div className={styles.formContainer}>

@@ -17,8 +17,6 @@ import DatosHistorial from './DatosHistorial';
 
 // =======================================================
 // Helper: limpiar payload para Supabase
-// - Omite llaves técnicas (id, employee_id, created_at, updated_at)
-// - Convierte "" en null
 // =======================================================
 function sanitizeRow(row, omitKeys = []) {
   if (!row || typeof row !== 'object') return row;
@@ -26,13 +24,12 @@ function sanitizeRow(row, omitKeys = []) {
   for (const [key, value] of Object.entries(row)) {
     if (omitKeys.includes(key)) continue;
     cleaned[key] = value === '' ? null : value;
-    }
+  }
   return cleaned;
 }
 
 // =======================================================
 // Helper: registrar evento en employee_history
-// usando la estructura REAL de la tabla
 // =======================================================
 async function registerHistoryEntry({ rut, employeeId, autor }) {
   if (!rut || !employeeId) return;
@@ -53,11 +50,11 @@ async function registerHistoryEntry({ rut, employeeId, autor }) {
     categoria: 'RRHH',
     descripcion:
       'Se actualizó la información de la ficha del colaborador desde el módulo RRHH.',
-    estado: 'REGISTRADO', // o "OK", como prefieras que aparezca
+    estado: 'REGISTRADO',
 
     // Detalle de la acción
     tipo_accion: 'ACTUALIZACION',
-    gravedad: 'BAJA', // BAJA / MEDIA / ALTA
+    gravedad: 'BAJA',
     etiqueta_accion: 'FICHA_ACTUALIZADA',
     valor_anterior: null,
     nuevo_valor: null,
@@ -255,7 +252,7 @@ function EmployeeProfilePage() {
       setLoading(true);
       setSaveError(null);
 
-      // 1) Datos personales
+      // 1) Datos personales (tabla SIN employee_id, usamos RUT)
       const { data: personal, error: perError } = await supabase
         .from('employee_personal')
         .select('*')
@@ -270,6 +267,7 @@ function EmployeeProfilePage() {
 
       setPersonalData(personal);
 
+      // Para el resto usamos el id de esta fila como "employeeId"
       const employeeId = personal.employee_id || personal.id;
       if (!employeeId) {
         console.warn(
@@ -400,23 +398,24 @@ function EmployeeProfilePage() {
     setSaveError(null);
 
     try {
+      // employeeId lo seguimos tomando del registro personal (id)
       const employeeId = personalData.employee_id || personalData.id;
 
-      // 1) Datos personales
-      if (personalData.id) {
+      // 1) DATOS PERSONALES (solo UPDATE por RUT, sin INSERT)
+      if (personalData.rut) {
         const personalPayload = sanitizeRow(personalData, [
           'id',
-          'employee_id',
+          'employee_id',   // 👈 muy importante: esta columna NO existe en la tabla
           'created_at',
           'updated_at',
         ]);
 
-        console.log('Payload employee_personal:', personalPayload);
+        console.log('Payload employee_personal (por RUT):', personalPayload);
 
         const { error: perUpdateError } = await supabase
           .from('employee_personal')
           .update(personalPayload)
-          .eq('id', personalData.id);
+          .eq('rut', personalData.rut);
 
         if (perUpdateError) {
           console.error('Error al actualizar employee_personal:', perUpdateError);
