@@ -10,10 +10,14 @@ import {
 
 function DatosAsistencia({ rut }) {
   const [loading, setLoading] = useState(true);
-  const [records, setRecords] = useState([]); // marcas de asistencia
+  const [records, setRecords] = useState([]); // marcas (attendance_marks)
   const [viewType, setViewType] = useState('mensual'); // 'mensual' o 'semanal'
   const [currentDate, setCurrentDate] = useState(new Date()); // referencia de período
   const [error, setError] = useState(null);
+
+  // ✅ Normaliza RUT para que calce entre app y web
+  const normalizeRut = (r = '') =>
+    r.replace(/\./g, '').replace(/\s/g, '').toUpperCase();
 
   // Helpers de rango de fechas según vista
   const getPeriodRange = (baseDate, type) => {
@@ -30,12 +34,12 @@ function DatosAsistencia({ rut }) {
     } else {
       // semanal: desde lunes de esa semana
       const day = start.getDay(); // 0 = domingo, 1 = lunes...
-      const diffToMonday = (day + 6) % 7; // transforma domingo (0) en 6, lunes (1) en 0, etc.
+      const diffToMonday = (day + 6) % 7;
       start.setDate(start.getDate() - diffToMonday);
       start.setHours(0, 0, 0, 0);
 
       end.setTime(start.getTime());
-      end.setDate(end.getDate() + 7); // semana completa
+      end.setDate(end.getDate() + 7);
     }
 
     return { start, end };
@@ -82,9 +86,9 @@ function DatosAsistencia({ rut }) {
     setCurrentDate(newDate);
   };
 
-  // Cargar datos de Supabase
+  // ✅ Cargar MARCAS desde Supabase
   useEffect(() => {
-    const fetchAttendance = async () => {
+    const fetchMarks = async () => {
       if (!rut) {
         setRecords([]);
         setLoading(false);
@@ -96,43 +100,49 @@ function DatosAsistencia({ rut }) {
 
       try {
         const { start, end } = getPeriodRange(currentDate, viewType);
+        const rutNorm = normalizeRut(rut);
 
         const { data, error: dbError } = await supabase
-          .from('employee_attendance') // 👈 nombre de la tabla
-          .select('*')
-          .eq('rut', rut)
-          .gte('timestamp', start.toISOString())
-          .lt('timestamp', end.toISOString())
-          .order('timestamp', { ascending: false });
+          .from('attendance_marks') // ✅ tabla de marcas
+          .select(
+            'id, rut, mark_type, mark_time, status, method, ip_address, photo_url, created_at'
+          )
+          .eq('rut', rutNorm)
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
+          .order('created_at', { ascending: false });
 
         if (dbError) throw dbError;
 
         setRecords(data || []);
       } catch (err) {
-        console.error('Error al cargar asistencia:', err.message);
-        setError('No se pudieron cargar los registros de asistencia.');
+        console.error('Error al cargar marcas:', err?.message || err);
+        setError('No se pudieron cargar las marcas de asistencia.');
         setRecords([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAttendance();
+    fetchMarks();
   }, [rut, viewType, currentDate]);
 
-  // Stats sencillos (podemos mejorarlos después)
-  const tardies = records.filter(
-    (r) => r.estado && r.estado.toLowerCase() === 'atraso'
+  // ✅ Stats (básicos para MVP)
+  // - "Llegadas tarde": si status contiene "atraso" (por ahora)
+  const tardies = records.filter((r) =>
+    String(r.status || '').toLowerCase().includes('atraso')
   ).length;
+
+  // - días con al menos 1 marca (unique days)
   const uniqueDays = new Set(
     records.map((r) =>
-      new Date(r.timestamp).toISOString().substring(0, 10)
+      new Date(r.created_at).toISOString().substring(0, 10)
     )
   ).size;
 
   const summaryStats = {
-    asistencia: uniqueDays === 0 ? '—' : '100%', // luego lo afinamos cuando tengas reglas claras
-    ausencias: 0, // lo podremos calcular más adelante
+    asistencia: uniqueDays === 0 ? '—' : uniqueDays, // aquí mostramos días con marcas (más real que 100%)
+    ausencias: 0, // más adelante lo calculamos con turnos/horarios
     atrasos: tardies,
   };
 
@@ -176,7 +186,7 @@ function DatosAsistencia({ rut }) {
           </div>
           <div className={styles.cardInfo}>
             <span className={styles.cardNumber}>{summaryStats.asistencia}</span>
-            <span className={styles.cardLabel}>Asistencia</span>
+            <span className={styles.cardLabel}>Días con marcas</span>
           </div>
         </div>
         <div
@@ -234,47 +244,58 @@ function DatosAsistencia({ rut }) {
               </tr>
             ) : (
               records.map((rec) => {
-                const date = new Date(rec.timestamp);
+                const date = new Date(rec.created_at);
+
+                // Para hora mostramos mark_time si existe, sino hora de created_at
+                const hora =
+                  rec.mark_time ||
+                  date.toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                // Tipo: mark_type (Entrada/Salida/Colación)
+                const tipo = rec.mark_type || '—';
+
+                // Estado: status (Identidad verificada, etc.)
+                const estado = rec.status || '—';
+
+                // Tags: mantenemos tu lógica Entrada vs Salida sin romper
+                const isEntrada = String(tipo).toLowerCase().includes('entrada');
+
                 return (
                   <tr key={rec.id}>
                     <td>{date.toLocaleDateString('es-ES')}</td>
-                    <td>
-                      {date.toLocaleTimeString('es-ES', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
+                    <td>{hora}</td>
                     <td>
                       <span
                         className={`${styles.tag} ${
-                          rec.tipo === 'Entrada'
-                            ? styles.tagEntrada
-                            : styles.tagSalida
+                          isEntrada ? styles.tagEntrada : styles.tagSalida
                         }`}
                       >
-                        {rec.tipo}
+                        {tipo}
                       </span>
                     </td>
                     <td>
                       <span
                         className={`${styles.tag} ${
-                          rec.estado === 'Válida'
+                          String(estado).toLowerCase().includes('verificada') ||
+                          String(estado).toLowerCase().includes('válida')
                             ? styles.tagValida
                             : styles.tagAtraso
                         }`}
                       >
-                        {rec.estado}
+                        {estado}
                       </span>
                     </td>
-                    <td>{rec.metodo || '—'}</td>
-                    <td>{rec.ip || '—'}</td>
+                    <td>{rec.method || '—'}</td>
+                    <td>{rec.ip_address || '—'}</td>
                     <td>
-                      {rec.foto_url ? (
+                      {rec.photo_url ? (
                         <button
                           type="button"
                           className={styles.photoButton}
-                          // más adelante podemos abrir el visor de fotos
-                          onClick={() => window.open(rec.foto_url, '_blank')}
+                          onClick={() => window.open(rec.photo_url, '_blank')}
                         >
                           <FiCamera />
                         </button>

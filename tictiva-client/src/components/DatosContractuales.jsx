@@ -59,7 +59,7 @@ function FormField({
 }
 
 // --- Componente Principal de Datos Contractuales ---
-function DatosContractuales({ contractData, isEditing, onChange }) {
+function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = false, enrolledAt = null }) {
   const [formData, setFormData] = useState(contractData || {});
 
   useEffect(() => {
@@ -101,6 +101,19 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
 
   if (!contractData) {
     return <div className={styles.loading}>Cargando datos contractuales...</div>;
+  }
+
+  const enrolledLabel = isEnrolled ? "✅ Enrolado" : "❌ No enrolado";
+  const enrolledBg = isEnrolled ? "#DCFCE7" : "#FEE2E2";
+  const enrolledColor = isEnrolled ? "#166534" : "#991B1B";
+
+  let enrolledAtText = null;
+  if (isEnrolled && enrolledAt) {
+    try {
+      enrolledAtText = new Date(enrolledAt).toLocaleString();
+    } catch (e) {
+      enrolledAtText = String(enrolledAt);
+    }
   }
 
   return (
@@ -303,15 +316,40 @@ function DatosContractuales({ contractData, isEditing, onChange }) {
 
       {/* === Sección 6: Control de asistencia === */}
       <h3 className={styles.sectionTitle}>6. Control de asistencia</h3>
-      <div className={styles.formGrid}>
-        {/* PIN SIEMPRE SOLO LECTURA, AUN EN EDICIÓN */}
-        <FormField
-          label="PIN de marcación"
-          name="pin_marcacion"
-          value={formData.pin_marcacion}
-          onChange={handleChange}
-          isEditing={false}          // nunca editable
-        />
+
+      {/* PIN SIEMPRE SOLO LECTURA, AUN EN EDICIÓN */}
+      <div style={{ display: "grid", gap: 10 }}>
+        <div className={styles.formGrid}>
+          <FormField
+            label="PIN de marcación"
+            name="pin_marcacion"
+            value={formData.pin_marcacion}
+            onChange={handleChange}
+            isEditing={false} // nunca editable
+          />
+        </div>
+
+        {/* ✅ Enrolado: Sí/No (solo informativo, NO editable) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span
+            style={{
+              padding: "6px 12px",
+              borderRadius: 999,
+              fontWeight: 800,
+              background: enrolledBg,
+              color: enrolledColor,
+              border: "1px solid rgba(0,0,0,0.06)",
+            }}
+          >
+            {enrolledLabel}
+          </span>
+
+          {isEnrolled && enrolledAtText && (
+            <span style={{ fontSize: 12, opacity: 0.75 }}>
+              Actualizado: <b>{enrolledAtText}</b>
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
