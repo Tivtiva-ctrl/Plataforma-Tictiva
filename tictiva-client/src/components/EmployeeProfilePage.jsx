@@ -238,6 +238,9 @@ function EmployeeProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
+  // ✅ NUEVO: enrolamiento facial (foto + fecha)
+  const [faceEnroll, setFaceEnroll] = useState(null); // { photo_url, updated_at } o null
+
   // ==========================================
   // Carga de datos desde Supabase
   // ==========================================
@@ -266,6 +269,20 @@ function EmployeeProfilePage() {
       }
 
       setPersonalData(personal);
+
+      // ✅ NUEVO: Traer enrolamiento (no afecta diseño, solo datos)
+      const { data: enroll, error: enrollError } = await supabase
+        .from('face_enrollments')
+        .select('photo_url, updated_at')
+        .eq('rut', rut)
+        .maybeSingle();
+
+      if (enrollError) {
+        console.warn('Error al cargar face_enrollments:', enrollError.message);
+        setFaceEnroll(null);
+      } else {
+        setFaceEnroll(enroll || null);
+      }
 
       // Para el resto usamos el id de esta fila como "employeeId"
       const employeeId = personal.employee_id || personal.id;
@@ -603,14 +620,18 @@ function EmployeeProfilePage() {
 
         <div className={styles.profileInfo}>
           <div className={styles.profileAvatar}>
-            {personalData.avatar &&
-            typeof personalData.avatar === 'string' &&
-            personalData.avatar.startsWith('http') ? (
+            {/* ✅ SOLO CAMBIÉ EL CONTENIDO: prioridad photo_url (enrolamiento) */}
+            {faceEnroll?.photo_url ? (
+              <img src={faceEnroll.photo_url} alt={personalData.nombre_completo} />
+            ) : personalData.avatar &&
+              typeof personalData.avatar === 'string' &&
+              personalData.avatar.startsWith('http') ? (
               <img src={personalData.avatar} alt={personalData.nombre_completo} />
             ) : (
               <span>{getInitials(personalData.nombre_completo)}</span>
             )}
           </div>
+
           <div className={styles.profileDetails}>
             <h1 className={styles.employeeName}>{personalData.nombre_completo}</h1>
             <p className={styles.employeeTitle}>{personalData.cargo}</p>
@@ -692,6 +713,7 @@ function EmployeeProfilePage() {
               />
             }
           />
+
           <Route
             path="contractual"
             element={
@@ -699,9 +721,13 @@ function EmployeeProfilePage() {
                 contractData={contractData}
                 isEditing={isEditing}
                 onChange={setContractData}
+                // ✅ nuevo (no rompe si el componente los ignora)
+                isEnrolled={!!faceEnroll}
+                enrolledAt={faceEnroll?.updated_at || null}
               />
             }
           />
+
           <Route
             path="previsional"
             element={
@@ -733,7 +759,19 @@ function EmployeeProfilePage() {
             }
           />
           <Route path="documentos" element={<DatosDocumentos />} />
-          <Route path="asistencia" element={<DatosAsistencia rut={rut} />} />
+
+          <Route
+            path="asistencia"
+            element={
+              <DatosAsistencia
+                rut={rut}
+                // ✅ nuevo (no rompe si el componente los ignora)
+                isEnrolled={!!faceEnroll}
+                enrolledAt={faceEnroll?.updated_at || null}
+              />
+            }
+          />
+
           <Route path="bitacora" element={<DatosBitacora rut={rut} />} />
           <Route path="historial" element={<DatosHistorial rut={rut} />} />
         </Routes>
