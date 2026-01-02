@@ -2,6 +2,19 @@
 import React, { useState, useEffect } from 'react';
 // Reutilizamos el CSS de DatosPersonales
 import styles from './DatosPersonales.module.css';
+import { supabase } from '../supabaseClient';
+
+// ================================
+// Normalizador de RUT (sin puntos ni guión)
+// ================================
+function normalizeRut(raw) {
+  return (raw || "")
+    .toString()
+    .trim()
+    .replace(/\./g, "")
+    .replace(/-/g, "")
+    .toUpperCase();
+}
 
 // ================================
 // Componente reutilizable de campo
@@ -59,8 +72,19 @@ function FormField({
 }
 
 // --- Componente Principal de Datos Contractuales ---
-function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = false, enrolledAt = null }) {
+function DatosContractuales({
+  contractData,
+  isEditing,
+  onChange,
+  // props existentes (se mantienen)
+  isEnrolled = false,
+  enrolledAt = null
+}) {
   const [formData, setFormData] = useState(contractData || {});
+
+  // ✅ Estado local para enrolamiento consultado en Supabase
+  const [remoteEnrolled, setRemoteEnrolled] = useState(null); // null = verificando / desconocido
+  const [remoteEnrolledAt, setRemoteEnrolledAt] = useState(null);
 
   useEffect(() => {
     setFormData(contractData || {});
@@ -84,6 +108,62 @@ function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = fa
     });
   };
 
+  // ==========================================================
+  // ✅ PUNTO 2: Consultar enrolamiento en Supabase (face_enrollments)
+  // ==========================================================
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkEnrollment() {
+      if (!contractData) return;
+
+      // Intentamos encontrar un RUT disponible desde contractData
+      const rutRaw =
+        contractData.rut ||
+        contractData.rut_trabajador ||
+        contractData.rut_empleado ||
+        contractData.employee_rut ||
+        contractData.rutKey ||
+        "";
+
+      const rutKey = normalizeRut(rutRaw);
+      if (!rutKey) {
+        // Si no hay rut, no podemos verificar
+        setRemoteEnrolled(null);
+        setRemoteEnrolledAt(null);
+        return;
+      }
+
+      // Estado "verificando"
+      setRemoteEnrolled(null);
+      setRemoteEnrolledAt(null);
+
+      const { data, error } = await supabase
+        .from("face_enrollments")
+        .select("rut, enrolled_at, created_at, photo_url, photo_path")
+        .eq("rut", rutKey)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        // Si hay error, no rompemos UI: dejamos el valor del padre (isEnrolled/enrolledAt)
+        console.warn("Error verificando enrolamiento:", error);
+        setRemoteEnrolled(null);
+        setRemoteEnrolledAt(null);
+        return;
+      }
+
+      const found = !!data;
+      setRemoteEnrolled(found);
+      // tomamos enrolled_at si existe, si no created_at
+      setRemoteEnrolledAt(data?.enrolled_at || data?.created_at || null);
+    }
+
+    checkEnrollment();
+    return () => { cancelled = true; };
+  }, [contractData]);
+
   // --- Opciones para los menús desplegables ---
   const tiposContrato = ["Indefinido", "Plazo Fijo", "Por Obra o Faena"];
   const estadosContrato = ["Vigente", "Terminado", "Suspendido"];
@@ -103,16 +183,31 @@ function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = fa
     return <div className={styles.loading}>Cargando datos contractuales...</div>;
   }
 
-  const enrolledLabel = isEnrolled ? "✅ Enrolado" : "❌ No enrolado";
-  const enrolledBg = isEnrolled ? "#DCFCE7" : "#FEE2E2";
-  const enrolledColor = isEnrolled ? "#166534" : "#991B1B";
+  // ✅ Si la consulta remota ya resolvió, usamos eso. Si no, usamos lo que venga del padre.
+  const effectiveIsEnrolled = remoteEnrolled !== null ? remoteEnrolled : isEnrolled;
+  const effectiveEnrolledAt = remoteEnrolledAt || enrolledAt;
+
+  const enrolledLabel =
+    remoteEnrolled === null
+      ? "⏳ Verificando enrolamiento..."
+      : (effectiveIsEnrolled ? "✅ Enrolado" : "❌ No enrolado");
+
+  const enrolledBg =
+    remoteEnrolled === null
+      ? "#E5E7EB"
+      : (effectiveIsEnrolled ? "#DCFCE7" : "#FEE2E2");
+
+  const enrolledColor =
+    remoteEnrolled === null
+      ? "#111827"
+      : (effectiveIsEnrolled ? "#166534" : "#991B1B");
 
   let enrolledAtText = null;
-  if (isEnrolled && enrolledAt) {
+  if (effectiveIsEnrolled && effectiveEnrolledAt) {
     try {
-      enrolledAtText = new Date(enrolledAt).toLocaleString();
+      enrolledAtText = new Date(effectiveEnrolledAt).toLocaleString();
     } catch (e) {
-      enrolledAtText = String(enrolledAt);
+      enrolledAtText = String(effectiveEnrolledAt);
     }
   }
 
@@ -132,7 +227,7 @@ function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = fa
         />
         <FormField
           label="Fecha de inicio"
-          name="fecha_inicio"              // usa fecha_inicio (DB)
+          name="fecha_inicio"
           value={formData.fecha_inicio}
           onChange={handleChange}
           isEditing={isEditing}
@@ -325,7 +420,7 @@ function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = fa
             name="pin_marcacion"
             value={formData.pin_marcacion}
             onChange={handleChange}
-            isEditing={false} // nunca editable
+            isEditing={false}
           />
         </div>
 
@@ -344,7 +439,7 @@ function DatosContractuales({ contractData, isEditing, onChange, isEnrolled = fa
             {enrolledLabel}
           </span>
 
-          {isEnrolled && enrolledAtText && (
+          {effectiveIsEnrolled && enrolledAtText && (
             <span style={{ fontSize: 12, opacity: 0.75 }}>
               Actualizado: <b>{enrolledAtText}</b>
             </span>
