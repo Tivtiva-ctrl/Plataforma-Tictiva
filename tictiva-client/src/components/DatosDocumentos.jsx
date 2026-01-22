@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useParams } from 'react-router-dom';
 import styles from './DatosDocumentos.module.css';
@@ -9,6 +9,9 @@ import {
   FiPaperclip,
   FiEdit,
   FiDownload,
+  FiChevronDown,
+  FiChevronRight,
+  FiFolder,
 } from 'react-icons/fi';
 
 /**
@@ -75,7 +78,6 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
               'Error al eliminar archivo antiguo del storage:',
               removeError.message
             );
-            // no cortamos el flujo por esto
           }
         }
 
@@ -117,12 +119,10 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
           );
         }
       } else {
-        const { error: dbError } = await supabase
-          .from('employee_documents')
-          .insert({
-            ...documentData,
-            uploaded_at: new Date(), // si tu columna tiene DEFAULT, esto se puede omitir
-          });
+        const { error: dbError } = await supabase.from('employee_documents').insert({
+          ...documentData,
+          uploaded_at: new Date(),
+        });
 
         if (dbError) {
           throw new Error(
@@ -131,8 +131,8 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
         }
       }
 
-      onSave();   // refresca la lista
-      onClose();  // cierra modal
+      onSave(); // refresca la lista
+      onClose(); // cierra modal
     } catch (err) {
       console.error('Error al guardar documento:', err.message);
       setError(err.message || 'Error desconocido al guardar el documento.');
@@ -159,7 +159,6 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
           </button>
         </div>
 
-        {/* Usamos exactamente las mismas clases que el modal bonito */}
         <form onSubmit={handleSubmit}>
           <div className={styles.modalBody}>
             <div className={styles.formGroup}>
@@ -196,6 +195,9 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
                 <option value="Salud">Salud</option>
                 <option value="General">General</option>
               </select>
+              <small className={styles.helperText}>
+                Tip: los comprobantes automáticos usan <b>category</b> (Asistencia / Evidencias) y se ordenan solos.
+              </small>
             </div>
 
             <div className={styles.dropZone}>
@@ -206,8 +208,7 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
                 </p>
               ) : isEditing ? (
                 <p>
-                  Arrastra un nuevo archivo aquí para reemplazar el actual o
-                  haz clic.
+                  Arrastra un nuevo archivo aquí para reemplazar el actual o haz clic.
                 </p>
               ) : (
                 <p>Haz clic o arrastra el documento hasta aquí.</p>
@@ -238,11 +239,7 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
               className={styles.saveButton}
               disabled={isUploading || !nombre || (!isEditing && !file)}
             >
-              {isUploading
-                ? 'Guardando...'
-                : isEditing
-                ? 'Guardar Cambios'
-                : 'Guardar'}
+              {isUploading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Guardar'}
             </button>
           </div>
         </form>
@@ -252,7 +249,7 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
 }
 
 /**
- * Listado principal de documentos
+ * Listado principal de documentos (con "carpetas" visuales)
  */
 function DatosDocumentos({ rut: rutProp }) {
   const { rut: rutFromParams } = useParams();
@@ -263,6 +260,16 @@ function DatosDocumentos({ rut: rutProp }) {
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
+
+  // Estado de carpetas (expand/collapse)
+  const [openFolders, setOpenFolders] = useState({
+    asistencia: true,
+    contractual: true,
+    previsional: true,
+    personal: true,
+    salud: true,
+    otros: true,
+  });
 
   const fetchDocuments = async () => {
     if (!rut) {
@@ -308,8 +315,59 @@ function DatosDocumentos({ rut: rutProp }) {
     }
   };
 
+  const getFolderKey = (doc) => {
+    const cat = (doc?.category || '').toString().trim().toLowerCase();
+    const tag = (doc?.tag || '').toString().trim().toLowerCase();
+
+    // 1) Primero category (para comprobantes automáticos)
+    if (cat.includes('asistencia') || cat.includes('evidencia')) return 'asistencia';
+
+    // 2) Si no hay category, usamos tag
+    if (tag === 'contractual') return 'contractual';
+    if (tag === 'previsional') return 'previsional';
+    if (tag === 'personal') return 'personal';
+    if (tag === 'salud') return 'salud';
+
+    return 'otros';
+  };
+
+  const folders = useMemo(() => {
+    const base = {
+      asistencia: [],
+      contractual: [],
+      previsional: [],
+      personal: [],
+      salud: [],
+      otros: [],
+    };
+
+    for (const d of documents) {
+      const k = getFolderKey(d);
+      base[k].push(d);
+    }
+    return base;
+  }, [documents]);
+
+  const folderMeta = [
+    { key: 'asistencia', title: 'Asistencia / Evidencias', emoji: '🧾' },
+    { key: 'contractual', title: 'Contractual', emoji: '📄' },
+    { key: 'previsional', title: 'Previsional', emoji: '🏦' },
+    { key: 'personal', title: 'Personal', emoji: '🪪' },
+    { key: 'salud', title: 'Salud', emoji: '🩺' },
+    { key: 'otros', title: 'Otros', emoji: '📎' },
+  ];
+
+  const toggleFolder = (key) => {
+    setOpenFolders((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const handleDownload = async (filePath) => {
     try {
+      if (!filePath) {
+        alert('Este documento no tiene archivo asociado.');
+        return;
+      }
+
       const { data, error } = await supabase.storage
         .from('employee-documents')
         .download(filePath);
@@ -328,6 +386,55 @@ function DatosDocumentos({ rut: rutProp }) {
       console.error('Error al descargar el archivo:', error.message);
       alert('No se pudo descargar el archivo.');
     }
+  };
+
+  const renderDocRow = (doc) => {
+    const fecha = doc.uploaded_at
+      ? new Date(doc.uploaded_at).toLocaleDateString('es-ES')
+      : 'Fecha desconocida';
+
+    // Para mostrar etiqueta bonita:
+    // - si viene category (comprobantes) mostramos category
+    // - si no, mostramos tag
+    const badgeText = doc.category?.trim() ? doc.category : (doc.tag || 'Sin etiqueta');
+
+    return (
+      <div key={doc.id} className={styles.documentItem}>
+        <div className={styles.fileIcon}>
+          <FiFileText size={20} />
+        </div>
+
+        <div className={styles.fileInfo}>
+          <strong>{doc.display_name}</strong>
+          <small>
+            Subido el {fecha}
+            <span
+              className={`${styles.fileTag} ${getTagColor(doc.tag)}`}
+              title={badgeText}
+            >
+              {badgeText}
+            </span>
+          </small>
+        </div>
+
+        <div className={styles.fileActions}>
+          <button
+            className={styles.actionButtonEdit}
+            type="button"
+            onClick={() => setEditingDocument(doc)}
+          >
+            <FiEdit size={14} /> Editar
+          </button>
+          <button
+            onClick={() => handleDownload(doc.file_path)}
+            className={styles.actionButtonDownload}
+            type="button"
+          >
+            <FiDownload size={14} /> Descargar
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -369,47 +476,50 @@ function DatosDocumentos({ rut: rutProp }) {
           <p>No hay documentos para este empleado.</p>
         )}
 
-        {!loading &&
-          documents.map((doc) => {
-            const fecha = doc.uploaded_at
-              ? new Date(doc.uploaded_at).toLocaleDateString('es-ES')
-              : 'Fecha desconocida';
+        {!loading && documents.length > 0 && (
+          <div className={styles.foldersWrapper}>
+            {folderMeta.map((f) => {
+              const list = folders[f.key] || [];
+              const isOpen = !!openFolders[f.key];
 
-            return (
-              <div key={doc.id} className={styles.documentItem}>
-                <div className={styles.fileIcon}>
-                  <FiFileText size={20} />
-                </div>
-                <div className={styles.fileInfo}>
-                  <strong>{doc.display_name}</strong>
-                  <small>
-                    Subido el {fecha}
-                    <span
-                      className={`${styles.fileTag} ${getTagColor(doc.tag)}`}
-                    >
-                      {doc.tag || 'Sin etiqueta'}
+              // Si quieres, puedes ocultar carpetas vacías:
+              // if (list.length === 0) return null;
+
+              return (
+                <div key={f.key} className={styles.folderBlock}>
+                  <button
+                    type="button"
+                    className={styles.folderHeader}
+                    onClick={() => toggleFolder(f.key)}
+                  >
+                    <span className={styles.folderLeft}>
+                      <span className={styles.folderEmoji}>{f.emoji}</span>
+                      <span className={styles.folderTitle}>{f.title}</span>
+                      <span className={styles.folderCount}>{list.length}</span>
                     </span>
-                  </small>
-                </div>
-                <div className={styles.fileActions}>
-                  <button
-                    className={styles.actionButtonEdit}
-                    type="button"
-                    onClick={() => setEditingDocument(doc)}
-                  >
-                    <FiEdit size={14} /> Editar
+
+                    <span className={styles.folderRight}>
+                      {isOpen ? <FiChevronDown /> : <FiChevronRight />}
+                    </span>
                   </button>
-                  <button
-                    onClick={() => handleDownload(doc.file_path)}
-                    className={styles.actionButtonDownload}
-                    type="button"
-                  >
-                    <FiDownload size={14} /> Descargar
-                  </button>
+
+                  {isOpen && (
+                    <div className={styles.folderBody}>
+                      {list.length === 0 ? (
+                        <div className={styles.emptyFolder}>
+                          <FiFolder />
+                          <span>Sin documentos en esta carpeta.</span>
+                        </div>
+                      ) : (
+                        list.map(renderDocRow)
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

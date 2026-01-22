@@ -332,3 +332,78 @@
   border-color: #d0dbe4;
   cursor: not-allowed;
 }
+/* ==== Carpetas / Secciones ==== */
+.foldersWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.folderBlock {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+}
+
+.folderHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.03);
+  border: none;
+  cursor: pointer;
+}
+
+.folderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.folderEmoji {
+  font-size: 18px;
+}
+
+.folderTitle {
+  font-weight: 700;
+}
+
+.folderCount {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(47, 91, 234, 0.15);
+}
+
+.folderRight {
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+}
+
+.folderBody {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.emptyFolder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  opacity: 0.7;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+}
+
+.helperText {
+  display: block;
+  margin-top: 6px;
+  opacity: 0.7;
+  font-size: 12px;
+}
