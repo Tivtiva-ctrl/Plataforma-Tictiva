@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useParams } from 'react-router-dom';
 import styles from './DatosDocumentos.module.css';
@@ -11,6 +11,8 @@ import {
   FiDownload,
   FiChevronRight,
   FiArrowLeft,
+  FiEye,
+  FiMoreHorizontal,
 } from 'react-icons/fi';
 
 /**
@@ -23,23 +25,17 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
 
   const [nombre, setNombre] = useState(existingDocument?.display_name || '');
   const [descripcion, setDescripcion] = useState(existingDocument?.description || '');
-
-  // ✅ NUEVO: carpeta/categoría (para vista tipo Windows)
   const [category, setCategory] = useState(existingDocument?.category || '');
-
-  // Mantenemos tag por compatibilidad (si tu tabla lo tiene y lo usas en otras partes)
   const [tag, setTag] = useState(existingDocument?.tag || 'General');
 
-  const [file, setFile] = useState(null); // nuevo archivo (opcional al editar)
+  const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
 
   const title = isEditing ? 'Editar Documento' : 'Subir Documento';
 
-  // Carpeta por defecto si no viene
   useEffect(() => {
     if (!category) {
-      // si venía tag, lo mapeamos
       const t = (tag || '').toLowerCase();
       if (t === 'contractual') setCategory('Contractual');
       else if (t === 'previsional') setCategory('Previsional');
@@ -61,44 +57,22 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
     e.preventDefault();
     setError(null);
 
-    if (!rut) {
-      setError('No se encontró el RUT del empleado.');
-      return;
-    }
-
-    if (!nombre) {
-      setError('Por favor completa el nombre.');
-      return;
-    }
-
-    if (!category) {
-      setError('Selecciona una carpeta (categoría).');
-      return;
-    }
-
-    // Al subir es obligatorio archivo, al editar es opcional
-    if (!isEditing && !file) {
-      setError('Por favor selecciona un archivo para subir.');
-      return;
-    }
+    if (!rut) return setError('No se encontró el RUT del empleado.');
+    if (!nombre) return setError('Por favor completa el nombre.');
+    if (!category) return setError('Selecciona una carpeta (categoría).');
+    if (!isEditing && !file) return setError('Por favor selecciona un archivo para subir.');
 
     setIsUploading(true);
 
     try {
       let filePath = existingDocument?.file_path || null;
 
-      // 1) Manejo del archivo (solo si se selecciona uno nuevo)
       if (file) {
-        // Si estamos editando y ya había archivo, intentar borrarlo
         if (isEditing && filePath) {
           const { error: removeError } = await supabase.storage
             .from('employee-documents')
             .remove([filePath]);
-
-          if (removeError) {
-            console.warn('Error al eliminar archivo antiguo del storage:', removeError.message);
-            // no cortamos el flujo por esto
-          }
+          if (removeError) console.warn('Error al eliminar archivo antiguo:', removeError.message);
         }
 
         const fileExt = file.name.split('.').pop();
@@ -107,52 +81,37 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
 
         const { error: uploadError } = await supabase.storage
           .from('employee-documents')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
 
-        if (uploadError) {
-          throw new Error(`Error al subir el archivo: ${uploadError.message}`);
-        }
+        if (uploadError) throw new Error(`Error al subir el archivo: ${uploadError.message}`);
       }
 
-      // 2) Datos para la tabla
-      // ✅ OJO: guardamos category (carpeta) sí o sí.
       const documentData = {
         rut,
         display_name: nombre,
         description: descripcion,
-        category, // ✅ carpeta
-        tag,      // compat
+        category,
+        tag,
         file_path: filePath,
       };
 
-      // 3) INSERT o UPDATE
       if (isEditing) {
         const { error: dbError } = await supabase
           .from('employee_documents')
           .update(documentData)
           .eq('id', existingDocument.id);
 
-        if (dbError) {
-          throw new Error(`Error al actualizar los datos del documento: ${dbError.message}`);
-        }
+        if (dbError) throw new Error(`Error al actualizar documento: ${dbError.message}`);
       } else {
         const { error: dbError } = await supabase
           .from('employee_documents')
-          .insert({
-            ...documentData,
-            uploaded_at: new Date(),
-          });
+          .insert({ ...documentData, uploaded_at: new Date() });
 
-        if (dbError) {
-          throw new Error(`Error al guardar los datos del documento: ${dbError.message}`);
-        }
+        if (dbError) throw new Error(`Error al guardar documento: ${dbError.message}`);
       }
 
-      onSave();  // refresca la lista
-      onClose(); // cierra modal
+      onSave();
+      onClose();
     } catch (err) {
       console.error('Error al guardar documento:', err.message);
       setError(err.message || 'Error desconocido al guardar el documento.');
@@ -191,11 +150,7 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
 
               <div className={styles.formGroup}>
                 <label htmlFor="category">Carpeta *</label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
+                <select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
                   <option value="">Selecciona carpeta…</option>
                   <option value="Asistencia / Evidencias">Asistencia / Evidencias</option>
                   <option value="Contractual">Contractual</option>
@@ -217,7 +172,6 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
               />
             </div>
 
-            {/* Tag opcional (si lo sigues usando) */}
             <div className={styles.formGroup}>
               <label htmlFor="tag">Etiqueta (opcional)</label>
               <select id="tag" value={tag} onChange={(e) => setTag(e.target.value)}>
@@ -270,6 +224,45 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
   );
 }
 
+/** Menú simple (⋯) por documento */
+function DocMenu({ open, onClose, onView, onDownload, onEdit, allowEdit }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onClose();
+    };
+    const onEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onEsc);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div ref={ref} className={styles.menu}>
+      <button type="button" className={styles.menuItem} onClick={onView}>
+        <FiEye /> Ver
+      </button>
+      <button type="button" className={styles.menuItem} onClick={onDownload}>
+        <FiDownload /> Descargar
+      </button>
+      {allowEdit && (
+        <button type="button" className={styles.menuItem} onClick={onEdit}>
+          <FiEdit /> Editar
+        </button>
+      )}
+    </div>
+  );
+}
+
 /**
  * Listado principal de documentos (vista carpetas tipo Windows)
  */
@@ -283,42 +276,19 @@ function DatosDocumentos({ rut: rutProp }) {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
 
-  // ✅ NUEVO: carpeta seleccionada
   const [selectedFolder, setSelectedFolder] = useState(null);
 
-  // ✅ Definición de carpetas “fijas” (siempre visibles)
+  // ✅ menú (⋯) abierto para doc.id
+  const [menuOpenFor, setMenuOpenFor] = useState(null);
+
   const FOLDERS = useMemo(
     () => [
-      {
-        key: 'Asistencia / Evidencias',
-        title: 'Asistencia / Evidencias',
-        subtitle: 'Comprobantes de marcación y evidencias asociadas.',
-      },
-      {
-        key: 'Contractual',
-        title: 'Contractual',
-        subtitle: 'Contratos, anexos, renovaciones y documentos laborales.',
-      },
-      {
-        key: 'Previsional',
-        title: 'Previsional',
-        subtitle: 'AFP, Isapre/Fonasa y documentación previsional.',
-      },
-      {
-        key: 'Personal',
-        title: 'Personal',
-        subtitle: 'Antecedentes personales y documentación del trabajador.',
-      },
-      {
-        key: 'Salud',
-        title: 'Salud',
-        subtitle: 'Licencias, certificados médicos y respaldo de salud.',
-      },
-      {
-        key: 'Otros',
-        title: 'Otros',
-        subtitle: 'Documentos generales o sin clasificación.',
-      },
+      { key: 'Asistencia / Evidencias', title: 'Asistencia / Evidencias', subtitle: 'Comprobantes de marcación y evidencias asociadas.' },
+      { key: 'Contractual', title: 'Contractual', subtitle: 'Contratos, anexos, renovaciones y documentos laborales.' },
+      { key: 'Previsional', title: 'Previsional', subtitle: 'AFP, Isapre/Fonasa y documentación previsional.' },
+      { key: 'Personal', title: 'Personal', subtitle: 'Antecedentes personales y documentación del trabajador.' },
+      { key: 'Salud', title: 'Salud', subtitle: 'Licencias, certificados médicos y respaldo de salud.' },
+      { key: 'Otros', title: 'Otros', subtitle: 'Documentos generales o sin clasificación.' },
     ],
     []
   );
@@ -360,12 +330,12 @@ function DatosDocumentos({ rut: rutProp }) {
   };
 
   useEffect(() => {
-    setSelectedFolder(null); // ✅ si cambias de empleado, volvemos a carpetas
+    setSelectedFolder(null);
+    setMenuOpenFor(null);
     fetchDocuments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rut]);
 
-  // ✅ Agrupar documentos por carpeta
   const grouped = useMemo(() => {
     const map = new Map();
     for (const f of FOLDERS) map.set(f.key, []);
@@ -377,12 +347,36 @@ function DatosDocumentos({ rut: rutProp }) {
     return map;
   }, [documents, FOLDERS]);
 
-  const handleDownload = async (bucket, filePath) => {
-    try {
-      // ✅ si tu registro tiene bucket, lo usamos; si no, asumimos employee-documents
-      const bucketName = bucket || 'employee-documents';
+  const folderCount = (folderKey) => (grouped.get(folderKey) || []).length;
 
-      const { data, error } = await supabase.storage.from(bucketName).download(filePath);
+  const currentDocs = selectedFolder ? grouped.get(selectedFolder) || [] : [];
+
+  const getBucket = (doc) => doc.bucket || 'employee-documents';
+
+  const viewFile = async (doc) => {
+    try {
+      const bucket = getBucket(doc);
+      const filePath = doc.file_path;
+
+      // ✅ Si el bucket es público, esto igual funciona; si es privado, te genera URL firmada
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 60 * 10);
+      if (error) throw error;
+
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      console.error('Error al ver documento:', e.message);
+      alert('No se pudo abrir el documento.');
+    } finally {
+      setMenuOpenFor(null);
+    }
+  };
+
+  const downloadFile = async (doc) => {
+    try {
+      const bucket = getBucket(doc);
+      const filePath = doc.file_path;
+
+      const { data, error } = await supabase.storage.from(bucket).download(filePath);
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
@@ -393,28 +387,22 @@ function DatosDocumentos({ rut: rutProp }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error al descargar el archivo:', error.message);
+    } catch (e) {
+      console.error('Error al descargar:', e.message);
       alert('No se pudo descargar el archivo.');
+    } finally {
+      setMenuOpenFor(null);
     }
   };
 
-  const folderCount = (folderKey) => (grouped.get(folderKey) || []).length;
-
-  const currentDocs = selectedFolder ? grouped.get(selectedFolder) || [] : [];
+  const canEditDoc = (folderKey) => folderKey !== 'Asistencia / Evidencias';
 
   return (
     <div className={styles.documentContainer}>
-      {/* Modal SUBIR */}
       {isUploadModalOpen && (
-        <DocumentModal
-          rut={rut}
-          onClose={() => setIsUploadModalOpen(false)}
-          onSave={fetchDocuments}
-        />
+        <DocumentModal rut={rut} onClose={() => setIsUploadModalOpen(false)} onSave={fetchDocuments} />
       )}
 
-      {/* Modal EDITAR */}
       {editingDocument && (
         <DocumentModal
           rut={rut}
@@ -424,12 +412,10 @@ function DatosDocumentos({ rut: rutProp }) {
         />
       )}
 
-      {/* Header */}
       <div className={styles.headerRow}>
         <div>
           <h2 className={styles.pageTitle}>Documentos del Empleado</h2>
 
-          {/* Breadcrumb */}
           <div className={styles.breadcrumb}>
             <span className={styles.crumb} onClick={() => setSelectedFolder(null)}>
               Documentos
@@ -443,19 +429,13 @@ function DatosDocumentos({ rut: rutProp }) {
           </div>
         </div>
 
-        <button
-          onClick={() => setIsUploadModalOpen(true)}
-          className={styles.uploadButton}
-          disabled={!rut}
-        >
+        <button onClick={() => setIsUploadModalOpen(true)} className={styles.uploadButton} disabled={!rut}>
           <FiUpload /> Subir Documento
         </button>
       </div>
 
-      {/* Loading */}
       {loading && <p className={styles.muted}>Cargando documentos...</p>}
 
-      {/* Vista carpetas */}
       {!loading && !selectedFolder && (
         <div className={styles.foldersList}>
           {FOLDERS.map((f) => (
@@ -481,7 +461,6 @@ function DatosDocumentos({ rut: rutProp }) {
         </div>
       )}
 
-      {/* Vista dentro de carpeta */}
       {!loading && selectedFolder && (
         <div className={styles.folderDetail}>
           <button className={styles.backButton} type="button" onClick={() => setSelectedFolder(null)}>
@@ -505,6 +484,9 @@ function DatosDocumentos({ rut: rutProp }) {
                   ? new Date(doc.uploaded_at).toLocaleDateString('es-CL')
                   : 'Fecha desconocida';
 
+                const isAttendanceFolder = selectedFolder === 'Asistencia / Evidencias';
+                const allowEdit = canEditDoc(selectedFolder);
+
                 return (
                   <div key={doc.id} className={styles.documentItem}>
                     <div className={styles.fileIcon}>
@@ -520,21 +502,52 @@ function DatosDocumentos({ rut: rutProp }) {
                       </small>
                     </div>
 
+                    {/* ✅ ACCIONES */}
                     <div className={styles.fileActions}>
-                      <button
-                        className={styles.actionButtonEdit}
-                        type="button"
-                        onClick={() => setEditingDocument(doc)}
-                      >
-                        <FiEdit size={14} /> Editar
-                      </button>
-                      <button
-                        onClick={() => handleDownload(doc.bucket, doc.file_path)}
-                        className={styles.actionButtonDownload}
-                        type="button"
-                      >
-                        <FiDownload size={14} /> Descargar
-                      </button>
+                      {isAttendanceFolder ? (
+                        <>
+                          <button
+                            className={styles.actionButtonGhost}
+                            type="button"
+                            onClick={() => viewFile(doc)}
+                            title="Ver"
+                          >
+                            <FiEye size={16} /> Ver
+                          </button>
+
+                          <button
+                            className={styles.actionButtonDownload}
+                            type="button"
+                            onClick={() => downloadFile(doc)}
+                            title="Descargar"
+                          >
+                            <FiDownload size={16} /> Descargar
+                          </button>
+                        </>
+                      ) : (
+                        <div className={styles.menuWrap}>
+                          <button
+                            type="button"
+                            className={styles.kebabButton}
+                            onClick={() => setMenuOpenFor((prev) => (prev === doc.id ? null : doc.id))}
+                            title="Más opciones"
+                          >
+                            <FiMoreHorizontal size={18} />
+                          </button>
+
+                          <DocMenu
+                            open={menuOpenFor === doc.id}
+                            onClose={() => setMenuOpenFor(null)}
+                            onView={() => viewFile(doc)}
+                            onDownload={() => downloadFile(doc)}
+                            onEdit={() => {
+                              setMenuOpenFor(null);
+                              setEditingDocument(doc);
+                            }}
+                            allowEdit={allowEdit}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
