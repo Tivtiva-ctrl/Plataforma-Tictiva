@@ -515,4 +515,4 @@ function DatosContractuales({
   );
 }
 
-export default DatosContractuales;
+export default DatosContractuales
