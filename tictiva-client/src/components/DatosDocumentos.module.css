@@ -1,409 +1,484 @@
 .documentContainer {
-  padding: 1rem 0;
+  width: 100%;
+  padding: 18px 18px 26px 18px;
 }
 
-.documentHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #f4f7f6;
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.documentHeader h2 {
-  font-family: var(--font-principal);
-  font-weight: 800;
-  font-size: 1.5rem;
-  color: var(--azul-tictiva);
+.pageTitle {
   margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
 }
 
+.muted {
+  color: #64748b;
+  margin-top: 10px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.crumb {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+.crumb:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.crumbActive {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Upload */
 .uploadButton {
+  background: #0f1f3d;
+  color: #ffffff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 31, 61, 0.15);
+}
+
+.uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.uploadButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* =========================
+   Carpetas estilo Windows
+   ========================= */
+
+.foldersList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.folderRow {
+  width: 100%;
+  border: 1px solid #e6edf7;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px 14px;
+  display: grid;
+  grid-template-columns: 40px 1fr 26px;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.12s ease;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.04);
+  text-align: left;
+}
+
+.folderRow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.07);
+}
+
+.folderIcon {
+  width: 34px;
+  height: 26px;
+  border-radius: 7px;
+  border: 2px solid #2f5bea; /* azul Tictiva */
+  position: relative;
+}
+
+.folderIcon::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: -7px;
+  width: 16px;
+  height: 10px;
+  border-radius: 7px 7px 0 0;
+  border: 2px solid #2f5bea;
+  border-bottom: none;
+  background: #ffffff;
+}
+
+.folderText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.folderTitleRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: var(--azul-tictiva);
-  color: var(--blanco);
-  border: none;
-  padding: 0.7rem 1.1rem;
-  border-radius: 8px;
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.uploadButton:hover {
-  background-color: #1a4a75; /* Azul más oscuro */
+  justify-content: space-between;
+  gap: 10px;
 }
 
-/* --- Estilo de la Lista (Foto 1) --- */
+.folderTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.folderSubtitle {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.folderCount {
+  background: #eef2ff;
+  border: 1px solid #dbeafe;
+  color: #1e3a8a;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  min-width: 34px;
+  text-align: center;
+}
+
+.folderChevron {
+  color: #64748b;
+}
+
+/* =========================
+   Dentro de carpeta
+   ========================= */
+
+.folderDetail {
+  margin-top: 8px;
+}
+
+.backButton {
+  border: 1px solid #e6edf7;
+  background: #ffffff;
+  padding: 10px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  color: #0f172a;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.backButton:hover {
+  background: #f8fafc;
+}
+
+.emptyFolder {
+  border: 1px dashed #dbeafe;
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.emptyIcon {
+  width: 34px;
+  height: 26px;
+  border-radius: 7px;
+  border: 2px solid #9aaef8;
+  position: relative;
+  opacity: 0.9;
+}
+.emptyIcon::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: -7px;
+  width: 16px;
+  height: 10px;
+  border-radius: 7px 7px 0 0;
+  border: 2px solid #9aaef8;
+  border-bottom: none;
+  background: #f8fafc;
+}
+
+.emptyTitle {
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.emptySub {
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* =========================
+   Lista documentos (dentro carpeta)
+   ========================= */
+
 .documentList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 10px;
 }
 
 .documentItem {
+  border: 1px solid #e6edf7;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 12px 12px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
   align-items: center;
-  gap: 1rem;
-  background-color: var(--blanco);
-  padding: 1rem 1.5rem;
-  border: 1px solid #e0e6ed;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.04);
 }
 
 .fileIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #f1f5ff;
+  color: #2f5bea;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f4f7f6;
-  color: var(--azul-tictiva);
 }
 
-.fileInfo {
-  display: flex;
-  flex-direction: column;
-}
 .fileInfo strong {
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--azul-tictiva);
-}
-.fileInfo small {
-  font-size: 0.85rem;
-  color: var(--gris-azulado);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.25rem;
+  color: #0f172a;
+  font-size: 14px;
 }
 
-/* --- Estilos de Etiquetas (Tags) --- */
-.fileTag {
-  font-weight: 600;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
+.fileMeta {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #64748b;
+  margin-top: 4px;
 }
-.tagGrey { background-color: #f3f4f6; color: #4b5563; }
-.tagBlue { background-color: #DBEAFE; color: #1E40AF; }
-.tagGreen { background-color: #D1FAE5; color: #065F46; }
-.tagPurple { background-color: #EDE9FE; color: #5B21B6; }
-.tagRed { background-color: #FEE2E2; color: #991B1B; }
 
+.dot {
+  opacity: 0.7;
+}
+
+.desc {
+  color: #64748b;
+}
 
 .fileActions {
   display: flex;
-  gap: 0.5rem;
-}
-
-/* =============================================== */
-/* === ¡BASE PARA TODOS LOS BOTONES DE ACCIÓN! === */
-/* =============================================== */
-.actionButtonView,
-.actionButtonEdit, 
-.actionButtonDownload {
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 0.85rem;
-  border-radius: 8px;
-  padding: 0.6rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 0.4rem;
 }
 
-/* Botón "Ver" */
-.actionButtonView {
-  background-color: var(--blanco);
-  border: 1px solid #4CAF50; /* Verde */
-  color: #4CAF50;
-}
-.actionButtonView:hover {
-  background-color: #4CAF50;
-  color: var(--blanco);
-}
-
-.actionButtonEdit {
-  background-color: var(--blanco);
-  border: 1px solid var(--gris-azulado);
-  color: var(--gris-azulado);
-}
-.actionButtonEdit:hover {
-  background-color: #f4f7f6;
-  border-color: var(--azul-tictiva);
-  color: var(--azul-tictiva);
+.actionButtonEdit,
+.actionButtonDownload {
+  border: 1px solid #e6edf7;
+  background: #ffffff;
+  padding: 9px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .actionButtonDownload {
-  background-color: var(--blanco);
-  border: 1px solid var(--azul-tictiva);
-  color: var(--azul-tictiva);
+  background: #0f1f3d;
+  color: #ffffff;
+  border-color: #0f1f3d;
 }
+
+.actionButtonEdit:hover {
+  background: #f8fafc;
+}
+
 .actionButtonDownload:hover {
-  background-color: var(--azul-tictiva);
-  color: var(--blanco);
+  transform: translateY(-1px);
 }
 
+/* =========================
+   Modal (tu modal “bonito”)
+   ========================= */
 
-/* =============================================== */
-/* === 3. ESTILOS DEL MODAL (POPUP - FOTO 2) === */
-/* =============================================== */
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 1000;
+  padding: 16px;
 }
 
 .modalContent {
-  background: var(--blanco);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 500px;
+  max-width: 640px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 22px 70px rgba(2, 6, 23, 0.35);
   overflow: hidden;
 }
 
 .modalHeader {
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e0e6ed;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f7;
 }
-.modalHeader h2 {
-  font-family: var(--font-principal);
-  font-weight: 800;
-  font-size: 1.25rem;
-  color: var(--azul-tictiva);
+
+.modalTitle {
   margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
 }
+
 .closeButton {
-  background: none;
   border: none;
-  color: var(--gris-azulado);
-  font-size: 1.5rem;
+  background: #f1f5f9;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   cursor: pointer;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background: #e2e8f0;
 }
 
 .modalBody {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  padding: 14px 16px 0 16px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
 }
+
 .formGroup label {
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: var(--gris-azulado);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 900;
+  color: #0f172a;
 }
+
 .formGroup input,
 .formGroup textarea,
 .formGroup select {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  border: 1px solid #d0dbe4;
-  border-radius: 8px;
-  font-family: var(--font-principal);
-  font-size: 0.95rem;
-  color: var(--azul-tictiva);
-  background-color: #f9fafb;
+  border: 1px solid #e6edf7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  font-size: 14px;
 }
+
 .formGroup textarea {
-  min-height: 80px;
+  min-height: 90px;
   resize: vertical;
 }
 
-/* Estilo del Dropzone */
 .dropZone {
-  border: 2px dashed #d0dbe4;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  color: var(--gris-azulado);
-  font-family: var(--font-principal);
-  background-color: #f9fafb;
+  border: 1px dashed #c7d2fe;
+  border-radius: 16px;
+  padding: 14px;
+  background: #f8fafc;
   position: relative;
-  cursor: pointer;
+  text-align: center;
+  color: #64748b;
 }
-.dropZone p {
-  margin: 0;
-  font-weight: 600;
-}
-.dropZone strong {
-  color: var(--azul-tictiva);
-}
+
 .dropZone input[type="file"] {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   opacity: 0;
   cursor: pointer;
 }
 
-/* Estilo para el texto "Archivo actual" */
 .currentFileText {
-  font-family: var(--font-principal);
-  font-size: 0.9rem;
-  color: var(--gris-azulado);
-  background-color: #f4f7f6;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #e0e6ed;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .modalError {
-  color: #D32F2F;
-  background-color: #FFEBEE;
-  border: 1px solid #D32F2F;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  text-align: center;
+  margin-top: 10px;
+  color: #b91c1c;
+  font-weight: 800;
 }
 
 .modalFooter {
-  padding: 1.5rem 2rem;
-  background-color: #f9fafb;
-  border-top: 1px solid #e0e6ed;
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.cancelButton, .saveButton {
-  padding: 0.7rem 1.2rem;
-  border-radius: 8px;
-  font-family: var(--font-principal);
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid #eef2f7;
+  margin-top: 12px;
 }
 
 .cancelButton {
-  background-color: var(--blanco);
-  border: 1px solid #d0dbe4;
-  color: var(--gris-azulado);
-}
-.cancelButton:hover {
-  background-color: #f4f7f6;
+  border: 1px solid #e6edf7;
+  background: #ffffff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 900;
+  color: #0f172a;
 }
 
 .saveButton {
-  background-color: var(--azul-tictiva);
-  color: var(--blanco);
-  border: 1px solid var(--azul-tictiva);
+  border: none;
+  background: #2f5bea;
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 900;
 }
-.saveButton:hover {
-  background-color: #1a4a75;
-}
-.saveButton:disabled {
-  background-color: #d0dbe4;
-  border-color: #d0dbe4;
+
+.saveButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
-/* ==== Carpetas / Secciones ==== */
-.foldersWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
 
-.folderBlock {
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.02);
-}
-
-.folderHeader {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: rgba(255,255,255,0.03);
-  border: none;
-  cursor: pointer;
-}
-
-.folderLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.folderEmoji {
-  font-size: 18px;
-}
-
-.folderTitle {
-  font-weight: 700;
-}
-
-.folderCount {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(47, 91, 234, 0.15);
-}
-
-.folderRight {
-  display: flex;
-  align-items: center;
-  opacity: 0.8;
-}
-
-.folderBody {
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.emptyFolder {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  opacity: 0.7;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.02);
-}
-
-.helperText {
-  display: block;
-  margin-top: 6px;
-  opacity: 0.7;
-  font-size: 12px;
+@media (max-width: 720px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
 }
