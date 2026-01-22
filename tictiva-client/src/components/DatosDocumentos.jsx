@@ -1,50 +1,164 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { supabase } from '../supabaseClient';
-import { useParams } from 'react-router-dom';
-import styles from './DatosDocumentos.module.css';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "../supabaseClient";
+import { useParams } from "react-router-dom";
+import styles from "./DatosDocumentos.module.css";
 import {
-  FiFileText,
   FiUpload,
   FiX,
   FiPaperclip,
-  FiEdit,
+  FiMoreHorizontal,
+  FiEye,
   FiDownload,
+  FiEdit,
+  FiFolder,
+  FiFileText,
   FiChevronRight,
   FiArrowLeft,
-  FiEye,
-  FiMoreHorizontal,
-} from 'react-icons/fi';
+} from "react-icons/fi";
 
 /**
- * Modal único para SUBIR o EDITAR documentos.
- * - existingDocument === null  => SUBIR
- * - existingDocument !== null  => EDITAR
+ * =========================================================
+ * Config de carpetas (Windows-like)
+ * =========================================================
  */
-function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
+const FOLDERS = [
+  {
+    key: "Asistencia / Evidencias",
+    title: "Asistencia / Evidencias",
+    description: "Comprobantes de marcación y evidencias asociadas",
+    readOnly: true,
+  },
+  {
+    key: "Contractual",
+    title: "Contractual",
+    description: "Contratos, anexos, renovaciones y documentos laborales",
+    readOnly: false,
+  },
+  {
+    key: "Previsional",
+    title: "Previsional",
+    description: "AFP, Isapre/Fonasa, cotizaciones y documentos previsionales",
+    readOnly: false,
+  },
+  {
+    key: "Personal",
+    title: "Personal",
+    description: "Documentación personal del colaborador",
+    readOnly: false,
+  },
+  {
+    key: "Salud",
+    title: "Salud",
+    description: "Licencias médicas y documentos de salud",
+    readOnly: false,
+  },
+  {
+    key: "Otros",
+    title: "Otros",
+    description: "Cualquier documento adicional o misceláneo",
+    readOnly: false,
+  },
+];
+
+const DEFAULT_BUCKET = "employee-documents";
+
+/**
+ * =========================================================
+ * Menú de 3 puntitos
+ * =========================================================
+ */
+function DocMenu({ showEdit, onView, onDownload, onEdit }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className={styles.menuWrap} ref={ref}>
+      <button
+        type="button"
+        className={styles.moreBtn}
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Más opciones"
+        title="Más opciones"
+      >
+        <FiMoreHorizontal />
+      </button>
+
+      {open && (
+        <div className={styles.menu}>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              setOpen(false);
+              onView();
+            }}
+          >
+            <FiEye /> Ver
+          </button>
+
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              setOpen(false);
+              onDownload();
+            }}
+          >
+            <FiDownload /> Descargar
+          </button>
+
+          {showEdit && (
+            <button
+              type="button"
+              className={styles.menuItem}
+              onClick={() => {
+                setOpen(false);
+                onEdit();
+              }}
+            >
+              <FiEdit /> Editar
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * =========================================================
+ * Modal para SUBIR o EDITAR documento (solo carpetas NO readOnly)
+ * =========================================================
+ */
+function DocumentModal({
+  onClose,
+  onSave,
+  rut,
+  existingDocument = null,
+  defaultCategory = "Otros",
+}) {
   const isEditing = !!existingDocument;
 
-  const [nombre, setNombre] = useState(existingDocument?.display_name || '');
-  const [descripcion, setDescripcion] = useState(existingDocument?.description || '');
-  const [category, setCategory] = useState(existingDocument?.category || '');
-  const [tag, setTag] = useState(existingDocument?.tag || 'General');
-
+  const [nombre, setNombre] = useState(existingDocument?.display_name || "");
+  const [descripcion, setDescripcion] = useState(existingDocument?.description || "");
+  const [category, setCategory] = useState(existingDocument?.category || defaultCategory);
+  const [tag, setTag] = useState(existingDocument?.tag || defaultCategory);
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
 
-  const title = isEditing ? 'Editar Documento' : 'Subir Documento';
+  const title = isEditing ? "Editar Documento" : "Subir Documento";
 
-  useEffect(() => {
-    if (!category) {
-      const t = (tag || '').toLowerCase();
-      if (t === 'contractual') setCategory('Contractual');
-      else if (t === 'previsional') setCategory('Previsional');
-      else if (t === 'personal') setCategory('Personal');
-      else if (t === 'salud') setCategory('Salud');
-      else setCategory('Otros');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const allowedFolders = useMemo(() => FOLDERS.filter((f) => !f.readOnly), []);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -57,31 +171,34 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
     e.preventDefault();
     setError(null);
 
-    if (!rut) return setError('No se encontró el RUT del empleado.');
-    if (!nombre) return setError('Por favor completa el nombre.');
-    if (!category) return setError('Selecciona una carpeta (categoría).');
-    if (!isEditing && !file) return setError('Por favor selecciona un archivo para subir.');
+    if (!rut) return setError("No se encontró el RUT del empleado.");
+    if (!nombre) return setError("Por favor completa el nombre.");
+
+    if (!isEditing && !file) return setError("Por favor selecciona un archivo para subir.");
 
     setIsUploading(true);
 
     try {
+      // ✅ uploads manuales SIEMPRE a employee-documents
+      const bucket = DEFAULT_BUCKET;
+
       let filePath = existingDocument?.file_path || null;
 
       if (file) {
-        if (isEditing && filePath) {
-          const { error: removeError } = await supabase.storage
-            .from('employee-documents')
-            .remove([filePath]);
-          if (removeError) console.warn('Error al eliminar archivo antiguo:', removeError.message);
+        if (isEditing && filePath && (existingDocument?.bucket || bucket) === bucket) {
+          const { error: removeError } = await supabase.storage.from(bucket).remove([filePath]);
+          if (removeError) console.warn("No se pudo borrar archivo antiguo:", removeError.message);
         }
 
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
         filePath = `${rut}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('employee-documents')
-          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || undefined,
+        });
 
         if (uploadError) throw new Error(`Error al subir el archivo: ${uploadError.message}`);
       }
@@ -92,37 +209,39 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
         description: descripcion,
         category,
         tag,
+        bucket,
         file_path: filePath,
       };
 
       if (isEditing) {
         const { error: dbError } = await supabase
-          .from('employee_documents')
+          .from("employee_documents")
           .update(documentData)
-          .eq('id', existingDocument.id);
+          .eq("id", existingDocument.id);
 
-        if (dbError) throw new Error(`Error al actualizar documento: ${dbError.message}`);
+        if (dbError) throw new Error(`Error al actualizar: ${dbError.message}`);
       } else {
-        const { error: dbError } = await supabase
-          .from('employee_documents')
-          .insert({ ...documentData, uploaded_at: new Date() });
+        const { error: dbError } = await supabase.from("employee_documents").insert({
+          ...documentData,
+          created_at: new Date().toISOString(), // ✅ TU COLUMNA REAL
+        });
 
-        if (dbError) throw new Error(`Error al guardar documento: ${dbError.message}`);
+        if (dbError) throw new Error(`Error al guardar: ${dbError.message}`);
       }
 
       onSave();
       onClose();
     } catch (err) {
-      console.error('Error al guardar documento:', err.message);
-      setError(err.message || 'Error desconocido al guardar el documento.');
+      console.error("Error guardando documento:", err);
+      setError(err?.message || "Error desconocido al guardar el documento.");
     } finally {
       setIsUploading(false);
     }
   };
 
   const nombreArchivoActual = existingDocument?.file_path
-    ? existingDocument.file_path.split('/').pop()
-    : 'No especificado';
+    ? existingDocument.file_path.split("/").pop()
+    : "No especificado";
 
   return (
     <div className={styles.modalOverlay}>
@@ -144,53 +263,50 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
                   type="text"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Ej. Contrato de Trabajo"
+                  placeholder="Ej. Anexo contrato / Certificado / etc."
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor="category">Carpeta *</label>
-                <select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
-                  <option value="">Selecciona carpeta…</option>
-                  <option value="Asistencia / Evidencias">Asistencia / Evidencias</option>
-                  <option value="Contractual">Contractual</option>
-                  <option value="Previsional">Previsional</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Salud">Salud</option>
-                  <option value="Otros">Otros</option>
+                <label htmlFor="category">Carpeta</label>
+                <select
+                  id="category"
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setTag(e.target.value);
+                  }}
+                >
+                  {allowedFolders.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.title}
+                    </option>
+                  ))}
                 </select>
+                <small className={styles.helpText}>
+                  * “Asistencia / Evidencias” se genera automáticamente (no editable).
+                </small>
+              </div>
+
+              <div className={styles.formGroup} style={{ gridColumn: "1 / -1" }}>
+                <label htmlFor="descripcion">Descripción</label>
+                <textarea
+                  id="descripcion"
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  placeholder="Breve contexto del documento"
+                />
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="descripcion">Descripción</label>
-              <textarea
-                id="descripcion"
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                placeholder="Ej. Documento firmado el 03/03/2021"
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="tag">Etiqueta (opcional)</label>
-              <select id="tag" value={tag} onChange={(e) => setTag(e.target.value)}>
-                <option value="Contractual">Contractual</option>
-                <option value="Previsional">Previsional</option>
-                <option value="Personal">Personal</option>
-                <option value="Salud">Salud</option>
-                <option value="General">General</option>
-              </select>
-            </div>
-
             <div className={styles.dropZone}>
-              <FiPaperclip size={26} />
+              <FiPaperclip size={28} />
               {file ? (
                 <p>
-                  Nuevo archivo: <strong>{file.name}</strong>
+                  Archivo: <strong>{file.name}</strong>
                 </p>
               ) : isEditing ? (
-                <p>Arrastra un nuevo archivo aquí para reemplazar el actual o haz clic.</p>
+                <p>Arrastra un archivo aquí para reemplazar el actual o haz clic.</p>
               ) : (
                 <p>Haz clic o arrastra el documento hasta aquí.</p>
               )}
@@ -207,15 +323,20 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
           </div>
 
           <div className={styles.modalFooter}>
-            <button type="button" onClick={onClose} className={styles.cancelButton} disabled={isUploading}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelButton}
+              disabled={isUploading}
+            >
               Cancelar
             </button>
             <button
               type="submit"
               className={styles.saveButton}
-              disabled={isUploading || !nombre || !category || (!isEditing && !file)}
+              disabled={isUploading || !nombre || (!isEditing && !file)}
             >
-              {isUploading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Guardar'}
+              {isUploading ? "Guardando..." : isEditing ? "Guardar Cambios" : "Guardar"}
             </button>
           </div>
         </form>
@@ -224,183 +345,147 @@ function DocumentModal({ onClose, onSave, rut, existingDocument = null }) {
   );
 }
 
-/** Menú simple (⋯) por documento */
-function DocMenu({ open, onClose, onView, onDownload, onEdit, allowEdit }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    };
-    const onEsc = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onEsc);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onEsc);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div ref={ref} className={styles.menu}>
-      <button type="button" className={styles.menuItem} onClick={onView}>
-        <FiEye /> Ver
-      </button>
-      <button type="button" className={styles.menuItem} onClick={onDownload}>
-        <FiDownload /> Descargar
-      </button>
-      {allowEdit && (
-        <button type="button" className={styles.menuItem} onClick={onEdit}>
-          <FiEdit /> Editar
-        </button>
-      )}
-    </div>
-  );
-}
-
 /**
- * Listado principal de documentos (vista carpetas tipo Windows)
+ * =========================================================
+ * Vista principal Documentos
+ * =========================================================
  */
 function DatosDocumentos({ rut: rutProp }) {
   const { rut: rutFromParams } = useParams();
   const rut = rutProp || rutFromParams;
 
-  const [documents, setDocuments] = useState([]);
+  const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
 
-  const [selectedFolder, setSelectedFolder] = useState(null);
-
-  // ✅ menú (⋯) abierto para doc.id
-  const [menuOpenFor, setMenuOpenFor] = useState(null);
-
-  const FOLDERS = useMemo(
-    () => [
-      { key: 'Asistencia / Evidencias', title: 'Asistencia / Evidencias', subtitle: 'Comprobantes de marcación y evidencias asociadas.' },
-      { key: 'Contractual', title: 'Contractual', subtitle: 'Contratos, anexos, renovaciones y documentos laborales.' },
-      { key: 'Previsional', title: 'Previsional', subtitle: 'AFP, Isapre/Fonasa y documentación previsional.' },
-      { key: 'Personal', title: 'Personal', subtitle: 'Antecedentes personales y documentación del trabajador.' },
-      { key: 'Salud', title: 'Salud', subtitle: 'Licencias, certificados médicos y respaldo de salud.' },
-      { key: 'Otros', title: 'Otros', subtitle: 'Documentos generales o sin clasificación.' },
-    ],
-    []
-  );
-
-  const normalizeCategory = (doc) => {
-    const cat = (doc?.category || '').trim();
-    if (cat) return cat;
-
-    const tag = (doc?.tag || '').trim().toLowerCase();
-    if (tag === 'contractual') return 'Contractual';
-    if (tag === 'previsional') return 'Previsional';
-    if (tag === 'personal') return 'Personal';
-    if (tag === 'salud') return 'Salud';
-    if (tag) return tag.charAt(0).toUpperCase() + tag.slice(1);
-    return 'Otros';
-  };
-
   const fetchDocuments = async () => {
     if (!rut) {
-      setDocuments([]);
+      setDocs([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
+
     const { data, error } = await supabase
-      .from('employee_documents')
-      .select('*')
-      .eq('rut', rut)
-      .order('uploaded_at', { ascending: false });
+      .from("employee_documents")
+      .select("*")
+      .eq("rut", rut)
+      .order("created_at", { ascending: false }); // ✅ TU COLUMNA REAL
 
     if (error) {
-      console.error('Error al cargar documentos:', error);
-      setDocuments([]);
+      console.error("Error al cargar documentos:", error);
+      setDocs([]);
     } else {
-      setDocuments(data || []);
+      setDocs(data || []);
     }
+
     setLoading(false);
   };
 
   useEffect(() => {
-    setSelectedFolder(null);
-    setMenuOpenFor(null);
     fetchDocuments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rut]);
 
-  const grouped = useMemo(() => {
-    const map = new Map();
-    for (const f of FOLDERS) map.set(f.key, []);
-    for (const d of documents) {
-      const key = normalizeCategory(d);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(d);
+  const groupedCounts = useMemo(() => {
+    const counts = {};
+    for (const f of FOLDERS) counts[f.key] = 0;
+
+    for (const d of docs) {
+      const cat = d.category || d.tag || "Otros";
+      if (!counts[cat]) counts[cat] = 0;
+      counts[cat] += 1;
     }
-    return map;
-  }, [documents, FOLDERS]);
+    return counts;
+  }, [docs]);
 
-  const folderCount = (folderKey) => (grouped.get(folderKey) || []).length;
+  const docsInFolder = useMemo(() => {
+    if (!selectedFolder) return [];
+    return docs.filter((d) => {
+      const cat = d.category || d.tag || "Otros";
+      return cat === selectedFolder;
+    });
+  }, [docs, selectedFolder]);
 
-  const currentDocs = selectedFolder ? grouped.get(selectedFolder) || [] : [];
+  const getBucketAndPath = (doc) => {
+    const bucket = (doc.bucket || DEFAULT_BUCKET).trim();
+    const filePath = (doc.file_path || "").trim();
+    return { bucket, filePath };
+  };
 
-  const getBucket = (doc) => doc.bucket || 'employee-documents';
-
-  const viewFile = async (doc) => {
+  const handleView = async (doc) => {
     try {
-      const bucket = getBucket(doc);
-      const filePath = doc.file_path;
+      const { bucket, filePath } = getBucketAndPath(doc);
+      if (!bucket || !filePath) throw new Error("Documento sin ruta/bucket.");
 
-      // ✅ Si el bucket es público, esto igual funciona; si es privado, te genera URL firmada
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 60 * 10);
-      if (error) throw error;
+      const { data: signed, error: signedErr } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, 60);
 
-      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+      if (!signedErr && signed?.signedUrl) {
+        window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      const { data: pub } = supabase.storage.from(bucket).getPublicUrl(filePath);
+      if (pub?.publicUrl) {
+        window.open(pub.publicUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      throw new Error("No se pudo generar link para ver.");
     } catch (e) {
-      console.error('Error al ver documento:', e.message);
-      alert('No se pudo abrir el documento.');
-    } finally {
-      setMenuOpenFor(null);
+      console.error(e);
+      alert("No se pudo abrir el documento.");
     }
   };
 
-  const downloadFile = async (doc) => {
+  const handleDownload = async (doc) => {
     try {
-      const bucket = getBucket(doc);
-      const filePath = doc.file_path;
+      const { bucket, filePath } = getBucketAndPath(doc);
+      if (!bucket || !filePath) throw new Error("Documento sin ruta/bucket.");
 
       const { data, error } = await supabase.storage.from(bucket).download(filePath);
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = filePath.split('/').pop();
+      a.download = filePath.split("/").pop() || "documento";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      console.error('Error al descargar:', e.message);
-      alert('No se pudo descargar el archivo.');
-    } finally {
-      setMenuOpenFor(null);
+      console.error(e);
+      alert("No se pudo descargar el archivo.");
     }
   };
 
-  const canEditDoc = (folderKey) => folderKey !== 'Asistencia / Evidencias';
+  const folderMeta = useMemo(() => {
+    const map = {};
+    for (const f of FOLDERS) map[f.key] = f;
+    return map;
+  }, []);
+
+  const selectedFolderMeta = selectedFolder ? folderMeta[selectedFolder] : null;
+  const isAsistenciaFolder = selectedFolder === "Asistencia / Evidencias";
 
   return (
-    <div className={styles.documentContainer}>
+    <div className={styles.page}>
+      {/* Modales */}
       {isUploadModalOpen && (
-        <DocumentModal rut={rut} onClose={() => setIsUploadModalOpen(false)} onSave={fetchDocuments} />
+        <DocumentModal
+          rut={rut}
+          onClose={() => setIsUploadModalOpen(false)}
+          onSave={fetchDocuments}
+          defaultCategory={selectedFolder && !isAsistenciaFolder ? selectedFolder : "Otros"}
+        />
       )}
 
       {editingDocument && (
@@ -409,35 +494,39 @@ function DatosDocumentos({ rut: rutProp }) {
           existingDocument={editingDocument}
           onClose={() => setEditingDocument(null)}
           onSave={fetchDocuments}
+          defaultCategory={editingDocument?.category || "Otros"}
         />
       )}
 
-      <div className={styles.headerRow}>
+      {/* Header */}
+      <div className={styles.header}>
         <div>
-          <h2 className={styles.pageTitle}>Documentos del Empleado</h2>
+          <h2 className={styles.title}>Documentos del Empleado</h2>
 
           <div className={styles.breadcrumb}>
-            <span className={styles.crumb} onClick={() => setSelectedFolder(null)}>
-              Documentos
-            </span>
+            <span className={styles.bcItem}>Documentos</span>
             {selectedFolder && (
               <>
                 <FiChevronRight />
-                <span className={styles.crumbActive}>{selectedFolder}</span>
+                <span className={styles.bcCurrent}>{selectedFolder}</span>
               </>
             )}
           </div>
         </div>
 
-        <button onClick={() => setIsUploadModalOpen(true)} className={styles.uploadButton} disabled={!rut}>
+        <button
+          className={styles.uploadBtn}
+          onClick={() => setIsUploadModalOpen(true)}
+          disabled={!rut || isAsistenciaFolder}
+          title={isAsistenciaFolder ? "Asistencia/Evidencias se genera automáticamente" : "Subir documento"}
+        >
           <FiUpload /> Subir Documento
         </button>
       </div>
 
-      {loading && <p className={styles.muted}>Cargando documentos...</p>}
-
-      {!loading && !selectedFolder && (
-        <div className={styles.foldersList}>
+      {/* Vista: Carpetas */}
+      {!selectedFolder && (
+        <div className={styles.foldersWrap}>
           {FOLDERS.map((f) => (
             <button
               key={f.key}
@@ -445,109 +534,74 @@ function DatosDocumentos({ rut: rutProp }) {
               className={styles.folderRow}
               onClick={() => setSelectedFolder(f.key)}
             >
-              <div className={styles.folderIcon} />
-              <div className={styles.folderText}>
-                <div className={styles.folderTitleRow}>
-                  <span className={styles.folderTitle}>{f.title}</span>
-                  <span className={styles.folderCount}>{folderCount(f.key)}</span>
-                </div>
-                <div className={styles.folderSubtitle}>{f.subtitle}</div>
+              <div className={styles.folderIcon}>
+                <FiFolder />
               </div>
-              <div className={styles.folderChevron}>
-                <FiChevronRight />
+
+              <div className={styles.folderInfo}>
+                <div className={styles.folderTitle}>{f.title}</div>
+                <div className={styles.folderDesc}>{f.description}</div>
               </div>
+
+              <div className={styles.folderCount}>{groupedCounts[f.key] || 0}</div>
             </button>
           ))}
         </div>
       )}
 
-      {!loading && selectedFolder && (
-        <div className={styles.folderDetail}>
-          <button className={styles.backButton} type="button" onClick={() => setSelectedFolder(null)}>
+      {/* Vista: Dentro carpeta */}
+      {selectedFolder && (
+        <div className={styles.folderView}>
+          <button type="button" className={styles.backBtn} onClick={() => setSelectedFolder(null)}>
             <FiArrowLeft /> Volver a carpetas
           </button>
 
-          {currentDocs.length === 0 ? (
-            <div className={styles.emptyFolder}>
-              <div className={styles.emptyIcon} />
+          <div className={styles.folderHead}>
+            <div className={styles.folderHeadLeft}>
+              <div className={styles.folderIconBig}>
+                <FiFolder />
+              </div>
               <div>
-                <div className={styles.emptyTitle}>Sin documentos en esta carpeta.</div>
-                <div className={styles.emptySub}>
-                  Puedes subir uno con el botón <b>Subir Documento</b>.
-                </div>
+                <div className={styles.folderHeadTitle}>{selectedFolderMeta?.title || selectedFolder}</div>
+                <div className={styles.folderHeadDesc}>{selectedFolderMeta?.description || ""}</div>
               </div>
             </div>
-          ) : (
-            <div className={styles.documentList}>
-              {currentDocs.map((doc) => {
-                const fecha = doc.uploaded_at
-                  ? new Date(doc.uploaded_at).toLocaleDateString('es-CL')
-                  : 'Fecha desconocida';
+            <div className={styles.folderHeadBadge}>{docsInFolder.length}</div>
+          </div>
 
-                const isAttendanceFolder = selectedFolder === 'Asistencia / Evidencias';
-                const allowEdit = canEditDoc(selectedFolder);
+          {loading && <p className={styles.emptyText}>Cargando documentos...</p>}
+
+          {!loading && docsInFolder.length === 0 && (
+            <p className={styles.emptyText}>Sin documentos en esta carpeta.</p>
+          )}
+
+          {!loading && docsInFolder.length > 0 && (
+            <div className={styles.docList}>
+              {docsInFolder.map((doc) => {
+                const fecha = doc.created_at
+                  ? new Date(doc.created_at).toLocaleDateString("es-CL") // ✅ TU COLUMNA REAL
+                  : "Fecha desconocida";
+
+                const showEdit = !isAsistenciaFolder;
 
                 return (
-                  <div key={doc.id} className={styles.documentItem}>
-                    <div className={styles.fileIcon}>
-                      <FiFileText size={20} />
+                  <div key={doc.id} className={styles.docRow}>
+                    <div className={styles.docIcon}>
+                      <FiFileText />
                     </div>
 
-                    <div className={styles.fileInfo}>
-                      <strong>{doc.display_name}</strong>
-                      <small className={styles.fileMeta}>
-                        Subido el {fecha}
-                        {doc.description ? <span className={styles.dot}>•</span> : null}
-                        {doc.description ? <span className={styles.desc}>{doc.description}</span> : null}
-                      </small>
+                    <div className={styles.docInfo}>
+                      <div className={styles.docName}>{doc.display_name || "Documento"}</div>
+                      <div className={styles.docMeta}>Subido el {fecha}</div>
                     </div>
 
-                    {/* ✅ ACCIONES */}
-                    <div className={styles.fileActions}>
-                      {isAttendanceFolder ? (
-                        <>
-                          <button
-                            className={styles.actionButtonGhost}
-                            type="button"
-                            onClick={() => viewFile(doc)}
-                            title="Ver"
-                          >
-                            <FiEye size={16} /> Ver
-                          </button>
-
-                          <button
-                            className={styles.actionButtonDownload}
-                            type="button"
-                            onClick={() => downloadFile(doc)}
-                            title="Descargar"
-                          >
-                            <FiDownload size={16} /> Descargar
-                          </button>
-                        </>
-                      ) : (
-                        <div className={styles.menuWrap}>
-                          <button
-                            type="button"
-                            className={styles.kebabButton}
-                            onClick={() => setMenuOpenFor((prev) => (prev === doc.id ? null : doc.id))}
-                            title="Más opciones"
-                          >
-                            <FiMoreHorizontal size={18} />
-                          </button>
-
-                          <DocMenu
-                            open={menuOpenFor === doc.id}
-                            onClose={() => setMenuOpenFor(null)}
-                            onView={() => viewFile(doc)}
-                            onDownload={() => downloadFile(doc)}
-                            onEdit={() => {
-                              setMenuOpenFor(null);
-                              setEditingDocument(doc);
-                            }}
-                            allowEdit={allowEdit}
-                          />
-                        </div>
-                      )}
+                    <div className={styles.docActions}>
+                      <DocMenu
+                        showEdit={showEdit}
+                        onView={() => handleView(doc)}
+                        onDownload={() => handleDownload(doc)}
+                        onEdit={() => setEditingDocument(doc)}
+                      />
                     </div>
                   </div>
                 );
