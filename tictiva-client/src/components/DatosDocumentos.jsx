@@ -10,7 +10,7 @@ import {
   FiEye,
   FiDownload,
   FiEdit,
-  FiFolder,
+  FiTrash2,
   FiFileText,
   FiChevronRight,
   FiArrowLeft,
@@ -18,16 +18,20 @@ import {
 
 /**
  * =========================================================
+ * Constantes (NO CONFUNDIR)
+ * - TABLE: tabla en Postgres
+ * - BUCKET: bucket en Storage
+ * =========================================================
+ */
+const DOCUMENTS_TABLE = "employee_documents"; // ✅ tabla (con guion bajo)
+const DEFAULT_BUCKET = "employee-documents"; // ✅ bucket (con guion)
+
+/**
+ * =========================================================
  * Config de carpetas (Windows-like)
  * =========================================================
  */
 const FOLDERS = [
-  {
-    key: "Asistencia / Evidencias",
-    title: "Asistencia / Evidencias",
-    description: "Comprobantes de marcación y evidencias asociadas",
-    readOnly: true,
-  },
   {
     key: "Contractual",
     title: "Contractual",
@@ -60,32 +64,101 @@ const FOLDERS = [
   },
 ];
 
-const DEFAULT_BUCKET = "employee-documents";
+/**
+ * =========================================================
+ * Helpers
+ * =========================================================
+ */
+const normalizeCategory = (raw) => {
+  const s = (raw || "").toString().trim();
+  if (!s) return "Otros";
+
+  const compact = s.toLowerCase().replace(/\s+/g, "");
+
+  // Si venía la carpeta antigua de marcaciones, la mandamos a Otros
+  if (compact === "asistencia/evidencias") return "Otros";
+  if (s.replace(/\s+/g, "") === "Asistencia/Evidencias") return "Otros";
+  if (s.toLowerCase() === "asistencia / evidencias") return "Otros";
+
+  const valid = {
+    contractual: "Contractual",
+    previsional: "Previsional",
+    personal: "Personal",
+    salud: "Salud",
+    otros: "Otros",
+  };
+
+  return valid[compact] || "Otros";
+};
+
+const formatDateCL = (iso) => {
+  if (!iso) return "Fecha desconocida";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "Fecha desconocida";
+  return d.toLocaleDateString("es-CL");
+};
 
 /**
  * =========================================================
- * Menú de 3 puntitos
+ * Menú de 3 puntitos (kebab) - inteligente (abre arriba si no cabe)
  * =========================================================
  */
-function DocMenu({ showEdit, onView, onDownload, onEdit }) {
+function DocMenu({ showEdit, onView, onDownload, onEdit, onDelete }) {
   const [open, setOpen] = useState(false);
+  const [direction, setDirection] = useState("down"); // "down" | "up"
   const ref = useRef(null);
 
+  const toggle = () => setOpen((v) => !v);
+
+  // Cierra con ESC
   useEffect(() => {
-    const handler = (e) => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Cierra con click/tap afuera (NO con scroll)
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (e) => {
       if (!ref.current) return;
       if (!ref.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  // Decide abrir arriba o abajo según espacio visible
+  useEffect(() => {
+    if (!open) return;
+    const el = ref.current;
+    if (!el) return;
+
+    const menuHeight = 200; // aprox
+    const margin = 12;
+
+    const rect = el.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    if (spaceBelow < menuHeight + margin && spaceAbove > menuHeight + margin) {
+      setDirection("up");
+    } else {
+      setDirection("down");
+    }
+  }, [open]);
 
   return (
     <div className={styles.menuWrap} ref={ref}>
       <button
         type="button"
-        className={styles.moreBtn}
-        onClick={() => setOpen((v) => !v)}
+        className={styles.kebabButton}
+        onClick={toggle}
         aria-label="Más opciones"
         title="Más opciones"
       >
@@ -93,13 +166,20 @@ function DocMenu({ showEdit, onView, onDownload, onEdit }) {
       </button>
 
       {open && (
-        <div className={styles.menu}>
+        <div
+          className={styles.menu}
+          style={
+            direction === "up"
+              ? { top: "auto", bottom: "46px" }
+              : { top: "46px", bottom: "auto" }
+          }
+        >
           <button
             type="button"
             className={styles.menuItem}
             onClick={() => {
               setOpen(false);
-              onView();
+              onView?.();
             }}
           >
             <FiEye /> Ver
@@ -110,7 +190,7 @@ function DocMenu({ showEdit, onView, onDownload, onEdit }) {
             className={styles.menuItem}
             onClick={() => {
               setOpen(false);
-              onDownload();
+              onDownload?.();
             }}
           >
             <FiDownload /> Descargar
@@ -122,12 +202,24 @@ function DocMenu({ showEdit, onView, onDownload, onEdit }) {
               className={styles.menuItem}
               onClick={() => {
                 setOpen(false);
-                onEdit();
+                onEdit?.();
               }}
             >
               <FiEdit /> Editar
             </button>
           )}
+
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              setOpen(false);
+              onDelete?.();
+            }}
+            title="Eliminar documento"
+          >
+            <FiTrash2 /> Eliminar
+          </button>
         </div>
       )}
     </div>
@@ -136,7 +228,7 @@ function DocMenu({ showEdit, onView, onDownload, onEdit }) {
 
 /**
  * =========================================================
- * Modal para SUBIR o EDITAR documento (solo carpetas NO readOnly)
+ * Modal para SUBIR o EDITAR documento
  * =========================================================
  */
 function DocumentModal({
@@ -150,14 +242,15 @@ function DocumentModal({
 
   const [nombre, setNombre] = useState(existingDocument?.display_name || "");
   const [descripcion, setDescripcion] = useState(existingDocument?.description || "");
-  const [category, setCategory] = useState(existingDocument?.category || defaultCategory);
-  const [tag, setTag] = useState(existingDocument?.tag || defaultCategory);
+  const [category, setCategory] = useState(
+    normalizeCategory(existingDocument?.category || defaultCategory)
+  );
+  const [tag, setTag] = useState(normalizeCategory(existingDocument?.tag || defaultCategory));
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
 
   const title = isEditing ? "Editar Documento" : "Subir Documento";
-
   const allowedFolders = useMemo(() => FOLDERS.filter((f) => !f.readOnly), []);
 
   const handleFileChange = (e) => {
@@ -173,17 +266,15 @@ function DocumentModal({
 
     if (!rut) return setError("No se encontró el RUT del empleado.");
     if (!nombre) return setError("Por favor completa el nombre.");
-
     if (!isEditing && !file) return setError("Por favor selecciona un archivo para subir.");
 
     setIsUploading(true);
 
     try {
-      // ✅ uploads manuales SIEMPRE a employee-documents
       const bucket = DEFAULT_BUCKET;
-
       let filePath = existingDocument?.file_path || null;
 
+      // Si se sube/reemplaza archivo => storage
       if (file) {
         if (isEditing && filePath && (existingDocument?.bucket || bucket) === bucket) {
           const { error: removeError } = await supabase.storage.from(bucket).remove([filePath]);
@@ -203,33 +294,37 @@ function DocumentModal({
         if (uploadError) throw new Error(`Error al subir el archivo: ${uploadError.message}`);
       }
 
+      const cleanCategory = normalizeCategory(category);
+      const cleanTag = normalizeCategory(tag);
+
       const documentData = {
         rut,
         display_name: nombre,
         description: descripcion,
-        category,
-        tag,
+        category: cleanCategory,
+        tag: cleanTag,
         bucket,
         file_path: filePath,
       };
 
+      // ✅ OJO: aquí es TABLA, no bucket
       if (isEditing) {
         const { error: dbError } = await supabase
-          .from("employee_documents")
+          .from(DOCUMENTS_TABLE)
           .update(documentData)
           .eq("id", existingDocument.id);
 
         if (dbError) throw new Error(`Error al actualizar: ${dbError.message}`);
       } else {
-        const { error: dbError } = await supabase.from("employee_documents").insert({
+        const { error: dbError } = await supabase.from(DOCUMENTS_TABLE).insert({
           ...documentData,
-          created_at: new Date().toISOString(), // ✅ TU COLUMNA REAL
+          created_at: new Date().toISOString(),
         });
 
         if (dbError) throw new Error(`Error al guardar: ${dbError.message}`);
       }
 
-      onSave();
+      await onSave();
       onClose();
     } catch (err) {
       console.error("Error guardando documento:", err);
@@ -284,7 +379,7 @@ function DocumentModal({
                   ))}
                 </select>
                 <small className={styles.helpText}>
-                  * “Asistencia / Evidencias” se genera automáticamente (no editable).
+                  * Los comprobantes de asistencia se gestionan desde el módulo de Asistencia.
                 </small>
               </div>
 
@@ -347,7 +442,7 @@ function DocumentModal({
 
 /**
  * =========================================================
- * Vista principal Documentos
+ * Vista principal
  * =========================================================
  */
 function DatosDocumentos({ rut: rutProp }) {
@@ -356,7 +451,6 @@ function DatosDocumentos({ rut: rutProp }) {
 
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [selectedFolder, setSelectedFolder] = useState(null);
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -371,11 +465,12 @@ function DatosDocumentos({ rut: rutProp }) {
 
     setLoading(true);
 
+    // ✅ OJO: aquí es TABLA, no bucket
     const { data, error } = await supabase
-      .from("employee_documents")
+      .from(DOCUMENTS_TABLE)
       .select("*")
       .eq("rut", rut)
-      .order("created_at", { ascending: false }); // ✅ TU COLUMNA REAL
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error al cargar documentos:", error);
@@ -392,25 +487,33 @@ function DatosDocumentos({ rut: rutProp }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rut]);
 
+  const folderMeta = useMemo(() => {
+    const map = {};
+    for (const f of FOLDERS) map[f.key] = f;
+    return map;
+  }, []);
+
+  const selectedFolderKey = selectedFolder ? normalizeCategory(selectedFolder) : null;
+  const selectedFolderMeta = selectedFolderKey ? folderMeta[selectedFolderKey] : null;
+  const isReadOnlyFolder = !!selectedFolderMeta?.readOnly;
+
   const groupedCounts = useMemo(() => {
     const counts = {};
     for (const f of FOLDERS) counts[f.key] = 0;
 
     for (const d of docs) {
-      const cat = d.category || d.tag || "Otros";
-      if (!counts[cat]) counts[cat] = 0;
-      counts[cat] += 1;
+      const cat = normalizeCategory(d.category || d.tag || "Otros");
+      counts[cat] = (counts[cat] || 0) + 1;
     }
     return counts;
   }, [docs]);
 
   const docsInFolder = useMemo(() => {
-    if (!selectedFolder) return [];
-    return docs.filter((d) => {
-      const cat = d.category || d.tag || "Otros";
-      return cat === selectedFolder;
-    });
-  }, [docs, selectedFolder]);
+    if (!selectedFolderKey) return [];
+    return docs.filter(
+      (d) => normalizeCategory(d.category || d.tag || "Otros") === selectedFolderKey
+    );
+  }, [docs, selectedFolderKey]);
 
   const getBucketAndPath = (doc) => {
     const bucket = (doc.bucket || DEFAULT_BUCKET).trim();
@@ -423,6 +526,7 @@ function DatosDocumentos({ rut: rutProp }) {
       const { bucket, filePath } = getBucketAndPath(doc);
       if (!bucket || !filePath) throw new Error("Documento sin ruta/bucket.");
 
+      // 1) Intento signed URL (sirve incluso si el bucket no es public)
       const { data: signed, error: signedErr } = await supabase.storage
         .from(bucket)
         .createSignedUrl(filePath, 60);
@@ -432,6 +536,7 @@ function DatosDocumentos({ rut: rutProp }) {
         return;
       }
 
+      // 2) Fallback public URL (si el bucket es public)
       const { data: pub } = supabase.storage.from(bucket).getPublicUrl(filePath);
       if (pub?.publicUrl) {
         window.open(pub.publicUrl, "_blank", "noopener,noreferrer");
@@ -467,24 +572,61 @@ function DatosDocumentos({ rut: rutProp }) {
     }
   };
 
-  const folderMeta = useMemo(() => {
-    const map = {};
-    for (const f of FOLDERS) map[f.key] = f;
-    return map;
-  }, []);
+  const handleDelete = async (doc) => {
+    const name = doc?.display_name || "Documento";
+    const ok = window.confirm(`¿Eliminar "${name}"?\n\nEsta acción no se puede deshacer.`);
+    if (!ok) return;
 
-  const selectedFolderMeta = selectedFolder ? folderMeta[selectedFolder] : null;
-  const isAsistenciaFolder = selectedFolder === "Asistencia / Evidencias";
+    try {
+      if (!doc?.id) {
+        console.error("Documento sin id:", doc);
+        alert("No se pudo eliminar: el documento no tiene ID.");
+        return;
+      }
+
+      // 1) Storage (si hay ruta)
+      const { bucket, filePath } = getBucketAndPath(doc);
+      if (bucket && filePath) {
+        const { error: removeErr } = await supabase.storage.from(bucket).remove([filePath]);
+        if (removeErr) console.warn("Storage remove error:", removeErr);
+      }
+
+      // 2) DB (tabla correcta)
+      const { data: deleted, error: dbErr } = await supabase
+        .from(DOCUMENTS_TABLE)
+        .delete()
+        .eq("id", doc.id)
+        .select("id");
+
+      if (dbErr) {
+        console.error("DB delete error:", dbErr);
+        alert(`No se pudo eliminar (DB): ${dbErr.message}`);
+        return;
+      }
+
+      if (!deleted || deleted.length === 0) {
+        console.warn("Delete no borró filas. Probable RLS.", doc.id);
+        alert("No se eliminó nada. Probable bloqueo por permisos (RLS).");
+        return;
+      }
+
+      // 3) UI
+      setDocs((prev) => prev.filter((d) => d.id !== doc.id));
+      await fetchDocuments();
+    } catch (e) {
+      console.error("Delete catch:", e);
+      alert("No se pudo eliminar el documento.");
+    }
+  };
 
   return (
-    <div className={styles.page}>
-      {/* Modales */}
+    <div className={styles.documentContainer}>
       {isUploadModalOpen && (
         <DocumentModal
           rut={rut}
           onClose={() => setIsUploadModalOpen(false)}
           onSave={fetchDocuments}
-          defaultCategory={selectedFolder && !isAsistenciaFolder ? selectedFolder : "Otros"}
+          defaultCategory={selectedFolderKey && !isReadOnlyFolder ? selectedFolderKey : "Otros"}
         />
       )}
 
@@ -494,39 +636,45 @@ function DatosDocumentos({ rut: rutProp }) {
           existingDocument={editingDocument}
           onClose={() => setEditingDocument(null)}
           onSave={fetchDocuments}
-          defaultCategory={editingDocument?.category || "Otros"}
+          defaultCategory={normalizeCategory(editingDocument?.category || "Otros")}
         />
       )}
 
-      {/* Header */}
-      <div className={styles.header}>
+      <div className={styles.headerRow}>
         <div>
-          <h2 className={styles.title}>Documentos del Empleado</h2>
+          <h2 className={styles.pageTitle}>Documentos del Empleado</h2>
 
           <div className={styles.breadcrumb}>
-            <span className={styles.bcItem}>Documentos</span>
-            {selectedFolder && (
+            <span
+              className={styles.crumb}
+              onClick={() => setSelectedFolder(null)}
+              role="button"
+              tabIndex={0}
+            >
+              Documentos
+            </span>
+
+            {selectedFolderKey && (
               <>
                 <FiChevronRight />
-                <span className={styles.bcCurrent}>{selectedFolder}</span>
+                <span className={styles.crumbActive}>{selectedFolderKey}</span>
               </>
             )}
           </div>
         </div>
 
         <button
-          className={styles.uploadBtn}
+          className={styles.uploadButton}
           onClick={() => setIsUploadModalOpen(true)}
-          disabled={!rut || isAsistenciaFolder}
-          title={isAsistenciaFolder ? "Asistencia/Evidencias se genera automáticamente" : "Subir documento"}
+          disabled={!rut}
+          title={!rut ? "No se encontró el RUT del empleado" : "Subir documento"}
         >
           <FiUpload /> Subir Documento
         </button>
       </div>
 
-      {/* Vista: Carpetas */}
-      {!selectedFolder && (
-        <div className={styles.foldersWrap}>
+      {!selectedFolderKey && (
+        <div className={styles.foldersList}>
           {FOLDERS.map((f) => (
             <button
               key={f.key}
@@ -534,73 +682,72 @@ function DatosDocumentos({ rut: rutProp }) {
               className={styles.folderRow}
               onClick={() => setSelectedFolder(f.key)}
             >
-              <div className={styles.folderIcon}>
-                <FiFolder />
+              <div className={styles.folderIcon} aria-hidden="true" />
+
+              <div className={styles.folderText}>
+                <div className={styles.folderTitleRow}>
+                  <div className={styles.folderTitle}>{f.title}</div>
+                  <div className={styles.folderCount}>{groupedCounts[f.key] || 0}</div>
+                </div>
+                <div className={styles.folderSubtitle}>{f.description}</div>
               </div>
 
-              <div className={styles.folderInfo}>
-                <div className={styles.folderTitle}>{f.title}</div>
-                <div className={styles.folderDesc}>{f.description}</div>
+              <div className={styles.folderChevron}>
+                <FiChevronRight />
               </div>
-
-              <div className={styles.folderCount}>{groupedCounts[f.key] || 0}</div>
             </button>
           ))}
         </div>
       )}
 
-      {/* Vista: Dentro carpeta */}
-      {selectedFolder && (
-        <div className={styles.folderView}>
-          <button type="button" className={styles.backBtn} onClick={() => setSelectedFolder(null)}>
+      {selectedFolderKey && (
+        <div className={styles.folderDetail}>
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={() => setSelectedFolder(null)}
+          >
             <FiArrowLeft /> Volver a carpetas
           </button>
 
-          <div className={styles.folderHead}>
-            <div className={styles.folderHeadLeft}>
-              <div className={styles.folderIconBig}>
-                <FiFolder />
-              </div>
-              <div>
-                <div className={styles.folderHeadTitle}>{selectedFolderMeta?.title || selectedFolder}</div>
-                <div className={styles.folderHeadDesc}>{selectedFolderMeta?.description || ""}</div>
-              </div>
-            </div>
-            <div className={styles.folderHeadBadge}>{docsInFolder.length}</div>
-          </div>
-
-          {loading && <p className={styles.emptyText}>Cargando documentos...</p>}
+          {loading && <p className={styles.muted}>Cargando documentos...</p>}
 
           {!loading && docsInFolder.length === 0 && (
-            <p className={styles.emptyText}>Sin documentos en esta carpeta.</p>
+            <div className={styles.emptyFolder}>
+              <div className={styles.emptyIcon} aria-hidden="true" />
+              <div>
+                <div className={styles.emptyTitle}>Sin documentos</div>
+                <div className={styles.emptySub}>No hay documentos en esta carpeta.</div>
+              </div>
+            </div>
           )}
 
           {!loading && docsInFolder.length > 0 && (
-            <div className={styles.docList}>
+            <div className={styles.documentList}>
               {docsInFolder.map((doc) => {
-                const fecha = doc.created_at
-                  ? new Date(doc.created_at).toLocaleDateString("es-CL") // ✅ TU COLUMNA REAL
-                  : "Fecha desconocida";
-
-                const showEdit = !isAsistenciaFolder;
+                const fecha = formatDateCL(doc.created_at);
+                const showEdit = !isReadOnlyFolder;
 
                 return (
-                  <div key={doc.id} className={styles.docRow}>
-                    <div className={styles.docIcon}>
+                  <div key={doc.id} className={styles.documentItem}>
+                    <div className={styles.fileIcon}>
                       <FiFileText />
                     </div>
 
-                    <div className={styles.docInfo}>
-                      <div className={styles.docName}>{doc.display_name || "Documento"}</div>
-                      <div className={styles.docMeta}>Subido el {fecha}</div>
+                    <div className={styles.fileInfo}>
+                      <strong>{doc.display_name || "Documento"}</strong>
+                      <div className={styles.fileMeta}>
+                        <span>Subido el {fecha}</span>
+                      </div>
                     </div>
 
-                    <div className={styles.docActions}>
+                    <div className={styles.fileActions}>
                       <DocMenu
                         showEdit={showEdit}
                         onView={() => handleView(doc)}
                         onDownload={() => handleDownload(doc)}
                         onEdit={() => setEditingDocument(doc)}
+                        onDelete={() => handleDelete(doc)}
                       />
                     </div>
                   </div>

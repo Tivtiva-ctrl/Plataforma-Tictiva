@@ -526,7 +526,7 @@
   position: absolute;
   right: 0;
   top: 46px;
-  z-index: 20;
+  z-index: 999;
   width: 180px;
   background: #ffffff;
   border: 1px solid #e6edf7;
