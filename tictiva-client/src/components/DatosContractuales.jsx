@@ -4,8 +4,6 @@ import React, { useState, useEffect } from "react";
 import styles from "./DatosPersonales.module.css";
 import { supabase } from "../supabaseClient";
 
-const DEBUG = false; // 👈 ponlo en true si quieres ver logs en consola
-
 // ================================
 // Normalizador de RUT (sin puntos ni guión)
 // ================================
@@ -15,15 +13,8 @@ function normalizeRut(raw) {
     .trim()
     .replace(/\./g, "")
     .replace(/-/g, "")
+    .replace(/\s/g, "")
     .toUpperCase();
-}
-
-// Detecta si parece UUID (employee_personal.id)
-function isUuid(v) {
-  if (!v) return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    String(v)
-  );
 }
 
 // ================================
@@ -87,19 +78,19 @@ function DatosContractuales({
   isEditing,
   onChange,
 
+  // ✅ nuevos (vienen desde EmployeeProfilePage corregido)
+  employeeId = null,
+
   // props existentes (se mantienen)
   isEnrolled = false,
   enrolledAt = null,
-
-  // ✅ NUEVO (no rompe nada): si el padre lo pasa, lo usamos y listo
-  employeeId: employeeIdProp = null,
 }) {
   const [formData, setFormData] = useState(contractData || {});
 
   // ✅ Estado local para enrolamiento consultado en Supabase
-  const [remoteEnrolled, setRemoteEnrolled] = useState(null); // null = verificando / desconocido
+  const [remoteEnrolled, setRemoteEnrolled] = useState(null); // null = verificando
   const [remoteEnrolledAt, setRemoteEnrolledAt] = useState(null);
-  const [remoteEnrollmentPhotoUrl, setRemoteEnrollmentPhotoUrl] = useState(null);
+  const [remotePhotoUrl, setRemotePhotoUrl] = useState(null);
 
   useEffect(() => {
     setFormData(contractData || {});
@@ -114,7 +105,6 @@ function DatosContractuales({
         [name]: value,
       };
 
-      // Avisamos al padre (EmployeeProfilePage)
       if (typeof onChange === "function") {
         onChange(updated);
       }
@@ -124,11 +114,9 @@ function DatosContractuales({
   };
 
   // ==========================================================
-  // ✅ ENROLAMIENTO (CORREGIDO y ROBUSTO)
-  // Regla: ENROLADO = existe registro en face_enrollments por employee_id
-  // 1) Intentamos por employeeId (lo correcto)
-  // 2) Si no hay employeeId, intentamos resolverlo desde contractData
-  // 3) Si no podemos, hacemos fallback por RUT (por compatibilidad con datos viejos)
+  // ✅ Verificar enrolamiento (ROBUSTO):
+  // 1) Por employee_id (lo ideal)
+  // 2) Si no encuentra, fallback por rut normalizado (por si hay migrados raros)
   // ==========================================================
   useEffect(() => {
     let cancelled = false;
@@ -136,98 +124,30 @@ function DatosContractuales({
     async function checkEnrollment() {
       if (!contractData) return;
 
-      // Estado "verificando"
-      setRemoteEnrolled(null);
-      setRemoteEnrolledAt(null);
-      setRemoteEnrollmentPhotoUrl(null);
+      // PIN (solo para mostrar el bloque; si no hay PIN, igual no rompemos)
+      const pin =
+        contractData.pin_marcacion ||
+        contractData.pin ||
+        formData.pin_marcacion ||
+        "";
 
-      // 1) Obtener employeeId (prioridad: prop del padre)
-      const employeeIdCandidate =
-        employeeIdProp ||
+      // Si no hay employeeId, intentamos sacarlo de contractData (por si viene)
+      const effectiveEmployeeId =
+        employeeId ||
         contractData.employee_id ||
         contractData.empleado_id ||
         contractData.trabajador_id ||
         contractData.colaborador_id ||
-        (isUuid(contractData.id) ? contractData.id : null) ||
         null;
 
-      // 2) Intentar por employee_id directo en face_enrollments (lo ideal)
-      //    (Esto NO depende del PIN ni del RUT)
-      if (employeeIdCandidate) {
-        if (DEBUG) {
-          console.log("🟦 [DatosContractuales] checkEnrollment by employee_id:", {
-            employeeIdCandidate,
-          });
-        }
+      // Si no hay pin, igual podemos verificar enrolamiento (porque es informativo),
+      // pero si quieres amarrarlo al pin, deja este if como estaba.
+      // Yo lo dejo flexible para que no te quede "No enrolado" solo por no tener pin.
+      setRemoteEnrolled(null);
+      setRemoteEnrolledAt(null);
+      setRemotePhotoUrl(null);
 
-        // 2.a) Primero intentamos usar la VIEW si existe (si la creaste)
-        //      Si no existe, fallará y hacemos fallback al select directo.
-        try {
-          const { data: vData, error: vErr } = await supabase
-            .from("v_employee_enrollment_status")
-            .select("is_enrolled, enrolled_at, enrollment_photo_url")
-            .eq("employee_id", employeeIdCandidate)
-            .maybeSingle();
-
-          // Si la view existe y responde (aunque sea null), usamos eso
-          if (!vErr) {
-            if (cancelled) return;
-
-            const ok = !!vData?.is_enrolled;
-            setRemoteEnrolled(ok);
-            setRemoteEnrolledAt(vData?.enrolled_at || null);
-            setRemoteEnrollmentPhotoUrl(vData?.enrollment_photo_url || null);
-
-            if (DEBUG) {
-              console.log("🟩 [DatosContractuales] view result:", vData);
-            }
-            return; // ✅ listo por view
-          }
-
-          // Si el error es porque la view no existe, seguimos al fallback
-          if (DEBUG) {
-            console.warn("🟨 [DatosContractuales] view not usable, fallback:", vErr);
-          }
-        } catch (e) {
-          if (DEBUG) console.warn("🟨 [DatosContractuales] view try/catch:", e);
-        }
-
-        // 2.b) Fallback directo a face_enrollments por employee_id
-        const { data: feData, error: feErr } = await supabase
-          .from("face_enrollments")
-          .select("employee_id, created_at, updated_at, enrolled_at, photo_url, photo_path")
-          .eq("employee_id", employeeIdCandidate)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (cancelled) return;
-
-        if (feErr) {
-          console.warn("Error verificando enrolamiento (face_enrollments por employee_id):", feErr);
-          setRemoteEnrolled(false);
-          setRemoteEnrolledAt(null);
-          setRemoteEnrollmentPhotoUrl(null);
-          return;
-        }
-
-        const found = !!feData;
-        setRemoteEnrolled(found);
-        setRemoteEnrolledAt(
-          feData?.enrolled_at || feData?.updated_at || feData?.created_at || null
-        );
-
-        // foto: preferimos photo_url (si existe); si no, dejamos photo_path (si existe) para que el padre la convierta
-        setRemoteEnrollmentPhotoUrl(feData?.photo_url || feData?.photo_path || null);
-
-        if (DEBUG) {
-          console.log("🟩 [DatosContractuales] face_enrollments by employee_id:", feData);
-        }
-        return; // ✅ listo por employee_id
-      }
-
-      // 3) Si no hay employeeId, hacemos fallback por RUT (compatibilidad)
-      //    OJO: tu BD tiene rut "cuerpo+dv pegado" en varios lados, así que normalizamos.
+      // 1) Buscamos RUT desde contractData si existe, si no desde employee_personal con employeeId
       let rutRaw =
         contractData.rut ||
         contractData.rut_trabajador ||
@@ -236,81 +156,73 @@ function DatosContractuales({
         contractData.rutKey ||
         "";
 
-      // Si no viene rut en contractuales, probamos buscarlo en employee_personal
-      // pero SIN inventar columnas: usamos SOLO employee_personal.id (si contractData.id es UUID)
-      if (!rutRaw && isUuid(contractData.id)) {
-        const q = await supabase
+      if (!rutRaw && effectiveEmployeeId) {
+        const q2 = await supabase
           .from("employee_personal")
           .select("rut")
-          .eq("id", contractData.id)
+          .eq("id", effectiveEmployeeId)
           .maybeSingle();
 
-        rutRaw = q?.data?.rut || "";
+        if (!q2.error && q2.data?.rut) rutRaw = q2.data.rut;
       }
 
       const rutKey = normalizeRut(rutRaw);
 
-      if (DEBUG) {
-        console.log("🟦 [DatosContractuales] fallback by rut:", { rutRaw, rutKey });
+      // 2) Intento A: por employee_id
+      let enrollment = null;
+
+      if (effectiveEmployeeId) {
+        const { data, error } = await supabase
+          .from("face_enrollments")
+          .select("employee_id, rut, photo_url, enrolled_at, created_at, updated_at")
+          .eq("employee_id", effectiveEmployeeId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!cancelled && !error && data) {
+          enrollment = data;
+        }
       }
 
-      if (!rutKey) {
-        // No se puede verificar
-        setRemoteEnrolled(false);
-        setRemoteEnrolledAt(null);
-        setRemoteEnrollmentPhotoUrl(null);
-        return;
-      }
+      // 3) Intento B (fallback): por rut normalizado
+      if (!enrollment && rutKey) {
+        const { data, error } = await supabase
+          .from("face_enrollments")
+          .select("employee_id, rut, photo_url, enrolled_at, created_at, updated_at")
+          .eq("rut", rutKey)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const { data: dataRut, error: errRut } = await supabase
-        .from("face_enrollments")
-        .select("rut, created_at, updated_at, enrolled_at, photo_url, photo_path")
-        .eq("rut", rutKey)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        if (!cancelled && !error && data) {
+          enrollment = data;
+        }
+      }
 
       if (cancelled) return;
 
-      if (errRut) {
-        console.warn("Error verificando enrolamiento (face_enrollments por rut):", errRut);
-        setRemoteEnrolled(false);
-        setRemoteEnrolledAt(null);
-        setRemoteEnrollmentPhotoUrl(null);
-        return;
-      }
+      const found = !!enrollment;
+      setRemoteEnrolled(found);
+      setRemotePhotoUrl(enrollment?.photo_url || null);
 
-      const foundRut = !!dataRut;
-      setRemoteEnrolled(foundRut);
-      setRemoteEnrolledAt(
-        dataRut?.enrolled_at || dataRut?.updated_at || dataRut?.created_at || null
-      );
-      setRemoteEnrollmentPhotoUrl(dataRut?.photo_url || dataRut?.photo_path || null);
-
-      if (DEBUG) {
-        console.log("🟩 [DatosContractuales] face_enrollments by rut:", dataRut);
-      }
+      // ✅ Fecha correcta para mostrar "Enrolado el..."
+      // Preferimos enrolled_at. Si no existe, usamos created_at.
+      // NO usamos updated_at para que no aparezca como "actualizado" (confunde).
+      setRemoteEnrolledAt(enrollment?.enrolled_at || enrollment?.created_at || null);
     }
 
     checkEnrollment();
     return () => {
       cancelled = true;
     };
-  }, [contractData, employeeIdProp]);
+  }, [contractData, formData.pin_marcacion, employeeId]);
 
   // --- Opciones para los menús desplegables ---
   const tiposContrato = ["Indefinido", "Plazo Fijo", "Por Obra o Faena"];
   const estadosContrato = ["Vigente", "Terminado", "Suspendido"];
   const tiposJornada = ["Completa (40h)", "Parcial (30h)", "Part-Time (20h)"];
-  const afps = [
-    "Capital",
-    "Cuprum",
-    "Habitat",
-    "Modelo",
-    "Planvital",
-    "Provida",
-    "Uno",
-  ];
+  const afps = ["Capital", "Cuprum", "Habitat", "Modelo", "Planvital", "Provida", "Uno"];
   const sistemasSalud = [
     "Fonasa",
     "Isapre Banmédica",
@@ -325,7 +237,7 @@ function DatosContractuales({
     return <div className={styles.loading}>Cargando datos contractuales...</div>;
   }
 
-  // ✅ Si la consulta remota ya resolvió, usamos eso. Si no, usamos lo que venga del padre.
+  // ✅ Si la consulta remota ya resolvió, usamos eso. Si no, usamos lo del padre.
   const effectiveIsEnrolled = remoteEnrolled !== null ? remoteEnrolled : isEnrolled;
   const effectiveEnrolledAt = remoteEnrolledAt || enrolledAt;
 
@@ -337,15 +249,24 @@ function DatosContractuales({
       : "❌ No enrolado";
 
   const enrolledBg =
-    remoteEnrolled === null ? "#E5E7EB" : effectiveIsEnrolled ? "#DCFCE7" : "#FEE2E2";
+    remoteEnrolled === null
+      ? "#E5E7EB"
+      : effectiveIsEnrolled
+      ? "#DCFCE7"
+      : "#FEE2E2";
 
   const enrolledColor =
-    remoteEnrolled === null ? "#111827" : effectiveIsEnrolled ? "#166534" : "#991B1B";
+    remoteEnrolled === null
+      ? "#111827"
+      : effectiveIsEnrolled
+      ? "#166534"
+      : "#991B1B";
 
+  // ✅ Texto final: "Enrolado el: ..."
   let enrolledAtText = null;
   if (effectiveIsEnrolled && effectiveEnrolledAt) {
     try {
-      enrolledAtText = new Date(effectiveEnrolledAt).toLocaleString();
+      enrolledAtText = new Date(effectiveEnrolledAt).toLocaleString("es-CL");
     } catch (e) {
       enrolledAtText = String(effectiveEnrolledAt);
     }
@@ -564,7 +485,7 @@ function DatosContractuales({
           />
         </div>
 
-        {/* ✅ Enrolado: Sí/No (solo informativo, NO editable) */}
+        {/* ✅ Enrolamiento */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span
             style={{
@@ -581,17 +502,23 @@ function DatosContractuales({
 
           {effectiveIsEnrolled && enrolledAtText && (
             <span style={{ fontSize: 12, opacity: 0.75 }}>
-              Actualizado: <b>{enrolledAtText}</b>
-            </span>
-          )}
-
-          {/* (Opcional) si quieres ver si llega URL/path */}
-          {DEBUG && remoteEnrollmentPhotoUrl && (
-            <span style={{ fontSize: 12, opacity: 0.75 }}>
-              Foto: <b>{String(remoteEnrollmentPhotoUrl).slice(0, 50)}…</b>
+              Enrolado el: <b>{enrolledAtText}</b>
             </span>
           )}
         </div>
+
+        {/* (Opcional) Si después quieres mostrar mini-preview de la foto en contractuales:
+            OJO: no lo hago obligatorio para no "cambiar diseño". Solo queda preparado.
+        */}
+        {false && remotePhotoUrl && (
+          <div style={{ marginTop: 8 }}>
+            <img
+              src={remotePhotoUrl}
+              alt="Foto enrolamiento"
+              style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 12 }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
