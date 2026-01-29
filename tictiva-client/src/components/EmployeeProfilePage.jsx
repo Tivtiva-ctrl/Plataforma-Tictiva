@@ -16,6 +16,23 @@ import DatosBitacora from "./DatosBitacora";
 import DatosHistorial from "./DatosHistorial";
 
 // =======================================================
+// ✅ Helper: Normalizar RUT (########-DV)
+// =======================================================
+function normalizeRut(input) {
+  if (input == null) return "";
+  let s = String(input).trim().toUpperCase();
+  s = s.replace(/[.\s-]/g, "");
+  s = s.replace(/[^0-9K]/g, "");
+  if (s.length < 2) return "";
+  const dv = s.slice(-1);
+  const num = s.slice(0, -1);
+  if (!/^\d+$/.test(num)) return "";
+  if (!/^[0-9K]$/.test(dv)) return "";
+  const numClean = String(parseInt(num, 10));
+  return `${numClean}-${dv}`;
+}
+
+// =======================================================
 // Helper: limpiar payload para Supabase
 // =======================================================
 function sanitizeRow(row, omitKeys = []) {
@@ -39,34 +56,24 @@ async function registerHistoryEntry({ rut, employeeId, autor }) {
   const payload = {
     employee_id: employeeId,
     rut,
-
-    // Contexto del módulo
     modulo: "RRHH",
     submodulo: "FICHA",
-
-    // Qué pasó
     tipo: "CAMBIO",
     titulo: "Actualización de ficha del colaborador",
     categoria: "RRHH",
     descripcion:
       "Se actualizó la información de la ficha del colaborador desde el módulo RRHH.",
     estado: "REGISTRADO",
-
-    // Detalle de la acción
     tipo_accion: "ACTUALIZACION",
     gravedad: "BAJA",
     etiqueta_accion: "FICHA_ACTUALIZADA",
     valor_anterior: null,
     nuevo_valor: null,
-
-    // Quién hizo la acción
     autor: actorName,
     autor_role: "ADMINISTRADOR",
     realizado_por_id: null,
     realizado_por_nombre: actorName,
     realizado_por_role: "ADMINISTRADOR",
-
-    // De dónde vino
     origen: "WEB_RRHH",
     direccion_ip: null,
     agente_usuario: null,
@@ -74,10 +81,7 @@ async function registerHistoryEntry({ rut, employeeId, autor }) {
   };
 
   const { error } = await supabase.from("employee_history").insert([payload]);
-
-  if (error) {
-    console.error("Error registrando historial (employee_history):", error);
-  }
+  if (error) console.error("Error registrando historial (employee_history):", error);
 }
 
 // =======================================================
@@ -85,34 +89,25 @@ async function registerHistoryEntry({ rut, employeeId, autor }) {
 // =======================================================
 function Overview360({ employee }) {
   if (!employee) {
-    return (
-      <div className={styles.sectionContent}>Cargando datos del empleado…</div>
-    );
+    return <div className={styles.sectionContent}>Cargando datos del empleado…</div>;
   }
 
   return (
     <div className={styles.cardGrid}>
-      {/* Datos personales */}
       <div className={styles.infoCard}>
         <h3>Datos personales</h3>
         <p>Email: {employee.email_personal || "[campo sin definir]"}</p>
         <p>Dirección: {employee.direccion || "[campo sin definir]"}</p>
         <p>Comuna: {employee.comuna || "[campo sin definir]"}</p>
-        <Link to="personal" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Horario */}
       <div className={styles.infoCard}>
         <h3>Horario</h3>
         <p>El empleado no tiene asignaciones activas en este momento.</p>
-        <Link to="asistencia" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Evaluaciones */}
       <div className={styles.infoCard}>
         <h3>Evaluaciones</h3>
         <div className={styles.evaluationScore}>7.8</div>
@@ -120,75 +115,49 @@ function Overview360({ employee }) {
         <p className={styles.evaluationSubtitle}>
           Último test aplicado por Nadia (psicóloga interna)
         </p>
-        <Link to="bitacora" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Contacto de emergencia */}
       <div className={styles.infoCard}>
         <h3>Contacto de emergencia</h3>
-        <p>
-          Nombre: {employee.contacto_emergencia_nombre || "[campo sin definir]"}
-        </p>
-        <p>
-          Teléfono:{" "}
-          {employee.contacto_emergencia_telefono || "[campo sin definir]"}
-        </p>
-        <Link to="personal" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <p>Nombre: {employee.contacto_emergencia_nombre || "[campo sin definir]"}</p>
+        <p>Teléfono: {employee.contacto_emergencia_telefono || "[campo sin definir]"}</p>
+        <Link to="personal" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Registros y anotaciones */}
       <div className={styles.infoCard}>
         <h3>Registros y anotaciones</h3>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Observaciones</div>
           <div className={styles.progressBar}>
-            <div
-              className={styles.progressBarFillBlue}
-              style={{ width: "60%" }}
-            />
+            <div className={styles.progressBarFillBlue} style={{ width: "60%" }} />
           </div>
           <div className={styles.progressBarValue}>1</div>
         </div>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Positivas</div>
           <div className={styles.progressBar}>
-            <div
-              className={styles.progressBarFillGreen}
-              style={{ width: "80%" }}
-            />
+            <div className={styles.progressBarFillGreen} style={{ width: "80%" }} />
           </div>
           <div className={styles.progressBarValue}>1</div>
         </div>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Negativas</div>
           <div className={styles.progressBar}>
-            <div
-              className={styles.progressBarFillRed}
-              style={{ width: "30%" }}
-            />
+            <div className={styles.progressBarFillRed} style={{ width: "30%" }} />
           </div>
           <div className={styles.progressBarValue}>1</div>
         </div>
         <div className={styles.progressBarContainer}>
           <div className={styles.progressBarLabel}>Entrevistas</div>
           <div className={styles.progressBar}>
-            <div
-              className={styles.progressBarFillPurple}
-              style={{ width: "40%" }}
-            />
+            <div className={styles.progressBarFillPurple} style={{ width: "40%" }} />
           </div>
           <div className={styles.progressBarValue}>0</div>
         </div>
-        <Link to="bitacora" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <Link to="bitacora" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Asistencia */}
       <div className={styles.infoCard}>
         <h3>Asistencia</h3>
         <div className={styles.attendanceCircle}>100%</div>
@@ -196,12 +165,9 @@ function Overview360({ employee }) {
         <div className={styles.attendanceAlert}>
           ⚠️ Atrasos: 1 atraso – 4h: 51m acumulado
         </div>
-        <Link to="asistencia" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <Link to="asistencia" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Alerta Verito */}
       <div className={`${styles.infoCard} ${styles.alertCard}`}>
         <h3>Hola, Verónica 💚</h3>
         <p>Detecté que {employee.nombre_completo} tiene 2 documentos vencidos.</p>
@@ -212,18 +178,14 @@ function Overview360({ employee }) {
         </div>
       </div>
 
-      {/* Salud */}
       <div className={styles.infoCard}>
         <h3>Datos de salud</h3>
         <p>Alergias: {employee.tipo_discapacidad || "[campo sin definir]"}</p>
         <p>Enf. crónicas: {"[campo sin definir]"}</p>
         <p>Seguro de salud: {"[Sin definir]"}</p>
-        <Link to="salud" className={styles.detailButton}>
-          Ver detalle
-        </Link>
+        <Link to="salud" className={styles.detailButton}>Ver detalle</Link>
       </div>
 
-      {/* Comunicaciones */}
       <div className={styles.infoCard}>
         <h3>Comunicación interna</h3>
         <p>18 mensajes registrados</p>
@@ -245,7 +207,8 @@ function Overview360({ employee }) {
 // === PÁGINA DE PERFIL PRINCIPAL ===
 // =======================================================
 function EmployeeProfilePage() {
-  const { rut } = useParams();
+  const { rut: rutParamRaw } = useParams();
+
   const [personalData, setPersonalData] = useState(null);
   const [contractData, setContractData] = useState(null);
   const [previsionalData, setPrevisionalData] = useState(null);
@@ -257,15 +220,66 @@ function EmployeeProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  // ✅ NUEVO: enrolamiento facial (foto + fecha) + employee_id real
-  const [faceEnroll, setFaceEnroll] = useState(null); // { employee_id, photo_url, enrolled_at/updated_at/created_at }
-  const [employeeId, setEmployeeId] = useState(null); // ✅ CLAVE para contractuales/asistencia
+  const [faceEnroll, setFaceEnroll] = useState(null);
+  const [employeeId, setEmployeeId] = useState(null);
+
+  // ✅ Fallback desde Storage si photo_url viene vacío/malo
+  const [fallbackFacePhotoUrl, setFallbackFacePhotoUrl] = useState(null);
+
+  // ✅ Cadena de fallback real (si falla la imagen 1, prueba la 2, etc.)
+  const [avatarCandidates, setAvatarCandidates] = useState([]);
+  const [avatarIdx, setAvatarIdx] = useState(0);
+  const [avatarSrc, setAvatarSrc] = useState(null);
+
+  const getInitials = (fullName) => {
+    if (!fullName) return "??";
+    const parts = fullName.trim().split(/\s+/);
+    const first = parts[0]?.[0] || "";
+    const last = parts[parts.length - 1]?.[0] || "";
+    return (first + last).toUpperCase() || "??";
+  };
+
+  // ✅ Convierte photo_url a una URL usable:
+  // - si ya es http, ok
+  // - si es path (ej "Enrollment/11.../a.jpg"), crea signed url desde enrollment_photos
+  async function resolveToHttpUrl(maybeUrlOrPath) {
+    const v = (maybeUrlOrPath || "").trim();
+    if (!v) return null;
+
+    if (v.startsWith("http://") || v.startsWith("https://")) {
+      // bust cache por si el navegador se queda pegado con error viejo
+      return `${v}${v.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    }
+
+    // Si viene como "Enrollment/..../file.jpg" o "Enrollment/..../"
+    // asumimos que está dentro del bucket enrollment_photos
+    const cleanPath = v.replace(/^\/+/, "");
+    try {
+      const { data: signed, error } = await supabase.storage
+        .from("enrollment_photos")
+        .createSignedUrl(cleanPath, 60 * 60);
+
+      if (!error && signed?.signedUrl) {
+        return `${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      }
+
+      // Public URL fallback
+      const { data: pub } = supabase.storage.from("enrollment_photos").getPublicUrl(cleanPath);
+      if (pub?.publicUrl) {
+        const p = pub.publicUrl;
+        return `${p}${p.includes("?") ? "&" : "?"}t=${Date.now()}`;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  }
 
   // ==========================================
   // Carga de datos desde Supabase
   // ==========================================
   useEffect(() => {
-    if (!rut) {
+    if (!rutParamRaw) {
       setLoading(false);
       console.error("No se proporcionó RUT");
       return;
@@ -274,30 +288,53 @@ function EmployeeProfilePage() {
     const fetchEmployeeData = async () => {
       setLoading(true);
       setSaveError(null);
+      setFallbackFacePhotoUrl(null);
+      setFaceEnroll(null);
+      setAvatarCandidates([]);
+      setAvatarIdx(0);
+      setAvatarSrc(null);
 
-      // 1) Datos personales (tabla SIN employee_id, usamos RUT)
-      const { data: personal, error: perError } = await supabase
-        .from("employee_personal")
-        .select("*")
-        .eq("rut", rut)
-        .single();
+      const rutCanonicoParam = normalizeRut(rutParamRaw);
 
-      if (perError) {
-        console.error("Error al cargar datos personales:", perError);
+      // 1) Datos personales (intentamos normalizado, y si no, raw)
+      let personal = null;
+
+      if (rutCanonicoParam) {
+        const { data, error } = await supabase
+          .from("employee_personal")
+          .select("*")
+          .eq("rut", rutCanonicoParam)
+          .maybeSingle();
+        if (!error) personal = data || null;
+      }
+
+      if (!personal) {
+        const { data, error } = await supabase
+          .from("employee_personal")
+          .select("*")
+          .eq("rut", rutParamRaw)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error al cargar datos personales:", error);
+          setLoading(false);
+          return;
+        }
+        personal = data || null;
+      }
+
+      if (!personal) {
+        setPersonalData(null);
         setLoading(false);
         return;
       }
 
       setPersonalData(personal);
 
-      // ✅ employeeId real para TODA la ficha (este era el faltante)
       const resolvedEmployeeId = personal.employee_id || personal.id || null;
       setEmployeeId(resolvedEmployeeId);
 
       if (!resolvedEmployeeId) {
-        console.warn(
-          "No se encontró employee_id/id; se cargarán solo datos personales."
-        );
         setContractData(null);
         setPrevisionalData(null);
         setBankData({});
@@ -307,8 +344,9 @@ function EmployeeProfilePage() {
         return;
       }
 
-      // ✅ NUEVO (CORREGIDO): Traer enrolamiento por employee_id (NO por rut)
-      // Esto arregla "No enrolado" aunque el rut venga en formato distinto.
+      const rutCanonico = normalizeRut(personal.rut) || rutCanonicoParam || "";
+
+      // 1.1) Enrolamiento por employee_id
       const { data: enroll, error: enrollError } = await supabase
         .from("face_enrollments")
         .select("employee_id, photo_url, enrolled_at, updated_at, created_at")
@@ -318,13 +356,55 @@ function EmployeeProfilePage() {
         .maybeSingle();
 
       if (enrollError) {
-        console.warn(
-          "Error al cargar face_enrollments (por employee_id):",
-          enrollError.message
-        );
+        console.warn("Error al cargar face_enrollments:", enrollError.message);
         setFaceEnroll(null);
       } else {
         setFaceEnroll(enroll || null);
+      }
+
+      // 1.2) Fallback Storage si no hay photo_url o si viene malo
+      if (rutCanonico) {
+        try {
+          const folder = `Enrollment/${rutCanonico}`;
+
+          const { data: files, error: listError } = await supabase.storage
+            .from("enrollment_photos")
+            .list(folder, {
+              limit: 50,
+              offset: 0,
+              sortBy: { column: "created_at", order: "desc" },
+            });
+
+          if (!listError && files && files.length > 0) {
+            const img = files.find((f) => {
+              const n = (f.name || "").toLowerCase();
+              return n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png") || n.endsWith(".webp");
+            });
+
+            if (img) {
+              const fullPath = `${folder}/${img.name}`;
+              const { data: signed, error: signedErr } = await supabase.storage
+                .from("enrollment_photos")
+                .createSignedUrl(fullPath, 60 * 60);
+
+              if (!signedErr && signed?.signedUrl) {
+                setFallbackFacePhotoUrl(`${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`);
+              } else {
+                const { data: pub } = supabase.storage
+                  .from("enrollment_photos")
+                  .getPublicUrl(fullPath);
+
+                if (pub?.publicUrl) {
+                  setFallbackFacePhotoUrl(`${pub.publicUrl}${pub.publicUrl.includes("?") ? "&" : "?"}t=${Date.now()}`);
+                }
+              }
+            }
+          } else if (listError) {
+            console.warn("No se pudo listar Storage enrolamiento:", listError.message);
+          }
+        } catch (e) {
+          console.warn("Fallback Storage enrolamiento excepción:", e?.message || e);
+        }
       }
 
       // 2) Contrato
@@ -336,9 +416,7 @@ function EmployeeProfilePage() {
         .limit(1)
         .maybeSingle();
 
-      if (conError) {
-        console.warn("Error al cargar datos de contrato:", conError.message);
-      }
+      if (conError) console.warn("Error al cargar datos de contrato:", conError.message);
       setContractData(contract || { employee_id: resolvedEmployeeId });
 
       // 3) Previsión
@@ -350,9 +428,7 @@ function EmployeeProfilePage() {
         .limit(1)
         .maybeSingle();
 
-      if (prevError) {
-        console.warn("Error al cargar datos previsionales:", prevError.message);
-      }
+      if (prevError) console.warn("Error al cargar datos previsionales:", prevError.message);
       setPrevisionalData(previsional || { employee_id: resolvedEmployeeId });
 
       // 4) Bancarios
@@ -364,9 +440,7 @@ function EmployeeProfilePage() {
         .limit(1)
         .maybeSingle();
 
-      if (bankError) {
-        console.warn("Error al cargar datos bancarios:", bankError.message);
-      }
+      if (bankError) console.warn("Error al cargar datos bancarios:", bankError.message);
       setBankData(bank || { employee_id: resolvedEmployeeId });
 
       // 5) Salud
@@ -378,16 +452,44 @@ function EmployeeProfilePage() {
         .limit(1)
         .maybeSingle();
 
-      if (healthError) {
-        console.warn("Error al cargar datos de salud:", healthError.message);
-      }
+      if (healthError) console.warn("Error al cargar datos de salud:", healthError.message);
       setHealthData(health || { employee_id: resolvedEmployeeId });
 
       setLoading(false);
     };
 
     fetchEmployeeData();
-  }, [rut]);
+  }, [rutParamRaw]);
+
+  // ✅ Construir candidatos de avatar y setear src inicial
+  useEffect(() => {
+    const build = async () => {
+      const candidates = [];
+
+      // 1) FaceEnroll photo_url (puede ser http o path)
+      const resolvedFace = await resolveToHttpUrl(faceEnroll?.photo_url);
+      if (resolvedFace) candidates.push(resolvedFace);
+
+      // 2) Fallback desde Storage
+      if (fallbackFacePhotoUrl) candidates.push(fallbackFacePhotoUrl);
+
+      // 3) Avatar de personalData (si es http)
+      if (
+        personalData?.avatar &&
+        typeof personalData.avatar === "string" &&
+        personalData.avatar.startsWith("http")
+      ) {
+        candidates.push(`${personalData.avatar}${personalData.avatar.includes("?") ? "&" : "?"}t=${Date.now()}`);
+      }
+
+      setAvatarCandidates(candidates);
+      setAvatarIdx(0);
+      setAvatarSrc(candidates[0] || null);
+    };
+
+    build();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faceEnroll?.photo_url, fallbackFacePhotoUrl, personalData?.avatar]);
 
   // Antigüedad
   const yearsAndMonths = useMemo(() => {
@@ -395,8 +497,7 @@ function EmployeeProfilePage() {
     if (!fecha) return "[Sin fecha de ingreso]";
 
     const ingressDate = new Date(fecha);
-    if (Number.isNaN(ingressDate.getTime()))
-      return "[Sin fecha de ingreso válida]";
+    if (Number.isNaN(ingressDate.getTime())) return "[Sin fecha de ingreso válida]";
 
     const today = new Date();
     let years = today.getFullYear() - ingressDate.getFullYear();
@@ -427,14 +528,6 @@ function EmployeeProfilePage() {
     { title: "Historial", path: "historial" },
   ];
 
-  const getInitials = (fullName) => {
-    if (!fullName) return "??";
-    const parts = fullName.trim().split(/\s+/);
-    const first = parts[0]?.[0] || "";
-    const last = parts[parts.length - 1]?.[0] || "";
-    return (first + last).toUpperCase() || "??";
-  };
-
   // ==========================================
   // Guardar TODAS las secciones editables
   // ==========================================
@@ -445,158 +538,73 @@ function EmployeeProfilePage() {
     setSaveError(null);
 
     try {
-      // employeeId lo seguimos tomando del registro personal (id)
       const resolvedEmployeeId = personalData.employee_id || personalData.id;
+      const rutCanonico = normalizeRut(personalData.rut) || personalData.rut;
 
-      // 1) DATOS PERSONALES (solo UPDATE por RUT, sin INSERT)
-      if (personalData.rut) {
-        const personalPayload = sanitizeRow(personalData, [
-          "id",
-          "employee_id", // 👈 muy importante: esta columna NO existe en la tabla
-          "created_at",
-          "updated_at",
-        ]);
-
-        console.log("Payload employee_personal (por RUT):", personalPayload);
+      if (rutCanonico) {
+        const personalPayload = sanitizeRow(
+          { ...personalData, rut: rutCanonico },
+          ["id", "employee_id", "created_at", "updated_at"]
+        );
 
         const { error: perUpdateError } = await supabase
           .from("employee_personal")
           .update(personalPayload)
-          .eq("rut", personalData.rut);
+          .eq("rut", rutCanonico);
 
-        if (perUpdateError) {
-          console.error("Error al actualizar employee_personal:", perUpdateError);
-          throw perUpdateError;
-        }
+        if (perUpdateError) throw perUpdateError;
       }
 
-      // 2) Contractuales
       if (contractData && (contractData.id || resolvedEmployeeId)) {
-        const contractPayload = sanitizeRow(contractData, [
-          "id",
-          "employee_id",
-          "created_at",
-          "updated_at",
-        ]);
+        const contractPayload = sanitizeRow(contractData, ["id", "employee_id", "created_at", "updated_at"]);
 
         if (contractData.id) {
-          const { error: conUpdateError } = await supabase
-            .from("employee_contracts")
-            .update(contractPayload)
-            .eq("id", contractData.id);
-
-          if (conUpdateError) {
-            console.error("Error al actualizar employee_contracts:", conUpdateError);
-            throw conUpdateError;
-          }
+          const { error } = await supabase.from("employee_contracts").update(contractPayload).eq("id", contractData.id);
+          if (error) throw error;
         } else {
-          const { error: conInsertError } = await supabase
-            .from("employee_contracts")
-            .insert([{ ...contractPayload, employee_id: resolvedEmployeeId }]);
-
-          if (conInsertError) {
-            console.error("Error al insertar employee_contracts:", conInsertError);
-            throw conInsertError;
-          }
+          const { error } = await supabase.from("employee_contracts").insert([{ ...contractPayload, employee_id: resolvedEmployeeId }]);
+          if (error) throw error;
         }
       }
 
-      // 3) Previsionales
       if (previsionalData && (previsionalData.id || resolvedEmployeeId)) {
-        const prevPayload = sanitizeRow(previsionalData, [
-          "id",
-          "employee_id",
-          "created_at",
-          "updated_at",
-        ]);
+        const prevPayload = sanitizeRow(previsionalData, ["id", "employee_id", "created_at", "updated_at"]);
 
         if (previsionalData.id) {
-          const { error: prevUpdateError } = await supabase
-            .from("employee_prevision")
-            .update(prevPayload)
-            .eq("id", previsionalData.id);
-
-          if (prevUpdateError) {
-            console.error("Error al actualizar employee_prevision:", prevUpdateError);
-            throw prevUpdateError;
-          }
+          const { error } = await supabase.from("employee_prevision").update(prevPayload).eq("id", previsionalData.id);
+          if (error) throw error;
         } else {
-          const { error: prevInsertError } = await supabase
-            .from("employee_prevision")
-            .insert([{ ...prevPayload, employee_id: resolvedEmployeeId }]);
-
-          if (prevInsertError) {
-            console.error("Error al insertar employee_prevision:", prevInsertError);
-            throw prevInsertError;
-          }
+          const { error } = await supabase.from("employee_prevision").insert([{ ...prevPayload, employee_id: resolvedEmployeeId }]);
+          if (error) throw error;
         }
       }
 
-      // 4) Bancarios
       if (bankData && (bankData.id || resolvedEmployeeId)) {
-        const bankPayload = sanitizeRow(bankData, [
-          "id",
-          "employee_id",
-          "created_at",
-          "updated_at",
-        ]);
+        const bankPayload = sanitizeRow(bankData, ["id", "employee_id", "created_at", "updated_at"]);
 
         if (bankData.id) {
-          const { error: bankUpdateError } = await supabase
-            .from("employee_bank_accounts")
-            .update(bankPayload)
-            .eq("id", bankData.id);
-
-          if (bankUpdateError) {
-            console.error("Error al actualizar employee_bank_accounts:", bankUpdateError);
-            throw bankUpdateError;
-          }
+          const { error } = await supabase.from("employee_bank_accounts").update(bankPayload).eq("id", bankData.id);
+          if (error) throw error;
         } else {
-          const { error: bankInsertError } = await supabase
-            .from("employee_bank_accounts")
-            .insert([{ ...bankPayload, employee_id: resolvedEmployeeId }]);
-
-          if (bankInsertError) {
-            console.error("Error al insertar employee_bank_accounts:", bankInsertError);
-            throw bankInsertError;
-          }
+          const { error } = await supabase.from("employee_bank_accounts").insert([{ ...bankPayload, employee_id: resolvedEmployeeId }]);
+          if (error) throw error;
         }
       }
 
-      // 5) Salud
       if (healthData && (healthData.id || resolvedEmployeeId)) {
-        const healthPayload = sanitizeRow(healthData, [
-          "id",
-          "employee_id",
-          "created_at",
-          "updated_at",
-        ]);
+        const healthPayload = sanitizeRow(healthData, ["id", "employee_id", "created_at", "updated_at"]);
 
         if (healthData.id) {
-          const { error: healthUpdateError } = await supabase
-            .from("employee_health")
-            .update(healthPayload)
-            .eq("id", healthData.id);
-
-          if (healthUpdateError) {
-            console.error("Error al actualizar employee_health:", healthUpdateError);
-            throw healthUpdateError;
-          }
+          const { error } = await supabase.from("employee_health").update(healthPayload).eq("id", healthData.id);
+          if (error) throw error;
         } else {
-          const { error: healthInsertError } = await supabase
-            .from("employee_health")
-            .insert([{ ...healthPayload, employee_id: resolvedEmployeeId }]);
-
-          if (healthInsertError) {
-            console.error("Error al insertar employee_health:", healthInsertError);
-            throw healthInsertError;
-          }
+          const { error } = await supabase.from("employee_health").insert([{ ...healthPayload, employee_id: resolvedEmployeeId }]);
+          if (error) throw error;
         }
       }
 
-      // 6) Registrar en historial
       await registerHistoryEntry({
-        rut: personalData.rut,
+        rut: rutCanonico,
         employeeId: resolvedEmployeeId,
         autor: "Admin Tictiva",
       });
@@ -604,9 +612,7 @@ function EmployeeProfilePage() {
       setIsEditing(false);
     } catch (err) {
       console.error("Error al guardar la ficha completa:", err);
-      setSaveError(
-        "Ocurrió un error al guardar la ficha. Revisa la consola para más detalles."
-      );
+      setSaveError("Ocurrió un error al guardar la ficha. Revisa la consola para más detalles.");
     } finally {
       setSaving(false);
     }
@@ -621,6 +627,17 @@ function EmployeeProfilePage() {
     await saveAllSections();
   };
 
+  // ✅ onError: si falla una foto, probamos la siguiente; si no hay, mostramos iniciales
+  const handleAvatarError = () => {
+    const next = avatarIdx + 1;
+    if (avatarCandidates[next]) {
+      setAvatarIdx(next);
+      setAvatarSrc(avatarCandidates[next]);
+    } else {
+      setAvatarSrc(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -633,7 +650,7 @@ function EmployeeProfilePage() {
     return (
       <div className={styles.errorContainer}>
         <h2>Empleado no encontrado</h2>
-        <p>No se pudieron cargar los datos del empleado (RUT: {rut}).</p>
+        <p>No se pudieron cargar los datos del empleado (RUT: {rutParamRaw}).</p>
         <Link to="/dashboard/rrhh/listado-de-fichas" className={styles.backLink}>
           ← Volver a Lista de Empleados
         </Link>
@@ -650,13 +667,12 @@ function EmployeeProfilePage() {
 
         <div className={styles.profileInfo}>
           <div className={styles.profileAvatar}>
-            {/* ✅ Prioridad: foto de enrolamiento (face_enrollments.photo_url) */}
-            {faceEnroll?.photo_url ? (
-              <img src={faceEnroll.photo_url} alt={personalData.nombre_completo} />
-            ) : personalData.avatar &&
-              typeof personalData.avatar === "string" &&
-              personalData.avatar.startsWith("http") ? (
-              <img src={personalData.avatar} alt={personalData.nombre_completo} />
+            {avatarSrc ? (
+              <img
+                src={avatarSrc}
+                alt={personalData.nombre_completo}
+                onError={handleAvatarError}
+              />
             ) : (
               <span>{getInitials(personalData.nombre_completo)}</span>
             )}
@@ -668,28 +684,19 @@ function EmployeeProfilePage() {
             <p className={styles.employeeStatus}>
               <span
                 className={`${styles.statusBadge} ${
-                  personalData.estado === "Activo"
-                    ? styles.statusActive
-                    : styles.statusInactive
+                  personalData.estado === "Activo" ? styles.statusActive : styles.statusInactive
                 }`}
               >
                 {personalData.estado}
               </span>
-              <span className={styles.employeeDates}>
-                Empleado desde {yearsAndMonths}
-              </span>
+              <span className={styles.employeeDates}>Empleado desde {yearsAndMonths}</span>
             </p>
           </div>
         </div>
 
         <div className={styles.profileActions}>
-          <button
-            className={styles.actionButton}
-            onClick={handleEditToggle}
-            disabled={saving}
-          >
-            {isEditing ? (saving ? "Guardando..." : "Guardar Ficha") : "Editar Ficha"}{" "}
-            <FiEdit />
+          <button className={styles.actionButton} onClick={handleEditToggle} disabled={saving}>
+            {isEditing ? (saving ? "Guardando..." : "Guardar Ficha") : "Editar Ficha"} <FiEdit />
           </button>
 
           {!isEditing && (
@@ -709,8 +716,8 @@ function EmployeeProfilePage() {
           {menuItems.map((item) => {
             const targetPath =
               item.path === "."
-                ? `/dashboard/rrhh/empleado/${rut}`
-                : `/dashboard/rrhh/empleado/${rut}/${item.path}`;
+                ? `/dashboard/rrhh/empleado/${rutParamRaw}`
+                : `/dashboard/rrhh/empleado/${rutParamRaw}/${item.path}`;
 
             return (
               <NavLink
@@ -751,7 +758,6 @@ function EmployeeProfilePage() {
                 contractData={contractData}
                 isEditing={isEditing}
                 onChange={setContractData}
-                // ✅ enrolamiento + ✅ employeeId REAL para que la vista funcione
                 employeeId={employeeId}
                 isEnrolled={!!faceEnroll}
                 enrolledAt={
@@ -801,16 +807,11 @@ function EmployeeProfilePage() {
 
           <Route
             path="asistencia"
-            element={
-              <DatosAsistencia
-                rut={rut}
-                employeeId={employeeId} // ✅ CLAVE para filtrar marcas por employee_id
-              />
-            }
+            element={<DatosAsistencia rut={rutParamRaw} employeeId={employeeId} />}
           />
 
-          <Route path="bitacora" element={<DatosBitacora rut={rut} />} />
-          <Route path="historial" element={<DatosHistorial rut={rut} />} />
+          <Route path="bitacora" element={<DatosBitacora rut={rutParamRaw} />} />
+          <Route path="historial" element={<DatosHistorial rut={rutParamRaw} />} />
         </Routes>
       </main>
     </div>

@@ -19,20 +19,14 @@ function EmployeeListPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
-  // ✅ Si una imagen falla, lo guardamos acá y mostramos iniciales
-  const [imgErrorById, setImgErrorById] = useState({}); // { [id]: true }
-
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
   useEffect(() => {
     const fetchEmployees = async () => {
       setLoading(true);
 
+      // ✅ NO pedimos fotos acá. Solo datos básicos de lista.
       const { data, error } = await supabase
         .from("employee_personal")
-        .select(
-          "id, nombre_completo, rut, cargo, estado, avatar, genero, discapacidad, fecha_nacimiento, enrollment_photo_path"
-        );
+        .select("id, nombre_completo, rut, cargo, estado, genero, discapacidad");
 
       if (error) {
         console.error("Error al cargar empleados:", error);
@@ -53,14 +47,8 @@ function EmployeeListPage() {
     const parts = String(fullName).trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return "??";
     const first = parts[0]?.[0] || "?";
-    const second = parts[1]?.[0] || "?";
-    return `${first}${second}`.toUpperCase();
-  };
-
-  const getEnrollmentAvatarUrl = (enrollmentPath) => {
-    if (!enrollmentPath) return null;
-    if (!SUPABASE_URL) return null;
-    return `${SUPABASE_URL}/storage/v1/object/public/enrollment_photos/${enrollmentPath}`;
+    const last = parts[parts.length - 1]?.[0] || "?";
+    return `${first}${last}`.toUpperCase();
   };
 
   // Normaliza datos
@@ -73,9 +61,6 @@ function EmployeeListPage() {
       estado: emp.estado ?? "—",
       genero: emp.genero ?? "Otro",
       discapacidad: emp.discapacidad ?? false,
-      avatar: emp.avatar ?? null,
-      enrollment_photo_path: emp.enrollment_photo_path ?? null,
-      fechaIngreso: emp.fecha_nacimiento,
     }));
   }, [employees]);
 
@@ -232,7 +217,7 @@ function EmployeeListPage() {
         <table className={styles.employeeTable}>
           <thead>
             <tr>
-              <th>FOTO</th>
+              <th>COLAB.</th>
               <th>NOMBRE COMPLETO</th>
               <th>RUT</th>
               <th>CARGO</th>
@@ -245,55 +230,13 @@ function EmployeeListPage() {
             {filteredEmployees.map((employee) => {
               const employeeRut = employee.rut;
 
-              const enrollmentUrl = getEnrollmentAvatarUrl(
-                employee.enrollment_photo_path
-              );
-
-              const avatarUrl =
-                enrollmentUrl ||
-                (employee.avatar &&
-                typeof employee.avatar === "string" &&
-                employee.avatar.startsWith("http")
-                  ? employee.avatar
-                  : null);
-
-              // ✅ si la imagen falló antes, forzamos fallback a iniciales
-              const shouldShowInitials = !avatarUrl || imgErrorById[employee.id];
-
-              // 🧪 Debug útil SOLO para tu caso (tu nombre tiene Verónica)
-              if (
-                employee.nombre.toLowerCase().includes("verónica") &&
-                employee.nombre.toLowerCase().includes("mateo")
-              ) {
-                console.log("🧪 DEBUG Veró:", {
-                  rut: employee.rut,
-                  enrollment_photo_path: employee.enrollment_photo_path,
-                  avatarUrl,
-                  supabaseUrl: SUPABASE_URL,
-                });
-              }
-
               return (
                 <tr key={employee.id}>
                   <td>
                     <div className={styles.avatar}>
-                      {shouldShowInitials ? (
-                        <span className={styles.avatarInitials}>
-                          {getInitials(employee.nombre)}
-                        </span>
-                      ) : (
-                        <img
-                          src={avatarUrl}
-                          alt={employee.nombre}
-                          className={styles.avatarImg}
-                          onError={() => {
-                            setImgErrorById((prev) => ({
-                              ...prev,
-                              [employee.id]: true,
-                            }));
-                          }}
-                        />
-                      )}
+                      <span className={styles.avatarInitials}>
+                        {getInitials(employee.nombre)}
+                      </span>
                     </div>
                   </td>
 
