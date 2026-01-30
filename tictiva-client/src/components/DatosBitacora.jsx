@@ -63,7 +63,7 @@ async function registerBitacoraHistory({ rut, employeeId, actionType, log }) {
   if (!rut) return;
 
   // Tipo “humano” de registro
-  const tipoRegistro = log?.tipo || log?.entry_type || 'Anotación';
+  const tipoRegistro = log?.tipo || log?.entry_type || log?.entryType || 'Anotación';
 
   // Título según acción
   let titulo = 'Registro en Bitácora Laboral';
@@ -83,50 +83,45 @@ async function registerBitacoraHistory({ rut, employeeId, actionType, log }) {
 
   const actionText = actionTextMap[actionType] || '';
 
+  const motivo = log?.motivo || log?.motive || '';
+  const detalle = log?.detalle || log?.detail || '';
+
   const descripcion = [
     actionText,
     `Tipo: ${tipoRegistro}.`,
     log?.grado ? `Clasificación: ${log.grado}.` : '',
-    log?.motivo || log?.motive ? `Motivo: ${log.motivo || log.motive}.` : '',
-    log?.detalle || log?.detail
-      ? `Detalle: ${log.detalle || log.detail}.`
-      : '',
+    motivo ? `Motivo: ${motivo}.` : '',
+    detalle ? `Detalle: ${detalle}.` : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   // 🔁 Alineado con la tabla employee_history (todo en español)
   const payload = {
-    // Identificación del colaborador
     employee_id: employeeId || null,
     rut,
 
-    // Contexto del módulo
     modulo: 'BITACORA',
     submodulo: 'BITACORA_LABORAL',
 
-    // Metadatos “conceptuales”
     tipo: 'BITACORA',
     titulo,
     categoria: 'BITACORA',
     descripcion,
     estado: log?.estado || 'OK',
 
-    // Detalle de la acción
-    tipo_accion: actionType,                  // CREAR / EDITAR / ELIMINAR
-    gravedad: log?.impacto || null,           // Leve / Moderado / Alto / Crítico
-    etiqueta_accion: `BITACORA_${actionType}`,// Ej: BITACORA_CREAR
-    valor_anterior: null,                     // para futuro diff
+    tipo_accion: actionType,                   // CREAR / EDITAR / ELIMINAR
+    gravedad: log?.impacto || null,            // Leve / Moderado / Alto / Crítico
+    etiqueta_accion: `BITACORA_${actionType}`, // Ej: BITACORA_CREAR
+    valor_anterior: null,
     nuevo_valor: null,
 
-    // Quién realiza la acción
     autor: CURRENT_USER_NAME,
     autor_role: CURRENT_USER_ROLE,
     realizado_por_id: null,
     realizado_por_nombre: CURRENT_USER_NAME,
     realizado_por_role: CURRENT_USER_ROLE,
 
-    // Origen técnico (para auditoría)
     origen: 'BITACORA_LABORAL',
     direccion_ip: null,
     agente_usuario: null,
@@ -190,19 +185,62 @@ const MOTIVOS_OBSERVACION = [
   'Recomendación de mejora en el trato con usuarios/clientes',
 ];
 
+// =====================================================
+// === Helpers de compatibilidad: español/inglés/legacy
+// =====================================================
+function normalizeLogRow(row) {
+  // ⚠️ En tu DB hay filas antiguas con campos en inglés y/o en español.
+  // Acá unificamos para que la UI SIEMPRE tenga: tipo/fecha/area/motivo/detalle/impacto/estado/grado/autor
+  const normalized = {
+    ...row,
+
+    tipo: row.tipo ?? row.entry_type ?? row.entryType ?? 'Anotación',
+    fecha: row.fecha ?? row.entry_date ?? row.entryDate ?? null,
+
+    // área (en tu tabla aparecen "area" y también "area_name")
+    area: row.area ?? row.area_name ?? row.areaName ?? '',
+
+    // motivo/detalle: tu tabla tiene "motive" y "detail"
+    motivo: row.motivo ?? row.motive ?? '',
+    detalle: row.detalle ?? row.detail ?? '',
+
+    impacto: row.impacto ?? 'Leve',
+    estado: row.estado ?? 'Abierto',
+    grado: row.grado ?? null,
+
+    author_name:
+      row.author_name ??
+      row.autor ??
+      row.author ??
+      row.created_by_name ??
+      row.created_by ??
+      null,
+
+    author_role:
+      row.author_role ??
+      row.autor_role ??
+      row.authorRole ??
+      null,
+  };
+
+  return normalized;
+}
+
 // ==========================================
 // === MODAL (CREAR / EDITAR / VER / EVIDENCIA)
 // ==========================================
 function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
+  const base = normalizeLogRow(logData || {});
+
   const [formData, setFormData] = useState({
-    fecha: logData?.fecha || logData?.entry_date || getTodayLocalString(),
-    tipo: logData?.tipo || logData?.entry_type || 'Anotación',
-    area: logData?.area || logData?.area_name || '',
-    motivo: logData?.motivo || logData?.motive || '',
-    detalle: logData?.detalle || logData?.detail || '',
-    impacto: logData?.impacto || 'Leve',
-    estado: logData?.estado || 'Abierto',
-    grado: logData?.grado || 'Positiva',
+    fecha: base.fecha || getTodayLocalString(),
+    tipo: base.tipo || 'Anotación',
+    area: base.area || '',
+    motivo: base.motivo || '',
+    detalle: base.detalle || '',
+    impacto: base.impacto || 'Leve',
+    estado: base.estado || 'Abierto',
+    grado: base.grado || 'Positiva',
   });
 
   const [file, setFile] = useState(null);
@@ -225,17 +263,19 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
   };
 
   useEffect(() => {
+    const b = normalizeLogRow(logData || {});
     setFormData({
-      fecha: logData?.fecha || logData?.entry_date || getTodayLocalString(),
-      tipo: logData?.tipo || logData?.entry_type || 'Anotación',
-      area: logData?.area || logData?.area_name || '',
-      motivo: logData?.motivo || logData?.motive || '',
-      detalle: logData?.detalle || logData?.detail || '',
-      impacto: logData?.impacto || 'Leve',
-      estado: logData?.estado || 'Abierto',
-      grado: logData?.grado || 'Positiva',
+      fecha: b.fecha || getTodayLocalString(),
+      tipo: b.tipo || 'Anotación',
+      area: b.area || '',
+      motivo: b.motivo || '',
+      detalle: b.detalle || '',
+      impacto: b.impacto || 'Leve',
+      estado: b.estado || 'Abierto',
+      grado: b.grado || 'Positiva',
     });
-  }, [logData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logData?.id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -259,19 +299,24 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
   const handleSubmit = async () => {
     setIsUploading(true);
 
-    if (!formData.motivo || !formData.detalle) {
-      alert('Por favor completa Motivo y Detalle antes de guardar.');
-      setIsUploading(false);
-      return;
+    // ✅ Si es modo evidencia, NO exigimos motivo/detalle (solo adjuntar y guardar)
+    if (!isEvidenceMode) {
+      if (!formData.motivo || !formData.detalle) {
+        alert('Por favor completa Motivo y Detalle antes de guardar.');
+        setIsUploading(false);
+        return;
+      }
     }
 
     let evidencePath = logData?.evidence_path || null;
 
     try {
+      // 1) Upload evidencia (si viene archivo)
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${rut}/${fileName}`;
+        const safeRut = rut || 'SIN_RUT';
+        const filePath = `${safeRut}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('bitacora_evidencias')
@@ -281,6 +326,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         evidencePath = filePath;
       }
 
+      // 2) Campos de identificación
       const commonFields = { rut };
 
       if (employeeId) {
@@ -289,70 +335,117 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
         commonFields.employee_id = logData.employee_id;
       }
 
+      // 3) Payloads
+      // ✅ IMPORTANTE: en tu DB existen columnas en inglés Y en español.
+      // Para que todo se vea, guardamos en ambas familias.
       const fullPayload = {
         ...commonFields,
+
+        // --- Español (UI) ---
         fecha: formData.fecha,
+        tipo: formData.tipo,
+        area: formData.area,
+        motivo: formData.motivo,
+        detalle: formData.detalle,
+
+        impacto: formData.impacto,
+        estado: formData.estado,
+        grado: formData.grado,
+
+        // --- Inglés/legacy (para registros antiguos o compatibilidad) ---
         entry_date: formData.fecha,
         entry_type: formData.tipo,
-        grado: formData.grado,
-        area: formData.area,
         area_name: formData.area || 'Sin área definida',
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
-        impacto: formData.impacto,
-        estado: formData.estado,
+
+        // Evidencia
         evidence_path: evidencePath,
+        has_evidence: Boolean(evidencePath),
+
+        // Autor
         author_name: CURRENT_USER_NAME,
         author_role: CURRENT_USER_ROLE,
       };
 
+      // Payload mínimo (por si tu tabla tiene restricciones)
       const basePayload = {
         ...commonFields,
+
         entry_date: formData.fecha,
         entry_type: formData.tipo,
         area_name: formData.area || 'Sin área definida',
         motive: formData.motivo || 'Sin motivo definido',
         detail: formData.detalle || 'Sin detalles.',
+        evidence_path: evidencePath,
+        has_evidence: Boolean(evidencePath),
+
         author_name: CURRENT_USER_NAME,
         author_role: CURRENT_USER_ROLE,
+      };
+
+      // ✅ Modo evidencia: NO pisamos campos (solo actualizamos evidencia)
+      const evidenceOnlyPayload = {
+        ...commonFields,
+        evidence_path: evidencePath,
+        has_evidence: Boolean(evidencePath),
+        updated_at: new Date().toISOString(),
+        updated_by: CURRENT_USER_NAME,
       };
 
       const save = async (payload) => {
         if (mode === 'create') {
+          // Al crear, siempre insert
           return supabase.from(LOG_TABLE).insert(payload);
         }
+        // Edit/view/evidence: update por id
         return supabase.from(LOG_TABLE).update(payload).eq('id', logData.id);
       };
 
-      let { error } = await save(fullPayload);
+      // 4) Guardar con fallback
+      let result;
+      if (isEvidenceMode) {
+        // Si no subió archivo, no hacemos nada
+        if (!file) {
+          alert('Selecciona un archivo para adjuntar.');
+          setIsUploading(false);
+          return;
+        }
+        result = await save(evidenceOnlyPayload);
+      } else {
+        result = await save(fullPayload);
 
-      if (error) {
-        console.warn(
-          'Fallo guardando con payload completo, probando payload básico:',
-          error.message
-        );
-        ({ error } = await save(basePayload));
+        if (result.error) {
+          console.warn(
+            'Fallo guardando con payload completo, probando payload básico:',
+            result.error?.message
+          );
+          result = await save(basePayload);
+        }
       }
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
-      // 👉 Registrar en employee_history
-      const actionType = mode === 'create' ? 'CREAR' : 'EDITAR';
-      await registerBitacoraHistory({
-        rut,
-        employeeId: commonFields.employee_id || null,
-        actionType,
-        log: {
-          ...(logData || {}),
-          ...formData,
-        },
-      });
+      // 5) Registrar en employee_history (solo si no es modo evidencia puro)
+      if (!isEvidenceMode) {
+        const actionType = mode === 'create' ? 'CREAR' : 'EDITAR';
+        await registerBitacoraHistory({
+          rut,
+          employeeId: commonFields.employee_id || null,
+          actionType,
+          log: {
+            ...(logData || {}),
+            ...formData,
+          },
+        });
+      }
 
-      onSave();
-      onClose();
+      // 6) Refresh lista
+      await onSave?.();
+      onClose?.();
     } catch (error) {
-      console.error('Error al guardar:', error.message);
-      alert('Error al guardar: ' + error.message);
+      console.error('Error al guardar:', error?.message || error);
+      alert('Error al guardar: ' + (error?.message || 'Error desconocido'));
     } finally {
       setIsUploading(false);
     }
@@ -617,9 +710,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
               </label>
               <input type="file" onChange={handleFileChange} />
               {logData?.evidence_path && (
-                <p className={styles.fileExists}>
-                  Ya existe un archivo adjunto.
-                </p>
+                <p className={styles.fileExists}>Ya existe un archivo adjunto.</p>
               )}
             </div>
           )}
@@ -637,11 +728,7 @@ function LogModal({ mode, logData, onClose, onSave, rut, employeeId }) {
 
         {/* FOOTER MODAL */}
         <div className={styles.modalFooter}>
-          <button
-            onClick={onClose}
-            className={styles.cancelButton}
-            type="button"
-          >
+          <button onClick={onClose} className={styles.cancelButton} type="button">
             {isReadOnly ? 'Cerrar' : 'Cancelar'}
           </button>
 
@@ -735,19 +822,15 @@ function DatosBitacora({ rut, employeeName }) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [openActionMenuId, setOpenActionMenuId] = useState(null);
 
-  const [periodo, setPeriodo] = useState('2025');
+  const [periodo, setPeriodo] = useState(String(new Date().getFullYear()));
   const [tipo, setTipo] = useState('Todos');
   const [estado, setEstado] = useState('Todos');
 
   const [employeeId, setEmployeeId] = useState(null);
-  const [employeeDisplayName, setEmployeeDisplayName] = useState(
-    employeeName || ''
-  );
+  const [employeeDisplayName, setEmployeeDisplayName] = useState(employeeName || '');
 
   useEffect(() => {
-    if (employeeName) {
-      setEmployeeDisplayName(employeeName);
-    }
+    if (employeeName) setEmployeeDisplayName(employeeName);
   }, [employeeName]);
 
   const fetchEmployeeId = async () => {
@@ -771,9 +854,7 @@ function DatosBitacora({ rut, employeeName }) {
           setEmployeeId(idFromPersonal);
         }
 
-        const combinedName = `${data.nombres || ''} ${
-          data.apellidos || ''
-        }`.trim();
+        const combinedName = `${data.nombres || ''} ${data.apellidos || ''}`.trim();
 
         const nameFromPersonal =
           data.full_name ||
@@ -789,52 +870,63 @@ function DatosBitacora({ rut, employeeName }) {
         }
       }
     } catch (err) {
-      console.warn(
-        'Error inesperado obteniendo nombre en employee_personal:',
-        err.message
-      );
+      console.warn('Error inesperado obteniendo nombre en employee_personal:', err.message);
     }
   };
 
   const fetchLogbook = async () => {
-    // 👉 Siempre filtramos por RUT para incluir registros viejos y nuevos
-    if (!rut) return;
+    if (!rut && !employeeId) return;
     setLoading(true);
 
-    let query = supabase.from(LOG_TABLE).select('*');
+    try {
+      // ✅ CLAVE: tus registros antiguos tienen rut NULL pero SÍ tienen employee_id.
+      // Por eso: filtramos por (rut == rutActual) OR (employee_id == employeeId).
+      let query = supabase.from(LOG_TABLE).select('*');
 
-    query = query.eq('rut', rut);
-    query = query.order('entry_date', { ascending: false });
+      if (rut && employeeId) {
+        // OJO: supabase-js usa .or("cond,cond")
+        query = query.or(`rut.eq.${rut},employee_id.eq.${employeeId}`);
+      } else if (rut) {
+        query = query.eq('rut', rut);
+      } else if (employeeId) {
+        query = query.eq('employee_id', employeeId);
+      }
 
-    if (periodo !== 'Todos') {
-      const startDate = `${periodo}-01-01`;
-      const endDate = `${periodo}-12-31`;
-      query = query.gte('entry_date', startDate).lte('entry_date', endDate);
-    }
+      // Orden: preferimos entry_date si existe; si no, created_at igual ayuda
+      query = query.order('entry_date', { ascending: false, nullsFirst: false });
+      query = query.order('created_at', { ascending: false, nullsFirst: false });
 
-    if (tipo !== 'Todos') query = query.eq('entry_type', tipo);
-    if (estado !== 'Todos') query = query.eq('estado', estado);
+      if (periodo !== 'Todos') {
+        const startDate = `${periodo}-01-01`;
+        const endDate = `${periodo}-12-31`;
+        // Para compatibilidad: filtramos por entry_date (legacy) y si hay fecha también la dejamos pasar.
+        // Supabase no soporta "coalesce" fácil aquí, así que se filtra por entry_date
+        query = query.gte('entry_date', startDate).lte('entry_date', endDate);
+      }
 
-    const { data, error } = await query;
+      if (tipo !== 'Todos') {
+        // Compatibilidad: entry_type y/o tipo
+        // Tomamos entry_type como base (que es lo que existe en tus filas antiguas)
+        query = query.eq('entry_type', tipo);
+      }
 
-    if (error) {
-      console.error('Error al cargar bitácora:', error.message);
+      if (estado !== 'Todos') query = query.eq('estado', estado);
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error al cargar bitácora:', error.message);
+        setLogs([]);
+      } else {
+        const mapped = (data || []).map(normalizeLogRow);
+        setLogs(mapped);
+      }
+    } catch (e) {
+      console.error('Error inesperado cargando bitácora:', e?.message || e);
       setLogs([]);
-    } else {
-      const mapped = (data || []).map((row) => ({
-        ...row,
-        tipo: row.tipo || row.entry_type,
-        fecha: row.fecha || row.entry_date,
-        area: row.area || row.area_name,
-        motivo: row.motivo || row.motive,
-        detalle: row.detalle || row.detail,
-        impacto: row.impacto || 'Leve',
-        estado: row.estado || 'Abierto',
-      }));
-      setLogs(mapped);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -864,7 +956,6 @@ function DatosBitacora({ rut, employeeName }) {
       console.error('Error al eliminar:', error.message);
       alert('No se pudo eliminar el registro.');
     } else {
-      // 👉 Registrar en historial la eliminación
       await registerBitacoraHistory({
         rut,
         employeeId,
@@ -915,10 +1006,7 @@ function DatosBitacora({ rut, employeeName }) {
       let tipoDisplay = log.tipo;
       if (log.tipo === 'Anotación' && log.grado) {
         tipoDisplay = `Anotación (${log.grado})`;
-      } else if (
-        (log.tipo === 'Positiva' || log.tipo === 'Negativa') &&
-        !log.grado
-      ) {
+      } else if ((log.tipo === 'Positiva' || log.tipo === 'Negativa') && !log.grado) {
         tipoDisplay = `Anotación (${log.tipo})`;
       }
 
@@ -1029,20 +1117,14 @@ function DatosBitacora({ rut, employeeName }) {
     doc.text('__________________________', 105, 250, { align: 'center' });
     doc.text('Firma Responsable', 105, 258, { align: 'center' });
 
-    doc.save(`Acta_${log.fecha}_${log.tipo}.pdf`);
+    doc.save(`Acta_${log.fecha || 'sin_fecha'}_${log.tipo || 'bitacora'}.pdf`);
     setOpenActionMenuId(null);
   };
 
   const total = logs.length;
-  const positivos = logs.filter(
-    (l) => l.grado === 'Positiva' || l.tipo === 'Positiva'
-  ).length;
-  const alertas = logs.filter(
-    (l) => l.impacto === 'Alto' || l.impacto === 'Crítico'
-  ).length;
-  const seguimiento = logs.filter(
-    (l) => l.estado === 'En seguimiento'
-  ).length;
+  const positivos = logs.filter((l) => l.grado === 'Positiva' || l.tipo === 'Positiva').length;
+  const alertas = logs.filter((l) => l.impacto === 'Alto' || l.impacto === 'Crítico').length;
+  const seguimiento = logs.filter((l) => l.estado === 'En seguimiento').length;
 
   let totalScore = 0;
   logs.forEach((log) => {
@@ -1089,11 +1171,7 @@ function DatosBitacora({ rut, employeeName }) {
         </div>
 
         <div className={styles.headerActions}>
-          <button
-            className={styles.actionButton}
-            onClick={generateGeneralReport}
-            type="button"
-          >
+          <button className={styles.actionButton} onClick={generateGeneralReport} type="button">
             <FiDownload size={14} /> Descargar
           </button>
 
@@ -1108,24 +1186,15 @@ function DatosBitacora({ rut, employeeName }) {
 
             {isRegisterOpen && (
               <div className={styles.registerDropdown}>
-                <button
-                  type="button"
-                  onClick={() => openModal('create', { tipo: 'Anotación' })}
-                >
+                <button type="button" onClick={() => openModal('create', { tipo: 'Anotación' })}>
                   <strong>Anotación</strong>
                   <small>Positivas o negativas</small>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => openModal('create', { tipo: 'Observación' })}
-                >
+                <button type="button" onClick={() => openModal('create', { tipo: 'Observación' })}>
                   <strong>Observación</strong>
                   <small>Formales sobre desempeño</small>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => openModal('create', { tipo: 'Entrevista' })}
-                >
+                <button type="button" onClick={() => openModal('create', { tipo: 'Entrevista' })}>
                   <strong>Entrevista</strong>
                   <small>Individual con colaborador</small>
                 </button>
@@ -1140,10 +1209,8 @@ function DatosBitacora({ rut, employeeName }) {
         <div className={styles.filterGroup}>
           <FiCalendar />
           <label>Periodo:</label>
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
-          >
+          <select value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
+            <option value="2026">2026</option>
             <option value="2025">2025</option>
             <option value="2024">2024</option>
             <option value="Todos">Todos</option>
@@ -1194,11 +1261,7 @@ function DatosBitacora({ rut, employeeName }) {
         <div className={styles.semaforoCard}>
           <h3>Semáforo Laboral</h3>
           <p>Estado actual</p>
-          <div
-            className={`${styles.semaforoItem} ${
-              styles[semaforoClassKey] || ''
-            }`}
-          >
+          <div className={`${styles.semaforoItem} ${styles[semaforoClassKey] || ''}`}>
             {semaforoLabel}
           </div>
         </div>
@@ -1233,10 +1296,7 @@ function DatosBitacora({ rut, employeeName }) {
                 let tipoDisplay = log.tipo;
                 if (log.tipo === 'Anotación' && log.grado) {
                   tipoDisplay = `Anotación (${log.grado})`;
-                } else if (
-                  (log.tipo === 'Positiva' || log.tipo === 'Negativa') &&
-                  !log.grado
-                ) {
+                } else if ((log.tipo === 'Positiva' || log.tipo === 'Negativa') && !log.grado) {
                   tipoDisplay = `Anotación (${log.tipo})`;
                 }
 
@@ -1258,14 +1318,10 @@ function DatosBitacora({ rut, employeeName }) {
                       {log.detalle || '—'}
                     </td>
                     <td>
-                      <span className={styles.impactBadge}>
-                        {log.impacto}
-                      </span>
+                      <span className={styles.impactBadge}>{log.impacto}</span>
                     </td>
                     <td>
-                      <span className={styles.statusBadge}>
-                        {log.estado}
-                      </span>
+                      <span className={styles.statusBadge}>{log.estado}</span>
                     </td>
                     <td>
                       <div className={styles.actionsCell}>
@@ -1273,9 +1329,7 @@ function DatosBitacora({ rut, employeeName }) {
                           className={styles.actionsButton}
                           type="button"
                           onClick={() =>
-                            setOpenActionMenuId(
-                              openActionMenuId === log.id ? null : log.id
-                            )
+                            setOpenActionMenuId(openActionMenuId === log.id ? null : log.id)
                           }
                         >
                           <FiMoreHorizontal />
@@ -1283,36 +1337,19 @@ function DatosBitacora({ rut, employeeName }) {
 
                         {openActionMenuId === log.id && (
                           <div className={styles.actionsDropdown}>
-                            <button
-                              type="button"
-                              onClick={() => openModal('view', log)}
-                            >
+                            <button type="button" onClick={() => openModal('view', log)}>
                               <FiEye /> Ver detalle
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => openModal('edit', log)}
-                            >
+                            <button type="button" onClick={() => openModal('edit', log)}>
                               <FiEdit /> Editar
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => openModal('evidence', log)}
-                            >
+                            <button type="button" onClick={() => openModal('evidence', log)}>
                               <FiPaperclip /> Subir evidencia
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => generatePDF(log)}
-                            >
+                            <button type="button" onClick={() => generatePDF(log)}>
                               <FiDownload /> Descargar acta
                             </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRegisterFollowUp(log)
-                              }
-                            >
+                            <button type="button" onClick={() => handleRegisterFollowUp(log)}>
                               <FiActivity /> Registrar seguimiento
                             </button>
                             <button

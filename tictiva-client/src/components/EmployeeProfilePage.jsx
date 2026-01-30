@@ -33,16 +33,37 @@ function normalizeRut(input) {
 }
 
 // =======================================================
-// Helper: limpiar payload para Supabase
+// ✅ FIX: limpiar payload para Supabase SIN pisar con null
+// - omitimos keys técnicas
+// - NO convertimos "" a null (porque borra datos sin querer)
+// - NO enviamos "" ni undefined (para no pisar)
+// - null se respeta (si algún día quieres borrar a propósito)
 // =======================================================
 function sanitizeRow(row, omitKeys = []) {
   if (!row || typeof row !== "object") return row;
   const cleaned = {};
+
   for (const [key, value] of Object.entries(row)) {
     if (omitKeys.includes(key)) continue;
-    cleaned[key] = value === "" ? null : value;
+
+    if (value === undefined) continue;
+    if (typeof value === "string" && value.trim() === "") continue;
+
+    cleaned[key] = value;
   }
   return cleaned;
+}
+
+// =======================================================
+// ✅ Mostrar error real (Supabase/PostgREST)
+// =======================================================
+function formatSupabaseError(err) {
+  if (!err) return "Error desconocido";
+  const code = err.code || err.status || "";
+  const msg = err.message || err.error_description || "";
+  const details = err.details || "";
+  const hint = err.hint || "";
+  return [code, msg, details, hint].filter(Boolean).join(" | ");
 }
 
 // =======================================================
@@ -223,10 +244,7 @@ function EmployeeProfilePage() {
   const [faceEnroll, setFaceEnroll] = useState(null);
   const [employeeId, setEmployeeId] = useState(null);
 
-  // ✅ Fallback desde Storage si photo_url viene vacío/malo
   const [fallbackFacePhotoUrl, setFallbackFacePhotoUrl] = useState(null);
-
-  // ✅ Cadena de fallback real (si falla la imagen 1, prueba la 2, etc.)
   const [avatarCandidates, setAvatarCandidates] = useState([]);
   const [avatarIdx, setAvatarIdx] = useState(0);
   const [avatarSrc, setAvatarSrc] = useState(null);
@@ -239,20 +257,14 @@ function EmployeeProfilePage() {
     return (first + last).toUpperCase() || "??";
   };
 
-  // ✅ Convierte photo_url a una URL usable:
-  // - si ya es http, ok
-  // - si es path (ej "Enrollment/11.../a.jpg"), crea signed url desde enrollment_photos
   async function resolveToHttpUrl(maybeUrlOrPath) {
     const v = (maybeUrlOrPath || "").trim();
     if (!v) return null;
 
     if (v.startsWith("http://") || v.startsWith("https://")) {
-      // bust cache por si el navegador se queda pegado con error viejo
       return `${v}${v.includes("?") ? "&" : "?"}t=${Date.now()}`;
     }
 
-    // Si viene como "Enrollment/..../file.jpg" o "Enrollment/..../"
-    // asumimos que está dentro del bucket enrollment_photos
     const cleanPath = v.replace(/^\/+/, "");
     try {
       const { data: signed, error } = await supabase.storage
@@ -263,15 +275,12 @@ function EmployeeProfilePage() {
         return `${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
       }
 
-      // Public URL fallback
       const { data: pub } = supabase.storage.from("enrollment_photos").getPublicUrl(cleanPath);
       if (pub?.publicUrl) {
         const p = pub.publicUrl;
         return `${p}${p.includes("?") ? "&" : "?"}t=${Date.now()}`;
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
     return null;
   }
 
@@ -296,7 +305,6 @@ function EmployeeProfilePage() {
 
       const rutCanonicoParam = normalizeRut(rutParamRaw);
 
-      // 1) Datos personales (intentamos normalizado, y si no, raw)
       let personal = null;
 
       if (rutCanonicoParam) {
@@ -346,7 +354,6 @@ function EmployeeProfilePage() {
 
       const rutCanonico = normalizeRut(personal.rut) || rutCanonicoParam || "";
 
-      // 1.1) Enrolamiento por employee_id
       const { data: enroll, error: enrollError } = await supabase
         .from("face_enrollments")
         .select("employee_id, photo_url, enrolled_at, updated_at, created_at")
@@ -362,7 +369,6 @@ function EmployeeProfilePage() {
         setFaceEnroll(enroll || null);
       }
 
-      // 1.2) Fallback Storage si no hay photo_url o si viene malo
       if (rutCanonico) {
         try {
           const folder = `Enrollment/${rutCanonico}`;
@@ -378,7 +384,12 @@ function EmployeeProfilePage() {
           if (!listError && files && files.length > 0) {
             const img = files.find((f) => {
               const n = (f.name || "").toLowerCase();
-              return n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png") || n.endsWith(".webp");
+              return (
+                n.endsWith(".jpg") ||
+                n.endsWith(".jpeg") ||
+                n.endsWith(".png") ||
+                n.endsWith(".webp")
+              );
             });
 
             if (img) {
@@ -388,14 +399,18 @@ function EmployeeProfilePage() {
                 .createSignedUrl(fullPath, 60 * 60);
 
               if (!signedErr && signed?.signedUrl) {
-                setFallbackFacePhotoUrl(`${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`);
+                setFallbackFacePhotoUrl(
+                  `${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`
+                );
               } else {
                 const { data: pub } = supabase.storage
                   .from("enrollment_photos")
                   .getPublicUrl(fullPath);
 
                 if (pub?.publicUrl) {
-                  setFallbackFacePhotoUrl(`${pub.publicUrl}${pub.publicUrl.includes("?") ? "&" : "?"}t=${Date.now()}`);
+                  setFallbackFacePhotoUrl(
+                    `${pub.publicUrl}${pub.publicUrl.includes("?") ? "&" : "?"}t=${Date.now()}`
+                  );
                 }
               }
             }
@@ -466,20 +481,19 @@ function EmployeeProfilePage() {
     const build = async () => {
       const candidates = [];
 
-      // 1) FaceEnroll photo_url (puede ser http o path)
       const resolvedFace = await resolveToHttpUrl(faceEnroll?.photo_url);
       if (resolvedFace) candidates.push(resolvedFace);
 
-      // 2) Fallback desde Storage
       if (fallbackFacePhotoUrl) candidates.push(fallbackFacePhotoUrl);
 
-      // 3) Avatar de personalData (si es http)
       if (
         personalData?.avatar &&
         typeof personalData.avatar === "string" &&
         personalData.avatar.startsWith("http")
       ) {
-        candidates.push(`${personalData.avatar}${personalData.avatar.includes("?") ? "&" : "?"}t=${Date.now()}`);
+        candidates.push(
+          `${personalData.avatar}${personalData.avatar.includes("?") ? "&" : "?"}t=${Date.now()}`
+        );
       }
 
       setAvatarCandidates(candidates);
@@ -529,7 +543,7 @@ function EmployeeProfilePage() {
   ];
 
   // ==========================================
-  // Guardar TODAS las secciones editables
+  // ✅ Guardar TODAS las secciones editables
   // ==========================================
   const saveAllSections = async () => {
     if (!personalData) return;
@@ -541,6 +555,7 @@ function EmployeeProfilePage() {
       const resolvedEmployeeId = personalData.employee_id || personalData.id;
       const rutCanonico = normalizeRut(personalData.rut) || personalData.rut;
 
+      // 1) Personal
       if (rutCanonico) {
         const personalPayload = sanitizeRow(
           { ...personalData, rut: rutCanonico },
@@ -555,50 +570,99 @@ function EmployeeProfilePage() {
         if (perUpdateError) throw perUpdateError;
       }
 
+      // 2) Contractuales
       if (contractData && (contractData.id || resolvedEmployeeId)) {
-        const contractPayload = sanitizeRow(contractData, ["id", "employee_id", "created_at", "updated_at"]);
+        // ✅ FIX REAL: NO usar "estado" (no existe). Usar "estado_contrato".
+        // Además, si por alguna razón quedó "estado" colado, lo borramos.
+        const normalizedContract = { ...(contractData || {}) };
+        delete normalizedContract.estado; // 🔥 clave
+
+        const contractPayload = sanitizeRow(normalizedContract, [
+          "id",
+          "employee_id",
+          "created_at",
+          "updated_at",
+        ]);
 
         if (contractData.id) {
-          const { error } = await supabase.from("employee_contracts").update(contractPayload).eq("id", contractData.id);
+          const { error } = await supabase
+            .from("employee_contracts")
+            .update(contractPayload)
+            .eq("id", contractData.id);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("employee_contracts").insert([{ ...contractPayload, employee_id: resolvedEmployeeId }]);
+          const { error } = await supabase
+            .from("employee_contracts")
+            .insert([{ ...contractPayload, employee_id: resolvedEmployeeId }]);
           if (error) throw error;
         }
       }
 
+      // 3) Previsión
       if (previsionalData && (previsionalData.id || resolvedEmployeeId)) {
-        const prevPayload = sanitizeRow(previsionalData, ["id", "employee_id", "created_at", "updated_at"]);
+        const prevPayload = sanitizeRow(previsionalData, [
+          "id",
+          "employee_id",
+          "created_at",
+          "updated_at",
+        ]);
 
         if (previsionalData.id) {
-          const { error } = await supabase.from("employee_prevision").update(prevPayload).eq("id", previsionalData.id);
+          const { error } = await supabase
+            .from("employee_prevision")
+            .update(prevPayload)
+            .eq("id", previsionalData.id);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("employee_prevision").insert([{ ...prevPayload, employee_id: resolvedEmployeeId }]);
+          const { error } = await supabase
+            .from("employee_prevision")
+            .insert([{ ...prevPayload, employee_id: resolvedEmployeeId }]);
           if (error) throw error;
         }
       }
 
+      // 4) Bancarios
       if (bankData && (bankData.id || resolvedEmployeeId)) {
-        const bankPayload = sanitizeRow(bankData, ["id", "employee_id", "created_at", "updated_at"]);
+        const bankPayload = sanitizeRow(bankData, [
+          "id",
+          "employee_id",
+          "created_at",
+          "updated_at",
+        ]);
 
         if (bankData.id) {
-          const { error } = await supabase.from("employee_bank_accounts").update(bankPayload).eq("id", bankData.id);
+          const { error } = await supabase
+            .from("employee_bank_accounts")
+            .update(bankPayload)
+            .eq("id", bankData.id);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("employee_bank_accounts").insert([{ ...bankPayload, employee_id: resolvedEmployeeId }]);
+          const { error } = await supabase
+            .from("employee_bank_accounts")
+            .insert([{ ...bankPayload, employee_id: resolvedEmployeeId }]);
           if (error) throw error;
         }
       }
 
+      // 5) Salud
       if (healthData && (healthData.id || resolvedEmployeeId)) {
-        const healthPayload = sanitizeRow(healthData, ["id", "employee_id", "created_at", "updated_at"]);
+        const healthPayload = sanitizeRow(healthData, [
+          "id",
+          "employee_id",
+          "created_at",
+          "updated_at",
+        ]);
 
         if (healthData.id) {
-          const { error } = await supabase.from("employee_health").update(healthPayload).eq("id", healthData.id);
+          const { error } = await supabase
+            .from("employee_health")
+            .update(healthPayload)
+            .eq("id", healthData.id);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from("employee_health").insert([{ ...healthPayload, employee_id: resolvedEmployeeId }]);
+          const { error } = await supabase
+            .from("employee_health")
+            .insert([{ ...healthPayload, employee_id: resolvedEmployeeId }]);
           if (error) throw error;
         }
       }
@@ -612,7 +676,7 @@ function EmployeeProfilePage() {
       setIsEditing(false);
     } catch (err) {
       console.error("Error al guardar la ficha completa:", err);
-      setSaveError("Ocurrió un error al guardar la ficha. Revisa la consola para más detalles.");
+      setSaveError(`No se pudo guardar: ${formatSupabaseError(err)}`);
     } finally {
       setSaving(false);
     }
@@ -627,7 +691,6 @@ function EmployeeProfilePage() {
     await saveAllSections();
   };
 
-  // ✅ onError: si falla una foto, probamos la siguiente; si no hay, mostramos iniciales
   const handleAvatarError = () => {
     const next = avatarIdx + 1;
     if (avatarCandidates[next]) {
@@ -684,7 +747,9 @@ function EmployeeProfilePage() {
             <p className={styles.employeeStatus}>
               <span
                 className={`${styles.statusBadge} ${
-                  personalData.estado === "Activo" ? styles.statusActive : styles.statusInactive
+                  personalData.estado === "Activo"
+                    ? styles.statusActive
+                    : styles.statusInactive
                 }`}
               >
                 {personalData.estado}
@@ -695,8 +760,13 @@ function EmployeeProfilePage() {
         </div>
 
         <div className={styles.profileActions}>
-          <button className={styles.actionButton} onClick={handleEditToggle} disabled={saving}>
-            {isEditing ? (saving ? "Guardando..." : "Guardar Ficha") : "Editar Ficha"} <FiEdit />
+          <button
+            className={styles.actionButton}
+            onClick={handleEditToggle}
+            disabled={saving}
+          >
+            {isEditing ? (saving ? "Guardando..." : "Guardar Ficha") : "Editar Ficha"}{" "}
+            <FiEdit />
           </button>
 
           {!isEditing && (
@@ -760,12 +830,7 @@ function EmployeeProfilePage() {
                 onChange={setContractData}
                 employeeId={employeeId}
                 isEnrolled={!!faceEnroll}
-                enrolledAt={
-                  faceEnroll?.enrolled_at ||
-                  faceEnroll?.updated_at ||
-                  faceEnroll?.created_at ||
-                  null
-                }
+                enrolledAt={faceEnroll?.enrolled_at || faceEnroll?.created_at || null}
               />
             }
           />
