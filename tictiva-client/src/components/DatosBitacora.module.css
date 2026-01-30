@@ -627,3 +627,63 @@
   font-weight: 600;
 }
 
+/* ================================
+   FIX COLORES: IMPACTO (BADGES)
+   ================================ */
+
+.impactLeve {
+  background: #e9f7ef !important;
+  color: #1e7a4a !important;
+  border: 1px solid #c9efd9 !important;
+}
+
+.impactModerado {
+  background: #fff6e6 !important;
+  color: #8a5a00 !important;
+  border: 1px solid #ffe1b3 !important;
+}
+
+.impactAlto {
+  background: #fff0ec !important;
+  color: #b42318 !important;
+  border: 1px solid #ffd0c7 !important;
+}
+
+.impactCritico {
+  background: #ffe9e9 !important;
+  color: #b00020 !important;
+  border: 1px solid #ffbcbc !important;
+}
+
+/* ================================
+   FIX COLORES: SEMÁFORO LABORAL
+   (Clases que usa el JSX)
+   ================================ */
+
+.semaforoItem {
+  border: 1px solid transparent;
+}
+
+.semaforoEstable {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-left: none !important;
+}
+
+.semaforoAtencion {
+  background-color: #fff8d6 !important;
+  color: #8d6e00 !important;
+  border-left: 6px solid #f2c94c !important;
+}
+
+.semaforoAlerta {
+  background-color: #fff0ec !important;
+  color: #b42318 !important;
+  border-left: 6px solid #ff7a59 !important;
+}
+
+.semaforoCritico {
+  background-color: #ffe9e9 !important;
+  color: #b00020 !important;
+  border-left: 6px solid #b00020 !important;
+}

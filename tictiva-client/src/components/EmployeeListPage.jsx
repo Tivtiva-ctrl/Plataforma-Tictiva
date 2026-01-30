@@ -13,32 +13,131 @@ import {
 } from "react-icons/fi";
 import { GoTable } from "react-icons/go";
 
+// ============================
+// Helpers
+// ============================
+function normalizeText(v) {
+  return (v ?? "").toString().trim();
+}
+
+function toLower(v) {
+  return normalizeText(v).toLowerCase();
+}
+
+// Fecha local (YYYY-MM-DD) -> Date (sin desfase)
+function parseLocalDateYYYYMMDD(value) {
+  if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  const dt = new Date(value);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function isPastLocal(dateValue) {
+  const d = parseLocalDateYYYYMMDD(dateValue);
+  if (!d) return false;
+  const today = new Date();
+  // comparar por día (sin hora)
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return dOnly.getTime() < todayOnly.getTime();
+}
+
+function computeEffectiveEstado(empEstadoRaw, contract) {
+  const empEstado = normalizeText(empEstadoRaw);
+
+  // 1) Si hay contrato: manda el contrato
+  if (contract) {
+    const estadoContrato = normalizeText(contract.estado_contrato);
+
+    if (toLower(estadoContrato) === "terminado") return "Inactivo";
+
+    // Si hay fecha término y ya pasó, también Inactivo
+    if (contract.fecha_termino && isPastLocal(contract.fecha_termino)) {
+      return "Inactivo";
+    }
+
+    // Si contrato dice vigente/suspendido/etc.
+    // - Vigente -> Activo
+    // - Suspendido -> (tu decides) aquí lo dejo como Inactivo para “no activo”
+    if (toLower(estadoContrato) === "vigente") return "Activo";
+    if (toLower(estadoContrato) === "suspendido") return "Inactivo";
+  }
+
+  // 2) Si employee_personal.estado viene bien, respétalo
+  if (toLower(empEstado) === "activo") return "Activo";
+  if (toLower(empEstado) === "inactivo") return "Inactivo";
+
+  // 3) Fallback sensato
+  return "Activo";
+}
+
 function EmployeeListPage() {
   const [employees, setEmployees] = useState([]);
+  const [contractsMap, setContractsMap] = useState({}); // employee_id -> ultimo contrato
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
   useEffect(() => {
-    const fetchEmployees = async () => {
+    const fetchEmployeesAndContracts = async () => {
       setLoading(true);
 
-      // ✅ NO pedimos fotos acá. Solo datos básicos de lista.
-      const { data, error } = await supabase
+      // 1) Empleados base
+      const { data: empData, error: empError } = await supabase
         .from("employee_personal")
         .select("id, nombre_completo, rut, cargo, estado, genero, discapacidad");
 
-      if (error) {
-        console.error("Error al cargar empleados:", error);
+      if (empError) {
+        console.error("Error al cargar empleados:", empError);
         setEmployees([]);
-      } else {
-        setEmployees(Array.isArray(data) ? data : []);
+        setContractsMap({});
+        setLoading(false);
+        return;
       }
 
+      const emps = Array.isArray(empData) ? empData : [];
+      setEmployees(emps);
+
+      // 2) Traer contratos (último por employee_id)
+      //    Nota: esto evita depender de joins/relaciones en Supabase.
+      const ids = emps.map((e) => e.id).filter(Boolean);
+
+      if (ids.length === 0) {
+        setContractsMap({});
+        setLoading(false);
+        return;
+      }
+
+      const { data: conData, error: conError } = await supabase
+        .from("employee_contracts")
+        .select("id, employee_id, estado_contrato, fecha_termino, fecha_inicio, created_at")
+        .in("employee_id", ids)
+        .order("employee_id", { ascending: true })
+        .order("id", { ascending: false });
+
+      if (conError) {
+        console.warn("No se pudieron cargar contratos para estado real:", conError.message);
+        setContractsMap({});
+        setLoading(false);
+        return;
+      }
+
+      // construir map: primer contrato por employee_id (ya viene ordenado desc por id)
+      const map = {};
+      (conData || []).forEach((c) => {
+        if (!c?.employee_id) return;
+        if (!map[c.employee_id]) map[c.employee_id] = c;
+      });
+
+      setContractsMap(map);
       setLoading(false);
     };
 
-    fetchEmployees();
+    fetchEmployeesAndContracts();
   }, []);
 
   // ✅ Iniciales: primer nombre + primer apellido
@@ -51,18 +150,28 @@ function EmployeeListPage() {
     return `${first}${last}`.toUpperCase();
   };
 
-  // Normaliza datos
+  // Normaliza datos + calcula estado real
   const safeEmployees = useMemo(() => {
-    return (employees ?? []).map((emp) => ({
-      id: emp.id ?? emp.rut ?? Math.random().toString(36).slice(2),
-      nombre: emp.nombre_completo ?? "Sin nombre",
-      rut: emp.rut ?? "—",
-      cargo: emp.cargo ?? "—",
-      estado: emp.estado ?? "—",
-      genero: emp.genero ?? "Otro",
-      discapacidad: emp.discapacidad ?? false,
-    }));
-  }, [employees]);
+    return (employees ?? []).map((emp) => {
+      const lastContract = emp?.id ? contractsMap[emp.id] : null;
+      const estadoReal = computeEffectiveEstado(emp?.estado, lastContract);
+
+      return {
+        id: emp.id ?? emp.rut ?? Math.random().toString(36).slice(2),
+        employee_id: emp.id ?? null,
+        nombre: emp.nombre_completo ?? "Sin nombre",
+        rut: emp.rut ?? "—",
+        cargo: emp.cargo ?? "—",
+        estado: estadoReal, // ✅ ahora SI es el real
+        genero: emp.genero ?? "Otro",
+        discapacidad: emp.discapacidad ?? false,
+
+        // opcional por si luego quieres mostrarlo en tooltip/debug
+        _raw_estado: emp?.estado ?? null,
+        _contract: lastContract ?? null,
+      };
+    });
+  }, [employees, contractsMap]);
 
   // Buscador
   const filteredEmployees = useMemo(() => {
@@ -75,7 +184,7 @@ function EmployeeListPage() {
     );
   }, [safeEmployees, searchQuery]);
 
-  // Stats
+  // Stats (usando estado real)
   const totalEmployees = safeEmployees.length;
   const activeEmployees = safeEmployees.filter(
     (e) => (e.estado || "").toLowerCase() === "activo"
@@ -90,8 +199,7 @@ function EmployeeListPage() {
     (e) => (e.genero || "").toLowerCase() === "mujer"
   ).length;
   const otherEmployees = totalEmployees - maleEmployees - femaleEmployees;
-  const disabledEmployees = safeEmployees.filter((e) => e.discapacidad === true)
-    .length;
+  const disabledEmployees = safeEmployees.filter((e) => e.discapacidad === true).length;
 
   // Cierra dropdown si click fuera
   useEffect(() => {
@@ -119,8 +227,7 @@ function EmployeeListPage() {
       {/* HEADER */}
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>
-          <GoTable size={28} style={{ marginRight: "0.75rem" }} /> Lista de
-          Empleados
+          <GoTable size={28} style={{ marginRight: "0.75rem" }} /> Lista de Empleados
         </h1>
         <p className={styles.pageSubtitle}>
           Gestiona la información de todos los colaboradores de la empresa.
@@ -284,54 +391,34 @@ function EmployeeListPage() {
                           className={styles.actionsDropdown}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/tictiva-360`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/tictiva-360`}>
                             Tictiva 360
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/personal`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/personal`}>
                             Datos personales
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/contractual`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/contractual`}>
                             Datos contractuales
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/previsional`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/previsional`}>
                             Datos previsionales
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/bancario`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/bancario`}>
                             Datos bancarios
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/salud`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/salud`}>
                             Datos de salud
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/documentos`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/documentos`}>
                             Documentos
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/asistencia`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/asistencia`}>
                             Asistencia
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/bitacora`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/bitacora`}>
                             Bitácora laboral 360
                           </Link>
-                          <Link
-                            to={`/dashboard/rrhh/empleado/${employeeRut}/historial`}
-                          >
+                          <Link to={`/dashboard/rrhh/empleado/${employeeRut}/historial`}>
                             Historial
                           </Link>
                         </div>
@@ -348,8 +435,7 @@ function EmployeeListPage() {
       {/* PAGINACIÓN */}
       <div className={styles.pagination}>
         <span>
-          Mostrando 1 a {filteredEmployees.length} de {filteredEmployees.length}{" "}
-          resultados
+          Mostrando 1 a {filteredEmployees.length} de {filteredEmployees.length} resultados
         </span>
         <div className={styles.paginationControls}>
           <button disabled>&lt;</button>

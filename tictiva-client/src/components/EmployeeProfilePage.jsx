@@ -34,10 +34,6 @@ function normalizeRut(input) {
 
 // =======================================================
 // ✅ FIX: limpiar payload para Supabase SIN pisar con null
-// - omitimos keys técnicas
-// - NO convertimos "" a null (porque borra datos sin querer)
-// - NO enviamos "" ni undefined (para no pisar)
-// - null se respeta (si algún día quieres borrar a propósito)
 // =======================================================
 function sanitizeRow(row, omitKeys = []) {
   if (!row || typeof row !== "object") return row;
@@ -64,6 +60,53 @@ function formatSupabaseError(err) {
   const details = err.details || "";
   const hint = err.hint || "";
   return [code, msg, details, hint].filter(Boolean).join(" | ");
+}
+
+// =======================================================
+// ✅ Estado Activo/Inactivo desde Contractuales
+// Reglas:
+// - Si estado_contrato es Terminado/Suspendido => Inactivo (por defecto)
+// - Si fecha_termino existe y es <= hoy => Inactivo
+// - Si no, Activo
+// =======================================================
+function computeEmployeeEstadoFromContract(contractData) {
+  if (!contractData || typeof contractData !== "object") return null;
+
+  const estadoContratoRaw =
+    contractData.estado_contrato ||
+    contractData.estadoContrato ||
+    contractData.estado ||
+    "";
+
+  const estadoContrato = String(estadoContratoRaw || "")
+    .trim()
+    .toLowerCase();
+
+  // Si viene explícito como terminado/suspendido, lo tratamos como no activo
+  if (
+    estadoContrato === "terminado" ||
+    estadoContrato === "finalizado" ||
+    estadoContrato === "finiquitado" ||
+    estadoContrato === "suspendido"
+  ) {
+    return "Inactivo";
+  }
+
+  // Si hay fecha de término y ya pasó (o es hoy), es inactivo
+  const ft = contractData.fecha_termino || contractData.fechaTermino || null;
+  if (ft) {
+    const d = new Date(ft);
+    if (!Number.isNaN(d.getTime())) {
+      // Comparación por día (sin hora)
+      const today = new Date();
+      const a = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      const b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      if (b <= a) return "Inactivo";
+    }
+  }
+
+  // Si el contrato está vigente, asumimos activo
+  return "Activo";
 }
 
 // =======================================================
@@ -275,7 +318,10 @@ function EmployeeProfilePage() {
         return `${signed.signedUrl}${signed.signedUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
       }
 
-      const { data: pub } = supabase.storage.from("enrollment_photos").getPublicUrl(cleanPath);
+      const { data: pub } = supabase.storage
+        .from("enrollment_photos")
+        .getPublicUrl(cleanPath);
+
       if (pub?.publicUrl) {
         const p = pub.publicUrl;
         return `${p}${p.includes("?") ? "&" : "?"}t=${Date.now()}`;
@@ -505,6 +551,15 @@ function EmployeeProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [faceEnroll?.photo_url, fallbackFacePhotoUrl, personalData?.avatar]);
 
+  // ✅ Estado mostrado en header:
+  // si contractuales indica Inactivo, manda.
+  // si no, usamos employee_personal.estado (o Activo por defecto)
+  const effectiveEstadoEmpleado = useMemo(() => {
+    const derived = computeEmployeeEstadoFromContract(contractData);
+    if (derived === "Inactivo") return "Inactivo";
+    return personalData?.estado || "Activo";
+  }, [contractData, personalData?.estado]);
+
   // Antigüedad
   const yearsAndMonths = useMemo(() => {
     const fecha = contractData?.fecha_inicio || personalData?.fecha_ingreso;
@@ -572,10 +627,10 @@ function EmployeeProfilePage() {
 
       // 2) Contractuales
       if (contractData && (contractData.id || resolvedEmployeeId)) {
-        // ✅ FIX REAL: NO usar "estado" (no existe). Usar "estado_contrato".
-        // Además, si por alguna razón quedó "estado" colado, lo borramos.
         const normalizedContract = { ...(contractData || {}) };
-        delete normalizedContract.estado; // 🔥 clave
+
+        // 🔒 Aseguramos que no se cuele "estado" (columna NO existente en employee_contracts)
+        delete normalizedContract.estado;
 
         const contractPayload = sanitizeRow(normalizedContract, [
           "id",
@@ -595,6 +650,22 @@ function EmployeeProfilePage() {
             .from("employee_contracts")
             .insert([{ ...contractPayload, employee_id: resolvedEmployeeId }]);
           if (error) throw error;
+        }
+      }
+
+      // ✅ 2.1) SINCRONIZAR estado (Activo/Inactivo) en employee_personal según contractuales
+      if (rutCanonico) {
+        const derivedEstado = computeEmployeeEstadoFromContract(contractData);
+        if (derivedEstado) {
+          const { error: estadoErr } = await supabase
+            .from("employee_personal")
+            .update({ estado: derivedEstado })
+            .eq("rut", rutCanonico);
+
+          if (estadoErr) throw estadoErr;
+
+          // Actualiza UI local inmediatamente
+          setPersonalData((prev) => (prev ? { ...prev, estado: derivedEstado } : prev));
         }
       }
 
@@ -744,17 +815,21 @@ function EmployeeProfilePage() {
           <div className={styles.profileDetails}>
             <h1 className={styles.employeeName}>{personalData.nombre_completo}</h1>
             <p className={styles.employeeTitle}>{personalData.cargo}</p>
+
             <p className={styles.employeeStatus}>
               <span
                 className={`${styles.statusBadge} ${
-                  personalData.estado === "Activo"
+                  effectiveEstadoEmpleado === "Activo"
                     ? styles.statusActive
                     : styles.statusInactive
                 }`}
               >
-                {personalData.estado}
+                {effectiveEstadoEmpleado}
               </span>
-              <span className={styles.employeeDates}>Empleado desde {yearsAndMonths}</span>
+
+              <span className={styles.employeeDates}>
+                Empleado desde {yearsAndMonths}
+              </span>
             </p>
           </div>
         </div>
